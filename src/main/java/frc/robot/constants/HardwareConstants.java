@@ -31,4 +31,21 @@ public class HardwareConstants {
             return new com.ctre.phoenix6.CANBus(name);
         }
     }
+
+    public record HoodConstants(
+            CANBus CANBus,
+            int hoodMotorID,
+            double hoodGearing,
+            double hoodUpperLimitRots,
+            double hoodLowerLimitRots
+    ) {}
+
+    //TODO: Change numbers
+    public static HoodConstants HOOD = new HoodConstants(
+            CANBus.RIO,
+            19,
+            50,
+            0.25,
+            0
+    );
 }

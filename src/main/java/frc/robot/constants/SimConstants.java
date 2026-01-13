@@ -28,4 +28,12 @@ public interface SimConstants {
          */
         double STEER_KS_VOLTS = 0.25;
     }
+
+    interface Hood {
+        //TODO: Change
+        double LENGTH_METERS = Units.inchesToMeters(17);
+
+        Rotation2d ZEROED_POSITION_TO_HORIZONTAL = Rotation2d.fromDegrees(15);
+        Rotation2d STARTING_ANGLE = Rotation2d.fromDegrees(0).plus(ZEROED_POSITION_TO_HORIZONTAL);
+    }
 }
