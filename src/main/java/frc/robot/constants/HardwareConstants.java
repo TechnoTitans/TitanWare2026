@@ -1,12 +1,17 @@
 package frc.robot.constants;
 
+
 import java.util.HashMap;
 import java.util.Objects;
 
+
 public class HardwareConstants {
+
+
     public enum CANBus {
         RIO("rio"),
         CANIVORE("CANivore");
+
 
         private static final HashMap<String, CANBus> BusNameToCANBus = new HashMap<>();
         static {
@@ -15,53 +20,65 @@ public class HardwareConstants {
             }
         }
 
+
         public final String name;
+
+
         CANBus(final String name) {
             this.name = name;
         }
 
+
         public static CANBus fromPhoenix6CANBus(final com.ctre.phoenix6.CANBus bus) {
             return Objects.requireNonNull(
-                    BusNameToCANBus.get(bus.getName()), () -> String.format("Could not get CANBus: %s", bus.getName()));
+                    BusNameToCANBus.get(bus.getName()),
+                    () -> String.format("Could not get CANBus: %s", bus.getName())
+            );
         }
+
 
         public com.ctre.phoenix6.CANBus toPhoenix6CANBus() {
             return new com.ctre.phoenix6.CANBus(name);
         }
     }
 
+
     public record HoodConstants(
-            CANBus CANBus,
+            CANBus canBus,
             int motorID,
             double hoodGearing,
             double hoodUpperLimitRots,
             double hoodLowerLimitRots
     ) {}
 
-    //TODO: Change numbers
-    public static HoodConstants HOOD = new HoodConstants(
+
+    // TODO: Change numbers
+    public static final HoodConstants HOOD = new HoodConstants(
             CANBus.RIO,
             19,
             50,
             0.25,
-            0
+            0.0
     );
 
+
     public record ShooterConstants(
-            CANBus CANBus,
+            CANBus canBus,
             int motorID,
             double gearing
     ) {}
 
-    //TODO: Change numbers
-    public static ShooterConstants SHOOTER = new ShooterConstants(
+
+    // TODO: Change numbers
+    public static final ShooterConstants SHOOTER = new ShooterConstants(
             CANBus.RIO,
             20,
             10
     );
 
-    public record TurretConstants (
-            CANBus CANBus,
+
+    public record TurretConstants(
+            CANBus canBus,
             int turretMotorID,
             int leftEncoderID,
             int rightEncoderID,
@@ -75,7 +92,8 @@ public class HardwareConstants {
             double lowerLimitRots
     ) {}
 
-    public static TurretConstants TURRET = new TurretConstants(
+
+    public static final TurretConstants TURRET = new TurretConstants(
             CANBus.CANIVORE,
             16,
             17,
@@ -89,4 +107,62 @@ public class HardwareConstants {
             0.5,
             -0.5
     );
+
+
+    public record IntakeArmConstants(
+            CANBus canBus,
+            int intakePivotMotorID,
+            int intakePivotCANCoderId,
+            double intakePivotCANCoderOffset,
+            double pivotGearing,
+            double pivotLowerLimitRots,
+            double pivotUpperLimitRots
+    ) {}
+
+
+    public static final IntakeArmConstants INTAKE_ARM = new IntakeArmConstants(
+            CANBus.RIO,
+            19,
+            20,
+            0.62939453125,
+            60,
+            -0.35,
+            0.0
+    );
+
+
+    public record IntakeConstants(
+            CANBus canBus,
+            int rollerMotorID,
+            int coralTOFID,
+            double rollerGearing
+    ) {}
+
+
+    public static final IntakeConstants INTAKE = new IntakeConstants(
+            CANBus.RIO,
+            21,
+            23,
+            10.0
+    );
+
+
+    public record ClimbConstants(
+            CANBus canBus,
+            int climbMotorID,
+            double climbGearing,
+            double climbLowerLimitRots,
+            double climbUpperLimitRots
+    ) {}
+
+
+    // TODO: Change numbers
+    public static final ClimbConstants CLIMB = new ClimbConstants(
+            CANBus.RIO,
+            22,
+            50.0,
+            0.0,
+            0.25
+    );
 }
+
