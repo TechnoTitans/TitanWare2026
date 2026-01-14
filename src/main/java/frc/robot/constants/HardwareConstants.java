@@ -38,6 +38,7 @@ public class HardwareConstants {
             double hoodLowerLimitRots
     ) {}
 
+
     //TODO: Change numbers
     public static HoodConstants HOOD = new HoodConstants(
             CANBus.RIO,
@@ -89,4 +90,17 @@ public class HardwareConstants {
             0.5,
             -0.5
     );
+
+    public record IntakeConstants(
+            CANBus CANBus,
+            int motorID,
+            double rollerGearing
+    ) {}
+
+    public static IntakeConstants INTAKE = new IntakeConstants(
+            CANBus.RIO,
+            14,
+            10
+    );
+
 }
