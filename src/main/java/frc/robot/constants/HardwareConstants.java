@@ -37,6 +37,11 @@ public class HardwareConstants {
             double hoodUpperLimitRots,
             double hoodLowerLimitRots
     ) {}
+    public record HopperConstants(
+            CANBus CANBus,
+            int motorID,
+            double rollerGearing
+    ) {}
 
     //TODO: Change numbers
     public static HoodConstants HOOD = new HoodConstants(
@@ -46,6 +51,10 @@ public class HardwareConstants {
             0.25,
             0
     );
+    public static HopperConstants HOPPER = new HopperConstants(
+            CANBus.RIO,
+            20,
+            30
 
     public record ShooterConstants(
             CANBus CANBus,
