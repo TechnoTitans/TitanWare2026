@@ -29,15 +29,21 @@ public interface SimConstants {
         double STEER_KS_VOLTS = 0.25;
     }
 
+    //TODO: Change ALL Number
+
     interface Hood {
-        //TODO: Change
+        Translation3d TURRET_TO_HOOD_TRANSLATION = new Translation3d(Units.inchesToMeters(6.155), 0, Units.inchesToMeters(2.125));
+
         double LENGTH_METERS = Units.inchesToMeters(17);
 
         Rotation2d ZEROED_POSITION_TO_HORIZONTAL = Rotation2d.fromDegrees(15);
         Rotation2d STARTING_ANGLE = Rotation2d.fromDegrees(0).plus(ZEROED_POSITION_TO_HORIZONTAL);
     }
-
     interface Shooter {
         double MOMENT_OF_INERTIA = 1;
+    }
+
+    interface Turret {
+        Translation3d ORIGIN = new Translation3d(0, 0, Units.inchesToMeters(17.2));
     }
 }

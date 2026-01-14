@@ -29,6 +29,7 @@ import frc.robot.subsystems.superstructure.turret.Turret;
 import frc.robot.utils.closeables.ToClose;
 import frc.robot.utils.ctre.RefreshAll;
 import frc.robot.utils.logging.LoggedCommandScheduler;
+import frc.robot.utils.solver.ComponentsSolver;
 import frc.robot.utils.subsystems.VirtualSubsystem;
 import org.littletonrobotics.junction.LogFileUtil;
 import org.littletonrobotics.junction.LoggedRobot;
@@ -96,6 +97,12 @@ public class Robot extends LoggedRobot {
             shooter,
             shotCalculationSupplier
     );
+
+    private final ComponentsSolver componentsSolver = new ComponentsSolver(
+            turret::getTurretPosition,
+            hood::getHoodPosition
+    );
+
     public final CommandXboxController driverController = new CommandXboxController(RobotMap.MainController);
     public final CommandXboxController coController = new CommandXboxController(RobotMap.CoController);
     public final Alert driverControllerDisconnected = new Alert(
