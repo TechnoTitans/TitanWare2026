@@ -1,7 +1,5 @@
 package frc.robot.constants;
 
-import edu.wpi.first.math.util.Units;
-
 import java.util.HashMap;
 import java.util.Objects;
 
@@ -39,6 +37,10 @@ public class HardwareConstants {
             double hoodUpperLimitRots,
             double hoodLowerLimitRots
     ) {}
+    public record HopperConstants(
+            CANBus CANBus,
+            int motorID
+    ) {}
 
     //TODO: Change numbers
     public static HoodConstants HOOD = new HoodConstants(
@@ -47,5 +49,9 @@ public class HardwareConstants {
             50,
             0.25,
             0
+    );
+    public static HopperConstants HOPPER = new HopperConstants(
+            CANBus.RIO,
+            20
     );
 }
