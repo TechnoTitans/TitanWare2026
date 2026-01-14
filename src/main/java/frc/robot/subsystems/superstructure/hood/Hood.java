@@ -35,10 +35,10 @@ public class Hood extends SubsystemBase {
 
 
     public enum Goal {
-        STOW(0.15, false),
+        STOW(0, false),
         CLIMB(0, false),
         TRACKING_HUB(0, true),
-        POOPING(0, true);
+        FERRYING(0, true);
 
         private double hoodPositionGoalRots;
         private final boolean isDynamic;

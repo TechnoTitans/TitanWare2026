@@ -32,7 +32,7 @@ public class HardwareConstants {
 
     public record HoodConstants(
             CANBus CANBus,
-            int hoodMotorID,
+            int motorID,
             double hoodGearing,
             double hoodUpperLimitRots,
             double hoodLowerLimitRots
@@ -55,5 +55,47 @@ public class HardwareConstants {
             CANBus.RIO,
             20,
             30
+
+    public record ShooterConstants(
+            CANBus CANBus,
+            int motorID,
+            double gearing
+    ) {}
+
+    //TODO: Change numbers
+    public static ShooterConstants SHOOTER = new ShooterConstants(
+            CANBus.RIO,
+            20,
+            10
+    );
+
+    public record TurretConstants (
+            CANBus CANBus,
+            int turretMotorID,
+            int leftEncoderID,
+            int rightEncoderID,
+            double turretGearing,
+            double leftEncoderGearing,
+            double rightEncoderGearing,
+            double leftEncoderOffset,
+            double rightEncoderOffset,
+            int countableRotations,
+            double upperLimitRots,
+            double lowerLimitRots
+    ) {}
+
+    public static TurretConstants TURRET = new TurretConstants(
+            CANBus.CANIVORE,
+            16,
+            17,
+            18,
+            45,
+            13,
+            17,
+            0,
+            0,
+            70,
+            0.5,
+            -0.5
     );
 }
