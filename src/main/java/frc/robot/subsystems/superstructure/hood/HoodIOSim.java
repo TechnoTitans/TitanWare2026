@@ -65,7 +65,7 @@ public class HoodIOSim implements HoodIO {
                 SimConstants.Hood.STARTING_ANGLE.getRadians()
         );
 
-        this.hoodMotor = new TalonFX(constants.hoodMotorID(), constants.CANBus());
+        this.hoodMotor = new TalonFX(constants.motorID(), constants.CANBus().toPhoenix6CANBus());
         this.motorConfig = new TalonFXConfiguration();
 
         this.hoodTalonFXSim = new TalonFXSim(
@@ -88,7 +88,7 @@ public class HoodIOSim implements HoodIO {
         this.torqueCurrentFOC = new TorqueCurrentFOC(0);
 
         RefreshAll.add(
-                RefreshAll.getBus(constants.CANBus()),
+                constants.CANBus(),
                 hoodPosition,
                 hoodVelocity,
                 hoodVoltage,

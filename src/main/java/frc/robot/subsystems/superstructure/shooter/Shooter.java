@@ -18,23 +18,32 @@ public class Shooter extends SubsystemBase {
     private final ShooterIO shooterIO;
     private final ShooterIOInputsAutoLogged inputs;
 
-    private Goal desiredGoal = Goal.NONE;
+    private Goal desiredGoal = Goal.STOP;
     private Goal currentGoal = desiredGoal;
 
     public final Trigger atVelocitySetpoint = new Trigger(this::atVelocitySetpoint);
 
     public enum Goal {
-        NONE(0),
-        SHOOT(10);
+        STOP(0, false),
+        TRACKING_HUB(0, true),
+        FERRYING(0, true);
 
-        private final double setpoint;
+        private double velocitySetpoint;
+        private final boolean isDynamic;
 
-        Goal(final double setpoint) {
-            this.setpoint = setpoint;
+        Goal(final double setpoint, final boolean isDynamic) {
+            this.velocitySetpoint = setpoint;
+            this.isDynamic = isDynamic;
         }
 
-        public double getSetpoint() {
-            return setpoint;
+        public double getVelocitySetpoint() {
+            return velocitySetpoint;
+        }
+
+        public void changeShooterVelocityGoal(final double desiredShooterVelocity) {
+            if (isDynamic) {
+                this.velocitySetpoint = desiredShooterVelocity;
+            }
         }
     }
     public Shooter(final Constants.RobotMode mode, final HardwareConstants.ShooterConstants constants) {
@@ -48,7 +57,7 @@ public class Shooter extends SubsystemBase {
         this.inputs = new ShooterIOInputsAutoLogged();
 
         this.shooterIO.config();
-        this.shooterIO.toFlywheelVelocity(desiredGoal.setpoint);
+        this.shooterIO.toFlywheelVelocity(desiredGoal.velocitySetpoint);
     }
 
     @Override
@@ -59,12 +68,14 @@ public class Shooter extends SubsystemBase {
         Logger.processInputs(LogKey, inputs);
 
         if (desiredGoal != currentGoal) {
-            shooterIO.toFlywheelVelocity(desiredGoal.setpoint);
+            shooterIO.toFlywheelVelocity(desiredGoal.velocitySetpoint);
+        } else if (desiredGoal.isDynamic) {
+            shooterIO.toFlywheelVelocity(desiredGoal.velocitySetpoint);
         }
 
         Logger.recordOutput(LogKey + "/DesiredGoal", desiredGoal.toString());
         Logger.recordOutput(LogKey + "/CurrentGoal", currentGoal.toString());
-        Logger.recordOutput(LogKey + "/DesiredGoal/ShooterVelocityRotsPerSec", desiredGoal.getSetpoint());
+        Logger.recordOutput(LogKey + "/DesiredGoal/ShooterVelocityRotsPerSec", desiredGoal.getVelocitySetpoint());
 
         Logger.recordOutput(LogKey + "/Triggers/AtVelocitySetpoint", atVelocitySetpoint());
         Logger.recordOutput(
@@ -80,7 +91,7 @@ public class Shooter extends SubsystemBase {
     public Command toGoal(final Goal desiredGoalSupplier) {
         return runEnd(
                 () -> setDesiredGoal(desiredGoalSupplier),
-                () -> setDesiredGoal(Goal.NONE)
+                () -> setDesiredGoal(Goal.STOP)
         ).withName("ToGoal");
     }
 
@@ -94,9 +105,13 @@ public class Shooter extends SubsystemBase {
         );
     }
 
+    public void updateVelocitySetpoint(final double desiredShooterVelocity) {
+        this.desiredGoal.changeShooterVelocityGoal(desiredShooterVelocity);
+    }
+
     private boolean atVelocitySetpoint() {
         return MathUtil.isNear(
-                desiredGoal.getSetpoint(),
+                desiredGoal.getVelocitySetpoint(),
                 inputs.flywheelVelocityRotsPerSec,
                 VelocityToleranceRotsPerSec
         );

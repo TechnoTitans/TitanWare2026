@@ -32,7 +32,7 @@ public class HardwareConstants {
 
     public record HoodConstants(
             CANBus CANBus,
-            int hoodMotorID,
+            int motorID,
             double hoodGearing,
             double hoodUpperLimitRots,
             double hoodLowerLimitRots

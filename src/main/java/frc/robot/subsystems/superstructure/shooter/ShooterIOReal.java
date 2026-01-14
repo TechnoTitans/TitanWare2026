@@ -36,7 +36,7 @@ public class ShooterIOReal implements ShooterIO {
     public ShooterIOReal(final HardwareConstants.ShooterConstants constants) {
         this.constants = constants;
 
-        this.flywheelMotor = new TalonFX(constants.flywheelMotorID(), constants.CANBus());
+        this.flywheelMotor = new TalonFX(constants.motorID(), constants.CANBus().toPhoenix6CANBus());
 
 
         this.flywheelPosition = flywheelMotor.getPosition(false);
@@ -50,7 +50,7 @@ public class ShooterIOReal implements ShooterIO {
         this.torqueCurrentFOC = new TorqueCurrentFOC(0);
 
         RefreshAll.add(
-                RefreshAll.getBus(constants.CANBus()),
+                constants.CANBus(),
                 flywheelPosition,
                 flywheelVelocity,
                 flywheelVoltage,
@@ -76,7 +76,7 @@ public class ShooterIOReal implements ShooterIO {
         flywheelConfiguration.MotorOutput.NeutralMode = NeutralModeValue.Brake;
         flywheelConfiguration.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
         flywheelConfiguration.Feedback.FeedbackSensorSource = FeedbackSensorSourceValue.RotorSensor;
-        flywheelConfiguration.Feedback.SensorToMechanismRatio = constants.flywheelGearing();
+        flywheelConfiguration.Feedback.SensorToMechanismRatio = constants.gearing();
         flywheelMotor.getConfigurator().apply(flywheelConfiguration);
 
         BaseStatusSignal.setUpdateFrequencyForAll(

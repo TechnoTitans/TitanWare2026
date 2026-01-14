@@ -33,7 +33,7 @@ public class Turret extends SubsystemBase {
         STOW(0, false),
         CLIMB(0, false),
         TRACKING_HUB(0, true),
-        POOPING(0, true);
+        FERRYING(0, true);
 
         private double turretPositionGoalRots;
         private final boolean isDynamic;
@@ -84,13 +84,11 @@ public class Turret extends SubsystemBase {
         turretIO.updateInputs(inputs);
         Logger.processInputs(LogKey, inputs);
 
-        if (desiredGoal.isDynamic) {
-            turretIO.toTurretContinuousPosition(desiredGoal.getTurretPositionGoalRots());
-        }
-
         if (desiredGoal != currentGoal) {
             turretIO.toTurretPosition(desiredGoal.getTurretPositionGoalRots());
             this.currentGoal = desiredGoal;
+        } else if (desiredGoal.isDynamic) {
+            turretIO.toTurretContinuousPosition(desiredGoal.getTurretPositionGoalRots());
         }
 
         Logger.recordOutput(LogKey + "/CurrentGoal", currentGoal.toString());

@@ -29,8 +29,6 @@ public class Superstructure extends VirtualSubsystem {
 
     private final Trigger desiredGoalIsRunningGoal;
     private final Trigger desiredGoalIsAtGoal;
-    private final Trigger desiredGoalIsTracking;
-    private final Trigger desiredGoalIsPooping;
     private final Trigger desiredGoalChanged;
 
     public final Trigger atSuperstructureSetpoint;
@@ -38,10 +36,10 @@ public class Superstructure extends VirtualSubsystem {
     private final Supplier<ShotCalculator.ShotCalculation> shotCalculationSupplier;
 
     public enum Goal {
-        STOW(Turret.Goal.STOW, Hood.Goal.STOW, Shooter.Goal.NONE, false),
-        CLIMB(Turret.Goal.CLIMB, Hood.Goal.CLIMB, Shooter.Goal.NONE, false),
-        TRACKING(Turret.Goal.TRACKING_HUB, Hood.Goal.TRACKING_HUB, Shooter.Goal.SHOOT, true),
-        POOPING(Turret.Goal.POOPING, Hood.Goal.POOPING, Shooter.Goal.SHOOT, true);
+        STOW(Turret.Goal.STOW, Hood.Goal.STOW, Shooter.Goal.STOP, false),
+        CLIMB(Turret.Goal.CLIMB, Hood.Goal.CLIMB, Shooter.Goal.STOP, false),
+        TRACKING(Turret.Goal.TRACKING_HUB, Hood.Goal.TRACKING_HUB, Shooter.Goal.TRACKING_HUB, true),
+        POOPING(Turret.Goal.FERRYING, Hood.Goal.FERRYING, Shooter.Goal.FERRYING, true);
 
         private final Turret.Goal turretGoal;
         private final Hood.Goal hoodGoal;
@@ -72,8 +70,6 @@ public class Superstructure extends VirtualSubsystem {
         this.desiredGoalIsRunningGoal = new Trigger(eventLoop, () -> this.desiredGoal == runningGoal);
         this.desiredGoalChanged = new Trigger(eventLoop, () -> this.desiredGoal != runningGoal);
         this.desiredGoalIsAtGoal = new Trigger(eventLoop, () -> this.desiredGoal == atGoal);
-        this.desiredGoalIsTracking = new Trigger(eventLoop, () -> this.desiredGoal == Goal.TRACKING);
-        this.desiredGoalIsPooping = new Trigger(eventLoop, () -> this.desiredGoal == Goal.POOPING);
         this.atSuperstructureSetpoint = turret.atSetpoint
                 .and(hood.atSetpoint)
                 .and(shooter.atVelocitySetpoint);
@@ -110,21 +106,15 @@ public class Superstructure extends VirtualSubsystem {
             hood.setGoal(desiredGoal.hoodGoal);
             shooter.setGoal(desiredGoal.shooterGoal);
             this.runningGoal = desiredGoal;
-        }
-
-        if (desiredGoal.isDynamic) {
+        } else if (desiredGoal.isDynamic) {
             final ShotCalculator.ShotCalculation shotCalculation = shotCalculationSupplier.get();
 
             turret.updatePositionSetpoint(shotCalculation.desiredTurretRotation().getRotations());
-            hood.updateDesiredHoodPosition(shotCalculation.hoodCalculation().hoodRotation().getRotations());
+            hood.updateDesiredHoodPosition(shotCalculation.hoodShooterCalculation().hoodRotation().getRotations());
 
             if (shouldShoot) {
-                shooter
+                shooter.updateVelocitySetpoint(shotCalculation.hoodShooterCalculation().flywheelVelocity());
             }
-        }
-
-        if (desiredGoal != Goal.CLIMB) {
-
         }
 
         Logger.recordOutput(LogKey + "/RunningGoal", runningGoal);
@@ -135,8 +125,6 @@ public class Superstructure extends VirtualSubsystem {
 
         Logger.recordOutput(LogKey + "/Triggers/DesiredGoalIsRunningGoal", desiredGoalIsRunningGoal);
         Logger.recordOutput(LogKey + "/Triggers/DesiredGoalIsAtGoal", desiredGoalIsAtGoal);
-        Logger.recordOutput(LogKey + "/Triggers/DesiredGoalIsTracking", desiredGoalIsTracking);
-        Logger.recordOutput(LogKey + "/Triggers/DesiredGoalIsPooping", desiredGoalIsPooping);
         Logger.recordOutput(LogKey + "/Triggers/DesiredGoalChanged", desiredGoalChanged);
     }
 

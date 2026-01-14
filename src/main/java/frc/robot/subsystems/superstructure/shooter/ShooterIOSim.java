@@ -52,16 +52,16 @@ public class ShooterIOSim implements ShooterIO {
                 LinearSystemId.createDCMotorSystem(
                         MoreDCMotor.getKrakenX44(1),
                         SimConstants.Shooter.MOMENT_OF_INERTIA,
-                        constants.flywheelGearing()
+                        constants.gearing()
                 ),
                 MoreDCMotor.getKrakenX44(1)
         );
 
-        this.flywheelMotor = new TalonFX(constants.flywheelMotorID(), constants.CANBus());
+        this.flywheelMotor = new TalonFX(constants.motorID(), constants.CANBus().toPhoenix6CANBus());
 
         this.flywheelTalonFXSim = new TalonFXSim(
                 flywheelMotor,
-                constants.flywheelGearing(),
+                constants.gearing(),
                 flywheelSim::update,
                 flywheelSim::setInputVoltage,
                 flywheelSim::getAngularPositionRad,
@@ -79,7 +79,7 @@ public class ShooterIOSim implements ShooterIO {
         this.torqueCurrentFOC = new TorqueCurrentFOC(0);
 
         RefreshAll.add(
-                RefreshAll.getBus(constants.CANBus()),
+                constants.CANBus(),
                 flywheelPosition,
                 flywheelVelocity,
                 flywheelVoltage,
@@ -116,7 +116,7 @@ public class ShooterIOSim implements ShooterIO {
         flywheelConfiguration.MotorOutput.NeutralMode = NeutralModeValue.Brake;
         flywheelConfiguration.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
         flywheelConfiguration.Feedback.FeedbackSensorSource = FeedbackSensorSourceValue.RotorSensor;
-        flywheelConfiguration.Feedback.SensorToMechanismRatio = constants.flywheelGearing();
+        flywheelConfiguration.Feedback.SensorToMechanismRatio = constants.gearing();
         flywheelMotor.getConfigurator().apply(flywheelConfiguration);
 
         BaseStatusSignal.setUpdateFrequencyForAll(
