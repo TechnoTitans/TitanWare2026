@@ -36,4 +36,8 @@ public interface SimConstants {
         Rotation2d ZEROED_POSITION_TO_HORIZONTAL = Rotation2d.fromDegrees(15);
         Rotation2d STARTING_ANGLE = Rotation2d.fromDegrees(0).plus(ZEROED_POSITION_TO_HORIZONTAL);
     }
+
+    interface Shooter {
+        double MOMENT_OF_INERTIA = 1;
+    }
 }
