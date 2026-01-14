@@ -39,7 +39,8 @@ public class HardwareConstants {
     ) {}
     public record HopperConstants(
             CANBus CANBus,
-            int motorID
+            int motorID,
+            double rollerGearing
     ) {}
 
     //TODO: Change numbers
@@ -52,6 +53,7 @@ public class HardwareConstants {
     );
     public static HopperConstants HOPPER = new HopperConstants(
             CANBus.RIO,
-            20
+            20,
+            30
     );
 }
