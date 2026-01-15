@@ -53,7 +53,7 @@ public class HardwareConstants {
     );
 
     public record IntakeConstants(
-            CANBus canBus,
+            CANBus CANBus,
             int motorID,
             double gearing
     ){}

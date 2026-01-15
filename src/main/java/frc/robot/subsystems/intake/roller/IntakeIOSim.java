@@ -60,7 +60,7 @@ public class IntakeIOSim implements IntakeIO {
 
         this.rollerMotorSim = new TalonFXSim(
                 rollerMotor,
-                constants.rollerGearing(),
+                constants.gearing(),
                 rollerMotorSim::update,
                 rollerMotorSim::setInputVoltage,
                 rollerMotorSim::getAngularPositionRad,
@@ -115,7 +115,7 @@ public class IntakeIOSim implements IntakeIO {
         rollerConfiguration.MotorOutput.NeutralMode = NeutralModeValue.Brake;
         rollerConfiguration.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
         rollerConfiguration.Feedback.FeedbackSensorSource = FeedbackSensorSourceValue.RotorSensor;
-        rollerConfiguration.Feedback.SensorToMechanismRatio = constants.rollerGearing();
+        rollerConfiguration.Feedback.SensorToMechanismRatio = constants.gearing();
         rollerMotor.getConfigurator().apply(rollerConfiguration);
 
         BaseStatusSignal.setUpdateFrequencyForAll(
