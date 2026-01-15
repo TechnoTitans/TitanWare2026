@@ -1,7 +1,6 @@
-package frc.robot.subsystems.intake;
+package frc.robot.subsystems.intake.roller;
 
 import edu.wpi.first.math.util.Units;
-import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;

@@ -52,6 +52,18 @@ public class HardwareConstants {
             0
     );
 
+    public record IntakeConstants(
+            CANBus canBus,
+            int motorID,
+            double gearing
+    ){}
+
+    public static final IntakeConstants INTAKE = new IntakeConstants(
+            CANBus.RIO,
+            16,
+            10
+    );
+
     public record HopperConstants(
             CANBus CANBus,
             int motorID,
@@ -61,7 +73,7 @@ public class HardwareConstants {
 
     public static HopperConstants HOPPER = new HopperConstants(
             CANBus.RIO,
-            18,
+            17,
             30
     );
 
@@ -82,9 +94,9 @@ public class HardwareConstants {
 
     public static TurretConstants TURRET = new TurretConstants(
             CANBus.CANIVORE,
+            18,
             19,
             20,
-            21,
             45,
             13,
             17,
@@ -106,7 +118,7 @@ public class HardwareConstants {
     //TODO: Change numbers
     public static HoodConstants HOOD = new HoodConstants(
             CANBus.RIO,
-            22,
+            21,
             50,
             0.25,
             0
@@ -121,7 +133,7 @@ public class HardwareConstants {
     //TODO: Change numbers
     public static ShooterConstants SHOOTER = new ShooterConstants(
             CANBus.RIO,
-            23,
+            22,
             10
     );
 }

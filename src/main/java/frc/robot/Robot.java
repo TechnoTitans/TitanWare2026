@@ -21,9 +21,12 @@ import frc.robot.constants.HardwareConstants;
 import frc.robot.constants.RobotMap;
 import frc.robot.subsystems.drive.Swerve;
 import frc.robot.subsystems.drive.constants.SwerveConstants;
+import frc.robot.subsystems.intake.roller.Intake;
+import frc.robot.subsystems.intake.slider.IntakeSlider;
 import frc.robot.subsystems.superstructure.ShotCalculator;
 import frc.robot.subsystems.superstructure.Superstructure;
 import frc.robot.subsystems.superstructure.hood.Hood;
+import frc.robot.subsystems.superstructure.hopper.Hopper;
 import frc.robot.subsystems.superstructure.shooter.Shooter;
 import frc.robot.subsystems.superstructure.turret.Turret;
 import frc.robot.utils.closeables.ToClose;
@@ -73,6 +76,21 @@ public class Robot extends LoggedRobot {
             SwerveConstants.CTRESwerve.BackRight
     );
 
+    public final IntakeSlider intakeSlider = new IntakeSlider(
+            Constants.CURRENT_MODE,
+            HardwareConstants.INTAKE_SLIDER
+    );
+
+    public final Intake intake = new Intake(
+            Constants.CURRENT_MODE,
+            HardwareConstants.INTAKE
+    );
+
+    public final Hopper hopper = new Hopper(
+            Constants.CURRENT_MODE,
+            HardwareConstants.HOPPER
+    );
+
     public final Turret turret = new Turret(
             Constants.CURRENT_MODE,
             HardwareConstants.TURRET
@@ -92,6 +110,7 @@ public class Robot extends LoggedRobot {
             () -> ShotCalculator.getShotCalculation(swerve::getPose);
 
     public final Superstructure superstructure = new Superstructure(
+            hopper,
             turret,
             hood,
             shooter,
