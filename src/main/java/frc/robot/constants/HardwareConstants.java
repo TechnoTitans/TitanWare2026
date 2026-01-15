@@ -30,35 +30,39 @@ public class HardwareConstants {
         }
     }
 
-    public record HoodConstants(
+    public record IntakeSliderConstants(
             CANBus CANBus,
             int motorID,
-            double hoodGearing,
-            double hoodUpperLimitRots,
-            double hoodLowerLimitRots
+            int encoderID,
+            double encoderOffset,
+            double gearing,
+            double gearPitchCircumference,
+            double upperLimitRots,
+            double lowerLimitRots
     ) {}
 
-
-    //TODO: Change numbers
-    public static HoodConstants HOOD = new HoodConstants(
+    public static final IntakeSliderConstants INTAKE_SLIDER = new IntakeSliderConstants(
             CANBus.RIO,
-            19,
-            50,
-            0.25,
+            14,
+            15,
+            0,
+            20,
+            0.5,
+            2,
             0
     );
 
-    public record ShooterConstants(
+    public record HopperConstants(
             CANBus CANBus,
             int motorID,
-            double gearing
+            double rollerGearing
     ) {}
 
-    //TODO: Change numbers
-    public static ShooterConstants SHOOTER = new ShooterConstants(
+
+    public static HopperConstants HOPPER = new HopperConstants(
             CANBus.RIO,
-            20,
-            10
+            18,
+            30
     );
 
     public record TurretConstants (
@@ -78,9 +82,9 @@ public class HardwareConstants {
 
     public static TurretConstants TURRET = new TurretConstants(
             CANBus.CANIVORE,
-            16,
-            17,
-            18,
+            19,
+            20,
+            21,
             45,
             13,
             17,
@@ -91,16 +95,33 @@ public class HardwareConstants {
             -0.5
     );
 
-    public record IntakeConstants(
+    public record HoodConstants(
             CANBus CANBus,
             int motorID,
-            double rollerGearing
+            double hoodGearing,
+            double hoodUpperLimitRots,
+            double hoodLowerLimitRots
     ) {}
 
-    public static IntakeConstants INTAKE = new IntakeConstants(
+    //TODO: Change numbers
+    public static HoodConstants HOOD = new HoodConstants(
             CANBus.RIO,
-            24,
-            10
+            22,
+            50,
+            0.25,
+            0
     );
 
+    public record ShooterConstants(
+            CANBus CANBus,
+            int motorID,
+            double gearing
+    ) {}
+
+    //TODO: Change numbers
+    public static ShooterConstants SHOOTER = new ShooterConstants(
+            CANBus.RIO,
+            23,
+            10
+    );
 }
