@@ -148,8 +148,8 @@ public class HardwareConstants {
 
 
     public record ClimbConstants(
-            CANBus canBus,
-            int climbMotorID,
+            CANBus CANBus,
+            int motorID,
             double climbGearing,
             double climbLowerLimitRots,
             double climbUpperLimitRots
