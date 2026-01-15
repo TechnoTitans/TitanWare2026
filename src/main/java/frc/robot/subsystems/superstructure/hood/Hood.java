@@ -16,23 +16,18 @@ public class Hood extends SubsystemBase {
     protected static final String LogKey = "Hood";
     private static final double PositionToleranceRots = 0.002;
     private static final double VelocityToleranceRotsPerSec = 0.002;
-    private static final double HardstopCurrentThreshold = 1;
 
     private final HardwareConstants.HoodConstants constants;
 
     private final HoodIO hoodIO;
     private final HoodIOInputsAutoLogged inputs;
 
-    private Goal previousGoal = Goal.STOW;
     private Goal desiredGoal = previousGoal;
     private Goal currentGoal = desiredGoal;
 
     public final Trigger atSetpoint = new Trigger(this::atHoodPositionSetpoint);
     public final Trigger atHoodLowerLimit = new Trigger(this::atHoodLowerLimit);
     public final Trigger atHoodUpperLimit = new Trigger(this::atHoodUpperLimit);
-
-    private boolean isHomed;
-
 
     public enum Goal {
         STOW(0, false),
@@ -68,8 +63,6 @@ public class Hood extends SubsystemBase {
             };
         };
 
-        isHomed = Constants.CURRENT_MODE == Constants.RobotMode.SIM ? true : false;
-
         this.inputs = new HoodIOInputsAutoLogged();
 
         this.hoodIO.config();
@@ -88,7 +81,6 @@ public class Hood extends SubsystemBase {
 
         if (desiredGoal != currentGoal) {
             hoodIO.toHoodPosition(desiredGoal.getHoodPositionGoalRots());
-            this.previousGoal = currentGoal;
             this.currentGoal = desiredGoal;
         }
 
@@ -98,7 +90,6 @@ public class Hood extends SubsystemBase {
         Logger.recordOutput(LogKey + "/Triggers/AtPositionSetpoint", atHoodPositionSetpoint());
         Logger.recordOutput(LogKey + "/Triggers/AtHoodLowerLimit", atHoodLowerLimit());
         Logger.recordOutput(LogKey + "/Triggers/AtHoodUpperLimit", atHoodUpperLimit());
-        Logger.recordOutput(LogKey + "/Triggers/IsHomed", isHomed);
 
         Logger.recordOutput(
                 LogKey + "/PeriodicIOPeriodMs",
@@ -120,36 +111,11 @@ public class Hood extends SubsystemBase {
         return inputs.hoodPositionRots >= constants.hoodUpperLimitRots();
     }
 
-    public boolean isHomed() {
-        return isHomed;
-    }
-
-    private double getCurrent() {
-        return inputs.hoodTorqueCurrentAmps;
-    }
 
     public void setGoal(final Goal goal) {
         this.desiredGoal = goal;
         Logger.recordOutput(LogKey + "/CurrentGoal", currentGoal.toString());
         Logger.recordOutput(LogKey + "/DesiredGoal", desiredGoal.toString());
-    }
-
-    public Command home() {
-        return Commands.sequence(
-                Commands.runOnce(hoodIO::home),
-                Commands.waitUntil(
-                        () -> getCurrent() >= HardstopCurrentThreshold
-                ),
-                Commands.runOnce(() -> {
-                            hoodIO.zeroMotor();
-                            this.isHomed = true;
-                        }
-                )
-                        .finallyDo(() -> {
-                           this.currentGoal = previousGoal;
-                           this.previousGoal = Goal.TRACKING_HUB;
-                        })
-        );
     }
 
     public Rotation2d getHoodPosition() {

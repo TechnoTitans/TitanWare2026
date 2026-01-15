@@ -14,8 +14,8 @@ import org.littletonrobotics.junction.Logger;
 
 public class IntakeSlider extends SubsystemBase {
     protected static final String LogKey = "IntakeSlider";
-    private static final double PositionToleranceRots = 0.02;
-    private static final double VelocityToleranceRotsPerSec = 0.01;
+    private static final double PositionToleranceRots = 0.002;
+    private static final double VelocityToleranceRotsPerSec = 0.002;
 
     private final HardwareConstants.IntakeSliderConstants constants;
 
