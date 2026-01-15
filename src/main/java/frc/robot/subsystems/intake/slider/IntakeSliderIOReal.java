@@ -134,9 +134,4 @@ public class IntakeSliderIOReal implements IntakeSliderIO {
     public void toPosition(double positionRots) {
         sliderMotor.setControl(positionVoltage.withPosition(positionRots));
     }
-
-    @Override
-    public void zeroPosition() {
-        sliderMotor.setPosition(0);
-    }
 }

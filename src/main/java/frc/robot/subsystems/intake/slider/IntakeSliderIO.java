@@ -25,8 +25,6 @@ public interface IntakeSliderIO {
     default void updateInputs(final IntakeArmIOInputs inputs) {}
 
     default void config() {}
-    
-    default void zeroPosition() {}
 
     default void toPosition(final double positionRots) {}
 }

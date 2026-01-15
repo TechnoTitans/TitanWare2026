@@ -56,7 +56,6 @@ public class IntakeSlider extends SubsystemBase {
         this.inputs = new IntakeArmIOInputsAutoLogged();
 
         this.intakeSliderIO.config();
-        zeroSlider();
 
         this.intakeSliderIO.toPosition(desiredGoal.getPositionGoalRots(constants.gearPitchCircumference()));
     }
@@ -105,10 +104,6 @@ public class IntakeSlider extends SubsystemBase {
         this.desiredGoal = goal;
         Logger.recordOutput(LogKey + "/CurrentGoal", currentGoal.toString());
         Logger.recordOutput(LogKey + "/DesiredGoal", desiredGoal.toString());
-    }
-
-    private void zeroSlider() {
-        intakeSliderIO.zeroPosition();
     }
 }
 

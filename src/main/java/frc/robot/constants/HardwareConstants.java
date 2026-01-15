@@ -37,7 +37,7 @@ public class HardwareConstants {
             double encoderOffset,
             double gearing,
             double gearPitchCircumference,
-            double upperLimtRots,
+            double upperLimitRots,
             double lowerLimitRots
     ) {}
 
