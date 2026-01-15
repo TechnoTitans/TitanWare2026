@@ -90,43 +90,25 @@ public class HardwareConstants {
             -0.5
     );
 
-    public record IntakeArmConstants(
-            String CANBus,
-            int intakePivotMotorID,
-            int intakePivotCANCoderId,
-            double intakePivotCANCoderOffset,
-            double pivotGearing,
-            double pivotLowerLimitRots,
-            double pivotUpperLimitRots
+    public record IntakeSliderConstants(
+            CANBus CANBus,
+            int motorID,
+            int encoderID,
+            double encoderOffset,
+            double gearing,
+            double gearPitchCircumference,
+            double lowerLimitRots,
+            double upperLimitRots
     ) {}
 
-    public static final IntakeArmConstants INTAKE_ARM = new IntakeArmConstants(
-            RobotMap.RioCANBus,
+    public static final IntakeSliderConstants INTAKE_SLIDER = new IntakeSliderConstants(
+            CANBus.RIO,
             19,
             20,
-            0.62939453125,
-            60,
-            -0.35,
-            0
+            0,
+            20,
+            0.5,
+            0,
+            2
     );
-
-    public record IntakeConstants(
-            String CANBus,
-            int rollerRollerMotorID,
-            int coralTOFID,
-            double rollerGearing
-    ) {}
-
-    public static final IntakeConstants INTAKE = new IntakeConstants(
-            RobotMap.RioCANBus,
-            21,
-            23,
-            10.0
-    );
-
-
-
-
-
-
 }
