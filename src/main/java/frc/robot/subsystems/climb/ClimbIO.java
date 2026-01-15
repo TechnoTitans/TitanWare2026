@@ -6,25 +6,23 @@ import org.littletonrobotics.junction.AutoLog;
 public class ClimbIO  {
     @AutoLog
     class ClimbIOInputs {
-        public double climbPositionRots = 0.0;
-        public double climbVelocity = 0.0;
-        public double climbVoltage = 0.0;
-        public double climbTorqueCurrentAmps = 0.0;
-        public double climbTempteratureCelsius = 0.0;
+        public double motorPositionRots = 0.0;
+        public double motorVelocity = 0.0;
+        public double motorVoltage = 0.0;
+        public double motorTorqueCurrentAmps = 0.0;
+        public double motorTemperatureCelsius = 0.0;
 
         public double encoderPositionsRots = 0.0;
     }
 
-    default void updateInputs(final HoodIO.HoodIOInputs inputs) {}
+    default void updateInputs(final ClimbIOInputs inputs) {}
 
     default void config() {}
 
-    default void toClimbPosition(final double positionRots) {}
+    default void toMotorPosition(final double positionRots) {}
 
-    default void toClimbContinuousPosition(final double positionRots) {}
+    default void toMotorVoltage(final double volts) {}
 
-    default void toClimbVoltage(final double volts) {}
-
-    default void toClimbTorqueCurrent(final double torqueCurrentAmps) {}
+    default void toMotorTorqueCurrent(final double torqueCurrentAmps) {}
 
 }
