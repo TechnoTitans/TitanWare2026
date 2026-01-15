@@ -54,7 +54,7 @@ public class Hopper extends SubsystemBase {
 
     @Override
     public void periodic() {
-        final double hopperPeriodicFPGATime = RobotController.getFPGATime();
+        final double HopperPeriodicFPGATime = Timer.getFPGATimestamp();
 
         hopperIO.updateInputs(inputs);
         Logger.processInputs(LogKey, inputs);
@@ -70,7 +70,7 @@ public class Hopper extends SubsystemBase {
 
         Logger.recordOutput(
                 LogKey + "/PeriodicIOPeriodMs",
-                Units.secondsToMilliseconds(Timer.getFPGATimestamp() - hopperPeriodicFPGATime)
+                Units.secondsToMilliseconds(Timer.getFPGATimestamp() - HopperPeriodicFPGATime)
         );
     }
 
