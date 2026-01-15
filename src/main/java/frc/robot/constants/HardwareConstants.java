@@ -98,4 +98,26 @@ public class HardwareConstants {
             0.5,
             -0.5
     );
+
+    public record IntakeSliderConstants(
+            CANBus CANBus,
+            int motorID,
+            int encoderID,
+            double encoderOffset,
+            double gearing,
+            double gearPitchCircumference,
+            double lowerLimitRots,
+            double upperLimitRots
+    ) {}
+
+    public static final IntakeSliderConstants INTAKE_SLIDER = new IntakeSliderConstants(
+            CANBus.RIO,
+            19,
+            20,
+            0,
+            20,
+            0.5,
+            0,
+            2
+    );
 }
