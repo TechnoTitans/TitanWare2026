@@ -74,29 +74,17 @@ public class Hopper extends SubsystemBase {
         );
     }
 
+    public Command setGoal(final Goal desiredGoal) {
+        return Commands.runOnce(
+                () -> {
+                    this.desiredGoal = desiredGoal;
+                    Logger.recordOutput(LogKey + "/CurrentGoal", currentGoal.toString());
+                    Logger.recordOutput(LogKey + "/DesiredGoal", desiredGoal.toString());
+                }
+        );
+    }
+
     public boolean atVelocitySetpoint() {
         return MathUtil.isNear(desiredGoal.rollerVelocitySetpoint, inputs.rollerVelocityRotsPerSec, VelocityToleranceRotsPerSec);
-    }
-
-    public Command collect() {
-        return Commands.sequence(
-                runOnce(() -> this.rollerPushing = true),
-                toRollerVelocity(PushingDesiredVelocity)
-        )
-                .finallyDo(() -> this.rollerPushing = false)
-                .withName("Collect");
-    }
-
-    private Command toRollerVelocity(final double rollerVelocity) {
-        return runEnd(
-                () -> {
-                    this.rollerVelocitySetpoint = rollerVelocity;
-                    hopperIO.toRollerVelocity(rollerVelocitySetpoint);
-                },
-                () -> {
-                    this.rollerVelocitySetpoint = 0;
-                    hopperIO.toRollerVelocity(rollerVelocitySetpoint);
-                }
-        ).withName("ToRollerVelocity");
     }
 }
