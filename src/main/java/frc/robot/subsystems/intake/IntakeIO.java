@@ -10,7 +10,6 @@ public interface IntakeIO {
         public double rollerVoltage = 0.0;
         public double rollerTorqueCurrentAmps = 0.0;
         public double rollerTemperatureCelsius = 0.0;
-
     }
 
     default void updateInputs(final IntakeIOInputs inputs) {}

@@ -1,6 +1,8 @@
 package frc.robot.subsystems.intake;
 
+import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.RobotController;
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
@@ -43,17 +45,18 @@ public class Intake extends SubsystemBase {
 
     @Override
     public void periodic() {
-        final double intakePeriodicFPGATime = RobotController.getFPGATime();
+        final double IntakePeriodicUpdateStart = Timer.getFPGATimestamp();;
 
         intakeIO.updateInputs(inputs);
         Logger.processInputs(LogKey, inputs);
 
         Logger.recordOutput(LogKey + "/RollerVelocitySetpoint", rollerVelocitySetpoint);
-        Logger.recordOutput(LogKey + "/RollerVoltageSetppint", rollerVoltageSetpoint);
+        Logger.recordOutput(LogKey + "/RollerVoltageSetpoint", rollerVoltageSetpoint);
 
         Logger.recordOutput(LogKey + "/Triggers/IsRollerIntaking", isRollerIntaking);
 
-        Logger.recordOutput(LogKey + "/PeriodicIOPeriodMs", RobotController.getFPGATime() - intakePeriodicFPGATime);
+        Logger.recordOutput(LogKey + "/PeriodicIOPeriodMs",
+                Units.secondsToMilliseconds(Timer.getFPGATimestamp() - IntakePeriodicUpdateStart));
     }
 
     public Command intake() {

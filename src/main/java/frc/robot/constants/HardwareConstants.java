@@ -99,7 +99,7 @@ public class HardwareConstants {
 
     public static IntakeConstants INTAKE = new IntakeConstants(
             CANBus.RIO,
-            14,
+            24,
             10
     );
 
