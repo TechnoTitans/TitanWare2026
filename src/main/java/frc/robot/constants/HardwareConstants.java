@@ -30,43 +30,39 @@ public class HardwareConstants {
         }
     }
 
-    public record HoodConstants(
+    public record IntakeSliderConstants(
             CANBus CANBus,
             int motorID,
-            double hoodGearing,
-            double hoodUpperLimitRots,
-            double hoodLowerLimitRots
+            int encoderID,
+            double encoderOffset,
+            double gearing,
+            double gearPitchCircumference,
+            double upperLimtRots,
+            double lowerLimitRots
     ) {}
+
+    public static final IntakeSliderConstants INTAKE_SLIDER = new IntakeSliderConstants(
+            CANBus.RIO,
+            14,
+            15,
+            0,
+            20,
+            0.5,
+            2,
+            0
+    );
+
     public record HopperConstants(
             CANBus CANBus,
             int motorID,
             double rollerGearing
     ) {}
 
-    //TODO: Change numbers
-    public static HoodConstants HOOD = new HoodConstants(
-            CANBus.RIO,
-            19,
-            50,
-            0.25,
-            0
-    );
+
     public static HopperConstants HOPPER = new HopperConstants(
             CANBus.RIO,
-            20,
+            18,
             30
-
-    public record ShooterConstants(
-            CANBus CANBus,
-            int motorID,
-            double gearing
-    ) {}
-
-    //TODO: Change numbers
-    public static ShooterConstants SHOOTER = new ShooterConstants(
-            CANBus.RIO,
-            20,
-            10
     );
 
     public record TurretConstants (
@@ -86,9 +82,9 @@ public class HardwareConstants {
 
     public static TurretConstants TURRET = new TurretConstants(
             CANBus.CANIVORE,
-            16,
-            17,
-            18,
+            19,
+            20,
+            21,
             45,
             13,
             17,
@@ -99,25 +95,33 @@ public class HardwareConstants {
             -0.5
     );
 
-    public record IntakeSliderConstants(
+    public record HoodConstants(
             CANBus CANBus,
             int motorID,
-            int encoderID,
-            double encoderOffset,
-            double gearing,
-            double gearPitchCircumference,
-            double lowerLimitRots,
-            double upperLimitRots
+            double hoodGearing,
+            double hoodUpperLimitRots,
+            double hoodLowerLimitRots
     ) {}
 
-    public static final IntakeSliderConstants INTAKE_SLIDER = new IntakeSliderConstants(
+    //TODO: Change numbers
+    public static HoodConstants HOOD = new HoodConstants(
             CANBus.RIO,
-            19,
-            20,
-            0,
-            20,
-            0.5,
-            0,
-            2
+            22,
+            50,
+            0.25,
+            0
+    );
+
+    public record ShooterConstants(
+            CANBus CANBus,
+            int motorID,
+            double gearing
+    ) {}
+
+    //TODO: Change numbers
+    public static ShooterConstants SHOOTER = new ShooterConstants(
+            CANBus.RIO,
+            23,
+            10
     );
 }
