@@ -113,6 +113,7 @@ public class Superstructure extends VirtualSubsystem {
 
             turret.updatePositionSetpoint(shotCalculation.desiredTurretRotation().getRotations());
             hood.updateDesiredHoodPosition(shotCalculation.hoodShooterCalculation().hoodRotation().getRotations());
+            shooter.updateVelocitySetpoint(shotCalculation.hoodShooterCalculation().flywheelVelocity());
 
             if (shouldShoot) {
                 shooter.updateVelocitySetpoint(shotCalculation.hoodShooterCalculation().flywheelVelocity());
@@ -131,6 +132,7 @@ public class Superstructure extends VirtualSubsystem {
         Logger.recordOutput(LogKey + "/RunningGoal", runningGoal);
         Logger.recordOutput(LogKey + "/DesiredGoal", desiredGoal);
         Logger.recordOutput(LogKey + "/AtGoal", atGoal);
+        Logger.recordOutput(LogKey + "/ShouldShoot", shouldShoot);
 
         Logger.recordOutput(LogKey + "/AtSetpoint", atSuperstructureSetpoint);
 

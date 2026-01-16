@@ -6,7 +6,7 @@ import java.util.Objects;
 public class HardwareConstants {
     public enum CANBus {
         RIO("rio"),
-        CANIVORE("CANivore");
+        CANIVORE("CANIVORE");
 
         private static final HashMap<String, CANBus> BusNameToCANBus = new HashMap<>();
         static {
@@ -30,38 +30,30 @@ public class HardwareConstants {
         }
     }
 
-    public record IntakeSliderConstants(
+    public record IntakeConstants(
             CANBus CANBus,
-            int motorID,
+            int rollerMotorID,
+            double rollerGearing,
+            int sliderMotorID,
             int encoderID,
             double encoderOffset,
-            double gearing,
-            double gearPitchCircumference,
+            double sliderGearing,
+            double gearPitchCircumferenceMeters,
             double upperLimitRots,
             double lowerLimitRots
     ) {}
 
-    public static final IntakeSliderConstants INTAKE_SLIDER = new IntakeSliderConstants(
+    public static IntakeConstants INTAKE = new IntakeConstants(
             CANBus.RIO,
             14,
-            15,
+            10,
+            14,
+            16,
             0,
             20,
-            0.5,
+            0.1,
             2,
             0
-    );
-
-    public record IntakeConstants(
-            CANBus CANBus,
-            int motorID,
-            double gearing
-    ){}
-
-    public static final IntakeConstants INTAKE = new IntakeConstants(
-            CANBus.RIO,
-            16,
-            10
     );
 
     public record HopperConstants(

@@ -21,8 +21,7 @@ import frc.robot.constants.HardwareConstants;
 import frc.robot.constants.RobotMap;
 import frc.robot.subsystems.drive.Swerve;
 import frc.robot.subsystems.drive.constants.SwerveConstants;
-import frc.robot.subsystems.intake.roller.Intake;
-import frc.robot.subsystems.intake.slider.IntakeSlider;
+import frc.robot.subsystems.intake.Intake;
 import frc.robot.subsystems.superstructure.ShotCalculator;
 import frc.robot.subsystems.superstructure.Superstructure;
 import frc.robot.subsystems.superstructure.hood.Hood;
@@ -34,6 +33,7 @@ import frc.robot.utils.ctre.RefreshAll;
 import frc.robot.utils.logging.LoggedCommandScheduler;
 import frc.robot.utils.solver.ComponentsSolver;
 import frc.robot.utils.subsystems.VirtualSubsystem;
+import frc.robot.utils.teleop.ControllerUtils;
 import org.littletonrobotics.junction.LogFileUtil;
 import org.littletonrobotics.junction.LoggedRobot;
 import org.littletonrobotics.junction.Logger;
@@ -76,11 +76,6 @@ public class Robot extends LoggedRobot {
             SwerveConstants.CTRESwerve.BackRight
     );
 
-    public final IntakeSlider intakeSlider = new IntakeSlider(
-            Constants.CURRENT_MODE,
-            HardwareConstants.INTAKE_SLIDER
-    );
-
     public final Intake intake = new Intake(
             Constants.CURRENT_MODE,
             HardwareConstants.INTAKE
@@ -120,6 +115,12 @@ public class Robot extends LoggedRobot {
     private final ComponentsSolver componentsSolver = new ComponentsSolver(
             turret::getTurretPosition,
             hood::getHoodPosition
+    );
+
+    private final RobotCommands robotCommands = new RobotCommands(
+            swerve,
+            intake,
+            superstructure
     );
 
     public final CommandXboxController driverController = new CommandXboxController(RobotMap.MainController);
@@ -287,7 +288,11 @@ public class Robot extends LoggedRobot {
     public void simulationPeriodic() {}
 
     public void configureStateTriggers() {
+        endgameTrigger.onTrue(ControllerUtils.rumbleForDurationCommand(
+                driverController.getHID(), GenericHID.RumbleType.kBothRumble, 0.5, 1)
+        );
 
+        disabled.onTrue(swerve.stopCommand());
     }
 
     public void configureAutos() {
@@ -295,6 +300,12 @@ public class Robot extends LoggedRobot {
     }
 
     public void configureButtonBindings(final EventLoop teleopEventLoop) {
+        driverController.leftTrigger(0.5, teleopEventLoop).whileTrue(
+                intake.toGoal(Intake.Goal.INTAKE)
+        );
 
+        driverController.rightTrigger(0.5, teleopEventLoop).whileTrue(
+                superstructure.setShootingState(true)
+        ).onFalse(superstructure.setShootingState(false));
     }
 }

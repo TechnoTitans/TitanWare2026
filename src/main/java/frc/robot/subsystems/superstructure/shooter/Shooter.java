@@ -18,7 +18,7 @@ public class Shooter extends SubsystemBase {
     private final ShooterIO shooterIO;
     private final ShooterIOInputsAutoLogged inputs;
 
-    private Goal desiredGoal = Goal.STOP;
+    private Goal desiredGoal = Goal.TRACKING_HUB;
     private Goal currentGoal = desiredGoal;
 
     public final Trigger atVelocitySetpoint = new Trigger(this::atVelocitySetpoint);
@@ -68,8 +68,6 @@ public class Shooter extends SubsystemBase {
         Logger.processInputs(LogKey, inputs);
 
         if (desiredGoal != currentGoal) {
-            shooterIO.toFlywheelVelocity(desiredGoal.velocitySetpoint);
-        } else if (desiredGoal.isDynamic) {
             shooterIO.toFlywheelVelocity(desiredGoal.velocitySetpoint);
         }
 

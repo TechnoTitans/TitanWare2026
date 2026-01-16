@@ -22,7 +22,7 @@ public class Hood extends SubsystemBase {
     private final HoodIO hoodIO;
     private final HoodIOInputsAutoLogged inputs;
 
-    private Goal desiredGoal = previousGoal;
+    private Goal desiredGoal = Goal.STOW;
     private Goal currentGoal = desiredGoal;
 
     public final Trigger atSetpoint = new Trigger(this::atHoodPositionSetpoint);

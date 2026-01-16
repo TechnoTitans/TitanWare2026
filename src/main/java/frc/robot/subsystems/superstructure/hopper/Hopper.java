@@ -19,6 +19,8 @@ public class Hopper extends SubsystemBase {
     private final HopperIO hopperIO;
     private final HopperIOInputsAutoLogged inputs;
 
+
+    //TODO: This won't work. When you shoot, your hopper won't actually move
     private Goal desiredGoal = Goal.STOP;
     private Goal currentGoal = desiredGoal;
 

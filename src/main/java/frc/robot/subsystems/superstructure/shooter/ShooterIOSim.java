@@ -13,6 +13,7 @@ import com.ctre.phoenix6.signals.FeedbackSensorSourceValue;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 import com.ctre.phoenix6.sim.ChassisReference;
+import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.system.plant.LinearSystemId;
 import edu.wpi.first.units.measure.*;
 import edu.wpi.first.wpilibj.Notifier;
@@ -50,11 +51,11 @@ public class ShooterIOSim implements ShooterIO {
 
         final DCMotorSim flywheelSim = new DCMotorSim(
                 LinearSystemId.createDCMotorSystem(
-                        MoreDCMotor.getKrakenX44(1),
+                        DCMotor.getKrakenX60Foc(1),
                         SimConstants.Shooter.MOMENT_OF_INERTIA,
                         constants.gearing()
                 ),
-                MoreDCMotor.getKrakenX44(1)
+                DCMotor.getKrakenX60Foc(1)
         );
 
         this.flywheelMotor = new TalonFX(constants.motorID(), constants.CANBus().toPhoenix6CANBus());
@@ -103,10 +104,8 @@ public class ShooterIOSim implements ShooterIO {
     public void config() {
         final TalonFXConfiguration flywheelConfiguration = new TalonFXConfiguration();
         flywheelConfiguration.Slot0 = new Slot0Configs()
-                .withKS(4.0212)
-                .withKV(0.40767)
-                .withKA(0.22711)
-                .withKP(30);
+                .withKS(0.01)
+                .withKP(5);
         flywheelConfiguration.CurrentLimits.StatorCurrentLimit = 40;
         flywheelConfiguration.CurrentLimits.StatorCurrentLimitEnable = true;
         flywheelConfiguration.CurrentLimits.SupplyCurrentLimit = 40;
