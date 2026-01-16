@@ -43,7 +43,7 @@ public class Hopper extends SubsystemBase {
     public Hopper(final Constants.RobotMode mode, final HardwareConstants.HopperConstants constants) {
         this.hopperIO = switch (mode) {
             case REAL -> new HopperIOReal(constants);
-            case SIM -> new HopperIOSim();
+            case SIM -> new HopperIOSim(constants);
             case DISABLED, REPLAY -> new HopperIO() {};
         };
 

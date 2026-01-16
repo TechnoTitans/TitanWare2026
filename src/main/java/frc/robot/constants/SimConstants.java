@@ -46,4 +46,7 @@ public interface SimConstants {
     interface Turret {
         Translation3d ORIGIN = new Translation3d(0, 0, Units.inchesToMeters(17.2));
     }
+    interface Hopper {
+        double MOMENT_OF_INERTIA = 5;
+    }
 }
