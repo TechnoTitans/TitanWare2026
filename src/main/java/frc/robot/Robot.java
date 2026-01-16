@@ -7,6 +7,7 @@ package frc.robot;
 import com.ctre.phoenix6.SignalLogger;
 import edu.wpi.first.hal.AllianceStationID;
 import edu.wpi.first.math.geometry.Pose3d;
+import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.*;
 import edu.wpi.first.wpilibj.event.EventLoop;
 import edu.wpi.first.wpilibj.livewindow.LiveWindow;
@@ -101,8 +102,21 @@ public class Robot extends LoggedRobot {
             HardwareConstants.SHOOTER
     );
 
+    private ShotCalculator.Target target = ShotCalculator.Target.HUB;
+
+    private final Trigger shouldFerry = new Trigger(
+            () -> {
+
+                if (swerve.getPose() != null) {
+                    return swerve.getPose().getX() > Units.inchesToMeters(118);
+                }
+
+                return false;
+            }
+    );
+
     private final Supplier<ShotCalculator.ShotCalculation> shotCalculationSupplier =
-            () -> ShotCalculator.getShotCalculation(swerve::getPose);
+            () -> ShotCalculator.getShotCalculation(swerve::getPose, () -> target);
 
     public final Superstructure superstructure = new Superstructure(
             hopper,
@@ -252,6 +266,7 @@ public class Robot extends LoggedRobot {
         coControllerDisconnected.set(!coController.getHID().isConnected());
 
         LoggedCommandScheduler.periodic();
+        Logger.recordOutput("Target", target);
 //        componentsSolver.periodic();
 
         Threads.setCurrentThreadPriority(false, 10);
@@ -293,6 +308,10 @@ public class Robot extends LoggedRobot {
         );
 
         disabled.onTrue(swerve.stopCommand());
+
+        shouldFerry.onTrue(
+                Commands.runOnce(() -> target = ShotCalculator.Target.FERRYING)
+        ).onFalse(Commands.runOnce(() -> target = ShotCalculator.Target.HUB));
     }
 
     public void configureAutos() {
