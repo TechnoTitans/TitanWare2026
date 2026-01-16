@@ -25,12 +25,10 @@ public class Superstructure extends VirtualSubsystem {
 
     private Goal desiredGoal = Goal.TRACKING;
     private Goal runningGoal = desiredGoal;
-    private Goal atGoal = desiredGoal;
 
     private final EventLoop eventLoop;
 
     private final Trigger desiredGoalIsRunningGoal;
-    private final Trigger desiredGoalIsAtGoal;
     private final Trigger desiredGoalChanged;
 
     public final Trigger atSuperstructureSetpoint;
@@ -76,7 +74,6 @@ public class Superstructure extends VirtualSubsystem {
 
         this.desiredGoalIsRunningGoal = new Trigger(eventLoop, () -> this.desiredGoal == runningGoal);
         this.desiredGoalChanged = new Trigger(eventLoop, () -> this.desiredGoal != runningGoal);
-        this.desiredGoalIsAtGoal = new Trigger(eventLoop, () -> this.desiredGoal == atGoal);
         this.atSuperstructureSetpoint = turret.atSetpoint
                 .and(hood.atSetpoint)
                 .and(shooter.atVelocitySetpoint);
@@ -113,10 +110,11 @@ public class Superstructure extends VirtualSubsystem {
 
             turret.updatePositionSetpoint(shotCalculation.desiredTurretRotation().getRotations());
             hood.updateDesiredHoodPosition(shotCalculation.hoodShooterCalculation().hoodRotation().getRotations());
-            shooter.updateVelocitySetpoint(shotCalculation.hoodShooterCalculation().flywheelVelocity());
 
             if (shouldShoot) {
                 shooter.updateVelocitySetpoint(shotCalculation.hoodShooterCalculation().flywheelVelocity());
+            } else if (!shouldShoot && desiredGoal.shooterGoal.getVelocitySetpoint() != 0) {
+                shooter.updateVelocitySetpoint(0);
             }
         }
 
@@ -131,18 +129,17 @@ public class Superstructure extends VirtualSubsystem {
 
         Logger.recordOutput(LogKey + "/RunningGoal", runningGoal);
         Logger.recordOutput(LogKey + "/DesiredGoal", desiredGoal);
-        Logger.recordOutput(LogKey + "/AtGoal", atGoal);
         Logger.recordOutput(LogKey + "/ShouldShoot", shouldShoot);
 
         Logger.recordOutput(LogKey + "/AtSetpoint", atSuperstructureSetpoint);
 
         Logger.recordOutput(LogKey + "/Triggers/DesiredGoalIsRunningGoal", desiredGoalIsRunningGoal);
-        Logger.recordOutput(LogKey + "/Triggers/DesiredGoalIsAtGoal", desiredGoalIsAtGoal);
         Logger.recordOutput(LogKey + "/Triggers/DesiredGoalChanged", desiredGoalChanged);
     }
 
+    //TODO: Swapping w/ running goal might be wrong logic
     public Trigger atSetpoint(final Supplier<Goal> goalSupplier) {
-        return atSuperstructureSetpoint.and(() -> atGoal == goalSupplier.get());
+        return atSuperstructureSetpoint.and(() -> runningGoal == goalSupplier.get());
     }
 
     public Trigger atSetpoint(final Goal goal) {
