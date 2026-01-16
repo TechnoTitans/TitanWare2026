@@ -187,3 +187,5 @@ compile_commands.json
 .factorypath
 
 *.wpilog
+
+simgui-ds.json

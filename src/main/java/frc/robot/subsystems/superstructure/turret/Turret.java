@@ -14,8 +14,8 @@ import org.littletonrobotics.junction.Logger;
 public class Turret extends SubsystemBase {
     protected static final String LogKey = "Turret";
 
-    private static final double PositionToleranceRots = 0.2;
-    private static final double VelocityToleranceRotsPerSec = 0.2;
+    private static final double PositionToleranceRots = 0.02;
+    private static final double VelocityToleranceRotsPerSec = 0.02;
 
     private final HardwareConstants.TurretConstants constants;
 

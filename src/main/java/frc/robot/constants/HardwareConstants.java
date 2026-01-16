@@ -47,12 +47,12 @@ public class HardwareConstants {
             CANBus.RIO,
             14,
             10,
-            14,
+            15,
             16,
             0,
             20,
             0.1,
-            2,
+            10,
             0
     );
 

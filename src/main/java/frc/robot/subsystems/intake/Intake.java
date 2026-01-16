@@ -10,13 +10,11 @@ import frc.robot.constants.Constants;
 import frc.robot.constants.HardwareConstants;
 import org.littletonrobotics.junction.Logger;
 
-import java.util.function.Supplier;
-
 
 public class Intake extends SubsystemBase {
     protected static final String LogKey = "Intake";
-    private static final double PositionToleranceRots = 0.002;
-    private static final double VelocityToleranceRotsPerSec = 0.002;
+    private static final double PositionToleranceRots = 0.02;
+    private static final double VelocityToleranceRotsPerSec = 0.02;
 
     private final HardwareConstants.IntakeConstants constants;
 
@@ -26,7 +24,7 @@ public class Intake extends SubsystemBase {
     private Goal desiredGoal = Goal.STOW;
     private Goal currentGoal = desiredGoal;
 
-    public final Trigger atSetpoint = new Trigger(this::atSliderPositionSetpoint);
+    public final Trigger atSliderSetpoint = new Trigger(this::atSliderPositionSetpoint);
     public final Trigger atSliderLowerLimit = new Trigger(this::atSliderLowerLimit);
     public final Trigger atSliderUpperLimit = new Trigger(this::atSliderUpperLimit);
 
@@ -36,23 +34,23 @@ public class Intake extends SubsystemBase {
         EJECT(0.5, -9);
 
         private final double sliderExtensionGoalMeters;
-        private final double rollerVelocityGoal;
+        private final double rollerVelocityGoalRotsPerSec;
         
-        Goal(final double sliderExtensionGoalMeters, final double rollerVelocityGoal) {
+        Goal(final double sliderExtensionGoalMeters, final double rollerVelocityGoalRotsPerSec) {
             this.sliderExtensionGoalMeters = sliderExtensionGoalMeters;
-            this.rollerVelocityGoal = rollerVelocityGoal;
+            this.rollerVelocityGoalRotsPerSec = rollerVelocityGoalRotsPerSec;
         }
 
         public double getSliderExtensionGoalMeters() {
             return sliderExtensionGoalMeters;
         }
         
-        public double getSliderGoalRots(final double gearPitchMeters) {
-            return this.sliderExtensionGoalMeters / gearPitchMeters;
+        public double getSliderGoalRots(final double gearPitchCircumferenceMeters) {
+            return this.sliderExtensionGoalMeters / gearPitchCircumferenceMeters;
         }
         
-        public double getRollerVelocityGoal() {
-            return rollerVelocityGoal;
+        public double getRollerVelocityGoalRotsPerSec() {
+            return rollerVelocityGoalRotsPerSec;
         }
     }
 
@@ -67,8 +65,9 @@ public class Intake extends SubsystemBase {
         };
 
         this.inputs = new IntakeIOInputsAutoLogged();
-
         this.intakeIO.config();
+
+        intakeIO.toSliderPosition(desiredGoal.getSliderGoalRots(constants.gearPitchCircumferenceMeters()));
     }
 
     @Override
@@ -78,11 +77,9 @@ public class Intake extends SubsystemBase {
         intakeIO.updateInputs(inputs);
         Logger.processInputs(LogKey, inputs);
 
-        Logger.recordOutput(LogKey + "GoalChangeNeeded", desiredGoal != currentGoal);
-
         if (desiredGoal != currentGoal) {
             intakeIO.toSliderPosition(desiredGoal.getSliderGoalRots(constants.gearPitchCircumferenceMeters()));
-            intakeIO.toRollerVelocity(desiredGoal.getRollerVelocityGoal());
+            intakeIO.toRollerVelocity(desiredGoal.getRollerVelocityGoalRotsPerSec());
 
             this.currentGoal = desiredGoal;
         }
@@ -90,16 +87,13 @@ public class Intake extends SubsystemBase {
         Logger.recordOutput(LogKey + "/CurrentGoal", currentGoal.toString());
         Logger.recordOutput(LogKey + "/DesiredGoal", desiredGoal.toString());
 
-        Logger.recordOutput(
-               LogKey + "/CurrentGoal/RollerVelocity", currentGoal.getRollerVelocityGoal())
-        ;
+        Logger.recordOutput(LogKey + "/CurrentGoal/RollerVelocity", currentGoal.getRollerVelocityGoalRotsPerSec());
+        Logger.recordOutput(LogKey + "/DesiredGoal/RollerVelocity", desiredGoal.getRollerVelocityGoalRotsPerSec());
 
-        Logger.recordOutput(
-                LogKey + "/DesiredGoal/RollerVelocity", desiredGoal.getRollerVelocityGoal())
-        ;
+        Logger.recordOutput(LogKey + "/Roller/AtRollerVelocitySetpoint", atRollerVelocitySetpoint());
 
-        Logger.recordOutput(LogKey + "/CurrentGoal/SliderGoal", currentGoal.getSliderGoalRots(constants.gearPitchCircumferenceMeters()));
-        Logger.recordOutput(LogKey + "/DesiredGoal/SliderGoal", desiredGoal.getSliderGoalRots(constants.gearPitchCircumferenceMeters()));
+        Logger.recordOutput(LogKey + "/CurrentGoal/SliderPositionRots", currentGoal.getSliderGoalRots(constants.gearPitchCircumferenceMeters()));
+        Logger.recordOutput(LogKey + "/DesiredGoal/SliderPositionRots", desiredGoal.getSliderGoalRots(constants.gearPitchCircumferenceMeters()));
 
         Logger.recordOutput(LogKey + "/Slider/AtPositionSetpoint", atSliderPositionSetpoint());
         Logger.recordOutput(LogKey + "/Slider/AtSliderLowerLimit", atSliderLowerLimit());
@@ -112,8 +106,13 @@ public class Intake extends SubsystemBase {
     
     private boolean atSliderPositionSetpoint() {
         return currentGoal == desiredGoal
-                && MathUtil.isNear(desiredGoal.getSliderExtensionGoalMeters(), inputs.sliderPositionRots, PositionToleranceRots)
+                && MathUtil.isNear(desiredGoal.getSliderGoalRots(constants.gearPitchCircumferenceMeters()), inputs.sliderPositionRots, PositionToleranceRots)
                 && MathUtil.isNear(0, inputs.sliderVelocityRotsPerSec, VelocityToleranceRotsPerSec);
+    }
+
+    public boolean atRollerVelocitySetpoint() {
+        return currentGoal == desiredGoal
+                && MathUtil.isNear(desiredGoal.rollerVelocityGoalRotsPerSec, inputs.rollerVelocityRotsPerSec, VelocityToleranceRotsPerSec);
     }
 
     private boolean atSliderLowerLimit() {

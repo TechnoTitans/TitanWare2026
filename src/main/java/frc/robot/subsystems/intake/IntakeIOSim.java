@@ -72,11 +72,12 @@ public class IntakeIOSim implements IntakeIO {
 
         final DCMotorSim rollerMotorSim = new DCMotorSim(
             LinearSystemId.createDCMotorSystem(
-                    0.19557 / (2 * Math.PI),
-                    2.9856 / (2 * Math.PI)
+                    1 / (2 * Math.PI),
+                    0.1 / (2 * Math.PI)
             ),
-            MoreDCMotor.getKrakenX44(1)
+            DCMotor.getKrakenX44Foc(1)
         );
+
         this.rollerMotorSim = new TalonFXSim(
                 rollerMotor,
                 constants.rollerGearing(),
@@ -88,8 +89,8 @@ public class IntakeIOSim implements IntakeIO {
 
         final DCMotorSim sliderSim = new DCMotorSim(
                 LinearSystemId.createDCMotorSystem(
-                        1 / (2 * Math.PI),
-                        0.1 / (2 * Math.PI)
+                        4 / (2 * Math.PI),
+                        0.04 / (2 * Math.PI)
                 ),
                 DCMotor.getKrakenX60Foc(0)
         );
@@ -141,7 +142,7 @@ public class IntakeIOSim implements IntakeIO {
         );
 
         final Notifier simUpdateNotifier = new Notifier(() -> {
-        final double dt = deltaTime.get();
+            final double dt = deltaTime.get();
             this.rollerMotorSim.update(dt);
             this.sliderMotorSim.update(dt);
         });
@@ -158,10 +159,9 @@ public class IntakeIOSim implements IntakeIO {
     public void config() {
         final TalonFXConfiguration rollerConfigurator = new TalonFXConfiguration();
         rollerConfigurator.Slot0 = new Slot0Configs()
-                .withKS(0.01)
-                .withKP(10);
-        rollerConfigurator.TorqueCurrent.PeakForwardTorqueCurrent = 60;
-        rollerConfigurator.TorqueCurrent.PeakReverseTorqueCurrent = -60;
+                .withKP(5);
+        rollerConfigurator.TorqueCurrent.PeakForwardTorqueCurrent = 80;
+        rollerConfigurator.TorqueCurrent.PeakReverseTorqueCurrent = -80;
         rollerConfigurator.CurrentLimits.StatorCurrentLimit = 60;
         rollerConfigurator.CurrentLimits.StatorCurrentLimitEnable = true;
         rollerConfigurator.MotorOutput.NeutralMode = NeutralModeValue.Brake;
@@ -171,14 +171,13 @@ public class IntakeIOSim implements IntakeIO {
         rollerMotor.getConfigurator().apply(rollerConfigurator);
 
         final CANcoderConfiguration sliderCANCoderConfig = new CANcoderConfiguration();
-        sliderCANCoderConfig.MagnetSensor.MagnetOffset = 0;
+        sliderCANCoderConfig.MagnetSensor.MagnetOffset = constants.encoderOffset();
         sliderCANCoderConfig.MagnetSensor.SensorDirection = SensorDirectionValue.CounterClockwise_Positive;
         sliderEncoder.getConfigurator().apply(sliderCANCoderConfig);
 
         final TalonFXConfiguration sliderMotorConfig = new TalonFXConfiguration();
         sliderMotorConfig.Slot0 = new Slot0Configs()
-                .withKS(0.01)
-                .withKP(1);
+                .withKP(30);
         sliderMotorConfig.TorqueCurrent.PeakForwardTorqueCurrent = 60;
         sliderMotorConfig.TorqueCurrent.PeakReverseTorqueCurrent = -60;
         sliderMotorConfig.CurrentLimits.StatorCurrentLimit = 60;
@@ -244,6 +243,7 @@ public class IntakeIOSim implements IntakeIO {
         inputs.sliderVoltage = sliderVoltage.getValueAsDouble();
         inputs.sliderTorqueCurrentAmps = sliderTorqueCurrent.getValueAsDouble();
         inputs.sliderTempCelsius = sliderDeviceTemp.getValueAsDouble();
+
         inputs.encoderPositionRots = sliderCANCoderPosition.getValueAsDouble();
         inputs.encoderVelocityRotsPerSec = sliderCANCoderVelocity.getValueAsDouble();
     }

@@ -64,8 +64,8 @@ public class TurretIOSim implements TurretIO {
 
         final DCMotorSim turretSim = new DCMotorSim(
                 LinearSystemId.createDCMotorSystem(
-                        1 / (2 * Math.PI),
-                        0.2004 / (2 * Math.PI)
+                        5 / (2 * Math.PI),
+                        0.05 / (2 * Math.PI)
                 ),
                 DCMotor.getKrakenX60Foc(1)
         );
@@ -120,8 +120,7 @@ public class TurretIOSim implements TurretIO {
     public void config() {
         final TalonFXConfiguration motorConfig = new TalonFXConfiguration();
         motorConfig.Slot0 = new Slot0Configs()
-                .withKS(0)
-                .withKP(2);
+                .withKP(3);
         motorConfig.MotionMagic.MotionMagicCruiseVelocity = 0;
         motorConfig.MotionMagic.MotionMagicExpo_kV = 0;
         motorConfig.MotionMagic.MotionMagicExpo_kA = 0;
