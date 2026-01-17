@@ -14,7 +14,6 @@ public class FieldConstants {
     public static final double FIELD_WIDTH_Y_METERS = Units.inchesToMeters(317);
 
 
-    public static final Translation2d hubCenter =
-            new Translation2d(FIELD_LENGTH_X_METERS / 2.0, FIELD_WIDTH_Y_METERS / 2.0);
+    public static final Translation2d hubCenter = new Translation2d(4.6256194, 4.0346376);
 
 }

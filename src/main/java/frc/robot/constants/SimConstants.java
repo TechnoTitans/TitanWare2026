@@ -40,11 +40,13 @@ public interface SimConstants {
         Rotation2d STARTING_ANGLE = Rotation2d.fromDegrees(0).plus(ZEROED_POSITION_TO_HORIZONTAL);
     }
     interface Shooter {
-        double MOMENT_OF_INERTIA = 5;
+        double MOMENT_OF_INERTIA = 0.2;
     }
 
     interface Turret {
         Translation3d ORIGIN = new Translation3d(0, 0, Units.inchesToMeters(17.2));
+
+        Transform2d TURRET_TO_ROBOT_TRANSFORM = new Transform2d(new Translation2d(0, 0), Rotation2d.kZero);
     }
     interface Hopper {
         double MOMENT_OF_INERTIA = 5;

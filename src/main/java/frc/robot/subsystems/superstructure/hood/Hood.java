@@ -4,8 +4,6 @@ import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.Timer;
-import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.constants.Constants;
@@ -13,7 +11,7 @@ import frc.robot.constants.HardwareConstants;
 import org.littletonrobotics.junction.Logger;
 
 public class Hood extends SubsystemBase {
-    protected static final String LogKey = "Hood";
+    protected static final String LogKey = "Superstructure/Hood";
     private static final double PositionToleranceRots = 0.002;
     private static final double VelocityToleranceRotsPerSec = 0.002;
 
@@ -32,8 +30,7 @@ public class Hood extends SubsystemBase {
     public enum Goal {
         STOW(0, false),
         CLIMB(0, false),
-        TRACKING_HUB(0, true),
-        FERRYING(0, true);
+        TRACKING(0, true);
 
         private double hoodPositionGoalRots;
         private final boolean isDynamic;

@@ -341,7 +341,7 @@ public class Swerve extends SubsystemBase {
         final ChassisSpeeds robotRelativeSpeeds = getRobotRelativeSpeeds();
 
         final Transform2d diff = robotPose.minus(state().Pose);
-        Logger.recordOutput("Diff", diff);
+        Logger.recordOutput(LogKey + "/Diff", diff);
 
         Logger.recordOutput(
                 LogKey + "/LinearSpeedMetersPerSecond",

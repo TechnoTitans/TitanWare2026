@@ -12,7 +12,7 @@ import frc.robot.utils.position.ChineseRemainder;
 import org.littletonrobotics.junction.Logger;
 
 public class Turret extends SubsystemBase {
-    protected static final String LogKey = "Turret";
+    protected static final String LogKey = "Superstructure/Turret";
 
     private static final double PositionToleranceRots = 0.02;
     private static final double VelocityToleranceRotsPerSec = 0.02;
@@ -32,8 +32,7 @@ public class Turret extends SubsystemBase {
     public enum Goal {
         STOW(0, false),
         CLIMB(0, false),
-        TRACKING_HUB(0, true),
-        FERRYING(0, true);
+        TRACKING(0, true);
 
         private double turretPositionGoalRots;
         private final boolean isDynamic;
