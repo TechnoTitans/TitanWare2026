@@ -40,7 +40,7 @@ public class Feeder extends SubsystemBase {
     public Feeder(final Constants.RobotMode mode, final HardwareConstants.FeederConstants constants) {
         this.feederIO = switch (mode) {
             case REAL -> new FeederIOReal(constants);
-            case SIM -> new FeederIOSim();
+            case SIM -> new FeederIOSim(constants);
             case DISABLED, REPLAY -> new FeederIO() {};
         };
 

@@ -48,4 +48,7 @@ public interface SimConstants {
 
         Transform2d TURRET_TO_ROBOT_TRANSFORM = new Transform2d(new Translation2d(0, 0), Rotation2d.kZero);
     }
+    interface Hopper {
+        double MOMENT_OF_INERTIA = 5;
+    }
 }
