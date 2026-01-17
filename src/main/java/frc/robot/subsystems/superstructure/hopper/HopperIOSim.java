@@ -149,14 +149,4 @@ public class HopperIOSim implements HopperIO {
     public void toRollerVelocity(final double velocityRotsPerSec) {
         rollerMotor.setControl(velocityTorqueCurrentFOC.withVelocity(velocityRotsPerSec));
     }
-
-    @Override
-    public void toRollerVoltage(final double volts) {
-        rollerMotor.setControl(voltageOut.withOutput(volts));
-    }
-
-    @Override
-    public void toRollerTorqueCurrent(final double torqueCurrentAmps) {
-        rollerMotor.setControl(torqueCurrentFOC.withOutput(torqueCurrentAmps));
-    }
 }
