@@ -138,6 +138,6 @@ public class HardwareConstants {
     public static ShooterConstants SHOOTER = new ShooterConstants(
             CANBus.RIO,
             23,
-            10
+            2
     );
 }
