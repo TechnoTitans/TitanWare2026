@@ -103,24 +103,18 @@ public class Robot extends LoggedRobot {
             HardwareConstants.SHOOTER
     );
 
-    private ShotCalculator.Target target = ShotCalculator.Target.HUB;
+    private Supplier<ShotCalculator.Target> targetSupplier = () -> {
+        if (swerve.getPose() != null && swerve.getPose().getX() > Units.inchesToMeters(130)) {
+            return ShotCalculator.Target.FERRYING;
+        }
 
-    private final Trigger shouldFerry = new Trigger(
-            () -> {
-
-                if (swerve.getPose() != null) {
-                    return swerve.getPose().getX() > Units.inchesToMeters(118);
-                }
-
-                return false;
-            }
-    );
-
+        return ShotCalculator.Target.HUB;
+    };
     private final Supplier<ShotCalculator.ShotCalculation> shotCalculationSupplier =
             () -> ShotCalculator.getShotCalculation(swerve::getPose,
                     swerve::getFieldRelativeSpeeds,
                     () -> IsRedAlliance.getAsBoolean()
-                            ? target.getTargetTranslation() : target.getTargetTranslation().rotateBy(Rotation2d.kPi));
+                            ? targetSupplier.get().getTargetTranslation() : targetSupplier.get().getTargetTranslation().rotateBy(Rotation2d.kPi));
 
     public final Superstructure superstructure = new Superstructure(
             feeder,
@@ -270,8 +264,7 @@ public class Robot extends LoggedRobot {
         coControllerDisconnected.set(!coController.getHID().isConnected());
 
         LoggedCommandScheduler.periodic();
-        Logger.recordOutput("Target", target);
-        Logger.recordOutput("ShouldFerry", shouldFerry);
+        Logger.recordOutput("Target", targetSupplier.get());
 //        componentsSolver.periodic();
 
         Threads.setCurrentThreadPriority(false, 10);
@@ -313,18 +306,6 @@ public class Robot extends LoggedRobot {
         );
 
         disabled.onTrue(swerve.stopCommand());
-
-        shouldFerry.onTrue(
-                Commands.parallel(
-                        Commands.runOnce(() -> target = ShotCalculator.Target.FERRYING),
-                        superstructure.setGoal(Superstructure.Goal.FERRYING)
-                )
-        ).onFalse(
-                Commands.parallel(
-                        Commands.runOnce(() -> target = ShotCalculator.Target.HUB),
-                        superstructure.setGoal(Superstructure.Goal.HUB)
-                )
-        );
     }
 
     public void configureAutos() {
@@ -337,7 +318,7 @@ public class Robot extends LoggedRobot {
         );
 
         driverController.rightTrigger(0.5, teleopEventLoop).whileTrue(
-                superstructure.toGoal(shouldFerry.getAsBoolean() ? Superstructure.Goal.SHOOTING_FERRYING : Superstructure.Goal.SHOOTING_HUB)
+                superstructure.toGoal(Superstructure.Goal.SHOOTING)
         );
     }
 }

@@ -25,8 +25,7 @@ public class Shooter extends SubsystemBase {
 
     public enum Goal {
         STOP(0, false),
-        TRACKING_HUB(0, true),
-        FERRYING(0, true);
+        TRACKING(0, true);
 
         private double velocitySetpoint;
         private final boolean isDynamic;
@@ -67,8 +66,13 @@ public class Shooter extends SubsystemBase {
         shooterIO.updateInputs(inputs);
         Logger.processInputs(LogKey, inputs);
 
+        if (desiredGoal.isDynamic) {
+            shooterIO.toFlywheelVelocity(desiredGoal.velocitySetpoint);
+        }
+
         if (desiredGoal != currentGoal) {
             shooterIO.toFlywheelVelocity(desiredGoal.velocitySetpoint);
+            this.currentGoal = desiredGoal;
         }
 
         Logger.recordOutput(LogKey + "/DesiredGoal", desiredGoal.toString());
@@ -93,14 +97,10 @@ public class Shooter extends SubsystemBase {
         ).withName("ToGoal");
     }
 
-    public Command setGoal(final Goal desiredGoal) {
-        return Commands.runOnce(
-                () -> {
-                    this.desiredGoal = desiredGoal;
-                    Logger.recordOutput(LogKey + "/CurrentGoal", currentGoal.toString());
-                    Logger.recordOutput(LogKey + "/DesiredGoal", desiredGoal.toString());
-                }
-        );
+    public void setGoal(final Goal desiredGoal) {
+        this.desiredGoal = desiredGoal;
+        Logger.recordOutput(LogKey + "/CurrentGoal", currentGoal.toString());
+        Logger.recordOutput(LogKey + "/DesiredGoal", desiredGoal.toString());
     }
 
     public void updateVelocitySetpoint(final double desiredShooterVelocity) {

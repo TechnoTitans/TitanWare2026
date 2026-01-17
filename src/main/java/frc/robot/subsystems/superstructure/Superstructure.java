@@ -21,7 +21,7 @@ public class Superstructure extends VirtualSubsystem {
     private final Hood hood;
     private final Shooter shooter;
 
-    private Goal desiredGoal = Goal.HUB;
+    private Goal desiredGoal = Goal.TRACKING;
     private Goal runningGoal = desiredGoal;
 
     private final EventLoop eventLoop;
@@ -36,10 +36,8 @@ public class Superstructure extends VirtualSubsystem {
     public enum Goal {
         STOW(Feeder.Goal.STOP, Turret.Goal.STOW, Hood.Goal.STOW, Shooter.Goal.STOP, false),
         CLIMB(Feeder.Goal.STOP, Turret.Goal.CLIMB, Hood.Goal.CLIMB, Shooter.Goal.STOP, false),
-        HUB(Feeder.Goal.STOP, Turret.Goal.TRACKING_HUB, Hood.Goal.TRACKING_HUB, Shooter.Goal.STOP, true),
-        SHOOTING_HUB(Feeder.Goal.FEED, Turret.Goal.TRACKING_HUB, Hood.Goal.TRACKING_HUB, Shooter.Goal.TRACKING_HUB, true),
-        FERRYING(Feeder.Goal.FEED, Turret.Goal.FERRYING, Hood.Goal.FERRYING, Shooter.Goal.STOP, true),
-        SHOOTING_FERRYING(Feeder.Goal.FEED, Turret.Goal.TRACKING_HUB, Hood.Goal.TRACKING_HUB, Shooter.Goal.FERRYING, true),;
+        TRACKING(Feeder.Goal.STOP, Turret.Goal.TRACKING, Hood.Goal.TRACKING, Shooter.Goal.STOP, true),
+        SHOOTING(Feeder.Goal.FEED, Turret.Goal.TRACKING, Hood.Goal.TRACKING, Shooter.Goal.TRACKING, true);
 
         private final Feeder.Goal feederGoal;
         private final Turret.Goal turretGoal;
@@ -149,14 +147,14 @@ public class Superstructure extends VirtualSubsystem {
     public Command toGoal(final Supplier<Goal> goal) {
         return runEnd(
                 () -> setDesiredGoal(goal.get()),
-                () -> setDesiredGoal(Goal.HUB)
+                () -> setDesiredGoal(Goal.TRACKING)
         ).withName("ToGoal");
     }
 
     public Command toGoal(final Goal goal) {
         return runEnd(
                 () -> setDesiredGoal(goal),
-                () -> setDesiredGoal(Goal.HUB)
+                () -> setDesiredGoal(Goal.TRACKING)
         ).withName("ToGoal");
     }
 

@@ -32,8 +32,7 @@ public class Turret extends SubsystemBase {
     public enum Goal {
         STOW(0, false),
         CLIMB(0, false),
-        TRACKING_HUB(0, true),
-        FERRYING(0, true);
+        TRACKING(0, true);
 
         private double turretPositionGoalRots;
         private final boolean isDynamic;
