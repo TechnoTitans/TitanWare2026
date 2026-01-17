@@ -1,37 +1,36 @@
 package frc.robot.utils.solver;
 
 import edu.wpi.first.math.geometry.*;
+import frc.robot.constants.HardwareConstants;
 import frc.robot.constants.SimConstants;
 import org.littletonrobotics.junction.Logger;
 
-import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
 
 public class ComponentsSolver {
     final Supplier<Rotation2d> turretRotationSupplier;
     final Supplier<Rotation2d> hoodRotationSupplier;
-//    final Supplier<Rotation2d> intakeRotationSupplier;
+    final Supplier<Rotation2d> intakeSliderRotationSupplier;
 
     public ComponentsSolver(
             final Supplier<Rotation2d> turretRotationSupplier,
-            final Supplier<Rotation2d> hoodRotationSupplier
-//            final Supplier<Rotation2d> intakeRotationSupplier
+            final Supplier<Rotation2d> hoodRotationSupplier,
+            final Supplier<Rotation2d> intakeSliderRotationSupplier
     ) {
         this.turretRotationSupplier = turretRotationSupplier;
         this.hoodRotationSupplier = hoodRotationSupplier;
-//        this.intakeRotationSupplier = intakeRotationSupplier;
+        this.intakeSliderRotationSupplier = intakeSliderRotationSupplier;
     }
 
     public void periodic() {
         final Pose3d[] superstructurePoses = getSuperstructurePoses();
-        final Pose3d[] intakePoses = getIntakePoses();
+        final Pose3d intakePose = getIntakePose();
 
         Logger.recordOutput(
                 "Components",
                 superstructurePoses[0],
                 superstructurePoses[1],
-                intakePoses[0],
-                intakePoses[1]
+                intakePose
         );
     }
 
@@ -56,7 +55,12 @@ public class ComponentsSolver {
         return new Pose3d[] {turretPose, hoodPose};
     }
 
-    private Pose3d[] getIntakePoses() {
-        return new Pose3d[]{};
+    private Pose3d getIntakePose() {
+        final double dt = intakeSliderRotationSupplier.get().getRotations()
+                        / (HardwareConstants.INTAKE.upperLimitRots() - HardwareConstants.INTAKE.lowerLimitRots());
+        final Pose3d intakePose = SimConstants.IntakeSlider.RETRACTED_POSE
+                .interpolate(SimConstants.IntakeSlider.EXTENDED_POSE, dt);
+
+        return intakePose;
     }
 }

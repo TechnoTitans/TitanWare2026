@@ -39,6 +39,7 @@ public interface SimConstants {
         Rotation2d ZEROED_POSITION_TO_HORIZONTAL = Rotation2d.fromDegrees(15);
         Rotation2d STARTING_ANGLE = Rotation2d.fromDegrees(0).plus(ZEROED_POSITION_TO_HORIZONTAL);
     }
+
     interface Shooter {
         double MOMENT_OF_INERTIA = 0.2;
     }
@@ -48,7 +49,10 @@ public interface SimConstants {
 
         Transform2d TURRET_TO_ROBOT_TRANSFORM = new Transform2d(new Translation2d(0, 0), Rotation2d.kZero);
     }
-    interface Hopper {
-        double MOMENT_OF_INERTIA = 5;
+
+    interface IntakeSlider {
+        Pose3d RETRACTED_POSE = new Pose3d(new Translation3d(0, 0, 0), new Rotation3d(0, 0, 0));
+
+        Pose3d EXTENDED_POSE = new Pose3d(new Translation3d(0, 0, 0), new Rotation3d(0, 0, 0));
     }
 }
