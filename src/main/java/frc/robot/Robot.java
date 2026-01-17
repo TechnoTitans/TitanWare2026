@@ -7,6 +7,7 @@ package frc.robot;
 import com.ctre.phoenix6.SignalLogger;
 import edu.wpi.first.hal.AllianceStationID;
 import edu.wpi.first.math.geometry.Pose3d;
+import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.*;
 import edu.wpi.first.wpilibj.event.EventLoop;
@@ -26,7 +27,7 @@ import frc.robot.subsystems.intake.Intake;
 import frc.robot.subsystems.superstructure.ShotCalculator;
 import frc.robot.subsystems.superstructure.Superstructure;
 import frc.robot.subsystems.superstructure.hood.Hood;
-import frc.robot.subsystems.superstructure.hopper.Hopper;
+import frc.robot.subsystems.superstructure.feeder.Feeder;
 import frc.robot.subsystems.superstructure.shooter.Shooter;
 import frc.robot.subsystems.superstructure.turret.Turret;
 import frc.robot.utils.closeables.ToClose;
@@ -82,9 +83,9 @@ public class Robot extends LoggedRobot {
             HardwareConstants.INTAKE
     );
 
-    public final Hopper hopper = new Hopper(
+    public final Feeder feeder = new Feeder(
             Constants.CURRENT_MODE,
-            HardwareConstants.HOPPER
+            HardwareConstants.FEEDER
     );
 
     public final Turret turret = new Turret(
@@ -116,10 +117,13 @@ public class Robot extends LoggedRobot {
     );
 
     private final Supplier<ShotCalculator.ShotCalculation> shotCalculationSupplier =
-            () -> ShotCalculator.getShotCalculation(swerve::getPose, () -> target);
+            () -> ShotCalculator.getShotCalculation(swerve::getPose,
+                    swerve::getFieldRelativeSpeeds,
+                    () -> IsRedAlliance.getAsBoolean()
+                            ? target.getTargetTranslation() : target.getTargetTranslation().rotateBy(Rotation2d.kPi));
 
     public final Superstructure superstructure = new Superstructure(
-            hopper,
+            feeder,
             turret,
             hood,
             shooter,
@@ -267,6 +271,7 @@ public class Robot extends LoggedRobot {
 
         LoggedCommandScheduler.periodic();
         Logger.recordOutput("Target", target);
+        Logger.recordOutput("ShouldFerry", shouldFerry);
 //        componentsSolver.periodic();
 
         Threads.setCurrentThreadPriority(false, 10);
@@ -310,8 +315,16 @@ public class Robot extends LoggedRobot {
         disabled.onTrue(swerve.stopCommand());
 
         shouldFerry.onTrue(
-                Commands.runOnce(() -> target = ShotCalculator.Target.FERRYING)
-        ).onFalse(Commands.runOnce(() -> target = ShotCalculator.Target.HUB));
+                Commands.parallel(
+                        Commands.runOnce(() -> target = ShotCalculator.Target.FERRYING),
+                        superstructure.setGoal(Superstructure.Goal.FERRYING)
+                )
+        ).onFalse(
+                Commands.parallel(
+                        Commands.runOnce(() -> target = ShotCalculator.Target.HUB),
+                        superstructure.setGoal(Superstructure.Goal.HUB)
+                )
+        );
     }
 
     public void configureAutos() {
@@ -324,7 +337,7 @@ public class Robot extends LoggedRobot {
         );
 
         driverController.rightTrigger(0.5, teleopEventLoop).whileTrue(
-                superstructure.setShootingState(true)
-        ).onFalse(superstructure.setShootingState(false));
+                superstructure.toGoal(shouldFerry.getAsBoolean() ? Superstructure.Goal.SHOOTING_FERRYING : Superstructure.Goal.SHOOTING_HUB)
+        );
     }
 }

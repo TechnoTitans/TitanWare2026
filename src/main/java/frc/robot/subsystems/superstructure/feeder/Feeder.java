@@ -1,33 +1,30 @@
-package frc.robot.subsystems.superstructure.hopper;
+package frc.robot.subsystems.superstructure.feeder;
 
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.util.Units;
-import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
-import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.constants.Constants;
 import frc.robot.constants.HardwareConstants;
 import org.littletonrobotics.junction.Logger;
 
-public class Hopper extends SubsystemBase {
-    protected static final String LogKey = "Hopper";
+public class Feeder extends SubsystemBase {
+    protected static final String LogKey = "Feeder";
     private static final double VelocityToleranceRotsPerSec = 0.002;
 
-    private final HopperIO hopperIO;
-    private final HopperIOInputsAutoLogged inputs;
+    private final FeederIO feederIO;
+    private final FeederIOInputsAutoLogged inputs;
 
 
-    //TODO: This won't work. When you shoot, your hopper won't actually move
+    //TODO: This won't work. When you shoot, your feeder won't actually move
     private Goal desiredGoal = Goal.STOP;
     private Goal currentGoal = desiredGoal;
 
     public enum Goal {
         STOP(0),
-        FEED(5),
-        EJECT(-5);
+        FEED(5);
 
         private final double rollerVelocitySetpoint;
 
@@ -40,39 +37,39 @@ public class Hopper extends SubsystemBase {
         }
     }
 
-    public Hopper(final Constants.RobotMode mode, final HardwareConstants.HopperConstants constants) {
-        this.hopperIO = switch (mode) {
-            case REAL -> new HopperIOReal(constants);
-            case SIM -> new HopperIOSim();
-            case DISABLED, REPLAY -> new HopperIO() {};
+    public Feeder(final Constants.RobotMode mode, final HardwareConstants.FeederConstants constants) {
+        this.feederIO = switch (mode) {
+            case REAL -> new FeederIOReal(constants);
+            case SIM -> new FeederIOSim();
+            case DISABLED, REPLAY -> new FeederIO() {};
         };
 
-        this.inputs = new HopperIOInputsAutoLogged();
+        this.inputs = new FeederIOInputsAutoLogged();
 
-        hopperIO.config();
+        feederIO.config();
 
-        hopperIO.toRollerVelocity(desiredGoal.getRollerVelocitySetpoint());
+        feederIO.toRollerVelocity(desiredGoal.getRollerVelocitySetpoint());
     }
 
     @Override
     public void periodic() {
-        final double HopperPeriodicFPGATime = Timer.getFPGATimestamp();
+        final double FeederPeriodicFPGATime = Timer.getFPGATimestamp();
 
-        hopperIO.updateInputs(inputs);
+        feederIO.updateInputs(inputs);
         Logger.processInputs(LogKey, inputs);
 
         if (desiredGoal != currentGoal) {
-            hopperIO.toRollerVelocity(desiredGoal.getRollerVelocitySetpoint());
+            feederIO.toRollerVelocity(desiredGoal.getRollerVelocitySetpoint());
         }
 
         Logger.recordOutput(LogKey + "/CurrentGoal", currentGoal.toString());
         Logger.recordOutput(LogKey + "/DesiredGoal", desiredGoal.toString());
-        Logger.recordOutput(LogKey + "/DesiredGoal/RollerVelocityRotsPerSec", desiredGoal.getRollerVelocitySetpoint());
+        Logger.recordOutput(LogKey + "/DesiredGoal/FeederVelocityRotsPerSec", desiredGoal.getRollerVelocitySetpoint());
         Logger.recordOutput(LogKey + "/Triggers/AtVelocitySetpoint", atVelocitySetpoint());
 
         Logger.recordOutput(
                 LogKey + "/PeriodicIOPeriodMs",
-                Units.secondsToMilliseconds(Timer.getFPGATimestamp() - HopperPeriodicFPGATime)
+                Units.secondsToMilliseconds(Timer.getFPGATimestamp() - FeederPeriodicFPGATime)
         );
     }
 

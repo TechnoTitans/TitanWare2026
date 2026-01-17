@@ -8,10 +8,11 @@ import edu.wpi.first.math.interpolation.Interpolatable;
 import edu.wpi.first.math.interpolation.InterpolatingTreeMap;
 import edu.wpi.first.math.interpolation.Interpolator;
 import edu.wpi.first.math.interpolation.InverseInterpolator;
+import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import frc.robot.constants.FieldConstants;
+import frc.robot.constants.SimConstants;
 import org.littletonrobotics.junction.Logger;
 
-import java.lang.reflect.Field;
 import java.util.function.Supplier;
 
 public class ShotCalculator {
@@ -58,55 +59,55 @@ public class ShotCalculator {
         shotDataMap.put(1d, new HoodShooterCalculation(
                 Rotation2d.fromRadians(0.437138669),
                 10,
-                0.1
+                1
         ));
 
         shotDataMap.put(1.5d, new HoodShooterCalculation(
                 Rotation2d.fromRadians(0.611352924),
                 10,
-                0.15
+                1.05
         ));
 
         shotDataMap.put(2d, new HoodShooterCalculation(
                 Rotation2d.fromRadians(0.75159462),
                 10,
-                0.2
+                1.1
         ));
 
         shotDataMap.put(2.5d, new HoodShooterCalculation(
                 Rotation2d.fromRadians(0.86282925),
                 10,
-                0.20
+                1.15
         ));
 
         shotDataMap.put(3d, new HoodShooterCalculation(
                 Rotation2d.fromRadians(0.951177756),
                 10,
-                0.25
+                1.2
         ));
 
         shotDataMap.put(3.5d, new HoodShooterCalculation(
                 Rotation2d.fromRadians(1.022015817),
                 10,
-                0.3
+                1.25
         ));
 
         shotDataMap.put(4d, new HoodShooterCalculation(
                 Rotation2d.fromRadians(1.079542321),
                 10,
-                0.35
+                1.3
         ));
 
         shotDataMap.put(4.5d, new HoodShooterCalculation(
                 Rotation2d.fromRadians(1.126894805),
                 10,
-                0.4
+                1.35
         ));
 
         shotDataMap.put(5d, new HoodShooterCalculation(
                 Rotation2d.fromRadians(1.166387399),
                 10,
-                0.50
+                1.4
         ));
     }
 
@@ -115,23 +116,69 @@ public class ShotCalculator {
             HoodShooterCalculation hoodShooterCalculation
     ) {}
 
-    public static ShotCalculation getShotCalculation(final Supplier<Pose2d> swervePoseSupplier, final Supplier<Target> targetSupplier) {
-        return getShotCalculation(swervePoseSupplier.get(), targetSupplier.get());
+    public static ShotCalculation getShotCalculation(
+            final Supplier<Pose2d> swervePoseSupplier,
+            final Supplier<ChassisSpeeds> swerveChassisSpeedsSupplier,
+            final Supplier<Translation2d> targetTranslationSupplier
+    ) {
+        return getShotCalculation(
+                swervePoseSupplier.get(),
+                swerveChassisSpeedsSupplier.get(),
+                targetTranslationSupplier.get()
+        );
     }
 
-    //TODO: Adding logging
-    private static ShotCalculation getShotCalculation(final Pose2d swervePose, final Target target) {
-        final Rotation2d differenceInAngle = target.getTargetTranslation().minus(swervePose.getTranslation()).getAngle();
+    //TODO:  logging
+    private static ShotCalculation getShotCalculation(
+            final Pose2d swervePose,
+            final ChassisSpeeds swerveChassisSpeeds,
+            final Translation2d target
+    ) {
+        final Pose2d turretPose = swervePose.transformBy(SimConstants.Turret.TURRET_TO_ROBOT_TRANSFORM);
+        final double turretToTargetDistance = target.getDistance(turretPose.getTranslation());
 
-        final Rotation2d desiredTurretRotation = differenceInAngle.minus(swervePose.getRotation());
+        final double robotAngleRads = swervePose.getRotation().getRadians();
+        final double turretVelocityX =
+                swerveChassisSpeeds.vxMetersPerSecond
+                    + swerveChassisSpeeds.omegaRadiansPerSecond
+                        * (SimConstants.Turret.TURRET_TO_ROBOT_TRANSFORM.getY() * Math.cos(robotAngleRads)
+                            - SimConstants.Turret.TURRET_TO_ROBOT_TRANSFORM.getX() * Math.sin(robotAngleRads));
+        final double turretVelocityY =
+                swerveChassisSpeeds.vyMetersPerSecond
+                    + swerveChassisSpeeds.omegaRadiansPerSecond
+                        * (SimConstants.Turret.TURRET_TO_ROBOT_TRANSFORM.getX() * Math.cos(robotAngleRads)
+                            - SimConstants.Turret.TURRET_TO_ROBOT_TRANSFORM.getY() * Math.sin(robotAngleRads));
 
-        final double distanceToTarget = FieldConstants.hubCenter.getDistance(swervePose.getTranslation());
+        final double timeOfFlight = shotDataMap.get(turretToTargetDistance)
+                .shotTime;
+        final double offsetX = turretVelocityX * timeOfFlight;
+        final double offsetY = turretVelocityY * timeOfFlight;
 
-        return new ShotCalculation(
-                desiredTurretRotation,
+        final Pose2d futurePose =
+                new Pose2d(
+                        turretPose.getTranslation().plus(new Translation2d(offsetX, offsetY)),
+                        turretPose.getRotation()
+                );
+
+        final double futureTurretToTargetDistance = target.getDistance(futurePose.getTranslation());
+
+        final Rotation2d desiredTurretAngle = target.minus(futurePose.getTranslation()).getAngle();
+
+
+//        final Rotation2d differenceInAngle = target.minus(swervePose.getTranslation()).getAngle();
+//
+//        final Rotation2d desiredTurretRotation = differenceInAngle.minus(swervePose.getRotation());
+//
+//        final double distanceToTarget = target.getDistance(swervePose.getTranslation())
+
+        final ShotCalculation shotCalculation = new ShotCalculation(
+                desiredTurretAngle,
                 shotDataMap.get(
-                        distanceToTarget
+                        futureTurretToTargetDistance
                 )
         );
+        Logger.recordOutput("ShotCalculation", shotCalculation);
+
+        return shotCalculation;
     }
 }

@@ -5,7 +5,7 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.subsystems.superstructure.hood.Hood;
-import frc.robot.subsystems.superstructure.hopper.Hopper;
+import frc.robot.subsystems.superstructure.feeder.Feeder;
 import frc.robot.subsystems.superstructure.shooter.Shooter;
 import frc.robot.subsystems.superstructure.turret.Turret;
 import frc.robot.utils.subsystems.VirtualSubsystem;
@@ -16,14 +16,12 @@ import java.util.function.Supplier;
 public class Superstructure extends VirtualSubsystem {
     protected static final String LogKey = "Superstructure";
 
-    private final Hopper hopper;
+    private final Feeder feeder;
     private final Turret turret;
     private final Hood hood;
     private final Shooter shooter;
 
-    private boolean shouldShoot = false;
-
-    private Goal desiredGoal = Goal.TRACKING;
+    private Goal desiredGoal = Goal.HUB;
     private Goal runningGoal = desiredGoal;
 
     private final EventLoop eventLoop;
@@ -36,21 +34,22 @@ public class Superstructure extends VirtualSubsystem {
     private final Supplier<ShotCalculator.ShotCalculation> shotCalculationSupplier;
 
     public enum Goal {
-        STOW(Hopper.Goal.STOP, Turret.Goal.STOW, Hood.Goal.STOW, Shooter.Goal.STOP, false),
-        CLIMB(Hopper.Goal.STOP, Turret.Goal.CLIMB, Hood.Goal.CLIMB, Shooter.Goal.STOP, false),
-        TRACKING(Hopper.Goal.FEED, Turret.Goal.TRACKING_HUB, Hood.Goal.TRACKING_HUB, Shooter.Goal.TRACKING_HUB, true),
-        FERRYING(Hopper.Goal.FEED, Turret.Goal.FERRYING, Hood.Goal.FERRYING, Shooter.Goal.FERRYING, true),
-        EJECTING(Hopper.Goal.EJECT, Turret.Goal.STOW, Hood.Goal.STOW, Shooter.Goal.STOP, false);
+        STOW(Feeder.Goal.STOP, Turret.Goal.STOW, Hood.Goal.STOW, Shooter.Goal.STOP, false),
+        CLIMB(Feeder.Goal.STOP, Turret.Goal.CLIMB, Hood.Goal.CLIMB, Shooter.Goal.STOP, false),
+        HUB(Feeder.Goal.STOP, Turret.Goal.TRACKING_HUB, Hood.Goal.TRACKING_HUB, Shooter.Goal.STOP, true),
+        SHOOTING_HUB(Feeder.Goal.FEED, Turret.Goal.TRACKING_HUB, Hood.Goal.TRACKING_HUB, Shooter.Goal.TRACKING_HUB, true),
+        FERRYING(Feeder.Goal.FEED, Turret.Goal.FERRYING, Hood.Goal.FERRYING, Shooter.Goal.STOP, true),
+        SHOOTING_FERRYING(Feeder.Goal.FEED, Turret.Goal.TRACKING_HUB, Hood.Goal.TRACKING_HUB, Shooter.Goal.FERRYING, true),;
 
-        private final Hopper.Goal hopperGoal;
+        private final Feeder.Goal feederGoal;
         private final Turret.Goal turretGoal;
         private final Hood.Goal hoodGoal;
         private final Shooter.Goal shooterGoal;
 
         private final boolean isDynamic;
 
-        Goal(final Hopper.Goal hopperGoal, final Turret.Goal turretGoal, final Hood.Goal hoodGoal, final Shooter.Goal shooterGoal, final boolean isDynamic) {
-            this.hopperGoal = hopperGoal;
+        Goal(final Feeder.Goal feederGoal, final Turret.Goal turretGoal, final Hood.Goal hoodGoal, final Shooter.Goal shooterGoal, final boolean isDynamic) {
+            this.feederGoal = feederGoal;
             this.turretGoal = turretGoal;
             this.hoodGoal = hoodGoal;
             this.shooterGoal = shooterGoal;
@@ -59,13 +58,13 @@ public class Superstructure extends VirtualSubsystem {
     }
 
     public Superstructure(
-            final Hopper hopper,
+            final Feeder feeder,
             final Turret turret,
             final Hood hood,
             final Shooter shooter,
             final Supplier<ShotCalculator.ShotCalculation> shotCalculationSupplier
     ) {
-        this.hopper = hopper;
+        this.feeder = feeder;
         this.turret = turret;
         this.hood = hood;
         this.shooter = shooter;
@@ -80,8 +79,10 @@ public class Superstructure extends VirtualSubsystem {
 
         this.shotCalculationSupplier = shotCalculationSupplier;
 
+        feeder.setGoal(desiredGoal.feederGoal);
         turret.setGoal(desiredGoal.turretGoal);
         hood.setGoal(desiredGoal.hoodGoal);
+        shooter.setGoal(desiredGoal.shooterGoal);
     }
 
     private Command runOnce(final Runnable action) {
@@ -110,26 +111,20 @@ public class Superstructure extends VirtualSubsystem {
 
             turret.updatePositionSetpoint(shotCalculation.desiredTurretRotation().getRotations());
             hood.updateDesiredHoodPosition(shotCalculation.hoodShooterCalculation().hoodRotation().getRotations());
-
-            if (shouldShoot) {
-                shooter.updateVelocitySetpoint(shotCalculation.hoodShooterCalculation().flywheelVelocity());
-            } else if (!shouldShoot && desiredGoal.shooterGoal.getVelocitySetpoint() != 0) {
-                shooter.updateVelocitySetpoint(0);
-            }
+            shooter.updateVelocitySetpoint(shotCalculation.hoodShooterCalculation().flywheelVelocity());
         }
 
         if (desiredGoal != runningGoal) {
             turret.setGoal(desiredGoal.turretGoal);
             hood.setGoal(desiredGoal.hoodGoal);
             shooter.setGoal(desiredGoal.shooterGoal);
-            hopper.setGoal(desiredGoal.hopperGoal);
+            feeder.setGoal(desiredGoal.feederGoal);
 
             this.runningGoal = desiredGoal;
         }
 
         Logger.recordOutput(LogKey + "/RunningGoal", runningGoal);
         Logger.recordOutput(LogKey + "/DesiredGoal", desiredGoal);
-        Logger.recordOutput(LogKey + "/ShouldShoot", shouldShoot);
 
         Logger.recordOutput(LogKey + "/AtSetpoint", atSuperstructureSetpoint);
 
@@ -146,28 +141,27 @@ public class Superstructure extends VirtualSubsystem {
         return atSetpoint(() -> goal);
     }
 
+    public Command setGoal(final Goal goal ){
+        return Commands.runOnce(
+                () -> setDesiredGoal(goal)
+        ).withName("SetGoal");
+    }
     public Command toGoal(final Supplier<Goal> goal) {
         return runEnd(
                 () -> setDesiredGoal(goal.get()),
-                () -> setDesiredGoal(Goal.TRACKING)
+                () -> setDesiredGoal(Goal.HUB)
         ).withName("ToGoal");
     }
 
     public Command toGoal(final Goal goal) {
         return runEnd(
                 () -> setDesiredGoal(goal),
-                () -> setDesiredGoal(Goal.TRACKING)
+                () -> setDesiredGoal(Goal.HUB)
         ).withName("ToGoal");
     }
 
     public Command runGoal(final Supplier<Goal> goalSupplier) {
         return run(() -> setDesiredGoal(goalSupplier.get()))
                 .withName("RunGoal");
-    }
-
-    public Command setShootingState(final boolean shouldShoot) {
-        return Commands.runOnce(
-                () -> this.shouldShoot = shouldShoot
-        ).withName("SetShootingState");
     }
 }

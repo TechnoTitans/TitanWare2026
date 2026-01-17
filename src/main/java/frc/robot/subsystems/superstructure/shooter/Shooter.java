@@ -18,7 +18,7 @@ public class Shooter extends SubsystemBase {
     private final ShooterIO shooterIO;
     private final ShooterIOInputsAutoLogged inputs;
 
-    private Goal desiredGoal = Goal.TRACKING_HUB;
+    private Goal desiredGoal = Goal.STOP;
     private Goal currentGoal = desiredGoal;
 
     public final Trigger atVelocitySetpoint = new Trigger(this::atVelocitySetpoint);
