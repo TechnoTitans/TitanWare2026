@@ -30,7 +30,7 @@ public class ShotCalculator {
             return targetTranslation;
         }
     }
-    protected static String LogKey = "ShotCalculator";
+    protected static String LogKey = "Superstructure/ShotCalculator";
 
     public record HoodShooterCalculation(
             Rotation2d hoodRotation,
@@ -177,7 +177,7 @@ public class ShotCalculator {
                         futureTurretToTargetDistance
                 )
         );
-        Logger.recordOutput("ShotCalculation", shotCalculation);
+        Logger.recordOutput(LogKey + "/ShotCalculation", shotCalculation);
 
         return shotCalculation;
     }

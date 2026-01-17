@@ -11,7 +11,7 @@ import frc.robot.constants.HardwareConstants;
 import org.littletonrobotics.junction.Logger;
 
 public class Feeder extends SubsystemBase {
-    protected static final String LogKey = "Feeder";
+    protected static final String LogKey = "Superstructure/Feeder";
     private static final double VelocityToleranceRotsPerSec = 0.002;
 
     private final FeederIO feederIO;

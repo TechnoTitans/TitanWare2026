@@ -12,7 +12,7 @@ import frc.robot.constants.HardwareConstants;
 import org.littletonrobotics.junction.Logger;
 
 public class Shooter extends SubsystemBase {
-    protected static final String LogKey = "Shooter";
+    protected static final String LogKey = "Superstructure/Shooter";
     private static final double VelocityToleranceRotsPerSec = 0.2;
 
     private final ShooterIO shooterIO;

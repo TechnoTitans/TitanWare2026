@@ -11,7 +11,7 @@ import frc.robot.constants.HardwareConstants;
 import org.littletonrobotics.junction.Logger;
 
 public class Hood extends SubsystemBase {
-    protected static final String LogKey = "Hood";
+    protected static final String LogKey = "Superstructure/Hood";
     private static final double PositionToleranceRots = 0.002;
     private static final double VelocityToleranceRotsPerSec = 0.002;
 
