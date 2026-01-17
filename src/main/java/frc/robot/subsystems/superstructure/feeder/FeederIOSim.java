@@ -49,8 +49,8 @@ public class FeederIOSim implements FeederIO {
 
         final DCMotorSim rollerSim = new DCMotorSim(
                 LinearSystemId.createDCMotorSystem(
-                        1 / (2 * Math.PI),
-                        0.1 / (2 * Math.PI)
+                        2 / (2 * Math.PI),
+                        1 / (2 * Math.PI)
                 ),
                 DCMotor.getKrakenX60Foc(1)
         );
@@ -102,8 +102,8 @@ public class FeederIOSim implements FeederIO {
         final TalonFXConfiguration rollerConfiguration = new TalonFXConfiguration();
         rollerConfiguration.Slot0 = new Slot0Configs()
                 .withKS(0.01)
-                .withKP(5);
-        rollerConfiguration.CurrentLimits.StatorCurrentLimit = 40;
+                .withKP(3.5);
+        rollerConfiguration.CurrentLimits.StatorCurrentLimit = 50;
         rollerConfiguration.CurrentLimits.StatorCurrentLimitEnable = true;
         rollerConfiguration.CurrentLimits.SupplyCurrentLimit = 40;
         rollerConfiguration.CurrentLimits.SupplyCurrentLowerLimit = 40;

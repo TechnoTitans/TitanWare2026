@@ -60,6 +60,7 @@ public class Hopper extends SubsystemBase {
 
         if (desiredGoal != currentGoal) {
             hopperIO.toRollerVelocity(desiredGoal.getRollerVelocitySetpoint());
+            this.currentGoal = desiredGoal;
         }
 
         Logger.recordOutput(LogKey + "/CurrentGoal", currentGoal.toString());

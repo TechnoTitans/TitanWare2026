@@ -60,6 +60,7 @@ public class Feeder extends SubsystemBase {
 
         if (desiredGoal != currentGoal) {
             feederIO.toRollerVelocity(desiredGoal.getRollerVelocitySetpoint());
+            this.currentGoal = desiredGoal;
         }
 
         Logger.recordOutput(LogKey + "/CurrentGoal", currentGoal.toString());
