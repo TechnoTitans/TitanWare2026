@@ -1,6 +1,7 @@
 package frc.robot.subsystems.intake;
 
 import edu.wpi.first.math.MathUtil;
+import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -135,5 +136,9 @@ public class Intake extends SubsystemBase {
         Logger.recordOutput(LogKey + "/CurrentGoal", currentGoal.toString());
         Logger.recordOutput(LogKey + "/DesiredGoal", desiredGoal.toString());
 
+    }
+
+    public Rotation2d getIntakeSliderPositionRots() {
+        return Rotation2d.fromRotations(inputs.sliderPositionRots);
     }
 }

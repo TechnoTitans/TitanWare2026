@@ -113,8 +113,9 @@ public class Robot extends LoggedRobot {
     private final Supplier<ShotCalculator.ShotCalculation> shotCalculationSupplier =
             () -> ShotCalculator.getShotCalculation(swerve::getPose,
                     swerve::getFieldRelativeSpeeds,
-                    () -> IsRedAlliance.getAsBoolean()
-                            ? targetSupplier.get().getTargetTranslation() : targetSupplier.get().getTargetTranslation().rotateBy(Rotation2d.kPi));
+                    () -> targetSupplier.get().getTargetTranslation());
+//                    () -> IsRedAlliance.getAsBoolean()
+//                            ? targetSupplier.get().getTargetTranslation() : targetSupplier.get().getTargetTranslation().rotateBy(Rotation2d.kPi));
 
     public final Superstructure superstructure = new Superstructure(
             feeder,
@@ -126,7 +127,8 @@ public class Robot extends LoggedRobot {
 
     private final ComponentsSolver componentsSolver = new ComponentsSolver(
             turret::getTurretPosition,
-            hood::getHoodPosition
+            hood::getHoodPosition,
+            intake::getIntakeSliderPositionRots
     );
 
     private final RobotCommands robotCommands = new RobotCommands(
@@ -265,7 +267,7 @@ public class Robot extends LoggedRobot {
 
         LoggedCommandScheduler.periodic();
         Logger.recordOutput("Target", targetSupplier.get());
-//        componentsSolver.periodic();
+        componentsSolver.periodic();
 
         Threads.setCurrentThreadPriority(false, 10);
     }

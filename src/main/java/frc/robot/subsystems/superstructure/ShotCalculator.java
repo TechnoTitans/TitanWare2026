@@ -18,7 +18,7 @@ import java.util.function.Supplier;
 public class ShotCalculator {
     public enum Target {
         HUB(FieldConstants.hubCenter),
-        FERRYING(FieldConstants.hubCenter);
+        FERRYING(FieldConstants.ferryTarget);
 
         private final Translation2d targetTranslation;
 
@@ -162,7 +162,7 @@ public class ShotCalculator {
 
         final double futureTurretToTargetDistance = target.getDistance(futurePose.getTranslation());
 
-        final Rotation2d desiredTurretAngle = target.minus(futurePose.getTranslation()).getAngle();
+        final Rotation2d desiredTurretAngle = target.minus(futurePose.getTranslation()).getAngle().minus(futurePose.getRotation());
 
 
 //        final Rotation2d differenceInAngle = target.minus(swervePose.getTranslation()).getAngle();

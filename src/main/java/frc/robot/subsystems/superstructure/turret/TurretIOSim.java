@@ -64,7 +64,7 @@ public class TurretIOSim implements TurretIO {
 
         final DCMotorSim turretSim = new DCMotorSim(
                 LinearSystemId.createDCMotorSystem(
-                        5 / (2 * Math.PI),
+                        10 / (2 * Math.PI),
                         0.05 / (2 * Math.PI)
                 ),
                 DCMotor.getKrakenX60Foc(1)
@@ -120,15 +120,17 @@ public class TurretIOSim implements TurretIO {
     public void config() {
         final TalonFXConfiguration motorConfig = new TalonFXConfiguration();
         motorConfig.Slot0 = new Slot0Configs()
-                .withKP(3);
+                .withKS(0.01)
+                .withKP(10)
+                .withKD(0.01);
         motorConfig.MotionMagic.MotionMagicCruiseVelocity = 0;
         motorConfig.MotionMagic.MotionMagicExpo_kV = 0;
         motorConfig.MotionMagic.MotionMagicExpo_kA = 0;
         motorConfig.TorqueCurrent.PeakForwardTorqueCurrent = 80;
         motorConfig.TorqueCurrent.PeakReverseTorqueCurrent = -80;
-        motorConfig.CurrentLimits.StatorCurrentLimit = 50;
+        motorConfig.CurrentLimits.StatorCurrentLimit = 60;
         motorConfig.CurrentLimits.StatorCurrentLimitEnable = true;
-        motorConfig.CurrentLimits.SupplyCurrentLimit = 40;
+        motorConfig.CurrentLimits.SupplyCurrentLimit = 50;
         motorConfig.CurrentLimits.SupplyCurrentLowerLimit = 30;
         motorConfig.CurrentLimits.SupplyCurrentLowerTime = 1;
         motorConfig.CurrentLimits.SupplyCurrentLimitEnable = true;
