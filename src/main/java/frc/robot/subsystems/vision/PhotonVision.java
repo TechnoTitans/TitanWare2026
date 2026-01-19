@@ -42,11 +42,15 @@ public class PhotonVision extends VirtualSubsystem {
     static {
         try {
             apriltagFieldLayout = new AprilTagFieldLayout(
-                    Filesystem.getDeployDirectory().getPath() + "/2025-reefscape-reef.json");
+                    Filesystem.getDeployDirectory().getPath() + "/2026-rebuilt-welded.json"
+            );
+
+//            apriltagFieldLayout = new AprilTagFieldLayout(
+//                    Filesystem.getDeployDirectory().getPath() + "/2026-rebuilt-andymark.json"
+//            );
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
-//        apriltagFieldLayout = AprilTagFieldLayout.loadField(AprilTagFields.k2025ReefscapeWelded);
         apriltagFieldLayout.setOrigin(AprilTagFieldLayout.OriginPosition.kBlueAllianceWallRightSide);
     }
 
