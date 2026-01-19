@@ -30,6 +30,7 @@ import frc.robot.subsystems.superstructure.hood.Hood;
 import frc.robot.subsystems.superstructure.feeder.Feeder;
 import frc.robot.subsystems.superstructure.shooter.Shooter;
 import frc.robot.subsystems.superstructure.turret.Turret;
+import frc.robot.subsystems.vision.PhotonVision;
 import frc.robot.utils.closeables.ToClose;
 import frc.robot.utils.ctre.RefreshAll;
 import frc.robot.utils.logging.LoggedCommandScheduler;
@@ -76,6 +77,11 @@ public class Robot extends LoggedRobot {
             SwerveConstants.CTRESwerve.FrontRight,
             SwerveConstants.CTRESwerve.BackLeft,
             SwerveConstants.CTRESwerve.BackRight
+    );
+
+    public final PhotonVision photonVision = new PhotonVision(
+            Constants.CURRENT_MODE,
+            swerve
     );
 
     public final Intake intake = new Intake(
