@@ -24,13 +24,14 @@ public class ComponentsSolver {
 
     public void periodic() {
         final Pose3d[] superstructurePoses = getSuperstructurePoses();
-        final Pose3d intakePose = getIntakePose();
+        final Pose3d[] intakeHopperPoses = getIntakeHopperPoses();
 
         Logger.recordOutput(
                 "Components",
                 superstructurePoses[0],
                 superstructurePoses[1],
-                intakePose
+                intakeHopperPoses[0],
+                intakeHopperPoses[1]
         );
     }
 
@@ -55,12 +56,16 @@ public class ComponentsSolver {
         return new Pose3d[] {turretPose, hoodPose};
     }
 
-    private Pose3d getIntakePose() {
+    private Pose3d[] getIntakeHopperPoses() {
         final double dt = intakeSliderRotationSupplier.get().getRotations()
                         / (HardwareConstants.INTAKE.upperLimitRots() - HardwareConstants.INTAKE.lowerLimitRots());
+
         final Pose3d intakePose = SimConstants.IntakeSlider.RETRACTED_POSE
                 .interpolate(SimConstants.IntakeSlider.EXTENDED_POSE, dt);
 
-        return intakePose;
+        final Pose3d hopperPose = SimConstants.Hopper.RETRACTED_POSE
+                .interpolate(SimConstants.Hopper.EXTENDED_POSE, dt);
+
+        return new Pose3d[] {intakePose, hopperPose};
     }
 }

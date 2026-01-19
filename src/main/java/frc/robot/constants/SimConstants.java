@@ -51,6 +51,12 @@ public interface SimConstants {
     }
 
     interface IntakeSlider {
+        Pose3d RETRACTED_POSE = new Pose3d(new Translation3d(0, 0.142, 0.443), new Rotation3d(0, 0, 0));
+
+        Pose3d EXTENDED_POSE = new Pose3d(new Translation3d(0, -0.120, 0.345), new Rotation3d(0, 0, 0));
+    }
+
+    interface Hopper {
         Pose3d RETRACTED_POSE = new Pose3d(new Translation3d(0, 0, 0), new Rotation3d(0, 0, 0));
 
         Pose3d EXTENDED_POSE = new Pose3d(new Translation3d(0, 0, 0), new Rotation3d(0, 0, 0));

@@ -31,8 +31,8 @@ public class Intake extends SubsystemBase {
 
     public enum Goal {
         STOW(0, 0),
-        INTAKE(0.5, 10),
-        EJECT(0.5, -9);
+        INTAKE(1, 10),
+        EJECT(1, -9);
 
         private final double sliderExtensionGoalMeters;
         private final double rollerVelocityGoalRotsPerSec;

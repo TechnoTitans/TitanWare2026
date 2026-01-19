@@ -89,10 +89,10 @@ public class IntakeIOSim implements IntakeIO {
 
         final DCMotorSim sliderSim = new DCMotorSim(
                 LinearSystemId.createDCMotorSystem(
-                        4 / (2 * Math.PI),
-                        0.04 / (2 * Math.PI)
+                        2.5 / (2 * Math.PI),
+                        0.01 / (2 * Math.PI)
                 ),
-                DCMotor.getKrakenX60Foc(0)
+                DCMotor.getKrakenX60Foc(1)
         );
 
         this.sliderMotorSim = new TalonFXSim(
