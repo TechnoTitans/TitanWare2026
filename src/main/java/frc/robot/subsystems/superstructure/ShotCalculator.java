@@ -11,13 +11,14 @@ import edu.wpi.first.math.interpolation.InverseInterpolator;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import frc.robot.constants.FieldConstants;
 import frc.robot.constants.SimConstants;
+import frc.robot.utils.geometry.AllianceFlipUtil;
 import org.littletonrobotics.junction.Logger;
 
 import java.util.function.Supplier;
 
 public class ShotCalculator {
     public enum Target {
-        HUB(FieldConstants.hubCenter),
+        HUB(FieldConstants.Hub.hubCenterPoint),
         FERRYING(FieldConstants.ferryTarget);
 
         private final Translation2d targetTranslation;
@@ -134,8 +135,9 @@ public class ShotCalculator {
             final ChassisSpeeds swerveChassisSpeeds,
             final Translation2d target
     ) {
+        final Translation2d flippedTarget = AllianceFlipUtil.apply(target);
         final Pose2d turretPose = swervePose.transformBy(SimConstants.Turret.TURRET_TO_ROBOT_TRANSFORM);
-        final double turretToTargetDistance = target.getDistance(turretPose.getTranslation());
+        final double turretToTargetDistance = flippedTarget.getDistance(turretPose.getTranslation());
 
         final double robotAngleRads = swervePose.getRotation().getRadians();
         final double turretVelocityX =
@@ -160,16 +162,9 @@ public class ShotCalculator {
                         turretPose.getRotation()
                 );
 
-        final double futureTurretToTargetDistance = target.getDistance(futurePose.getTranslation());
+        final double futureTurretToTargetDistance = flippedTarget.getDistance(futurePose.getTranslation());
 
-        final Rotation2d desiredTurretAngle = target.minus(futurePose.getTranslation()).getAngle().minus(futurePose.getRotation());
-
-
-//        final Rotation2d differenceInAngle = target.minus(swervePose.getTranslation()).getAngle();
-//
-//        final Rotation2d desiredTurretRotation = differenceInAngle.minus(swervePose.getRotation());
-//
-//        final double distanceToTarget = target.getDistance(swervePose.getTranslation())
+        final Rotation2d desiredTurretAngle = flippedTarget.minus(futurePose.getTranslation()).getAngle().minus(futurePose.getRotation());
 
         final ShotCalculation shotCalculation = new ShotCalculation(
                 desiredTurretAngle,

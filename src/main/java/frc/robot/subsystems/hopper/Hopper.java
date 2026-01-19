@@ -74,14 +74,17 @@ public class Hopper extends SubsystemBase {
         );
     }
 
-    public Command setGoal(final Goal desiredGoal) {
-        return Commands.runOnce(
-                () -> {
-                    this.desiredGoal = desiredGoal;
-                    Logger.recordOutput(LogKey + "/CurrentGoal", currentGoal.toString());
-                    Logger.recordOutput(LogKey + "/DesiredGoal", desiredGoal.toString());
-                }
-        );
+    public Command toGoal(final Goal desiredGoal) {
+        return runEnd(
+                () -> setGoal(desiredGoal),
+                () -> setGoal(Goal.STOP)
+        ).withName("ToGoal");
+    }
+
+    public void setGoal(final Goal desiredGoal) {
+        this.desiredGoal = desiredGoal;
+        Logger.recordOutput(LogKey + "/CurrentGoal", currentGoal.toString());
+        Logger.recordOutput(LogKey + "/DesiredGoal", desiredGoal.toString());
     }
 
     public boolean atVelocitySetpoint() {

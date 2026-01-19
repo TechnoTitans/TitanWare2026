@@ -23,6 +23,7 @@ import frc.robot.constants.HardwareConstants;
 import frc.robot.constants.RobotMap;
 import frc.robot.subsystems.drive.Swerve;
 import frc.robot.subsystems.drive.constants.SwerveConstants;
+import frc.robot.subsystems.hopper.Hopper;
 import frc.robot.subsystems.intake.Intake;
 import frc.robot.subsystems.superstructure.ShotCalculator;
 import frc.robot.subsystems.superstructure.Superstructure;
@@ -109,6 +110,11 @@ public class Robot extends LoggedRobot {
             HardwareConstants.SHOOTER
     );
 
+    public final Hopper hopper = new Hopper(
+            Constants.CURRENT_MODE,
+            HardwareConstants.HOPPER
+    );
+
     private Supplier<ShotCalculator.Target> targetSupplier = () -> {
         if (swerve.getPose() != null && swerve.getPose().getX() > Units.inchesToMeters(130)) {
             return ShotCalculator.Target.FERRYING;
@@ -140,7 +146,8 @@ public class Robot extends LoggedRobot {
     private final RobotCommands robotCommands = new RobotCommands(
             swerve,
             intake,
-            superstructure
+            superstructure,
+            hopper
     );
 
     public final CommandXboxController driverController = new CommandXboxController(RobotMap.MainController);
@@ -322,7 +329,7 @@ public class Robot extends LoggedRobot {
 
     public void configureButtonBindings(final EventLoop teleopEventLoop) {
         driverController.leftTrigger(0.5, teleopEventLoop).whileTrue(
-                intake.toGoal(Intake.Goal.INTAKE)
+                robotCommands.intake()
         );
 
         driverController.rightTrigger(0.5, teleopEventLoop).whileTrue(
