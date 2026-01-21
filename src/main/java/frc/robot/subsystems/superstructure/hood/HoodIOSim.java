@@ -13,6 +13,7 @@ import com.ctre.phoenix6.signals.FeedbackSensorSourceValue;
 import com.ctre.phoenix6.signals.GravityTypeValue;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
+import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.system.plant.LinearSystemId;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.units.measure.*;
@@ -56,7 +57,7 @@ public class HoodIOSim implements HoodIO {
                         5 / (2d * Math.PI),
                         0.04 / (2d * Math.PI)
                 ),
-                MoreDCMotor.getKrakenX44(1),
+                DCMotor.getKrakenX44Foc(1),
                 constants.hoodGearing(),
                 SimConstants.Hood.LENGTH_METERS,
                 Units.rotationsToRadians(constants.hoodLowerLimitRots()) + zeroedPositionToHorizontalRads,
@@ -111,10 +112,8 @@ public class HoodIOSim implements HoodIO {
     @Override
     public void config() {
         motorConfig.Slot0 = new Slot0Configs()
-                .withKG(0.1)
-                .withGravityType(GravityTypeValue.Arm_Cosine)
-                .withKP(10);
-        motorConfig.CurrentLimits.StatorCurrentLimit = 50;
+                .withKP(50);
+        motorConfig.CurrentLimits.StatorCurrentLimit = 60;
         motorConfig.CurrentLimits.StatorCurrentLimitEnable = true;
         motorConfig.CurrentLimits.SupplyCurrentLimit = 40;
         motorConfig.CurrentLimits.SupplyCurrentLowerLimit = 30;
@@ -174,5 +173,19 @@ public class HoodIOSim implements HoodIO {
     @Override
     public void toHoodTorqueCurrent(final double torqueCurrent) {
         hoodMotor.setControl(torqueCurrentFOC.withOutput(torqueCurrent));
+    }
+
+    @Override
+    public void home() {
+        motorConfig.TorqueCurrent.PeakForwardTorqueCurrent = 1;
+        hoodMotor.setControl(voltageOut.withOutput(-0.1));
+    }
+
+    @Override
+    public void zeroMotor() {
+        hoodMotor.setPosition(0);
+        motorConfig.SoftwareLimitSwitch.ForwardSoftLimitThreshold = constants.hoodUpperLimitRots();
+        motorConfig.SoftwareLimitSwitch.ReverseSoftLimitThreshold = 0;
+        toHoodPosition(0);
     }
 }

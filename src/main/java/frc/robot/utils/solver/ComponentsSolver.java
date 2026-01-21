@@ -38,16 +38,17 @@ public class ComponentsSolver {
     private Pose3d[] getSuperstructurePoses() {
         final Pose3d turretPose = new Pose3d(
                 SimConstants.Turret.ORIGIN,
-                new Rotation3d(turretRotationSupplier.get())
+                new Rotation3d(turretRotationSupplier.get().plus(Rotation2d.kCW_90deg))
         );
 
         final Pose3d hoodPose = turretPose.transformBy(
                 new Transform3d(
                         SimConstants.Hood.TURRET_TO_HOOD_TRANSLATION,
                         new Rotation3d(
+                                hoodRotationSupplier.get().unaryMinus().plus(SimConstants.Hood.ZEROED_POSITION_TO_HORIZONTAL).getRadians(),
+//                                hoodRotationSupplier.get().minus(SimConstants.Hood.ZEROED_POSITION_TO_HORIZONTAL)
+//                                        .getRadians(),
                                 0,
-                                hoodRotationSupplier.get().minus(SimConstants.Hood.ZEROED_POSITION_TO_HORIZONTAL)
-                                        .getRadians(),
                                 0
                         )
                 )

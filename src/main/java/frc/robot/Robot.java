@@ -114,8 +114,11 @@ public class Robot extends LoggedRobot {
     );
 
     private final Supplier<ShotCalculator.ShotCalculation> shotCalculationSupplier =
-            () -> ShotCalculator.getShotCalculation(swerve::getPose,
-                    swerve::getFieldRelativeSpeeds);
+            () -> ShotCalculator.getShotCalculation(
+                    swerve::getPose,
+                    swerve::getRobotRelativeSpeeds,
+                    swerve::getFieldRelativeSpeeds
+            );
     public final Superstructure superstructure = new Superstructure(
             feeder,
             turret,
@@ -266,7 +269,7 @@ public class Robot extends LoggedRobot {
         coControllerDisconnected.set(!coController.getHID().isConnected());
 
         LoggedCommandScheduler.periodic();
-        Logger.recordOutput("Target", shotCalculationSupplier.get().target());
+        Logger.recordOutput("ShotCalculation", shotCalculationSupplier.get());
         componentsSolver.periodic();
 
         Threads.setCurrentThreadPriority(false, 10);
@@ -303,6 +306,11 @@ public class Robot extends LoggedRobot {
     public void simulationPeriodic() {}
 
     public void configureStateTriggers() {
+        autonomousEnabled.onTrue(hood.home());
+
+        teleopEnabled.and(() -> Constants.CURRENT_MODE != Constants.RobotMode.SIM).and(hood::isHomed).negate().onTrue(hood.home());
+
+
         endgameTrigger.onTrue(ControllerUtils.rumbleForDurationCommand(
                 driverController.getHID(), GenericHID.RumbleType.kBothRumble, 0.5, 1)
         );

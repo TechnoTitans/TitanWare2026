@@ -119,8 +119,8 @@ public class TurretIOSim implements TurretIO {
     public void config() {
         final TalonFXConfiguration motorConfig = new TalonFXConfiguration();
         motorConfig.Slot0 = new Slot0Configs()
-                .withKP(15)
-                .withKD(0.1);
+                .withKP(70)
+                .withKD(0.01);
         motorConfig.MotionMagic.MotionMagicCruiseVelocity = 0;
         motorConfig.MotionMagic.MotionMagicExpo_kV = 0;
         motorConfig.MotionMagic.MotionMagicExpo_kA = 0;
