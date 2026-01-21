@@ -7,8 +7,6 @@ package frc.robot;
 import com.ctre.phoenix6.SignalLogger;
 import edu.wpi.first.hal.AllianceStationID;
 import edu.wpi.first.math.geometry.Pose3d;
-import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.*;
 import edu.wpi.first.wpilibj.event.EventLoop;
 import edu.wpi.first.wpilibj.livewindow.LiveWindow;
@@ -27,8 +25,8 @@ import frc.robot.subsystems.hopper.Hopper;
 import frc.robot.subsystems.intake.Intake;
 import frc.robot.subsystems.superstructure.ShotCalculator;
 import frc.robot.subsystems.superstructure.Superstructure;
-import frc.robot.subsystems.superstructure.hood.Hood;
 import frc.robot.subsystems.superstructure.feeder.Feeder;
+import frc.robot.subsystems.superstructure.hood.Hood;
 import frc.robot.subsystems.superstructure.shooter.Shooter;
 import frc.robot.subsystems.superstructure.turret.Turret;
 import frc.robot.subsystems.vision.PhotonVision;
@@ -115,20 +113,9 @@ public class Robot extends LoggedRobot {
             HardwareConstants.HOPPER
     );
 
-    private Supplier<ShotCalculator.Target> targetSupplier = () -> {
-        if (swerve.getPose() != null && swerve.getPose().getX() > Units.inchesToMeters(130)) {
-            return ShotCalculator.Target.FERRYING;
-        }
-
-        return ShotCalculator.Target.HUB;
-    };
     private final Supplier<ShotCalculator.ShotCalculation> shotCalculationSupplier =
             () -> ShotCalculator.getShotCalculation(swerve::getPose,
-                    swerve::getFieldRelativeSpeeds,
-                    () -> targetSupplier.get().getTargetTranslation());
-//                    () -> IsRedAlliance.getAsBoolean()
-//                            ? targetSupplier.get().getTargetTranslation() : targetSupplier.get().getTargetTranslation().rotateBy(Rotation2d.kPi));
-
+                    swerve::getFieldRelativeSpeeds);
     public final Superstructure superstructure = new Superstructure(
             feeder,
             turret,
@@ -279,7 +266,7 @@ public class Robot extends LoggedRobot {
         coControllerDisconnected.set(!coController.getHID().isConnected());
 
         LoggedCommandScheduler.periodic();
-        Logger.recordOutput("Target", targetSupplier.get());
+        Logger.recordOutput("Target", shotCalculationSupplier.get().target());
         componentsSolver.periodic();
 
         Threads.setCurrentThreadPriority(false, 10);

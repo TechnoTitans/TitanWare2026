@@ -73,7 +73,7 @@ public class Turret extends SubsystemBase {
                 constants.countableRotations()
         );
 
-        turretIO.setTurretPosition(chineseRemainder.getAbsolutePosition());
+//        turretIO.setTurretPosition(chineseRemainder.getAbsolutePosition());
     }
 
     @Override

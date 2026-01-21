@@ -9,6 +9,7 @@ import edu.wpi.first.math.interpolation.InterpolatingTreeMap;
 import edu.wpi.first.math.interpolation.Interpolator;
 import edu.wpi.first.math.interpolation.InverseInterpolator;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
+import edu.wpi.first.math.util.Units;
 import frc.robot.constants.FieldConstants;
 import frc.robot.constants.SimConstants;
 import frc.robot.utils.geometry.AllianceFlipUtil;
@@ -32,6 +33,8 @@ public class ShotCalculator {
         }
     }
     protected static String LogKey = "Superstructure/ShotCalculator";
+    protected static double FerryXBoundary = Units.inchesToMeters(130);
+    protected static double TimeDTSec = 0.25;
 
     public record HoodShooterCalculation(
             Rotation2d hoodRotation,
@@ -114,42 +117,43 @@ public class ShotCalculator {
 
     public record ShotCalculation(
             Rotation2d desiredTurretRotation,
-            HoodShooterCalculation hoodShooterCalculation
+            HoodShooterCalculation hoodShooterCalculation,
+            Target target
     ) {}
 
     public static ShotCalculation getShotCalculation(
             final Supplier<Pose2d> swervePoseSupplier,
-            final Supplier<ChassisSpeeds> swerveChassisSpeedsSupplier,
-            final Supplier<Translation2d> targetTranslationSupplier
+            final Supplier<ChassisSpeeds> swerveChassisSpeedsSupplier
     ) {
         return getShotCalculation(
                 swervePoseSupplier.get(),
-                swerveChassisSpeedsSupplier.get(),
-                targetTranslationSupplier.get()
+                swerveChassisSpeedsSupplier.get()
         );
     }
 
     //TODO:  logging
     private static ShotCalculation getShotCalculation(
             final Pose2d swervePose,
-            final ChassisSpeeds swerveChassisSpeeds,
-            final Translation2d target
+            final ChassisSpeeds swerveChassisSpeeds
     ) {
-        final Translation2d flippedTarget = AllianceFlipUtil.apply(target);
         final Pose2d turretPose = swervePose.transformBy(SimConstants.Turret.TURRET_TO_ROBOT_TRANSFORM);
-        final double turretToTargetDistance = flippedTarget.getDistance(turretPose.getTranslation());
+
+        getTarget(turretPose)
 
         final double robotAngleRads = swervePose.getRotation().getRadians();
         final double turretVelocityX =
                 swerveChassisSpeeds.vxMetersPerSecond
-                    + swerveChassisSpeeds.omegaRadiansPerSecond
+                        + swerveChassisSpeeds.omegaRadiansPerSecond
                         * (SimConstants.Turret.TURRET_TO_ROBOT_TRANSFORM.getY() * Math.cos(robotAngleRads)
-                            - SimConstants.Turret.TURRET_TO_ROBOT_TRANSFORM.getX() * Math.sin(robotAngleRads));
+                        - SimConstants.Turret.TURRET_TO_ROBOT_TRANSFORM.getX() * Math.sin(robotAngleRads));
         final double turretVelocityY =
                 swerveChassisSpeeds.vyMetersPerSecond
-                    + swerveChassisSpeeds.omegaRadiansPerSecond
+                        + swerveChassisSpeeds.omegaRadiansPerSecond
                         * (SimConstants.Turret.TURRET_TO_ROBOT_TRANSFORM.getX() * Math.cos(robotAngleRads)
-                            - SimConstants.Turret.TURRET_TO_ROBOT_TRANSFORM.getY() * Math.sin(robotAngleRads));
+                        - SimConstants.Turret.TURRET_TO_ROBOT_TRANSFORM.getY() * Math.sin(robotAngleRads));
+
+        final Translation2d flippedTarget = AllianceFlipUtil.apply(target.getTargetTranslation());
+        final double turretToTargetDistance = flippedTarget.getDistance(turretPose.getTranslation());
 
         final double timeOfFlight = shotDataMap.get(turretToTargetDistance)
                 .shotTime;
@@ -170,10 +174,26 @@ public class ShotCalculator {
                 desiredTurretAngle,
                 shotDataMap.get(
                         futureTurretToTargetDistance
-                )
+                ),
+                target
         );
         Logger.recordOutput(LogKey + "/ShotCalculation", shotCalculation);
 
         return shotCalculation;
+    }
+
+    private static Target getTarget(final Pose2d currentPose, final Pose2d finalPose) {
+        final double futurePoseXPosition = pose.getX() + swerveChassisSpeeds.vxMetersPerSecond * TimeDTSec;
+        final Target currentTarget =
+                pose.getX() > FerryXBoundary ? Target.FERRYING : Target.HUB;
+
+        if (currentTarget == Target.HUB) {
+                return currentTarget;
+        }
+
+        final Target futureTarget =
+                futurePoseXPosition > FerryXBoundary ? Target.FERRYING : Target.HUB;
+
+        return futureTarget;
     }
 }

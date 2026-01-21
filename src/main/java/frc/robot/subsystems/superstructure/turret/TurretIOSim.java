@@ -12,10 +12,7 @@ import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.CANcoder;
 import com.ctre.phoenix6.hardware.ParentDevice;
 import com.ctre.phoenix6.hardware.TalonFX;
-import com.ctre.phoenix6.signals.FeedbackSensorSourceValue;
-import com.ctre.phoenix6.signals.InvertedValue;
-import com.ctre.phoenix6.signals.NeutralModeValue;
-import com.ctre.phoenix6.signals.SensorDirectionValue;
+import com.ctre.phoenix6.signals.*;
 import com.ctre.phoenix6.sim.ChassisReference;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.system.plant.LinearSystemId;
@@ -23,6 +20,7 @@ import edu.wpi.first.units.measure.*;
 import edu.wpi.first.wpilibj.Notifier;
 import edu.wpi.first.wpilibj.simulation.DCMotorSim;
 import frc.robot.constants.HardwareConstants;
+import frc.robot.constants.SimConstants;
 import frc.robot.utils.closeables.ToClose;
 import frc.robot.utils.control.DeltaTime;
 import frc.robot.utils.ctre.RefreshAll;
@@ -64,8 +62,9 @@ public class TurretIOSim implements TurretIO {
 
         final DCMotorSim turretSim = new DCMotorSim(
                 LinearSystemId.createDCMotorSystem(
-                        10 / (2 * Math.PI),
-                        0.05 / (2 * Math.PI)
+                        DCMotor.getKrakenX60Foc(1),
+                        SimConstants.Turret.MOMENT_OF_INERTIA,
+                        constants.turretGearing()
                 ),
                 DCMotor.getKrakenX60Foc(1)
         );
@@ -120,9 +119,8 @@ public class TurretIOSim implements TurretIO {
     public void config() {
         final TalonFXConfiguration motorConfig = new TalonFXConfiguration();
         motorConfig.Slot0 = new Slot0Configs()
-                .withKS(0.01)
-                .withKP(10)
-                .withKD(0.01);
+                .withKP(15)
+                .withKD(0.1);
         motorConfig.MotionMagic.MotionMagicCruiseVelocity = 0;
         motorConfig.MotionMagic.MotionMagicExpo_kV = 0;
         motorConfig.MotionMagic.MotionMagicExpo_kA = 0;
