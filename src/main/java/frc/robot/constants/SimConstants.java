@@ -45,7 +45,7 @@ public interface SimConstants {
     }
 
     interface Turret {
-        Translation3d ORIGIN = new Translation3d(-0.208, 0, 0.384);
+        Translation3d ORIGIN = new Translation3d(-0.127, 0, 0.384);
 
         Transform2d TURRET_TO_ROBOT_TRANSFORM = new Transform2d(ORIGIN.toTranslation2d(), Rotation2d.kZero);
 
