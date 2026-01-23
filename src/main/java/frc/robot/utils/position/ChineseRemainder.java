@@ -1,53 +1,37 @@
 package frc.robot.utils.position;
 
-import java.util.HashSet;
-import java.util.Set;
-
 public class ChineseRemainder {
-    final double encoder1Position;
-    final double encoder2Position;
-
-    private final double encoder1Gearing;
-    private final double encoder2Gearing;
-
-    private final int countableRotations;
-
-    public ChineseRemainder(
-            final double encoder1Position,
-            final double encoder2Position,
+    public static double getAbsolutePosition(
             final double encoder1Gearing,
+            final double encoder1Reading,
             final double encoder2Gearing,
-            final int countableRotations) {
-        this.encoder1Position = encoder1Position;
-        this.encoder2Position = encoder2Position;
-        this.encoder1Gearing = encoder1Gearing;
-        this.encoder2Gearing = encoder2Gearing;
-        this.countableRotations = countableRotations;
-    }
+            final double encoder2Reading,
+            final int countableRotations
+    ) {
+        final double[] encoder1Solutions = getPossibleSolutions(encoder1Reading, encoder1Gearing, countableRotations);
+        final double[] encoder2Solutions = getPossibleSolutions(encoder2Reading, encoder2Gearing, countableRotations);
 
-    public double getAbsolutePosition() {
-        final Set<Double> encoder1PossibleSolutions =
-                possibleSolutions(encoder1Gearing, encoder1Position);
-
-        final Set<Double> encoder2PossibleSolutions =
-                possibleSolutions(encoder2Gearing, encoder2Position);
-
-        encoder1PossibleSolutions.retainAll(encoder2PossibleSolutions);
-
-        return encoder1PossibleSolutions.iterator().next();
-    }
-
-    private Set<Double> possibleSolutions(
-            final double encoderGearing,
-            final double encoderReading) {
-        final Set<Double> possibleSolutions = new HashSet<>();
-
-        for (int i = 0; i < countableRotations; i++) {
-            possibleSolutions.add(
-                    (i + 1) + (encoderReading) * encoderGearing
-            );
+        for (int i = 0; i < encoder1Solutions.length; i++) {
+            if (Math.abs(encoder1Solutions[i] - encoder2Solutions[i]) < 0.01) {
+                return encoder1Solutions[i];
+            }
         }
 
-        return possibleSolutions;
+        throw new RuntimeException("No matching solution found between encoders");
+    }
+
+    private static double[] getPossibleSolutions(
+            final double encoderReading,
+            final double encoderGearing,
+            final int countableRotations
+    ) {
+        final double[] possibleRotations = new double[countableRotations + 1];
+
+        for (int i = 0; i <= countableRotations; i++) {
+            possibleRotations[i] =
+                    (i + (encoderReading/360)) * encoderGearing;
+        }
+
+        return possibleRotations;
     }
 }

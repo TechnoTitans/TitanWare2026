@@ -65,15 +65,15 @@ public class Turret extends SubsystemBase {
         this.turretIO.config();
 
         turretIO.updateInputs(inputs);
-        final ChineseRemainder chineseRemainder = new ChineseRemainder(
-                inputs.leftPositionRots,
-                inputs.rightPositionRots,
-                constants.leftEncoderGearing(),
-                constants.rightEncoderGearing(),
-                constants.countableRotations()
+        final double absolutePosition = ChineseRemainder.getAbsolutePosition(
+                constants.leftEncoderGearing()/constants.turretTooth(),
+                Units.rotationsToDegrees(inputs.leftPositionRots),
+                constants.rightEncoderGearing()/constants.turretTooth(),
+                Units.rotationsToDegrees(inputs.rightPositionRots),
+                constants.turretTooth()
         );
 
-//        turretIO.setTurretPosition(chineseRemainder.getAbsolutePosition());
+        turretIO.setTurretPosition(absolutePosition % 1);
     }
 
     @Override
@@ -97,6 +97,15 @@ public class Turret extends SubsystemBase {
         Logger.recordOutput(LogKey + "/Triggers/AtPositionSetpoint", atTurretPositionSetpoint());
         Logger.recordOutput(LogKey + "/Triggers/AtPivotLowerLimit", atTurretLowerLimit());
         Logger.recordOutput(LogKey + "/Triggers/AtPivotUpperLimit", atTurretUpperLimit());
+//        Logger.recordOutput(LogKey + "/CRT",
+//                ChineseRemainder.getAbsolutePosition(
+//                        Units.rotationsToDegrees(inputs.leftPositionRots),
+//                        constants.leftEncoderGearing(),
+//                        Units.rotationsToDegrees(inputs.rightPositionRots),
+//                        constants.rightEncoderGearing(),
+//                        constants.turretTooth()
+//                )
+//        );
         Logger.recordOutput(
                 LogKey + "/PeriodicIOPeriodMs",
                 Units.secondsToMilliseconds(Timer.getFPGATimestamp() - TurretPeriodicUpdateStart)

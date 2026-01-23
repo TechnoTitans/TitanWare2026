@@ -24,6 +24,7 @@ import frc.robot.constants.SimConstants;
 import frc.robot.utils.closeables.ToClose;
 import frc.robot.utils.control.DeltaTime;
 import frc.robot.utils.ctre.RefreshAll;
+import frc.robot.utils.sim.feedback.SimCANCoder;
 import frc.robot.utils.sim.motors.TalonFXSim;
 
 public class TurretIOSim implements TurretIO {
@@ -64,14 +65,14 @@ public class TurretIOSim implements TurretIO {
                 LinearSystemId.createDCMotorSystem(
                         DCMotor.getKrakenX60Foc(1),
                         SimConstants.Turret.MOMENT_OF_INERTIA,
-                        constants.turretGearing()
+                        constants.turretToMechanismGearing()
                 ),
                 DCMotor.getKrakenX60Foc(1)
         );
 
         this.turretTalonFXSim = new TalonFXSim(
                 turretMotor,
-                constants.turretGearing(),
+                constants.turretToMechanismGearing(),
                 turretSim::update,
                 turretSim::setInputVoltage,
                 turretSim::getAngularPositionRad,
@@ -84,8 +85,11 @@ public class TurretIOSim implements TurretIO {
         this.turretTorqueCurrent = turretMotor.getTorqueCurrent(false);
         this.turretDeviceTemp = turretMotor.getDeviceTemp(false);
 
-        this.leftEncoderPosition = leftEncoder.getPosition(false);
-        this.rightEncoderPosition = rightEncoder.getPosition(false);
+        leftEncoder.setPosition(0.5384615384615385);
+        rightEncoder.setPosition(0.17647058823529416);
+
+        this.leftEncoderPosition = leftEncoder.getPosition(true);
+        this.rightEncoderPosition = rightEncoder.getPosition(true);
 
         this.motionMagicExpoVoltage = new MotionMagicExpoVoltage(0);
         this.positionVoltage = new PositionVoltage(0);
@@ -106,6 +110,13 @@ public class TurretIOSim implements TurretIO {
         final Notifier simUpdateNotifier = new Notifier(() -> {
             final double dt = deltaTime.get();
             turretTalonFXSim.update(dt);
+
+
+//            leftEncoder.getSimState().setRawPosition(turretTalonFXSim.getAngularPositionRots() *
+//                    constants.turretTooth() / constants.leftEncoderGearing());
+//
+//            rightEncoder.getSimState().setRawPosition(leftEncoder.getPosition().getValueAsDouble() *
+//                    constants.leftEncoderGearing() / constants.rightEncoderGearing());
         });
         ToClose.add(simUpdateNotifier);
         simUpdateNotifier.setName(String.format(
@@ -133,7 +144,7 @@ public class TurretIOSim implements TurretIO {
         motorConfig.CurrentLimits.SupplyCurrentLowerTime = 1;
         motorConfig.CurrentLimits.SupplyCurrentLimitEnable = true;
         motorConfig.Feedback.FeedbackSensorSource = FeedbackSensorSourceValue.RotorSensor;
-        motorConfig.Feedback.SensorToMechanismRatio = constants.turretGearing();
+        motorConfig.Feedback.SensorToMechanismRatio = constants.turretToMechanismGearing();
         motorConfig.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
         motorConfig.MotorOutput.NeutralMode = NeutralModeValue.Brake;
         motorConfig.SoftwareLimitSwitch.ForwardSoftLimitThreshold = constants.upperLimitRots();
