@@ -85,9 +85,6 @@ public class TurretIOSim implements TurretIO {
         this.turretTorqueCurrent = turretMotor.getTorqueCurrent(false);
         this.turretDeviceTemp = turretMotor.getDeviceTemp(false);
 
-        leftEncoder.setPosition(0.5384615384615385);
-        rightEncoder.setPosition(0.17647058823529416);
-
         this.leftEncoderPosition = leftEncoder.getPosition(true);
         this.rightEncoderPosition = rightEncoder.getPosition(true);
 
@@ -112,11 +109,11 @@ public class TurretIOSim implements TurretIO {
             turretTalonFXSim.update(dt);
 
 
-//            leftEncoder.getSimState().setRawPosition(turretTalonFXSim.getAngularPositionRots() *
-//                    constants.turretTooth() / constants.leftEncoderGearing());
-//
-//            rightEncoder.getSimState().setRawPosition(leftEncoder.getPosition().getValueAsDouble() *
-//                    constants.leftEncoderGearing() / constants.rightEncoderGearing());
+            leftEncoder.getSimState().setRawPosition(turretTalonFXSim.getAngularPositionRots() *
+                    constants.turretTooth() / constants.leftEncoderGearing());
+
+            rightEncoder.getSimState().setRawPosition(leftEncoder.getPosition().getValueAsDouble() *
+                    constants.leftEncoderGearing() / constants.rightEncoderGearing());
         });
         ToClose.add(simUpdateNotifier);
         simUpdateNotifier.setName(String.format(

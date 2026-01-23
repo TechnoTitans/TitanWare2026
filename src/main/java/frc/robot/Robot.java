@@ -7,6 +7,7 @@ package frc.robot;
 import com.ctre.phoenix6.SignalLogger;
 import edu.wpi.first.hal.AllianceStationID;
 import edu.wpi.first.math.geometry.Pose3d;
+import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj.*;
 import edu.wpi.first.wpilibj.event.EventLoop;
 import edu.wpi.first.wpilibj.livewindow.LiveWindow;
@@ -17,6 +18,7 @@ import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.constants.Constants;
+import frc.robot.constants.FieldConstants;
 import frc.robot.constants.HardwareConstants;
 import frc.robot.constants.RobotMap;
 import frc.robot.subsystems.drive.Swerve;
@@ -271,6 +273,7 @@ public class Robot extends LoggedRobot {
         LoggedCommandScheduler.periodic();
         Logger.recordOutput("ShotCalculation", shotCalculationSupplier.get());
         componentsSolver.periodic();
+        robotCommands.periodic();
 
         Threads.setCurrentThreadPriority(false, 10);
     }
@@ -328,7 +331,13 @@ public class Robot extends LoggedRobot {
         );
 
         driverController.rightTrigger(0.5, teleopEventLoop).whileTrue(
-                superstructure.toGoal(Superstructure.Goal.SHOOTING)
+                robotCommands.shootWhileMoving()
+        );
+
+        coController.rightTrigger(0.5, teleopEventLoop).whileTrue(
+                robotCommands.shootStationary(
+                        () -> FieldConstants.Hub.hubCenterPoint.getAngle()
+                )
         );
     }
 }

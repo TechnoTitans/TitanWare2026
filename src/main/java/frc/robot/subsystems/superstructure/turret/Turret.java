@@ -65,15 +65,20 @@ public class Turret extends SubsystemBase {
         this.turretIO.config();
 
         turretIO.updateInputs(inputs);
-        final double absolutePosition = ChineseRemainder.getAbsolutePosition(
-                constants.leftEncoderGearing()/constants.turretTooth(),
-                Units.rotationsToDegrees(inputs.leftPositionRots),
-                constants.rightEncoderGearing()/constants.turretTooth(),
-                Units.rotationsToDegrees(inputs.rightPositionRots),
-                constants.turretTooth()
-        );
 
-        turretIO.setTurretPosition(absolutePosition % 1);
+        try {
+            final double absolutePosition = ChineseRemainder.getAbsolutePosition(
+                    constants.leftEncoderGearing()/constants.turretTooth(),
+                    Units.rotationsToDegrees(inputs.leftPositionRots),
+                    constants.rightEncoderGearing()/constants.turretTooth(),
+                    Units.rotationsToDegrees(inputs.rightPositionRots),
+                    constants.turretTooth()
+            ) % 1.0;
+
+            turretIO.setTurretPosition(absolutePosition);
+        } catch (RuntimeException e) {
+            turretIO.setTurretPosition(0.0);
+        }
     }
 
     @Override
