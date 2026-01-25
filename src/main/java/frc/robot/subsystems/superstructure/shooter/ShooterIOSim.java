@@ -12,6 +12,7 @@ import com.ctre.phoenix6.hardware.ParentDevice;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.FeedbackSensorSourceValue;
 import com.ctre.phoenix6.signals.InvertedValue;
+import com.ctre.phoenix6.signals.MotorAlignmentValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 import com.ctre.phoenix6.sim.ChassisReference;
 import edu.wpi.first.math.system.plant.DCMotor;
@@ -96,7 +97,7 @@ public class ShooterIOSim implements ShooterIO {
         this.velocityTorqueCurrentFOC = new VelocityTorqueCurrentFOC(0);
         this.voltageOut = new VoltageOut(0);
         this.torqueCurrentFOC = new TorqueCurrentFOC(0);
-        this.follower = new Follower(masterMotor.getDeviceID(), false);
+        this.follower = new Follower(masterMotor.getDeviceID(), MotorAlignmentValue.Aligned);
 
         RefreshAll.add(
                 constants.CANBus(),
@@ -118,7 +119,7 @@ public class ShooterIOSim implements ShooterIO {
         });
         ToClose.add(simUpdateNotifier);
         simUpdateNotifier.setName(String.format(
-                "SimUpdate(%d)",
+                "SimUpdate(%d,%d)",
                 masterMotor.getDeviceID(),
                 followerMotor.getDeviceID()
         ));

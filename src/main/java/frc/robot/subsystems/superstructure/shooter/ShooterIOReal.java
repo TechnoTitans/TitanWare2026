@@ -12,6 +12,7 @@ import com.ctre.phoenix6.hardware.ParentDevice;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.FeedbackSensorSourceValue;
 import com.ctre.phoenix6.signals.InvertedValue;
+import com.ctre.phoenix6.signals.MotorAlignmentValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 import edu.wpi.first.units.measure.*;
 import frc.robot.constants.HardwareConstants;
@@ -63,7 +64,7 @@ public class ShooterIOReal implements ShooterIO {
         this.velocityTorqueCurrentFOC = new VelocityTorqueCurrentFOC(0);
         this.voltageOut = new VoltageOut(0);
         this.torqueCurrentFOC = new TorqueCurrentFOC(0);
-        this.follower = new Follower(masterMotor.getDeviceID(), true);
+        this.follower = new Follower(masterMotor.getDeviceID(), MotorAlignmentValue.Opposed);
 
         RefreshAll.add(
                 constants.CANBus(),
