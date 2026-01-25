@@ -107,8 +107,8 @@ public class Intake extends SubsystemBase {
     
     private boolean atSliderPositionSetpoint() {
         return currentGoal == desiredGoal
-                && MathUtil.isNear(desiredGoal.getSliderGoalRots(constants.gearPitchCircumferenceMeters()), inputs.sliderPositionRots, PositionToleranceRots)
-                && MathUtil.isNear(0, inputs.sliderVelocityRotsPerSec, VelocityToleranceRotsPerSec);
+                && MathUtil.isNear(desiredGoal.getSliderGoalRots(constants.gearPitchCircumferenceMeters()), inputs.masterSliderPositionRots, PositionToleranceRots)
+                && MathUtil.isNear(0, inputs.masterSliderVelocityRotsPerSec, VelocityToleranceRotsPerSec);
     }
 
     public boolean atRollerVelocitySetpoint() {
@@ -117,11 +117,11 @@ public class Intake extends SubsystemBase {
     }
 
     private boolean atSliderLowerLimit() {
-        return inputs.sliderPositionRots <= constants.lowerLimitRots();
+        return inputs.masterSliderPositionRots <= constants.lowerLimitRots();
     }
 
     private boolean atSliderUpperLimit() {
-        return inputs.sliderPositionRots >= constants.upperLimitRots();
+        return inputs.masterSliderPositionRots >= constants.upperLimitRots();
     }
 
     public Command toGoal(final Goal goal) {
@@ -139,6 +139,6 @@ public class Intake extends SubsystemBase {
     }
 
     public Rotation2d getIntakeSliderPositionRots() {
-        return Rotation2d.fromRotations(inputs.sliderPositionRots);
+        return Rotation2d.fromRotations(inputs.masterSliderPositionRots);
     }
 }
