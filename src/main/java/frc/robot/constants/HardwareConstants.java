@@ -92,7 +92,6 @@ public class HardwareConstants {
             double rightEncoderGearing,
             double leftEncoderOffset,
             double rightEncoderOffset,
-            int countableRotations,
             double upperLimitRots,
             double lowerLimitRots
     ) {}
@@ -108,7 +107,6 @@ public class HardwareConstants {
             17.0,
             0,
             0,
-            80,
             0.5,
             -0.5
     );
