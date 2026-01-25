@@ -66,7 +66,7 @@ public class Hood extends SubsystemBase {
             };
         };
 
-        isHomed = Constants.CURRENT_MODE == Constants.RobotMode.SIM ? true : false;
+        isHomed = Constants.CURRENT_MODE == Constants.RobotMode.SIM;
 
         this.inputs = new HoodIOInputsAutoLogged();
 
