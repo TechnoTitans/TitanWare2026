@@ -11,11 +11,17 @@ public interface IntakeIO {
         public double rollerTorqueCurrentAmps = 0.0;
         public double rollerTempCelsius = 0.0;
 
-        public double sliderPositionRots = 0.0;
-        public double sliderVelocityRotsPerSec = 0.0;
-        public double sliderVoltage = 0.0;
-        public double sliderTorqueCurrentAmps = 0.0;
-        public double sliderTempCelsius = 0.0;
+        public double masterSliderPositionRots = 0.0;
+        public double masterSliderVelocityRotsPerSec = 0.0;
+        public double masterSliderVoltage = 0.0;
+        public double masterSliderTorqueCurrentAmps = 0.0;
+        public double masterSliderTempCelsius = 0.0;
+
+        public double followerSliderPositionRots = 0.0;
+        public double followerSliderVelocityRotsPerSec = 0.0;
+        public double followerSliderVoltage = 0.0;
+        public double followerSliderTorqueCurrentAmps = 0.0;
+        public double followerSliderTempCelsius = 0.0;
 
         public double encoderPositionRots = 0.0;
         public double encoderVelocityRotsPerSec = 0.0;

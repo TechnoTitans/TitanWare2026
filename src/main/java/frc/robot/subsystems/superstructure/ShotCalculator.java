@@ -36,7 +36,7 @@ public class ShotCalculator {
     }
     protected static final String LogKey = "Superstructure/ShotCalculator";
 
-    private static final double FerryXBoundary = Units.inchesToMeters(150);
+    private static final double FerryXBoundary = Units.inchesToMeters(205);
     private static final double FuturePoseDTSec = 0.25;
     private static final double PhaseDelaySec = 0.03;
 
@@ -148,60 +148,24 @@ public class ShotCalculator {
             final ChassisSpeeds robotRelativeChassisSpeeds,
             final ChassisSpeeds fieldRelativeChassisSpeeds
     ) {
-        final Pose2d compensatedPose = swervePose.exp(
-                new Twist2d(
-                        robotRelativeChassisSpeeds.vxMetersPerSecond * PhaseDelaySec,
-                        robotRelativeChassisSpeeds.vxMetersPerSecond * PhaseDelaySec,
-                        robotRelativeChassisSpeeds.omegaRadiansPerSecond * PhaseDelaySec
-                )
-        );
 
-        final Pose2d turretPose = compensatedPose.transformBy(SimConstants.Turret.TURRET_TO_ROBOT_TRANSFORM);
+        final Pose2d turretPose = swervePose.transformBy(SimConstants.Turret.TURRET_TO_ROBOT_TRANSFORM);
 
         Target target = getTarget(turretPose, fieldRelativeChassisSpeeds.vxMetersPerSecond);
         final Translation2d targetTranslation = AllianceFlipUtil.apply(target.getTargetTranslation());
 
         final double turretToTargetDistance = targetTranslation.getDistance(turretPose.getTranslation());
 
-        final double robotAngleRads = compensatedPose.getRotation().getRadians();
-        final double turretVelocityX =
-                fieldRelativeChassisSpeeds.vxMetersPerSecond
-                        + fieldRelativeChassisSpeeds.omegaRadiansPerSecond
-                        * (SimConstants.Turret.TURRET_TO_ROBOT_TRANSFORM.getY() * Math.cos(robotAngleRads)
-                        - SimConstants.Turret.TURRET_TO_ROBOT_TRANSFORM.getX() * Math.sin(robotAngleRads));
-        final double turretVelocityY =
-                fieldRelativeChassisSpeeds.vyMetersPerSecond
-                        + fieldRelativeChassisSpeeds.omegaRadiansPerSecond
-                        * (SimConstants.Turret.TURRET_TO_ROBOT_TRANSFORM.getX() * Math.cos(robotAngleRads)
-                        - SimConstants.Turret.TURRET_TO_ROBOT_TRANSFORM.getY() * Math.sin(robotAngleRads));
+        final Rotation2d desiredTurretAngle =  targetTranslation.minus(turretPose.getTranslation()).getAngle().minus(turretPose.getRotation())
+                .plus(new Rotation2d(Units.radiansToRotations(-fieldRelativeChassisSpeeds.omegaRadiansPerSecond * 0.02)));
 
-        double timeOfFlight;
-        Pose2d futurePose = turretPose;
-        double futureTurretToTargetDistance = turretToTargetDistance;
-
-        for (int i = 0; i < 20; i++) {
-            timeOfFlight = shotDataMap.get(futureTurretToTargetDistance).shotTime();
-            double offsetX = turretVelocityX * timeOfFlight;
-            double offsetY = turretVelocityY * timeOfFlight;
-            futurePose =
-                    new Pose2d(
-                            turretPose.getTranslation().plus(new Translation2d(offsetX, offsetY)),
-                            turretPose.getRotation()
-                    );
-            futureTurretToTargetDistance = targetTranslation.getDistance(futurePose.getTranslation());
-        }
-
-        final Rotation2d desiredTurretAngle =  targetTranslation.minus(futurePose.getTranslation()).getAngle().minus(futurePose.getRotation());
-
-        final ShotCalculation shotCalculation = new ShotCalculation(
+        return new ShotCalculation(
                 desiredTurretAngle,
                 shotDataMap.get(
-                        futureTurretToTargetDistance
+                        turretToTargetDistance
                 ),
                 target
         );
-
-        return shotCalculation;
     }
 
     private static Target getTarget(final Pose2d currentPose, final double vxMetersPerSecond) {
