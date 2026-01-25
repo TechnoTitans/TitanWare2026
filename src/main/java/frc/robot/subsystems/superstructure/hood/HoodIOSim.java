@@ -65,7 +65,7 @@ public class HoodIOSim implements HoodIO {
                 SimConstants.Hood.STARTING_ANGLE.getRadians()
         );
 
-        this.hoodMotor = new TalonFX(constants.hoodMotorID(), constants.CANBus().toPhoenix6CANBus());
+        this.hoodMotor = new TalonFX(constants.motorID(), constants.CANBus().toPhoenix6CANBus());
         this.motorConfig = new TalonFXConfiguration();
 
         this.hoodTalonFXSim = new TalonFXSim(
@@ -110,13 +110,6 @@ public class HoodIOSim implements HoodIO {
 
     @Override
     public void config() {
-        final CANcoderConfiguration hoodCANCoderConfiguration = new CANcoderConfiguration();
-        hoodCANCoderConfiguration.MagnetSensor.MagnetOffset = 0;
-        hoodCANCoderConfiguration.MagnetSensor.SensorDirection = SensorDirectionValue.Clockwise_Positive;
-
-        final TalonFXConfiguration hoodConfiguration = new TalonFXConfiguration();
-        hoodConfiguration.Commutation.MotorArrangement = MotorArrangementValue.Minion_JST;
-        hoodConfiguration.Commutation.AdvancedHallSupport = AdvancedHallSupportValue.Enabled;
 
         motorConfig.Slot0 = new Slot0Configs()
                 .withKG(0.1)
@@ -153,8 +146,6 @@ public class HoodIOSim implements HoodIO {
                 4,
                 hoodMotor
         );
-        hoodMotor.getSimState().MotorOrientation = ChassisReference.Clockwise_Positive;
-        hoodMotor.getSimState().ExtSensorOrientation = ChassisReference.Clockwise_Positive;
     }
 
     @Override

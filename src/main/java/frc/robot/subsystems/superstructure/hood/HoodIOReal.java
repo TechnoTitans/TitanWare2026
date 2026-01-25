@@ -5,6 +5,7 @@ import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.CANcoderConfiguration;
 import com.ctre.phoenix6.configs.Slot0Configs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
+import com.ctre.phoenix6.configs.TalonFXSConfiguration;
 import com.ctre.phoenix6.controls.MotionMagicExpoVoltage;
 import com.ctre.phoenix6.controls.PositionVoltage;
 import com.ctre.phoenix6.controls.TorqueCurrentFOC;
@@ -12,6 +13,7 @@ import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.CANcoder;
 import com.ctre.phoenix6.hardware.ParentDevice;
 import com.ctre.phoenix6.hardware.TalonFX;
+import com.ctre.phoenix6.hardware.TalonFXS;
 import com.ctre.phoenix6.signals.*;
 import edu.wpi.first.units.measure.*;
 import frc.robot.constants.HardwareConstants;
@@ -37,8 +39,8 @@ public class HoodIOReal implements HoodIO {
     public HoodIOReal(final HardwareConstants.HoodConstants constants) {
         this.constants = constants;
 
-        this.hoodMotor = new TalonFX(constants.hoodMotorID(), constants.CANBus().toPhoenix6CANBus());
-        this.motorConfig = new TalonFXConfiguration();
+        this.hoodMotor = new TalonFXS(constants.motorID(), constants.CANBus().toPhoenix6CANBus());
+        this.motorConfig = new TalonFXSConfiguration();
 
         this.hoodPosition = hoodMotor.getPosition(false);
         this.hoodVelocity = hoodMotor.getVelocity(false);
@@ -64,7 +66,7 @@ public class HoodIOReal implements HoodIO {
     @Override
     public void config() {
 
-        final TalonFXConfiguration motorConfiguration = new TalonFXConfiguration();
+        final TalonFXSConfiguration motorConfiguration = new TalonFXSConfiguration();
         motorConfiguration.Commutation.MotorArrangement = MotorArrangementValue.Minion_JST;
         motorConfiguration.Commutation.AdvancedHallSupport = AdvancedHallSupportValue.Enabled;
         motorConfig.Slot0 = new Slot0Configs()
