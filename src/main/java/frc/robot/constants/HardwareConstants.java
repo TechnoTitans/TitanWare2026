@@ -6,7 +6,7 @@ import java.util.Objects;
 public class HardwareConstants {
     public enum CANBus {
         RIO("rio"),
-        CANIVORE("CANIVORE");
+        CANIVORE("CANivore");
 
         private static final HashMap<String, CANBus> BusNameToCANBus = new HashMap<>();
         static {
@@ -30,57 +30,34 @@ public class HardwareConstants {
         }
     }
 
-    public record IntakeConstants(
+    public record HoodConstants(
             CANBus CANBus,
-            int rollerMotorID,
-            double rollerGearing,
-            int masterSliderMotorID,
-            int followerSliderMotorID,
-            int encoderID,
-            double encoderOffset,
-            double sliderGearing,
-            double gearPitchCircumferenceMeters,
-            double upperLimitRots,
-            double lowerLimitRots
+            int motorID,
+            double hoodGearing,
+            double hoodUpperLimitRots,
+            double hoodLowerLimitRots
     ) {}
 
-    public static IntakeConstants INTAKE = new IntakeConstants(
+    //TODO: Change numbers
+    public static HoodConstants HOOD = new HoodConstants(
             CANBus.RIO,
-            14,
-            10,
-            15,
-            16,
-            17,
-            0,
-            20,
-            0.1,
-            10,
+            19,
+            50,
+            0.25,
             0
     );
 
-    public record HopperConstants(
+    public record ShooterConstants(
             CANBus CANBus,
             int motorID,
-            double rollerGearing
+            double gearing
     ) {}
 
-    public static HopperConstants HOPPER = new HopperConstants(
+    //TODO: Change numbers
+    public static ShooterConstants SHOOTER = new ShooterConstants(
             CANBus.RIO,
-            18,
+            20,
             10
-    );
-
-    public record FeederConstants(
-            CANBus CANBus,
-            int motorID,
-            double rollerGearing
-    ) {}
-
-
-    public static FeederConstants FEEDER = new FeederConstants(
-            CANBus.RIO,
-            19,
-            30
     );
 
     public record TurretConstants (
@@ -100,46 +77,15 @@ public class HardwareConstants {
 
     public static TurretConstants TURRET = new TurretConstants(
             CANBus.CANIVORE,
-            20,
-            21,
-            22,
-            24,
-            80,
-            13.0,
-            17.0,
+            16,
+            17,
+            18,
+            45,
+            13,
+            17,
             0,
             0,
             0.5,
             -0.5
-    );
-
-    public record HoodConstants(
-            CANBus CANBus,
-            int motorID,
-            double hoodGearing,
-            double hoodUpperLimitRots,
-            double hoodLowerLimitRots
-    ) {}
-
-    //TODO: Change numbers
-    public static HoodConstants HOOD = new HoodConstants(
-            CANBus.RIO,
-            23,
-            50,
-            0.25,
-            0
-    );
-
-    public record ShooterConstants(
-            CANBus CANBus,
-            int motorID,
-            double gearing
-    ) {}
-
-    //TODO: Change numbers
-    public static ShooterConstants SHOOTER = new ShooterConstants(
-            CANBus.RIO,
-            24,
-            2
     );
 }
