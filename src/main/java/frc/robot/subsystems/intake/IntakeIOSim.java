@@ -39,7 +39,7 @@ public class IntakeIOSim implements IntakeIO {
     private final TalonFXSim rollerMotorSim;
     private final TalonFXSim sliderMotorSim;
 
-    private final PositionVoltage positionVoltage;
+    private final MotionMagicExpoVoltage motionMagicExpoVoltage;
     private final VelocityTorqueCurrentFOC velocityTorqueCurrentFOC;
     private final TorqueCurrentFOC torqueCurrentFOC;
     private final VoltageOut voltageOut;
@@ -111,7 +111,7 @@ public class IntakeIOSim implements IntakeIO {
 
         this.sliderMotorSim.attachFeedbackSensor(new SimCANCoder(sliderEncoder));
 
-        this.positionVoltage = new PositionVoltage(0);
+        this.motionMagicExpoVoltage = new MotionMagicExpoVoltage(0);
         this.velocityTorqueCurrentFOC = new VelocityTorqueCurrentFOC(0);
         this.torqueCurrentFOC = new TorqueCurrentFOC(0);
         this.voltageOut = new VoltageOut(0);

@@ -2,17 +2,13 @@ package frc.robot.subsystems.superstructure.hood;
 
 import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.StatusSignal;
-import com.ctre.phoenix6.configs.CANcoderConfiguration;
 import com.ctre.phoenix6.configs.Slot0Configs;
-import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.configs.TalonFXSConfiguration;
 import com.ctre.phoenix6.controls.MotionMagicExpoVoltage;
 import com.ctre.phoenix6.controls.PositionVoltage;
 import com.ctre.phoenix6.controls.TorqueCurrentFOC;
 import com.ctre.phoenix6.controls.VoltageOut;
-import com.ctre.phoenix6.hardware.CANcoder;
 import com.ctre.phoenix6.hardware.ParentDevice;
-import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.hardware.TalonFXS;
 import com.ctre.phoenix6.signals.*;
 import edu.wpi.first.units.measure.*;
@@ -22,8 +18,8 @@ import frc.robot.utils.ctre.RefreshAll;
 public class HoodIOReal implements HoodIO {
     private final HardwareConstants.HoodConstants constants;
 
-    private final TalonFX hoodMotor;
-    final TalonFXConfiguration motorConfig;
+    private final TalonFXS hoodMotor;
+    final TalonFXSConfiguration motorConfig;
 
     private final StatusSignal<Angle> hoodPosition;
     private final StatusSignal<AngularVelocity> hoodVelocity;
@@ -54,12 +50,12 @@ public class HoodIOReal implements HoodIO {
         this.torqueCurrentFOC = new TorqueCurrentFOC(0);
 
         RefreshAll.add(
-                constants.CANBus.(),
+                constants.CANBus(),
                 hoodPosition,
                 hoodVelocity,
                 hoodVoltage,
                 hoodTorqueCurrent,
-                hoodDeviceTemp;
+                hoodDeviceTemp
         );
     }
 
@@ -80,16 +76,12 @@ public class HoodIOReal implements HoodIO {
         motorConfig.MotionMagic.MotionMagicCruiseVelocity = 0;
         motorConfig.MotionMagic.MotionMagicExpo_kV = 9.263;
         motorConfig.MotionMagic.MotionMagicExpo_kA = 2.1;
-        motorConfig.TorqueCurrent.PeakForwardTorqueCurrent = 80;
-        motorConfig.TorqueCurrent.PeakReverseTorqueCurrent = -80;
         motorConfig.CurrentLimits.StatorCurrentLimit = 50;
         motorConfig.CurrentLimits.StatorCurrentLimitEnable = true;
         motorConfig.CurrentLimits.SupplyCurrentLimit = 40;
         motorConfig.CurrentLimits.SupplyCurrentLowerLimit = 30;
         motorConfig.CurrentLimits.SupplyCurrentLowerTime = 1;
         motorConfig.CurrentLimits.SupplyCurrentLimitEnable = true;
-        motorConfig.Feedback.FeedbackSensorSource = FeedbackSensorSourceValue.RotorSensor;
-        motorConfig.Feedback.SensorToMechanismRatio = constants.hoodGearing();
         motorConfig.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
         motorConfig.MotorOutput.NeutralMode = NeutralModeValue.Brake;
         motorConfig.SoftwareLimitSwitch.ForwardSoftLimitThreshold = constants.hoodUpperLimitRots();
@@ -144,9 +136,9 @@ public class HoodIOReal implements HoodIO {
         hoodMotor.setControl(torqueCurrentFOC.withOutput(torqueCurrent));
     }
 
+    //TODO: Find alternative for changing torque current value
     @Override
     public void home() {
-        motorConfig.TorqueCurrent.PeakForwardTorqueCurrent = 1;
         hoodMotor.setControl(voltageOut.withOutput(-0.1));
     }
 

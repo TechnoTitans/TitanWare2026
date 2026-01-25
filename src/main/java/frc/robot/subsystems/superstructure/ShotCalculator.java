@@ -1,11 +1,9 @@
 package frc.robot.subsystems.superstructure;
 
 import edu.wpi.first.math.MathUtil;
-import edu.wpi.first.math.filter.LinearFilter;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
-import edu.wpi.first.math.geometry.Twist2d;
 import edu.wpi.first.math.interpolation.Interpolatable;
 import edu.wpi.first.math.interpolation.InterpolatingTreeMap;
 import edu.wpi.first.math.interpolation.Interpolator;
@@ -16,7 +14,6 @@ import frc.robot.constants.FieldConstants;
 import frc.robot.constants.SimConstants;
 import frc.robot.utils.geometry.AllianceFlipUtil;
 
-import javax.sound.sampled.Line;
 import java.util.function.Supplier;
 
 public class ShotCalculator {
