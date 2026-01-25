@@ -2,18 +2,17 @@ package frc.robot.subsystems.superstructure.hood;
 
 import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.StatusSignal;
+import com.ctre.phoenix6.configs.CANcoderConfiguration;
 import com.ctre.phoenix6.configs.Slot0Configs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.MotionMagicExpoVoltage;
 import com.ctre.phoenix6.controls.PositionVoltage;
 import com.ctre.phoenix6.controls.TorqueCurrentFOC;
 import com.ctre.phoenix6.controls.VoltageOut;
+import com.ctre.phoenix6.hardware.CANcoder;
 import com.ctre.phoenix6.hardware.ParentDevice;
 import com.ctre.phoenix6.hardware.TalonFX;
-import com.ctre.phoenix6.signals.FeedbackSensorSourceValue;
-import com.ctre.phoenix6.signals.GravityTypeValue;
-import com.ctre.phoenix6.signals.InvertedValue;
-import com.ctre.phoenix6.signals.NeutralModeValue;
+import com.ctre.phoenix6.signals.*;
 import edu.wpi.first.units.measure.*;
 import frc.robot.constants.HardwareConstants;
 import frc.robot.utils.ctre.RefreshAll;
@@ -38,7 +37,7 @@ public class HoodIOReal implements HoodIO {
     public HoodIOReal(final HardwareConstants.HoodConstants constants) {
         this.constants = constants;
 
-        this.hoodMotor = new TalonFX(constants.motorID(), constants.CANBus().toPhoenix6CANBus());
+        this.hoodMotor = new TalonFX(constants.hoodMotorID(), constants.CANBus().toPhoenix6CANBus());
         this.motorConfig = new TalonFXConfiguration();
 
         this.hoodPosition = hoodMotor.getPosition(false);
@@ -53,17 +52,21 @@ public class HoodIOReal implements HoodIO {
         this.torqueCurrentFOC = new TorqueCurrentFOC(0);
 
         RefreshAll.add(
-                constants.CANBus(),
+                constants.CANBus.(),
                 hoodPosition,
                 hoodVelocity,
                 hoodVoltage,
                 hoodTorqueCurrent,
-                hoodDeviceTemp
+                hoodDeviceTemp;
         );
     }
 
     @Override
     public void config() {
+
+        final TalonFXConfiguration motorConfiguration = new TalonFXConfiguration();
+        motorConfiguration.Commutation.MotorArrangement = MotorArrangementValue.Minion_JST;
+        motorConfiguration.Commutation.AdvancedHallSupport = AdvancedHallSupportValue.Enabled;
         motorConfig.Slot0 = new Slot0Configs()
                 .withKS(0.016887)
                 .withKG(0.25249)

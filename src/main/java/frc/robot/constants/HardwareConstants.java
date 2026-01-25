@@ -35,8 +35,10 @@ public class HardwareConstants {
     }
 
     public record HoodConstants(
-            CANBus canBus,
-            int motorID,
+            CANBus CANBus,
+            int hoodMotorID,
+            int hoodCANCoderID,
+            double hoodCANCoderOffset,
             double hoodGearing,
             double hoodUpperLimitRots,
             double hoodLowerLimitRots
@@ -47,7 +49,9 @@ public class HardwareConstants {
             CANBus.RIO,
             19,
             50,
+            -6.7,
             0.25,
+            0.0,
             0.0
     );
 

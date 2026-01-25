@@ -2,17 +2,17 @@ package frc.robot.subsystems.superstructure.hood;
 
 import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.StatusSignal;
+import com.ctre.phoenix6.configs.CANcoderConfiguration;
 import com.ctre.phoenix6.configs.Slot0Configs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.PositionVoltage;
 import com.ctre.phoenix6.controls.TorqueCurrentFOC;
 import com.ctre.phoenix6.controls.VoltageOut;
+import com.ctre.phoenix6.hardware.CANcoder;
 import com.ctre.phoenix6.hardware.ParentDevice;
 import com.ctre.phoenix6.hardware.TalonFX;
-import com.ctre.phoenix6.signals.FeedbackSensorSourceValue;
-import com.ctre.phoenix6.signals.GravityTypeValue;
-import com.ctre.phoenix6.signals.InvertedValue;
-import com.ctre.phoenix6.signals.NeutralModeValue;
+import com.ctre.phoenix6.signals.*;
+import com.ctre.phoenix6.sim.ChassisReference;
 import edu.wpi.first.math.system.plant.LinearSystemId;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.units.measure.*;
@@ -65,7 +65,7 @@ public class HoodIOSim implements HoodIO {
                 SimConstants.Hood.STARTING_ANGLE.getRadians()
         );
 
-        this.hoodMotor = new TalonFX(constants.motorID(), constants.CANBus().toPhoenix6CANBus());
+        this.hoodMotor = new TalonFX(constants.hoodMotorID(), constants.CANBus().toPhoenix6CANBus());
         this.motorConfig = new TalonFXConfiguration();
 
         this.hoodTalonFXSim = new TalonFXSim(
@@ -110,6 +110,14 @@ public class HoodIOSim implements HoodIO {
 
     @Override
     public void config() {
+        final CANcoderConfiguration hoodCANCoderConfiguration = new CANcoderConfiguration();
+        hoodCANCoderConfiguration.MagnetSensor.MagnetOffset = 0;
+        hoodCANCoderConfiguration.MagnetSensor.SensorDirection = SensorDirectionValue.Clockwise_Positive;
+
+        final TalonFXConfiguration hoodConfiguration = new TalonFXConfiguration();
+        hoodConfiguration.Commutation.MotorArrangement = MotorArrangementValue.Minion_JST;
+        hoodConfiguration.Commutation.AdvancedHallSupport = AdvancedHallSupportValue.Enabled;
+
         motorConfig.Slot0 = new Slot0Configs()
                 .withKG(0.1)
                 .withGravityType(GravityTypeValue.Arm_Cosine)
@@ -145,6 +153,8 @@ public class HoodIOSim implements HoodIO {
                 4,
                 hoodMotor
         );
+        hoodMotor.getSimState().MotorOrientation = ChassisReference.Clockwise_Positive;
+        hoodMotor.getSimState().ExtSensorOrientation = ChassisReference.Clockwise_Positive;
     }
 
     @Override
