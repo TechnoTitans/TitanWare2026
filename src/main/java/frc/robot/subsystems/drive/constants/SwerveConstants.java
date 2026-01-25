@@ -58,7 +58,7 @@ public class SwerveConstants {
             1,
             2,
             3,
-            0.36376953125,
+            0,
             SwerveConstants.KrakenX60Foc.KtNMPerAmp
     );
 
@@ -69,7 +69,7 @@ public class SwerveConstants {
             4,
             5,
             6,
-            -0.361328125,
+            0,
             SwerveConstants.KrakenX60Foc.KtNMPerAmp
     );
 
@@ -80,7 +80,7 @@ public class SwerveConstants {
             7,
             8,
             9,
-            -0.41259765625,
+            0,
             SwerveConstants.KrakenX60Foc.KtNMPerAmp
     );
 
@@ -91,7 +91,7 @@ public class SwerveConstants {
             10,
             11,
             12,
-            0.4130859375,
+            0,
             SwerveConstants.KrakenX60Foc.KtNMPerAmp
     );
 

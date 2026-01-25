@@ -36,7 +36,7 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.Robot;
-import frc.robot.auto.Autos;
+//import frc.robot.auto.Autos;
 import frc.robot.constants.Constants;
 import frc.robot.subsystems.drive.SwerveIO.SwerveDriveState;
 import frc.robot.subsystems.drive.constants.SwerveConstants;
@@ -453,9 +453,6 @@ public class Swerve extends SubsystemBase {
         return state().ModulePositions;
     }
 
-    /**
-     * Use {@link frc.robot.subsystems.vision.PhotonVision#resetPose(Pose2d)} instead.
-     */
     public void resetPose(final Pose2d pose) {
         if (isReplay()) {
             replayPoseEstimator.resetPose(pose);
@@ -886,28 +883,28 @@ public class Swerve extends SubsystemBase {
         );
     }
 
-    public void followChoreoSample(final SwerveSample swerveSample) {
-        final Pose2d currentPose = getPose();
-        final ChassisSpeeds speeds = choreoController.calculate(currentPose, swerveSample);
-
-        Logger.recordOutput(Autos.LogKey + "/Timestamp", swerveSample.getTimestamp());
-        Logger.recordOutput(Autos.LogKey + "/CurrentPose", currentPose);
-        Logger.recordOutput(Autos.LogKey + "/TargetSpeeds", swerveSample.getChassisSpeeds());
-        Logger.recordOutput(Autos.LogKey + "/TargetPose", swerveSample.getPose());
-
-        Logger.recordOutput(
-                Autos.LogKey + "/TargetRotation",
-                MathUtil.angleModulus(swerveSample.heading)
-        );
-
-        Logger.recordOutput(
-                Autos.LogKey + "/CurrentRotation",
-                MathUtil.angleModulus(currentPose.getRotation().getRadians())
-        );
-
-//        drive(speeds, swerveSample.moduleForcesX(), swerveSample.moduleForcesY());
-        drive(speeds);
-    }
+//    public void followChoreoSample(final SwerveSample swerveSample) {
+//        final Pose2d currentPose = getPose();
+//        final ChassisSpeeds speeds = choreoController.calculate(currentPose, swerveSample);
+//
+//        Logger.recordOutput(Autos.LogKey + "/Timestamp", swerveSample.getTimestamp());
+//        Logger.recordOutput(Autos.LogKey + "/CurrentPose", currentPose);
+//        Logger.recordOutput(Autos.LogKey + "/TargetSpeeds", swerveSample.getChassisSpeeds());
+//        Logger.recordOutput(Autos.LogKey + "/TargetPose", swerveSample.getPose());
+//
+//        Logger.recordOutput(
+//                Autos.LogKey + "/TargetRotation",
+//                MathUtil.angleModulus(swerveSample.heading)
+//        );
+//
+//        Logger.recordOutput(
+//                Autos.LogKey + "/CurrentRotation",
+//                MathUtil.angleModulus(currentPose.getRotation().getRadians())
+//        );
+//
+////        drive(speeds, swerveSample.moduleForcesX(), swerveSample.moduleForcesY());
+//        drive(speeds);
+//    }
 
     @SuppressWarnings("unused")
     public Command wheelRadiusCharacterization() {

@@ -3,6 +3,7 @@ package frc.robot.subsystems.superstructure;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.interpolation.Interpolatable;
 import edu.wpi.first.math.interpolation.InterpolatingTreeMap;
 import edu.wpi.first.math.interpolation.Interpolator;
@@ -10,9 +11,24 @@ import edu.wpi.first.math.interpolation.InverseInterpolator;
 import frc.robot.constants.FieldConstants;
 import org.littletonrobotics.junction.Logger;
 
+import java.lang.reflect.Field;
 import java.util.function.Supplier;
 
 public class ShotCalculator {
+    public enum Target {
+        HUB(FieldConstants.hubCenter),
+        FERRYING(FieldConstants.hubCenter);
+
+        private final Translation2d targetTranslation;
+
+        Target(final Translation2d targetTranslation) {
+            this.targetTranslation = targetTranslation;
+        }
+
+        public Translation2d getTargetTranslation() {
+            return targetTranslation;
+        }
+    }
     protected static String LogKey = "ShotCalculator";
 
     public record HoodShooterCalculation(
@@ -99,16 +115,15 @@ public class ShotCalculator {
             HoodShooterCalculation hoodShooterCalculation
     ) {}
 
-    public static ShotCalculation getShotCalculation(final Supplier<Pose2d> swervePoseSupplier) {
-        return getShotCalculation(swervePoseSupplier.get());
+    public static ShotCalculation getShotCalculation(final Supplier<Pose2d> swervePoseSupplier, final Supplier<Target> targetSupplier) {
+        return getShotCalculation(swervePoseSupplier.get(), targetSupplier.get());
     }
 
-    private static ShotCalculation getShotCalculation(final Pose2d swervePose) {
-        final Rotation2d differenceInAngle = FieldConstants.hubCenter.minus(swervePose.getTranslation()).getAngle();
-        Logger.recordOutput(LogKey + "DifferenceInAngle", differenceInAngle);
+    //TODO: Adding logging
+    private static ShotCalculation getShotCalculation(final Pose2d swervePose, final Target target) {
+        final Rotation2d differenceInAngle = target.getTargetTranslation().minus(swervePose.getTranslation()).getAngle();
 
         final Rotation2d desiredTurretRotation = differenceInAngle.minus(swervePose.getRotation());
-        Logger.recordOutput(LogKey + "DesiredTurretRotation", desiredTurretRotation);
 
         final double distanceToTarget = FieldConstants.hubCenter.getDistance(swervePose.getTranslation());
 

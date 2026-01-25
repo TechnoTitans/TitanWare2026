@@ -141,18 +141,4 @@ public class HoodIOReal implements HoodIO {
     public void toHoodTorqueCurrent(final double torqueCurrent) {
         hoodMotor.setControl(torqueCurrentFOC.withOutput(torqueCurrent));
     }
-
-    @Override
-    public void home() {
-        motorConfig.TorqueCurrent.PeakForwardTorqueCurrent = 1;
-        hoodMotor.setControl(voltageOut.withOutput(-0.1));
-    }
-
-    @Override
-    public void zeroMotor() {
-        hoodMotor.setPosition(0);
-        motorConfig.SoftwareLimitSwitch.ForwardSoftLimitThreshold = constants.hoodUpperLimitRots();
-        motorConfig.SoftwareLimitSwitch.ReverseSoftLimitThreshold = 0;
-        toHoodPosition(0);
-    }
 }
