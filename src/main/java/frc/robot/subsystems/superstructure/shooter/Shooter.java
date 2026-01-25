@@ -56,7 +56,7 @@ public class Shooter extends SubsystemBase {
         this.inputs = new ShooterIOInputsAutoLogged();
 
         this.shooterIO.config();
-        this.shooterIO.toFlywheelVelocity(desiredGoal.velocitySetpoint);
+        this.shooterIO.toVelocity(desiredGoal.velocitySetpoint);
     }
 
     @Override
@@ -67,11 +67,11 @@ public class Shooter extends SubsystemBase {
         Logger.processInputs(LogKey, inputs);
 
         if (desiredGoal.isDynamic) {
-            shooterIO.toFlywheelVelocity(desiredGoal.velocitySetpoint);
+            shooterIO.toVelocity(desiredGoal.velocitySetpoint);
         }
 
         if (desiredGoal != currentGoal) {
-            shooterIO.toFlywheelVelocity(desiredGoal.velocitySetpoint);
+            shooterIO.toVelocity(desiredGoal.velocitySetpoint);
             this.currentGoal = desiredGoal;
         }
 
@@ -110,7 +110,7 @@ public class Shooter extends SubsystemBase {
     private boolean atVelocitySetpoint() {
         return MathUtil.isNear(
                 desiredGoal.getVelocitySetpoint(),
-                inputs.flywheelVelocityRotsPerSec,
+                inputs.masterVelocityRotsPerSec,
                 VelocityToleranceRotsPerSec
         );
     }

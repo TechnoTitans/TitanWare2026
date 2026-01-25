@@ -132,7 +132,8 @@ public class HardwareConstants {
 
     public record ShooterConstants(
             CANBus CANBus,
-            int motorID,
+            int masterMotorID,
+            int followerMotorID,
             double gearing
     ) {}
 
@@ -140,6 +141,7 @@ public class HardwareConstants {
     public static ShooterConstants SHOOTER = new ShooterConstants(
             CANBus.RIO,
             23,
+            24,
             2
     );
 }
