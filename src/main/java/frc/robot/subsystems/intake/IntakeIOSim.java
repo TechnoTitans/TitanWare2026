@@ -256,7 +256,7 @@ public class IntakeIOSim implements IntakeIO {
         rollerMotor.getSimState().Orientation = ChassisReference.CounterClockwise_Positive;
         sliderEncoder.getSimState().Orientation = ChassisReference.CounterClockwise_Positive;
         masterSliderMotor.getSimState().Orientation = ChassisReference.Clockwise_Positive;
-        followerSliderMotor.getSimState().Orientation = ChassisReference.Clockwise_Positive;
+        followerSliderMotor.getSimState().Orientation = ChassisReference.CounterClockwise_Positive;
     }
 
     @Override
