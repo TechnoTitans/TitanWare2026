@@ -39,7 +39,7 @@ public class IntakeIOSim implements IntakeIO {
     private final TalonFXSim rollerMotorSim;
     private final TalonFXSim sliderMotorSim;
 
-    private final MotionMagicExpoVoltage motionMagicExpoVoltage;
+    private final PositionVoltage positionVoltage;
     private final VelocityTorqueCurrentFOC velocityTorqueCurrentFOC;
     private final TorqueCurrentFOC torqueCurrentFOC;
     private final VoltageOut voltageOut;
@@ -94,8 +94,8 @@ public class IntakeIOSim implements IntakeIO {
 
         final DCMotorSim sliderSim = new DCMotorSim(
                 LinearSystemId.createDCMotorSystem(
-                        2.5 / (2 * Math.PI),
-                        0.01 / (2 * Math.PI)
+                        3 / (2 * Math.PI),
+                        0.04 / (2 * Math.PI)
                 ),
                 DCMotor.getKrakenX60Foc(1)
         );
@@ -111,7 +111,7 @@ public class IntakeIOSim implements IntakeIO {
 
         this.sliderMotorSim.attachFeedbackSensor(new SimCANCoder(sliderEncoder));
 
-        this.motionMagicExpoVoltage = new MotionMagicExpoVoltage(0);
+        this.positionVoltage = new PositionVoltage(0);
         this.velocityTorqueCurrentFOC = new VelocityTorqueCurrentFOC(0);
         this.torqueCurrentFOC = new TorqueCurrentFOC(0);
         this.voltageOut = new VoltageOut(0);
@@ -196,7 +196,8 @@ public class IntakeIOSim implements IntakeIO {
 
         final TalonFXConfiguration sliderMotorConfig = new TalonFXConfiguration();
         sliderMotorConfig.Slot0 = new Slot0Configs()
-                .withKP(30);
+                .withKG(0.20)
+                .withKP(100);
         sliderMotorConfig.TorqueCurrent.PeakForwardTorqueCurrent = 60;
         sliderMotorConfig.TorqueCurrent.PeakReverseTorqueCurrent = -60;
         sliderMotorConfig.CurrentLimits.StatorCurrentLimit = 60;

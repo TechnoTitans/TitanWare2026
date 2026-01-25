@@ -1,6 +1,5 @@
 package frc.robot.subsystems.drive;
 
-import choreo.trajectory.SwerveSample;
 import com.ctre.phoenix6.SignalLogger;
 import com.ctre.phoenix6.StatusCode;
 import com.ctre.phoenix6.configs.CANcoderConfiguration;
@@ -36,7 +35,6 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.Robot;
-//import frc.robot.auto.Autos;
 import frc.robot.constants.Constants;
 import frc.robot.subsystems.drive.SwerveIO.SwerveDriveState;
 import frc.robot.subsystems.drive.constants.SwerveConstants;
