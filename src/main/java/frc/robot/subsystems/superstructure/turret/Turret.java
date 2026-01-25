@@ -100,17 +100,8 @@ public class Turret extends SubsystemBase {
         Logger.recordOutput(LogKey + "/DesiredGoal/TurretPositionRots", desiredGoal.getTurretPositionGoalRots());
 
         Logger.recordOutput(LogKey + "/Triggers/AtPositionSetpoint", atTurretPositionSetpoint());
-        Logger.recordOutput(LogKey + "/Triggers/AtPivotLowerLimit", atTurretLowerLimit());
-        Logger.recordOutput(LogKey + "/Triggers/AtPivotUpperLimit", atTurretUpperLimit());
-//        Logger.recordOutput(LogKey + "/CRT",
-//                ChineseRemainder.getAbsolutePosition(
-//                        Units.rotationsToDegrees(inputs.leftPositionRots),
-//                        constants.leftEncoderGearing(),
-//                        Units.rotationsToDegrees(inputs.rightPositionRots),
-//                        constants.rightEncoderGearing(),
-//                        constants.turretTooth()
-//                )
-//        );
+        Logger.recordOutput(LogKey + "/Triggers/AtLowerLimit", atTurretLowerLimit());
+        Logger.recordOutput(LogKey + "/Triggers/AtUpperLimit", atTurretUpperLimit());
         Logger.recordOutput(
                 LogKey + "/PeriodicIOPeriodMs",
                 Units.secondsToMilliseconds(Timer.getFPGATimestamp() - TurretPeriodicUpdateStart)

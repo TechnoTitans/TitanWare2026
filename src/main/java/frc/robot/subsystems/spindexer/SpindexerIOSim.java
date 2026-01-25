@@ -1,4 +1,4 @@
-package frc.robot.subsystems.hopper;
+package frc.robot.subsystems.spindexer;
 
 import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.StatusSignal;
@@ -24,11 +24,11 @@ import frc.robot.utils.control.DeltaTime;
 import frc.robot.utils.ctre.RefreshAll;
 import frc.robot.utils.sim.motors.TalonFXSim;
 
-public class HopperIOSim implements HopperIO {
+public class SpindexerIOSim implements SpindexerIO {
     private static final double SIM_UPDATE_PERIOD_SEC = 0.005;
 
     private final DeltaTime deltaTime;
-    private final HardwareConstants.HopperConstants constants;
+    private final HardwareConstants.SpindexerConstants constants;
 
     private final TalonFX rollerMotor;
     private final TalonFXSim rollerTalonFXSim;
@@ -43,7 +43,7 @@ public class HopperIOSim implements HopperIO {
     private final VoltageOut voltageOut;
     private final TorqueCurrentFOC torqueCurrentFOC;
 
-    public HopperIOSim(final HardwareConstants.HopperConstants constants) {
+    public SpindexerIOSim(final HardwareConstants.SpindexerConstants constants) {
         this.deltaTime = new DeltaTime(true);
         this.constants = constants;
 
@@ -137,15 +137,15 @@ public class HopperIOSim implements HopperIO {
     }
 
     @Override
-    public void updateInputs(HopperIO.HopperIOInputs inputs) {
-        inputs.rollerPositionRots = rollerPosition.getValueAsDouble();
-        inputs.rollerVelocityRotsPerSec = rollerVelocity.getValueAsDouble();
-        inputs.rollerVoltage = rollerVoltage.getValueAsDouble();
-        inputs.rollerTorqueCurrentAmps = rollerTorqueCurrent.getValueAsDouble();
-        inputs.rollerTemperatureCelsius = rollerTemperature.getValueAsDouble();
+    public void updateInputs(SpindexerIOInputs inputs) {
+        inputs.wheelPositionRots = rollerPosition.getValueAsDouble();
+        inputs.wheelVelocityRotsPerSec = rollerVelocity.getValueAsDouble();
+        inputs.wheelVoltage = rollerVoltage.getValueAsDouble();
+        inputs.wheelTorqueCurrentAmps = rollerTorqueCurrent.getValueAsDouble();
+        inputs.wheelTemperatureCelsius = rollerTemperature.getValueAsDouble();
     }
     @Override
-    public void toRollerVelocity(final double velocityRotsPerSec) {
-        rollerMotor.setControl(velocityTorqueCurrentFOC.withVelocity(velocityRotsPerSec));
+    public void toWheelVelocity(final double wheelVelocityRotsPerSec) {
+        rollerMotor.setControl(velocityTorqueCurrentFOC.withVelocity(wheelVelocityRotsPerSec));
     }
 }

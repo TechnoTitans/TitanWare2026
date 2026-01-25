@@ -1,4 +1,4 @@
-package frc.robot.subsystems.hopper;
+package frc.robot.subsystems.spindexer;
 
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.util.Units;
@@ -9,12 +9,12 @@ import frc.robot.constants.Constants;
 import frc.robot.constants.HardwareConstants;
 import org.littletonrobotics.junction.Logger;
 
-public class Hopper extends SubsystemBase {
-    protected static final String LogKey = "Hopper";
+public class Spindexer extends SubsystemBase {
+    protected static final String LogKey = "Spindexer";
     private static final double VelocityToleranceRotsPerSec = 0.002;
 
-    private final HopperIO hopperIO;
-    private final HopperIOInputsAutoLogged inputs;
+    private final SpindexerIO spindexerIO;
+    private final SpindexerIOInputsAutoLogged inputs;
 
     private Goal desiredGoal = Goal.STOP;
     private Goal currentGoal = desiredGoal;
@@ -36,29 +36,29 @@ public class Hopper extends SubsystemBase {
         }
     }
 
-    public Hopper(final Constants.RobotMode mode, final HardwareConstants.HopperConstants constants) {
-        this.hopperIO = switch (mode) {
-            case REAL -> new HopperIOReal(constants);
-            case SIM -> new HopperIOSim(constants);
-            case DISABLED, REPLAY -> new HopperIO() {};
+    public Spindexer(final Constants.RobotMode mode, final HardwareConstants.SpindexerConstants constants) {
+        this.spindexerIO = switch (mode) {
+            case REAL -> new SpindexerIOReal(constants);
+            case SIM -> new SpindexerIOSim(constants);
+            case DISABLED, REPLAY -> new SpindexerIO() {};
         };
 
-        this.inputs = new HopperIOInputsAutoLogged();
+        this.inputs = new SpindexerIOInputsAutoLogged();
 
-        hopperIO.config();
+        spindexerIO.config();
 
-        hopperIO.toRollerVelocity(desiredGoal.getRollerVelocitySetpoint());
+        spindexerIO.toWheelVelocity(desiredGoal.getRollerVelocitySetpoint());
     }
 
     @Override
     public void periodic() {
         final double HopperPeriodicFPGATime = Timer.getFPGATimestamp();
 
-        hopperIO.updateInputs(inputs);
+        spindexerIO.updateInputs(inputs);
         Logger.processInputs(LogKey, inputs);
 
         if (desiredGoal != currentGoal) {
-            hopperIO.toRollerVelocity(desiredGoal.getRollerVelocitySetpoint());
+            spindexerIO.toWheelVelocity(desiredGoal.getRollerVelocitySetpoint());
             this.currentGoal = desiredGoal;
         }
 
@@ -86,7 +86,7 @@ public class Hopper extends SubsystemBase {
         Logger.recordOutput(LogKey + "/DesiredGoal", desiredGoal.toString());
     }
 
-    public boolean atVelocitySetpoint() {
-        return MathUtil.isNear(desiredGoal.rollerVelocitySetpoint, inputs.rollerVelocityRotsPerSec, VelocityToleranceRotsPerSec);
+    private boolean atVelocitySetpoint() {
+        return MathUtil.isNear(desiredGoal.rollerVelocitySetpoint, inputs.wheelVelocityRotsPerSec, VelocityToleranceRotsPerSec);
     }
 }
