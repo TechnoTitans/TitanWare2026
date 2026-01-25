@@ -5,10 +5,7 @@ import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.CANcoderConfiguration;
 import com.ctre.phoenix6.configs.Slot0Configs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
-import com.ctre.phoenix6.controls.MotionMagicExpoVoltage;
-import com.ctre.phoenix6.controls.TorqueCurrentFOC;
-import com.ctre.phoenix6.controls.VelocityTorqueCurrentFOC;
-import com.ctre.phoenix6.controls.VoltageOut;
+import com.ctre.phoenix6.controls.*;
 import com.ctre.phoenix6.hardware.CANcoder;
 import com.ctre.phoenix6.hardware.ParentDevice;
 import com.ctre.phoenix6.hardware.TalonFX;
@@ -21,8 +18,9 @@ public class IntakeIOReal implements IntakeIO {
     private final HardwareConstants.IntakeConstants constants;
 
     private final TalonFX rollerMotor;
-    private final TalonFX sliderMotor;
-    private final CANcoder sliderEncoder;
+    private final TalonFX masterSliderMotor;
+    private final TalonFX followerSliderMotor;
+    private final CANcoder encoder;
 
     private final StatusSignal<Angle> rollerPosition;
     private final StatusSignal<AngularVelocity> rollerVelocity;
@@ -30,26 +28,34 @@ public class IntakeIOReal implements IntakeIO {
     private final StatusSignal<Current> rollerTorqueCurrent;
     private final StatusSignal<Temperature> rollerDeviceTemp;
 
-    private final StatusSignal<Angle> sliderPosition;
-    private final StatusSignal<AngularVelocity> sliderVelocity;
-    private final StatusSignal<Voltage> sliderVoltage;
-    private final StatusSignal<Current> sliderTorqueCurrent;
-    private final StatusSignal<Temperature> sliderDeviceTemp;
+    private final StatusSignal<Angle> masterSliderPosition;
+    private final StatusSignal<AngularVelocity> masterSliderVelocity;
+    private final StatusSignal<Voltage> masterSliderVoltage;
+    private final StatusSignal<Current> masterSliderTorqueCurrent;
+    private final StatusSignal<Temperature> masterSliderDeviceTemp;
     private final StatusSignal<Angle> encoderPosition;
     private final StatusSignal<AngularVelocity> encoderVelocity;
+
+    private final StatusSignal<Angle> followerSliderPosition;
+    private final StatusSignal<AngularVelocity> followerSliderVelocity;
+    private final StatusSignal<Voltage> followerSliderVoltage;
+    private final StatusSignal<Current> followerSliderTorqueCurrent;
+    private final StatusSignal<Temperature> followerSliderDeviceTemp;
 
     private final MotionMagicExpoVoltage motionMagicExpoVoltage;
     private final VelocityTorqueCurrentFOC velocityTorqueCurrentFOC;
     private final TorqueCurrentFOC torqueCurrentFOC;
     private final VoltageOut voltageOut;
+    private final Follower follower;
 
 
     public IntakeIOReal(final HardwareConstants.IntakeConstants constants) {
         this.constants = constants;
 
         this.rollerMotor = new TalonFX(constants.rollerMotorID(), constants.CANBus().toPhoenix6CANBus());
-        this.sliderMotor = new TalonFX(constants.sliderMotorID(), constants.CANBus().toPhoenix6CANBus());
-        this.sliderEncoder = new CANcoder(constants.encoderID(), constants.CANBus().toPhoenix6CANBus());
+        this.masterSliderMotor = new TalonFX(constants.masterSliderMotorID(), constants.CANBus().toPhoenix6CANBus());
+        this.followerSliderMotor = new TalonFX(constants.followerSliderMotorID(), constants.CANBus().toPhoenix6CANBus());
+        this.encoder = new CANcoder(constants.encoderID(), constants.CANBus().toPhoenix6CANBus());
 
         this.rollerPosition = rollerMotor.getPosition(false);
         this.rollerVelocity = rollerMotor.getVelocity(false);
@@ -57,18 +63,25 @@ public class IntakeIOReal implements IntakeIO {
         this.rollerTorqueCurrent = rollerMotor.getTorqueCurrent(false);
         this.rollerDeviceTemp = rollerMotor.getDeviceTemp(false);
 
-        this.sliderPosition = sliderMotor.getPosition(false);
-        this.sliderVelocity = sliderMotor.getVelocity(false);
-        this.sliderVoltage = sliderMotor.getMotorVoltage(false);
-        this.sliderTorqueCurrent = sliderMotor.getTorqueCurrent(false);
-        this.sliderDeviceTemp = sliderMotor.getDeviceTemp(false);
-        this.encoderPosition = sliderEncoder.getPosition(false);
-        this.encoderVelocity = sliderEncoder.getVelocity(false);
+        this.masterSliderPosition = masterSliderMotor.getPosition(false);
+        this.masterSliderVelocity = masterSliderMotor.getVelocity(false);
+        this.masterSliderVoltage = masterSliderMotor.getMotorVoltage(false);
+        this.masterSliderTorqueCurrent = masterSliderMotor.getTorqueCurrent(false);
+        this.masterSliderDeviceTemp = masterSliderMotor.getDeviceTemp(false);
+        this.encoderPosition = encoder.getPosition(false);
+        this.encoderVelocity = encoder.getVelocity(false);
+
+        this.followerSliderPosition = followerSliderMotor.getPosition(false);
+        this.followerSliderVelocity = followerSliderMotor.getVelocity(false);
+        this.followerSliderVoltage = followerSliderMotor.getMotorVoltage(false);
+        this.followerSliderTorqueCurrent = followerSliderMotor.getTorqueCurrent(false);
+        this.followerSliderDeviceTemp = followerSliderMotor.getDeviceTemp(false);
 
         this.motionMagicExpoVoltage = new MotionMagicExpoVoltage(0);
         this.velocityTorqueCurrentFOC = new VelocityTorqueCurrentFOC(0);
         this.torqueCurrentFOC = new TorqueCurrentFOC(0);
         this.voltageOut = new VoltageOut(0);
+        this.follower = new Follower(masterSliderMotor.getDeviceID(), MotorAlignmentValue.Opposed);
 
         RefreshAll.add(
                 constants.CANBus(),
@@ -76,7 +89,17 @@ public class IntakeIOReal implements IntakeIO {
                 rollerVelocity,
                 rollerVoltage,
                 rollerTorqueCurrent,
-                rollerDeviceTemp
+                rollerDeviceTemp,
+                masterSliderPosition,
+                masterSliderVelocity,
+                masterSliderVoltage,
+                masterSliderTorqueCurrent,
+                masterSliderDeviceTemp,
+                followerSliderPosition,
+                followerSliderVelocity,
+                followerSliderVoltage,
+                followerSliderTorqueCurrent,
+                followerSliderDeviceTemp
         );
     }
 
@@ -117,7 +140,7 @@ public class IntakeIOReal implements IntakeIO {
         sliderMotorConfig.CurrentLimits.SupplyCurrentLowerTime = 1;
         sliderMotorConfig.CurrentLimits.SupplyCurrentLimitEnable = true;
         sliderMotorConfig.Feedback.FeedbackSensorSource = FeedbackSensorSourceValue.FusedCANcoder;
-        sliderMotorConfig.Feedback.FeedbackRemoteSensorID = sliderEncoder.getDeviceID();
+        sliderMotorConfig.Feedback.FeedbackRemoteSensorID = encoder.getDeviceID();
         sliderMotorConfig.Feedback.SensorToMechanismRatio = 1;
         sliderMotorConfig.Feedback.RotorToSensorRatio = 112.84;
         sliderMotorConfig.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
@@ -126,12 +149,15 @@ public class IntakeIOReal implements IntakeIO {
         sliderMotorConfig.SoftwareLimitSwitch.ForwardSoftLimitEnable = true;
         sliderMotorConfig.SoftwareLimitSwitch.ReverseSoftLimitThreshold = constants.lowerLimitRots();
         sliderMotorConfig.SoftwareLimitSwitch.ReverseSoftLimitEnable = true;
-        sliderMotor.getConfigurator().apply(sliderMotorConfig);
+
+        masterSliderMotor.getConfigurator().apply(sliderMotorConfig);
+        sliderMotorConfig.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
+        followerSliderMotor.getConfigurator().apply(sliderMotorConfig);
 
         final CANcoderConfiguration sliderCANCoderConfig = new CANcoderConfiguration();
         sliderCANCoderConfig.MagnetSensor.MagnetOffset = constants.encoderOffset();
         sliderCANCoderConfig.MagnetSensor.SensorDirection = SensorDirectionValue.CounterClockwise_Positive;
-        sliderEncoder.getConfigurator().apply(sliderCANCoderConfig);
+        encoder.getConfigurator().apply(sliderCANCoderConfig);
 
         BaseStatusSignal.setUpdateFrequencyForAll(
                 100,
@@ -139,10 +165,14 @@ public class IntakeIOReal implements IntakeIO {
                 rollerVelocity,
                 rollerVoltage,
                 rollerTorqueCurrent,
-                sliderPosition,
-                sliderVelocity,
-                sliderVoltage,
-                sliderTorqueCurrent,
+                masterSliderPosition,
+                masterSliderVelocity,
+                masterSliderVoltage,
+                masterSliderTorqueCurrent,
+                followerSliderPosition,
+                followerSliderVelocity,
+                followerSliderVoltage,
+                followerSliderTorqueCurrent,
                 encoderPosition,
                 encoderVelocity
         );
@@ -150,14 +180,16 @@ public class IntakeIOReal implements IntakeIO {
         BaseStatusSignal.setUpdateFrequencyForAll(
                 4,
                 rollerDeviceTemp,
-                sliderDeviceTemp
+                masterSliderDeviceTemp,
+                followerSliderDeviceTemp
         );
 
         ParentDevice.optimizeBusUtilizationForAll(
                 4,
                 rollerMotor,
-                sliderMotor,
-                sliderEncoder
+                masterSliderMotor,
+                followerSliderMotor,
+                encoder
         );
     }
 
@@ -169,11 +201,18 @@ public class IntakeIOReal implements IntakeIO {
         inputs.rollerTorqueCurrentAmps = rollerTorqueCurrent.getValueAsDouble();
         inputs.rollerTempCelsius = rollerDeviceTemp.getValueAsDouble();
 
-        inputs.sliderPositionRots = sliderPosition.getValueAsDouble();
-        inputs.sliderVelocityRotsPerSec = sliderVelocity.getValueAsDouble();
-        inputs.sliderVoltage = sliderVoltage.getValueAsDouble();
-        inputs.sliderTorqueCurrentAmps = sliderTorqueCurrent.getValueAsDouble();
-        inputs.sliderTempCelsius = sliderDeviceTemp.getValueAsDouble();
+        inputs.masterSliderPositionRots = masterSliderPosition.getValueAsDouble();
+        inputs.masterSliderVelocityRotsPerSec = masterSliderVelocity.getValueAsDouble();
+        inputs.masterSliderVoltage = masterSliderVoltage.getValueAsDouble();
+        inputs.masterSliderTorqueCurrentAmps = masterSliderTorqueCurrent.getValueAsDouble();
+        inputs.masterSliderTempCelsius = masterSliderDeviceTemp.getValueAsDouble();
+
+        inputs.followerSliderPositionRots = followerSliderPosition.getValueAsDouble();
+        inputs.followerSliderVelocityRotsPerSec = followerSliderVelocity.getValueAsDouble();
+        inputs.followerSliderVoltage = followerSliderVoltage.getValueAsDouble();
+        inputs.followerSliderTorqueCurrentAmps = followerSliderTorqueCurrent.getValueAsDouble();
+        inputs.followerSliderTempCelsius = followerSliderDeviceTemp.getValueAsDouble();
+
         inputs.encoderPositionRots = encoderPosition.getValueAsDouble();
         inputs.encoderVelocityRotsPerSec = encoderVelocity.getValueAsDouble();
     }
@@ -195,16 +234,19 @@ public class IntakeIOReal implements IntakeIO {
 
     @Override
     public void toSliderPosition(double positionRots) {
-        sliderMotor.setControl(motionMagicExpoVoltage.withPosition(positionRots));
+        masterSliderMotor.setControl(motionMagicExpoVoltage.withPosition(positionRots));
+        followerSliderMotor.setControl(follower);
     }
 
     @Override
     public void toSliderVoltage(double volts) {
-        sliderMotor.setControl(voltageOut.withOutput(volts));
+        masterSliderMotor.setControl(voltageOut.withOutput(volts));
+        followerSliderMotor.setControl(follower);
     }
 
     @Override
     public void toSliderTorqueCurrent(double torqueCurrent) {
-        sliderMotor.setControl(torqueCurrentFOC.withOutput(torqueCurrent));
+        masterSliderMotor.setControl(torqueCurrentFOC.withOutput(torqueCurrent));
+        followerSliderMotor.setControl(follower);
     }
 }
