@@ -1,53 +1,57 @@
 package frc.robot.utils.solver;
 
-import edu.wpi.first.math.geometry.*;
+import edu.wpi.first.math.geometry.Pose3d;
+import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Rotation3d;
+import edu.wpi.first.math.geometry.Transform3d;
+import frc.robot.constants.HardwareConstants;
 import frc.robot.constants.SimConstants;
 import org.littletonrobotics.junction.Logger;
 
-import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
 
 public class ComponentsSolver {
     final Supplier<Rotation2d> turretRotationSupplier;
     final Supplier<Rotation2d> hoodRotationSupplier;
-//    final Supplier<Rotation2d> intakeRotationSupplier;
+    final Supplier<Rotation2d> intakeSliderRotationSupplier;
 
     public ComponentsSolver(
             final Supplier<Rotation2d> turretRotationSupplier,
-            final Supplier<Rotation2d> hoodRotationSupplier
-//            final Supplier<Rotation2d> intakeRotationSupplier
+            final Supplier<Rotation2d> hoodRotationSupplier,
+            final Supplier<Rotation2d> intakeSliderRotationSupplier
     ) {
         this.turretRotationSupplier = turretRotationSupplier;
         this.hoodRotationSupplier = hoodRotationSupplier;
-//        this.intakeRotationSupplier = intakeRotationSupplier;
+        this.intakeSliderRotationSupplier = intakeSliderRotationSupplier;
     }
 
     public void periodic() {
         final Pose3d[] superstructurePoses = getSuperstructurePoses();
-        final Pose3d[] intakePoses = getIntakePoses();
+        final Pose3d[] intakeHopperPoses = getIntakeHopperPoses();
 
         Logger.recordOutput(
                 "Components",
                 superstructurePoses[0],
                 superstructurePoses[1],
-                intakePoses[0],
-                intakePoses[1]
+                intakeHopperPoses[0],
+                intakeHopperPoses[1]
         );
     }
 
     private Pose3d[] getSuperstructurePoses() {
         final Pose3d turretPose = new Pose3d(
                 SimConstants.Turret.ORIGIN,
-                new Rotation3d(turretRotationSupplier.get())
+                new Rotation3d(turretRotationSupplier.get().plus(Rotation2d.kCW_90deg))
         );
 
         final Pose3d hoodPose = turretPose.transformBy(
                 new Transform3d(
                         SimConstants.Hood.TURRET_TO_HOOD_TRANSLATION,
                         new Rotation3d(
+                                hoodRotationSupplier.get().unaryMinus().plus(SimConstants.Hood.ZEROED_POSITION_TO_HORIZONTAL).getRadians(),
+//                                hoodRotationSupplier.get().minus(SimConstants.Hood.ZEROED_POSITION_TO_HORIZONTAL)
+//                                        .getRadians(),
                                 0,
-                                hoodRotationSupplier.get().minus(SimConstants.Hood.ZEROED_POSITION_TO_HORIZONTAL)
-                                        .getRadians(),
                                 0
                         )
                 )
@@ -56,7 +60,16 @@ public class ComponentsSolver {
         return new Pose3d[] {turretPose, hoodPose};
     }
 
-    private Pose3d[] getIntakePoses() {
-        return new Pose3d[]{};
+    private Pose3d[] getIntakeHopperPoses() {
+        final double dt = intakeSliderRotationSupplier.get().getRotations()
+                        / (HardwareConstants.INTAKE.upperLimitRots() - HardwareConstants.INTAKE.lowerLimitRots());
+
+        final Pose3d intakePose = SimConstants.IntakeSlider.RETRACTED_POSE
+                .interpolate(SimConstants.IntakeSlider.EXTENDED_POSE, dt);
+
+        final Pose3d hopperPose = SimConstants.Hopper.RETRACTED_POSE
+                .interpolate(SimConstants.Hopper.EXTENDED_POSE, dt);
+
+        return new Pose3d[] {intakePose, hopperPose};
     }
 }

@@ -65,12 +65,12 @@ public class HardwareConstants {
             int turretMotorID,
             int leftEncoderID,
             int rightEncoderID,
-            double turretGearing,
+            double turretToMechanismGearing,
+            int turretTooth,
             double leftEncoderGearing,
             double rightEncoderGearing,
             double leftEncoderOffset,
             double rightEncoderOffset,
-            int countableRotations,
             double upperLimitRots,
             double lowerLimitRots
     ) {}
@@ -85,7 +85,6 @@ public class HardwareConstants {
             17,
             0,
             0,
-            70,
             0.5,
             -0.5
     );

@@ -58,6 +58,7 @@ public class IntakeState extends VirtualSubsystem {
                 .withName("SetIntakeState: " + state.toString());
     }
 
+    //TODO: Finish state triggers and sim triggers
     public void configureStateTriggers() {
 
     }

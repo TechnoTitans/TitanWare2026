@@ -20,7 +20,6 @@ import edu.wpi.first.wpilibj.Notifier;
 import edu.wpi.first.wpilibj.simulation.DCMotorSim;
 import frc.robot.constants.HardwareConstants;
 import frc.robot.constants.SimConstants;
-import frc.robot.utils.MoreDCMotor;
 import frc.robot.utils.closeables.ToClose;
 import frc.robot.utils.control.DeltaTime;
 import frc.robot.utils.ctre.RefreshAll;
@@ -105,10 +104,10 @@ public class ShooterIOSim implements ShooterIO {
         final TalonFXConfiguration flywheelConfiguration = new TalonFXConfiguration();
         flywheelConfiguration.Slot0 = new Slot0Configs()
                 .withKS(0.01)
-                .withKP(5);
-        flywheelConfiguration.CurrentLimits.StatorCurrentLimit = 40;
+                .withKP(200);
+        flywheelConfiguration.CurrentLimits.StatorCurrentLimit = 70;
         flywheelConfiguration.CurrentLimits.StatorCurrentLimitEnable = true;
-        flywheelConfiguration.CurrentLimits.SupplyCurrentLimit = 40;
+        flywheelConfiguration.CurrentLimits.SupplyCurrentLimit = 60;
         flywheelConfiguration.CurrentLimits.SupplyCurrentLowerLimit = 40;
         flywheelConfiguration.CurrentLimits.SupplyCurrentLowerTime = 1;
         flywheelConfiguration.CurrentLimits.SupplyCurrentLimitEnable = true;

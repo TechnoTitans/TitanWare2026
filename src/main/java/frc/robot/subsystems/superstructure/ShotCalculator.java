@@ -1,23 +1,28 @@
 package frc.robot.subsystems.superstructure;
 
 import edu.wpi.first.math.MathUtil;
+import edu.wpi.first.math.filter.LinearFilter;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.math.geometry.Twist2d;
 import edu.wpi.first.math.interpolation.Interpolatable;
 import edu.wpi.first.math.interpolation.InterpolatingTreeMap;
 import edu.wpi.first.math.interpolation.Interpolator;
 import edu.wpi.first.math.interpolation.InverseInterpolator;
+import edu.wpi.first.math.kinematics.ChassisSpeeds;
+import edu.wpi.first.math.util.Units;
 import frc.robot.constants.FieldConstants;
-import org.littletonrobotics.junction.Logger;
+import frc.robot.constants.SimConstants;
+import frc.robot.utils.geometry.AllianceFlipUtil;
 
-import java.lang.reflect.Field;
+import javax.sound.sampled.Line;
 import java.util.function.Supplier;
 
 public class ShotCalculator {
     public enum Target {
-        HUB(FieldConstants.hubCenter),
-        FERRYING(FieldConstants.hubCenter);
+        HUB(FieldConstants.Hub.hubCenterPoint),
+        FERRYING(FieldConstants.ferryTarget);
 
         private final Translation2d targetTranslation;
 
@@ -29,7 +34,16 @@ public class ShotCalculator {
             return targetTranslation;
         }
     }
-    protected static String LogKey = "ShotCalculator";
+    protected static final String LogKey = "Superstructure/ShotCalculator";
+
+    private static final double FerryXBoundary = Units.inchesToMeters(205);
+    private static final double FuturePoseDTSec = 0.25;
+    private static final double PhaseDelaySec = 0.03;
+
+//    private static final LinearFilter turretLinearFilter =
+//            LinearFilter.movingAverage((int) (5.0));
+//    private static final LinearFilter hoodLinearFilter =
+//            LinearFilter.movingAverage((int) (5.0));
 
     public record HoodShooterCalculation(
             Rotation2d hoodRotation,
@@ -54,84 +68,119 @@ public class ShotCalculator {
             HoodShooterCalculation.interpolator
     );
 
+    //TODO: Temp values
     static {
         shotDataMap.put(1d, new HoodShooterCalculation(
-                Rotation2d.fromRadians(0.437138669),
+                Rotation2d.fromDegrees(5),
                 10,
-                0.1
+                1
         ));
 
         shotDataMap.put(1.5d, new HoodShooterCalculation(
-                Rotation2d.fromRadians(0.611352924),
+                Rotation2d.fromDegrees(10),
                 10,
-                0.15
+                1.05
         ));
 
         shotDataMap.put(2d, new HoodShooterCalculation(
-                Rotation2d.fromRadians(0.75159462),
+                Rotation2d.fromDegrees(15),
                 10,
-                0.2
+                1.1
         ));
 
         shotDataMap.put(2.5d, new HoodShooterCalculation(
-                Rotation2d.fromRadians(0.86282925),
+                Rotation2d.fromDegrees(18),
                 10,
-                0.20
+                1.15
         ));
 
         shotDataMap.put(3d, new HoodShooterCalculation(
-                Rotation2d.fromRadians(0.951177756),
+                Rotation2d.fromDegrees(19),
                 10,
-                0.25
+                1.2
         ));
 
         shotDataMap.put(3.5d, new HoodShooterCalculation(
-                Rotation2d.fromRadians(1.022015817),
+                Rotation2d.fromDegrees(20),
                 10,
-                0.3
+                1.25
         ));
 
         shotDataMap.put(4d, new HoodShooterCalculation(
-                Rotation2d.fromRadians(1.079542321),
+                Rotation2d.fromDegrees(22),
                 10,
-                0.35
+                1.3
         ));
 
         shotDataMap.put(4.5d, new HoodShooterCalculation(
-                Rotation2d.fromRadians(1.126894805),
+                Rotation2d.fromDegrees(25),
                 10,
-                0.4
+                1.35
         ));
 
         shotDataMap.put(5d, new HoodShooterCalculation(
-                Rotation2d.fromRadians(1.166387399),
+                Rotation2d.fromDegrees(26),
                 10,
-                0.50
+                1.4
         ));
     }
 
     public record ShotCalculation(
             Rotation2d desiredTurretRotation,
-            HoodShooterCalculation hoodShooterCalculation
+            HoodShooterCalculation hoodShooterCalculation,
+            Target target
     ) {}
 
-    public static ShotCalculation getShotCalculation(final Supplier<Pose2d> swervePoseSupplier, final Supplier<Target> targetSupplier) {
-        return getShotCalculation(swervePoseSupplier.get(), targetSupplier.get());
+    public static ShotCalculation getShotCalculation(
+            final Supplier<Pose2d> swervePoseSupplier,
+            final Supplier<ChassisSpeeds> robotRelativeChassisSpeedsSupplier,
+            final Supplier<ChassisSpeeds> swerveChassisSpeedsSupplier
+    ) {
+        return getShotCalculation(
+                swervePoseSupplier.get(),
+                robotRelativeChassisSpeedsSupplier.get(),
+                swerveChassisSpeedsSupplier.get()
+        );
     }
 
-    //TODO: Adding logging
-    private static ShotCalculation getShotCalculation(final Pose2d swervePose, final Target target) {
-        final Rotation2d differenceInAngle = target.getTargetTranslation().minus(swervePose.getTranslation()).getAngle();
+    private static ShotCalculation getShotCalculation(
+            final Pose2d swervePose,
+            final ChassisSpeeds robotRelativeChassisSpeeds,
+            final ChassisSpeeds fieldRelativeChassisSpeeds
+    ) {
 
-        final Rotation2d desiredTurretRotation = differenceInAngle.minus(swervePose.getRotation());
+        final Pose2d turretPose = swervePose.transformBy(SimConstants.Turret.TURRET_TO_ROBOT_TRANSFORM);
 
-        final double distanceToTarget = FieldConstants.hubCenter.getDistance(swervePose.getTranslation());
+        Target target = getTarget(turretPose, fieldRelativeChassisSpeeds.vxMetersPerSecond);
+        final Translation2d targetTranslation = AllianceFlipUtil.apply(target.getTargetTranslation());
+
+        final double turretToTargetDistance = targetTranslation.getDistance(turretPose.getTranslation());
+
+        final Rotation2d desiredTurretAngle =  targetTranslation.minus(turretPose.getTranslation()).getAngle().minus(turretPose.getRotation())
+                .plus(new Rotation2d(Units.radiansToRotations(-fieldRelativeChassisSpeeds.omegaRadiansPerSecond * 0.02)));
 
         return new ShotCalculation(
-                desiredTurretRotation,
+                desiredTurretAngle,
                 shotDataMap.get(
-                        distanceToTarget
-                )
+                        turretToTargetDistance
+                ),
+                target
         );
+    }
+
+    private static Target getTarget(final Pose2d currentPose, final double vxMetersPerSecond) {
+        final double futurePoseXPosition = currentPose.getX() + vxMetersPerSecond * FuturePoseDTSec;
+
+        final Target currentTarget =
+                currentPose.getX() > FerryXBoundary ? Target.FERRYING : Target.HUB;
+
+        if (currentTarget == Target.HUB) {
+                return currentTarget;
+        }
+
+        final Target futureTarget =
+                futurePoseXPosition > FerryXBoundary ? Target.FERRYING : Target.HUB;
+
+        return futureTarget;
     }
 }

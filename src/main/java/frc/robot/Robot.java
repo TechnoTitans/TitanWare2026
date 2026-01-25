@@ -7,7 +7,6 @@ package frc.robot;
 import com.ctre.phoenix6.SignalLogger;
 import edu.wpi.first.hal.AllianceStationID;
 import edu.wpi.first.math.geometry.Pose3d;
-import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.*;
 import edu.wpi.first.wpilibj.event.EventLoop;
 import edu.wpi.first.wpilibj.livewindow.LiveWindow;
@@ -18,17 +17,20 @@ import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.constants.Constants;
+import frc.robot.constants.FieldConstants;
 import frc.robot.constants.HardwareConstants;
 import frc.robot.constants.RobotMap;
 import frc.robot.subsystems.drive.Swerve;
 import frc.robot.subsystems.drive.constants.SwerveConstants;
+import frc.robot.subsystems.hopper.Hopper;
 import frc.robot.subsystems.intake.Intake;
 import frc.robot.subsystems.superstructure.ShotCalculator;
 import frc.robot.subsystems.superstructure.Superstructure;
+import frc.robot.subsystems.superstructure.feeder.Feeder;
 import frc.robot.subsystems.superstructure.hood.Hood;
-import frc.robot.subsystems.superstructure.hopper.Hopper;
 import frc.robot.subsystems.superstructure.shooter.Shooter;
 import frc.robot.subsystems.superstructure.turret.Turret;
+import frc.robot.subsystems.vision.PhotonVision;
 import frc.robot.utils.closeables.ToClose;
 import frc.robot.utils.ctre.RefreshAll;
 import frc.robot.utils.logging.LoggedCommandScheduler;
@@ -77,14 +79,19 @@ public class Robot extends LoggedRobot {
             SwerveConstants.CTRESwerve.BackRight
     );
 
+    public final PhotonVision photonVision = new PhotonVision(
+            Constants.RobotMode.DISABLED,
+            swerve
+    );
+
     public final Intake intake = new Intake(
             Constants.CURRENT_MODE,
             HardwareConstants.INTAKE
     );
 
-    public final Hopper hopper = new Hopper(
+    public final Feeder feeder = new Feeder(
             Constants.CURRENT_MODE,
-            HardwareConstants.HOPPER
+            HardwareConstants.FEEDER
     );
 
     public final Turret turret = new Turret(
@@ -102,24 +109,19 @@ public class Robot extends LoggedRobot {
             HardwareConstants.SHOOTER
     );
 
-    private ShotCalculator.Target target = ShotCalculator.Target.HUB;
-
-    private final Trigger shouldFerry = new Trigger(
-            () -> {
-
-                if (swerve.getPose() != null) {
-                    return swerve.getPose().getX() > Units.inchesToMeters(118);
-                }
-
-                return false;
-            }
+    public final Hopper hopper = new Hopper(
+            Constants.CURRENT_MODE,
+            HardwareConstants.HOPPER
     );
 
     private final Supplier<ShotCalculator.ShotCalculation> shotCalculationSupplier =
-            () -> ShotCalculator.getShotCalculation(swerve::getPose, () -> target);
-
+            () -> ShotCalculator.getShotCalculation(
+                    swerve::getPose,
+                    swerve::getRobotRelativeSpeeds,
+                    swerve::getFieldRelativeSpeeds
+            );
     public final Superstructure superstructure = new Superstructure(
-            hopper,
+            feeder,
             turret,
             hood,
             shooter,
@@ -128,13 +130,15 @@ public class Robot extends LoggedRobot {
 
     private final ComponentsSolver componentsSolver = new ComponentsSolver(
             turret::getTurretPosition,
-            hood::getHoodPosition
+            hood::getHoodPosition,
+            intake::getIntakeSliderPositionRots
     );
 
     private final RobotCommands robotCommands = new RobotCommands(
             swerve,
             intake,
-            superstructure
+            superstructure,
+            hopper
     );
 
     public final CommandXboxController driverController = new CommandXboxController(RobotMap.MainController);
@@ -266,8 +270,9 @@ public class Robot extends LoggedRobot {
         coControllerDisconnected.set(!coController.getHID().isConnected());
 
         LoggedCommandScheduler.periodic();
-        Logger.recordOutput("Target", target);
-//        componentsSolver.periodic();
+        Logger.recordOutput("ShotCalculation", shotCalculationSupplier.get());
+        componentsSolver.periodic();
+        robotCommands.periodic();
 
         Threads.setCurrentThreadPriority(false, 10);
     }
@@ -303,15 +308,16 @@ public class Robot extends LoggedRobot {
     public void simulationPeriodic() {}
 
     public void configureStateTriggers() {
+        autonomousEnabled.onTrue(hood.home());
+
+        teleopEnabled.and(() -> Constants.CURRENT_MODE != Constants.RobotMode.SIM).and(hood::isHomed).negate().onTrue(hood.home());
+
+
         endgameTrigger.onTrue(ControllerUtils.rumbleForDurationCommand(
                 driverController.getHID(), GenericHID.RumbleType.kBothRumble, 0.5, 1)
         );
 
         disabled.onTrue(swerve.stopCommand());
-
-        shouldFerry.onTrue(
-                Commands.runOnce(() -> target = ShotCalculator.Target.FERRYING)
-        ).onFalse(Commands.runOnce(() -> target = ShotCalculator.Target.HUB));
     }
 
     public void configureAutos() {
@@ -320,11 +326,17 @@ public class Robot extends LoggedRobot {
 
     public void configureButtonBindings(final EventLoop teleopEventLoop) {
         driverController.leftTrigger(0.5, teleopEventLoop).whileTrue(
-                intake.toGoal(Intake.Goal.INTAKE)
+                robotCommands.intake()
         );
 
         driverController.rightTrigger(0.5, teleopEventLoop).whileTrue(
-                superstructure.setShootingState(true)
-        ).onFalse(superstructure.setShootingState(false));
+                robotCommands.shootWhileMoving()
+        );
+
+        coController.rightTrigger(0.5, teleopEventLoop).whileTrue(
+                robotCommands.shootStationary(
+                        FieldConstants.Hub.hubCenterPoint::getAngle
+                )
+        );
     }
 }

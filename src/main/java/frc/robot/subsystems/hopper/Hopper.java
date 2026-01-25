@@ -1,13 +1,10 @@
-package frc.robot.subsystems.superstructure.hopper;
+package frc.robot.subsystems.hopper;
 
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.util.Units;
-import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
-import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.constants.Constants;
 import frc.robot.constants.HardwareConstants;
 import org.littletonrobotics.junction.Logger;
@@ -19,13 +16,12 @@ public class Hopper extends SubsystemBase {
     private final HopperIO hopperIO;
     private final HopperIOInputsAutoLogged inputs;
 
-
-    //TODO: This won't work. When you shoot, your hopper won't actually move
     private Goal desiredGoal = Goal.STOP;
     private Goal currentGoal = desiredGoal;
 
     public enum Goal {
         STOP(0),
+        INTAKE(4),
         FEED(5),
         EJECT(-5);
 
@@ -43,7 +39,7 @@ public class Hopper extends SubsystemBase {
     public Hopper(final Constants.RobotMode mode, final HardwareConstants.HopperConstants constants) {
         this.hopperIO = switch (mode) {
             case REAL -> new HopperIOReal(constants);
-            case SIM -> new HopperIOSim();
+            case SIM -> new HopperIOSim(constants);
             case DISABLED, REPLAY -> new HopperIO() {};
         };
 
@@ -63,11 +59,12 @@ public class Hopper extends SubsystemBase {
 
         if (desiredGoal != currentGoal) {
             hopperIO.toRollerVelocity(desiredGoal.getRollerVelocitySetpoint());
+            this.currentGoal = desiredGoal;
         }
 
         Logger.recordOutput(LogKey + "/CurrentGoal", currentGoal.toString());
         Logger.recordOutput(LogKey + "/DesiredGoal", desiredGoal.toString());
-        Logger.recordOutput(LogKey + "/DesiredGoal/RollerVelocityRotsPerSec", desiredGoal.getRollerVelocitySetpoint());
+        Logger.recordOutput(LogKey + "/DesiredGoal/HopperVelocityRotsPerSec", desiredGoal.getRollerVelocitySetpoint());
         Logger.recordOutput(LogKey + "/Triggers/AtVelocitySetpoint", atVelocitySetpoint());
 
         Logger.recordOutput(
@@ -76,14 +73,17 @@ public class Hopper extends SubsystemBase {
         );
     }
 
-    public Command setGoal(final Goal desiredGoal) {
-        return Commands.runOnce(
-                () -> {
-                    this.desiredGoal = desiredGoal;
-                    Logger.recordOutput(LogKey + "/CurrentGoal", currentGoal.toString());
-                    Logger.recordOutput(LogKey + "/DesiredGoal", desiredGoal.toString());
-                }
-        );
+    public Command toGoal(final Goal desiredGoal) {
+        return runEnd(
+                () -> setGoal(desiredGoal),
+                () -> setGoal(Goal.STOP)
+        ).withName("ToGoal");
+    }
+
+    public void setGoal(final Goal desiredGoal) {
+        this.desiredGoal = desiredGoal;
+        Logger.recordOutput(LogKey + "/CurrentGoal", currentGoal.toString());
+        Logger.recordOutput(LogKey + "/DesiredGoal", desiredGoal.toString());
     }
 
     public boolean atVelocitySetpoint() {

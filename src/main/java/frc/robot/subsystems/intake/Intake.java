@@ -1,6 +1,7 @@
 package frc.robot.subsystems.intake;
 
 import edu.wpi.first.math.MathUtil;
+import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -30,8 +31,8 @@ public class Intake extends SubsystemBase {
 
     public enum Goal {
         STOW(0, 0),
-        INTAKE(0.5, 10),
-        EJECT(0.5, -9);
+        INTAKE(1, 10),
+        EJECT(1, -9);
 
         private final double sliderExtensionGoalMeters;
         private final double rollerVelocityGoalRotsPerSec;
@@ -106,8 +107,8 @@ public class Intake extends SubsystemBase {
     
     private boolean atSliderPositionSetpoint() {
         return currentGoal == desiredGoal
-                && MathUtil.isNear(desiredGoal.getSliderGoalRots(constants.gearPitchCircumferenceMeters()), inputs.sliderPositionRots, PositionToleranceRots)
-                && MathUtil.isNear(0, inputs.sliderVelocityRotsPerSec, VelocityToleranceRotsPerSec);
+                && MathUtil.isNear(desiredGoal.getSliderGoalRots(constants.gearPitchCircumferenceMeters()), inputs.masterSliderPositionRots, PositionToleranceRots)
+                && MathUtil.isNear(0, inputs.masterSliderVelocityRotsPerSec, VelocityToleranceRotsPerSec);
     }
 
     public boolean atRollerVelocitySetpoint() {
@@ -116,11 +117,11 @@ public class Intake extends SubsystemBase {
     }
 
     private boolean atSliderLowerLimit() {
-        return inputs.sliderPositionRots <= constants.lowerLimitRots();
+        return inputs.masterSliderPositionRots <= constants.lowerLimitRots();
     }
 
     private boolean atSliderUpperLimit() {
-        return inputs.sliderPositionRots >= constants.upperLimitRots();
+        return inputs.masterSliderPositionRots >= constants.upperLimitRots();
     }
 
     public Command toGoal(final Goal goal) {
@@ -135,5 +136,9 @@ public class Intake extends SubsystemBase {
         Logger.recordOutput(LogKey + "/CurrentGoal", currentGoal.toString());
         Logger.recordOutput(LogKey + "/DesiredGoal", desiredGoal.toString());
 
+    }
+
+    public Rotation2d getIntakeSliderPositionRots() {
+        return Rotation2d.fromRotations(inputs.masterSliderPositionRots);
     }
 }
