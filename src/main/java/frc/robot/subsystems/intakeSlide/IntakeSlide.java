@@ -12,7 +12,7 @@ import frc.robot.constants.HardwareConstants;
 import org.littletonrobotics.junction.Logger;
 
 public class IntakeSlide extends SubsystemBase {
-    protected static final String LogKey = "Intake";
+    protected static final String LogKey = "/Intake/Slide";
     private static final double PositionToleranceRots = 0.02;
     private static final double VelocityToleranceRotsPerSec = 0.02;
 
