@@ -66,7 +66,7 @@ public class Hood extends SubsystemBase {
             };
         };
 
-        isHomed = Constants.CURRENT_MODE == Constants.RobotMode.SIM ? true : false;
+        isHomed = Constants.CURRENT_MODE == Constants.RobotMode.SIM;
 
         this.inputs = new HoodIOInputsAutoLogged();
 
@@ -103,35 +103,6 @@ public class Hood extends SubsystemBase {
         );
     }
 
-    private boolean atHoodPositionSetpoint() {
-        return currentGoal == desiredGoal
-                && MathUtil.isNear(desiredGoal.hoodPositionGoalRots, inputs.hoodPositionRots, PositionToleranceRots)
-                && MathUtil.isNear(0, inputs.hoodVelocityRotsPerSec, VelocityToleranceRotsPerSec);
-    }
-
-    private boolean atHoodLowerLimit() {
-        return inputs.hoodPositionRots <= constants.hoodLowerLimitRots();
-    }
-
-    private boolean atHoodUpperLimit() {
-        return inputs.hoodPositionRots >= constants.hoodUpperLimitRots();
-    }
-
-    public boolean isHomed() {
-        return isHomed;
-    }
-
-    private double getCurrent() {
-        return inputs.hoodTorqueCurrentAmps;
-    }
-
-
-    public void setGoal(final Goal goal) {
-        this.desiredGoal = goal;
-        Logger.recordOutput(LogKey + "/CurrentGoal", currentGoal.toString());
-        Logger.recordOutput(LogKey + "/DesiredGoal", desiredGoal.toString());
-    }
-
     public Command home() {
         return Commands.sequence(
                 Commands.runOnce(hoodIO::home),
@@ -150,11 +121,39 @@ public class Hood extends SubsystemBase {
         );
     }
 
-    public Rotation2d getHoodPosition() {
-        return Rotation2d.fromRotations(inputs.hoodPositionRots);
+    public void setGoal(final Goal goal) {
+        this.desiredGoal = goal;
+        Logger.recordOutput(LogKey + "/CurrentGoal", currentGoal.toString());
+        Logger.recordOutput(LogKey + "/DesiredGoal", desiredGoal.toString());
     }
 
     public void updateDesiredHoodPosition(final double desiredHoodPosition) {
         this.desiredGoal.changeHoodPositionRots(desiredHoodPosition);
+    }
+
+    public Rotation2d getHoodPosition() {
+        return Rotation2d.fromRotations(inputs.hoodPositionRots);
+    }
+
+    public boolean isHomed() {
+        return isHomed;
+    }
+
+    private boolean atHoodPositionSetpoint() {
+        return currentGoal == desiredGoal
+                && MathUtil.isNear(desiredGoal.hoodPositionGoalRots, inputs.hoodPositionRots, PositionToleranceRots)
+                && MathUtil.isNear(0, inputs.hoodVelocityRotsPerSec, VelocityToleranceRotsPerSec);
+    }
+
+    private boolean atHoodLowerLimit() {
+        return inputs.hoodPositionRots <= constants.hoodLowerLimitRots();
+    }
+
+    private boolean atHoodUpperLimit() {
+        return inputs.hoodPositionRots >= constants.hoodUpperLimitRots();
+    }
+
+    private double getCurrent() {
+        return inputs.hoodTorqueCurrentAmps;
     }
 }

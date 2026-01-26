@@ -85,17 +85,6 @@ public class Shooter extends SubsystemBase {
         );
     }
 
-    public void setDesiredGoal(final Goal desiredGoal) {
-        this.desiredGoal = desiredGoal;
-    }
-
-    public Command toGoal(final Goal desiredGoalSupplier) {
-        return runEnd(
-                () -> setDesiredGoal(desiredGoalSupplier),
-                () -> setDesiredGoal(Goal.STOP)
-        ).withName("ToGoal");
-    }
-
     public void setGoal(final Goal desiredGoal) {
         this.desiredGoal = desiredGoal;
         Logger.recordOutput(LogKey + "/CurrentGoal", currentGoal.toString());

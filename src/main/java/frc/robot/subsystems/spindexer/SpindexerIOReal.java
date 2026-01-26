@@ -1,4 +1,4 @@
-package frc.robot.subsystems.hopper;
+package frc.robot.subsystems.spindexer;
 
 import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.Slot0Configs;
@@ -11,8 +11,8 @@ import com.ctre.phoenix6.signals.NeutralModeValue;
 import edu.wpi.first.units.measure.*;
 import frc.robot.constants.HardwareConstants;
 
-public class HopperIOReal implements HopperIO {
-    private final HardwareConstants.HopperConstants constants;
+public class SpindexerIOReal implements SpindexerIO {
+    private final HardwareConstants.SpindexerConstants constants;
 
     private final TalonFX rollerMotor;
 
@@ -24,7 +24,7 @@ public class HopperIOReal implements HopperIO {
 
     private final VelocityTorqueCurrentFOC velocityTorqueCurrentFOC;
 
-    public HopperIOReal(final HardwareConstants.HopperConstants constants) {
+    public SpindexerIOReal(final HardwareConstants.SpindexerConstants constants) {
         this.constants = constants;
 
         this.rollerMotor = new TalonFX(constants.motorID(), constants.CANBus().toPhoenix6CANBus());
@@ -39,12 +39,12 @@ public class HopperIOReal implements HopperIO {
     }
 
     @Override
-    public void updateInputs(final HopperIOInputs inputs) {
-        inputs.rollerPositionRots = rollerPosition.getValueAsDouble();
-        inputs.rollerVelocityRotsPerSec = rollerVelocity.getValueAsDouble();
-        inputs.rollerVoltage = rollerVoltage.getValueAsDouble();
-        inputs.rollerTorqueCurrentAmps = rollerTorqueCurrent.getValueAsDouble();
-        inputs.rollerTemperatureCelsius = rollerTemperature.getValueAsDouble();
+    public void updateInputs(final SpindexerIOInputs inputs) {
+        inputs.wheelPositionRots = rollerPosition.getValueAsDouble();
+        inputs.wheelVelocityRotsPerSec = rollerVelocity.getValueAsDouble();
+        inputs.wheelVoltage = rollerVoltage.getValueAsDouble();
+        inputs.wheelTorqueCurrentAmps = rollerTorqueCurrent.getValueAsDouble();
+        inputs.wheelTemperatureCelsius = rollerTemperature.getValueAsDouble();
     }
 
     @Override
@@ -69,7 +69,7 @@ public class HopperIOReal implements HopperIO {
     }
 
     @Override
-    public void toRollerVelocity(final double velocityRotsPerSec) {
-        rollerMotor.setControl(velocityTorqueCurrentFOC.withVelocity(velocityRotsPerSec));
+    public void toWheelVelocity(final double wheelVelocityRotsPerSec) {
+        rollerMotor.setControl(velocityTorqueCurrentFOC.withVelocity(wheelVelocityRotsPerSec));
     }
 }

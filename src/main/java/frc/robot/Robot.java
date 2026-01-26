@@ -25,6 +25,8 @@ import frc.robot.subsystems.drive.constants.SwerveConstants;
 import frc.robot.subsystems.hopper.Hopper;
 import frc.robot.subsystems.intake.roller.IntakeRoller;
 import frc.robot.subsystems.intake.slide.IntakeSlide;
+import frc.robot.subsystems.intake.Intake;
+import frc.robot.subsystems.spindexer.Spindexer;
 import frc.robot.subsystems.superstructure.ShotCalculator;
 import frc.robot.subsystems.superstructure.Superstructure;
 import frc.robot.subsystems.superstructure.feeder.Feeder;
@@ -115,9 +117,9 @@ public class Robot extends LoggedRobot {
             HardwareConstants.SHOOTER
     );
 
-    public final Hopper hopper = new Hopper(
+    public final Spindexer spindexer = new Spindexer(
             Constants.CURRENT_MODE,
-            HardwareConstants.HOPPER
+            HardwareConstants.SPINDEXER
     );
 
     private final Supplier<ShotCalculator.ShotCalculation> shotCalculationSupplier =
@@ -126,6 +128,11 @@ public class Robot extends LoggedRobot {
                     swerve::getRobotRelativeSpeeds,
                     swerve::getFieldRelativeSpeeds
             );
+
+    //TODO: Change to Moving when SOTM is implemented
+    private ShotCalculator.ScoringType scoringType =
+            ShotCalculator.ScoringType.Stationary;
+
     public final Superstructure superstructure = new Superstructure(
             feeder,
             turret,
@@ -145,7 +152,7 @@ public class Robot extends LoggedRobot {
             intakeRoller,
             intakeSlide,
             superstructure,
-            hopper
+            spindexer
     );
 
     public final CommandXboxController driverController = new CommandXboxController(RobotMap.MainController);
@@ -278,6 +285,7 @@ public class Robot extends LoggedRobot {
 
         LoggedCommandScheduler.periodic();
         Logger.recordOutput("ShotCalculation", shotCalculationSupplier.get());
+        Logger.recordOutput("ScoringType", scoringType);
         componentsSolver.periodic();
         robotCommands.periodic();
 
@@ -344,6 +352,14 @@ public class Robot extends LoggedRobot {
                 robotCommands.shootStationary(
                         FieldConstants.Hub.hubCenterPoint::getAngle
                 )
+        );
+
+        coController.povDown().onTrue(
+                Commands.runOnce(() -> this.scoringType = ShotCalculator.ScoringType.Stationary)
+        );
+
+        coController.povDown().onTrue(
+                Commands.run(() -> this.scoringType = ShotCalculator.ScoringType.Moving)
         );
     }
 }

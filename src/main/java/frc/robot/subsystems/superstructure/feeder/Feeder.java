@@ -15,8 +15,6 @@ public class Feeder extends SubsystemBase {
     private final FeederIO feederIO;
     private final FeederIOInputsAutoLogged inputs;
 
-
-    //TODO: This won't work. When you shoot, your feeder won't actually move
     private Goal desiredGoal = Goal.STOP;
     private Goal currentGoal = desiredGoal;
 
@@ -78,7 +76,7 @@ public class Feeder extends SubsystemBase {
         Logger.recordOutput(LogKey + "/DesiredGoal", desiredGoal.toString());
     }
 
-    public boolean atVelocitySetpoint() {
+    private boolean atVelocitySetpoint() {
         return MathUtil.isNear(desiredGoal.rollerVelocitySetpoint, inputs.rollerVelocityRotsPerSec, VelocityToleranceRotsPerSec);
     }
 }

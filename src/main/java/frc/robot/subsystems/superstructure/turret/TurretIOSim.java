@@ -4,6 +4,7 @@ import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.CANcoderConfiguration;
 import com.ctre.phoenix6.configs.Slot0Configs;
+import com.ctre.phoenix6.configs.Slot1Configs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.MotionMagicExpoVoltage;
 import com.ctre.phoenix6.controls.PositionVoltage;
@@ -131,6 +132,9 @@ public class TurretIOSim implements TurretIO {
         motorConfig.Slot0 = new Slot0Configs()
                 .withKP(70)
                 .withKD(0.01);
+        motorConfig.Slot1 = new Slot1Configs()
+                .withKD(50)
+                .withKD(0.01);
         motorConfig.MotionMagic.MotionMagicCruiseVelocity = 0;
         motorConfig.MotionMagic.MotionMagicExpo_kV = 0;
         motorConfig.MotionMagic.MotionMagicExpo_kA = 0;
@@ -200,7 +204,7 @@ public class TurretIOSim implements TurretIO {
 
     @Override
     public void toTurretPosition(final double positionRots) {
-        turretMotor.setControl(motionMagicExpoVoltage.withPosition(positionRots));
+        turretMotor.setControl(motionMagicExpoVoltage.withPosition(positionRots).withSlot(1));
     }
 
     @Override
