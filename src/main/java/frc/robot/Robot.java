@@ -22,7 +22,8 @@ import frc.robot.constants.HardwareConstants;
 import frc.robot.constants.RobotMap;
 import frc.robot.subsystems.drive.Swerve;
 import frc.robot.subsystems.drive.constants.SwerveConstants;
-import frc.robot.subsystems.intake.Intake;
+import frc.robot.subsystems.intake.roller.IntakeRoller;
+import frc.robot.subsystems.intake.slide.IntakeSlide;
 import frc.robot.subsystems.spindexer.Spindexer;
 import frc.robot.subsystems.superstructure.ShotCalculator;
 import frc.robot.subsystems.superstructure.Superstructure;
@@ -84,9 +85,14 @@ public class Robot extends LoggedRobot {
             swerve
     );
 
-    public final Intake intake = new Intake(
+    public final IntakeRoller intakeRoller = new IntakeRoller(
             Constants.CURRENT_MODE,
-            HardwareConstants.INTAKE
+            HardwareConstants.INTAKE_ROLLER
+    );
+
+    public final IntakeSlide intakeSlide = new IntakeSlide(
+            Constants.CURRENT_MODE,
+            HardwareConstants.INTAKE_SLIDE
     );
 
     public final Feeder feeder = new Feeder(
@@ -136,12 +142,13 @@ public class Robot extends LoggedRobot {
     private final ComponentsSolver componentsSolver = new ComponentsSolver(
             turret::getTurretPosition,
             hood::getHoodPosition,
-            intake::getIntakeSliderPositionRots
+            intakeSlide::getIntakeSlidePositionRots
     );
 
     private final RobotCommands robotCommands = new RobotCommands(
             swerve,
-            intake,
+            intakeRoller,
+            intakeSlide,
             superstructure,
             spindexer
     );

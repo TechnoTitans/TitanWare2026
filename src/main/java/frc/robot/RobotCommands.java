@@ -7,7 +7,8 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.subsystems.drive.Swerve;
 import frc.robot.subsystems.spindexer.Spindexer;
-import frc.robot.subsystems.intake.Intake;
+import frc.robot.subsystems.intake.roller.IntakeRoller;
+import frc.robot.subsystems.intake.slide.IntakeSlide;
 import frc.robot.subsystems.superstructure.Superstructure;
 import org.littletonrobotics.junction.Logger;
 
@@ -18,7 +19,8 @@ public class RobotCommands {
     protected static final double AllowableSpeedToShootMetersPerSec = 0.1;
 
     private final Swerve swerve;
-    private final Intake intake;
+    private final IntakeRoller intakeRoller;
+    private final IntakeSlide intakeSlide;
     private final Superstructure superstructure;
     private final Spindexer spindexer;
 
@@ -26,12 +28,14 @@ public class RobotCommands {
 
     public RobotCommands(
             final Swerve swerve,
-            final Intake intake,
+            final IntakeRoller intakeRoller,
+            final IntakeSlide intakeSlide,
             final Superstructure superstructure,
             final Spindexer spindexer
     ) {
         this.swerve = swerve;
-        this.intake = intake;
+        this.intakeRoller = intakeRoller;
+        this.intakeSlide = intakeSlide;
         this.superstructure = superstructure;
         this.spindexer = spindexer;
 
@@ -48,7 +52,8 @@ public class RobotCommands {
 
     public Command intake() {
         return Commands.parallel(
-                intake.toGoal(Intake.Goal.INTAKE),
+                intakeRoller.toGoal(IntakeRoller.Goal.INTAKE),
+                intakeSlide.toGoal(IntakeSlide.Goal.INTAKE),
                 spindexer.toGoal(Spindexer.Goal.INTAKE)
         ).withName("Intake");
     }
