@@ -1,4 +1,4 @@
-package frc.robot.subsystems.intakeRoller;
+package frc.robot.subsystems.intake.roller;
 
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.util.Units;

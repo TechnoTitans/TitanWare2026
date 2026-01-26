@@ -7,8 +7,8 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.subsystems.drive.Swerve;
 import frc.robot.subsystems.hopper.Hopper;
-import frc.robot.subsystems.intakeRoller.IntakeRoller;
-import frc.robot.subsystems.intakeSlide.IntakeSlide;
+import frc.robot.subsystems.intake.roller.IntakeRoller;
+import frc.robot.subsystems.intake.slide.IntakeSlide;
 import frc.robot.subsystems.superstructure.Superstructure;
 import org.littletonrobotics.junction.Logger;
 

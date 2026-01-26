@@ -1,4 +1,4 @@
-package frc.robot.subsystems.intakeSlide;
+package frc.robot.subsystems.intake.slide;
 
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Rotation2d;

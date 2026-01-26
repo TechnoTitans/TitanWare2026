@@ -1,4 +1,4 @@
-package frc.robot.subsystems.intakeSlide;
+package frc.robot.subsystems.intake.slide;
 
 import org.littletonrobotics.junction.AutoLog;
 

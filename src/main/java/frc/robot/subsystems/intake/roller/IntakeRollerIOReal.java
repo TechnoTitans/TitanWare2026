@@ -1,4 +1,4 @@
-package frc.robot.subsystems.intakeRoller;
+package frc.robot.subsystems.intake.roller;
 
 import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.StatusSignal;
