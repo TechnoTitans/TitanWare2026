@@ -195,7 +195,7 @@ public class ShotCalculator {
         final double turretToTargetDistance = targetTranslation.getDistance(turretPose.getTranslation());
 
         final Rotation2d desiredTurretAngle = targetTranslation.minus(turretPose.getTranslation()).getAngle().minus(
-                turretPose.getRotation().minus(Rotation2d.fromRadians(fieldRelativeChassisSpeeds.omegaRadiansPerSecond * 5))
+                turretPose.getRotation()
         );
 
         return new ShotCalculation(
