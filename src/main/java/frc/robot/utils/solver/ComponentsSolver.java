@@ -18,11 +18,11 @@ public class ComponentsSolver {
     public ComponentsSolver(
             final Supplier<Rotation2d> turretRotationSupplier,
             final Supplier<Rotation2d> hoodRotationSupplier,
-            final Supplier<Rotation2d> intakeSliderRotationSupplier
+            final Supplier<Rotation2d> intakeSlideRotationSupplier
     ) {
         this.turretRotationSupplier = turretRotationSupplier;
         this.hoodRotationSupplier = hoodRotationSupplier;
-        this.intakeSlideRotationSupplier = intakeSliderRotationSupplier;
+        this.intakeSlideRotationSupplier = intakeSlideRotationSupplier;
     }
 
     public void periodic() {
@@ -64,8 +64,8 @@ public class ComponentsSolver {
         final double dt = intakeSlideRotationSupplier.get().getRotations()
                         / (HardwareConstants.INTAKE_SLIDE.upperLimitRots() - HardwareConstants.INTAKE_SLIDE.lowerLimitRots());
 
-        final Pose3d intakePose = SimConstants.IntakeSlider.RETRACTED_POSE
-                .interpolate(SimConstants.IntakeSlider.EXTENDED_POSE, dt);
+        final Pose3d intakePose = SimConstants.IntakeSlide.RETRACTED_POSE
+                .interpolate(SimConstants.IntakeSlide.EXTENDED_POSE, dt);
 
         final Pose3d hopperPose = SimConstants.Hopper.RETRACTED_POSE
                 .interpolate(SimConstants.Hopper.EXTENDED_POSE, dt);

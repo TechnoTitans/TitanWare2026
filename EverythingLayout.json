@@ -14,7 +14,7 @@
             "/Superstructure",
             "/RealOutputs/Swerve/Odometry",
             "/RealOutputs/Intake/Roller",
-            "/RealOutputs/Intake/Slider",
+            "/RealOutputs/Intake/Slide",
             "/RealOutputs/Intake/DesiredGoal",
             "/Hopper",
             "/RealOutputs/Hopper/DesiredGoal",
@@ -166,7 +166,7 @@
                 "rightSources": [
                   {
                     "type": "stepped",
-                    "logKey": "/RealOutputs/Intake/DesiredGoal/SliderPositionRots",
+                    "logKey": "/RealOutputs/Intake/DesiredGoal/SlidePositionRots",
                     "logType": "Number",
                     "visible": true,
                     "options": {
@@ -176,7 +176,7 @@
                   },
                   {
                     "type": "stepped",
-                    "logKey": "/Intake/SliderPositionRots",
+                    "logKey": "/Intake/SlidePositionRots",
                     "logType": "Number",
                     "visible": true,
                     "options": {
@@ -215,7 +215,7 @@
                   },
                   {
                     "type": "stripes",
-                    "logKey": "/RealOutputs/Intake/Slider/AtPositionSetpoint",
+                    "logKey": "/RealOutputs/Intake/Slide/AtPositionSetpoint",
                     "logType": "Boolean",
                     "visible": true,
                     "options": {

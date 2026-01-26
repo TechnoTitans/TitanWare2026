@@ -33,7 +33,6 @@ public class IntakeSlideIOSim implements IntakeSlideIO {
 
     private final TalonFX masterMotor;
     private final TalonFX followerMotor;
-    private final CANcoder encoder;
 
     private final TalonFXSim motorsSim;
 
@@ -54,16 +53,12 @@ public class IntakeSlideIOSim implements IntakeSlideIO {
     private final StatusSignal<Current> followerTorqueCurrent;
     private final StatusSignal<Temperature> followerDeviceTemp;
 
-    private final StatusSignal<Angle> encoderPosition;
-    private final StatusSignal<AngularVelocity> encoderVelocity;
-
     public IntakeSlideIOSim(final HardwareConstants.IntakeSlideConstants constants) {
         this.deltaTime = new DeltaTime(true);
         this.constants = constants;
 
         this.masterMotor = new TalonFX(constants.masterMotorID(), constants.CANBus().toPhoenix6CANBus());
         this.followerMotor = new TalonFX(constants.followerMotorID(), constants.CANBus().toPhoenix6CANBus());
-        this.encoder = new CANcoder(constants.encoderID(), constants.CANBus().toPhoenix6CANBus());
         
         final DCMotorSim motorsSim = new DCMotorSim(
                 LinearSystemId.createDCMotorSystem(
@@ -81,8 +76,6 @@ public class IntakeSlideIOSim implements IntakeSlideIO {
                 motorsSim::getAngularPositionRad,
                 motorsSim::getAngularVelocityRadPerSec
         );
-        
-        this.motorsSim.attachFeedbackSensor(new SimCANCoder(encoder));
 
         this.motionMagicExpoVoltage = new MotionMagicExpoVoltage(0);
         this.torqueCurrentFOC = new TorqueCurrentFOC(0);
@@ -101,9 +94,6 @@ public class IntakeSlideIOSim implements IntakeSlideIO {
         this.followerTorqueCurrent = followerMotor.getTorqueCurrent(false);
         this.followerDeviceTemp = followerMotor.getDeviceTemp(false);
 
-        this.encoderPosition = encoder.getPosition(false);
-        this.encoderVelocity = encoder.getVelocity(false);
-
         RefreshAll.add(
                 constants.CANBus(),
                 masterPosition,
@@ -115,9 +105,7 @@ public class IntakeSlideIOSim implements IntakeSlideIO {
                 followerVelocity,
                 followerVoltage,
                 followerTorqueCurrent,
-                followerDeviceTemp,
-                encoderPosition,
-                encoderVelocity
+                followerDeviceTemp
         );
 
         final Notifier simUpdateNotifier = new Notifier(() -> {
@@ -135,11 +123,6 @@ public class IntakeSlideIOSim implements IntakeSlideIO {
 
     @Override
     public void config() {
-        final CANcoderConfiguration encoderConfig = new CANcoderConfiguration();
-        encoderConfig.MagnetSensor.MagnetOffset = constants.encoderOffset();
-        encoderConfig.MagnetSensor.SensorDirection = SensorDirectionValue.CounterClockwise_Positive;
-        encoder.getConfigurator().apply(encoderConfig);
-        
         final TalonFXConfiguration motorConfig = new TalonFXConfiguration();
         motorConfig.Slot0 = new Slot0Configs()
                 .withKG(0.20)
@@ -152,8 +135,6 @@ public class IntakeSlideIOSim implements IntakeSlideIO {
         motorConfig.CurrentLimits.SupplyCurrentLowerLimit = 40;
         motorConfig.CurrentLimits.SupplyCurrentLowerTime = 1;
         motorConfig.CurrentLimits.SupplyCurrentLimitEnable = true;
-        motorConfig.Feedback.FeedbackSensorSource = FeedbackSensorSourceValue.FusedCANcoder;
-        motorConfig.Feedback.FeedbackRemoteSensorID = encoder.getDeviceID();
         motorConfig.Feedback.RotorToSensorRatio = constants.slideGearing();
         motorConfig.Feedback.SensorToMechanismRatio = 1;
         motorConfig.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
@@ -176,9 +157,7 @@ public class IntakeSlideIOSim implements IntakeSlideIO {
                 followerPosition,
                 followerVelocity,
                 followerVoltage,
-                followerTorqueCurrent,
-                encoderPosition,
-                encoderVelocity
+                followerTorqueCurrent
         );
 
         BaseStatusSignal.setUpdateFrequencyForAll(
@@ -190,11 +169,9 @@ public class IntakeSlideIOSim implements IntakeSlideIO {
         ParentDevice.optimizeBusUtilizationForAll(
                 4,
                 masterMotor,
-                followerMotor,
-                encoder
+                followerMotor
         );
-        
-        encoder.getSimState().Orientation = ChassisReference.CounterClockwise_Positive;
+
         masterMotor.getSimState().Orientation = ChassisReference.Clockwise_Positive;
         followerMotor.getSimState().Orientation = ChassisReference.CounterClockwise_Positive;
     }
@@ -212,26 +189,23 @@ public class IntakeSlideIOSim implements IntakeSlideIO {
         inputs.followerVoltage = followerVoltage.getValueAsDouble();
         inputs.followerTorqueCurrentAmps = followerTorqueCurrent.getValueAsDouble();
         inputs.followerTempCelsius = followerDeviceTemp.getValueAsDouble();
-
-        inputs.encoderPositionRots = encoderPosition.getValueAsDouble();
-        inputs.encoderVelocityRotsPerSec = encoderVelocity.getValueAsDouble();
     }
 
     @Override
-    public void toSlidePosition(final double sliderPositionRots) {
-        masterMotor.setControl(motionMagicExpoVoltage.withPosition(sliderPositionRots));
+    public void toSlidePosition(final double positionRots) {
+        masterMotor.setControl(motionMagicExpoVoltage.withPosition(positionRots));
         followerMotor.setControl(follower);
     }
 
     @Override
-    public void toSlideVoltage(final double sliderVolts) {
-        masterMotor.setControl(voltageOut.withOutput(sliderVolts));
+    public void toSlideVoltage(final double volts) {
+        masterMotor.setControl(voltageOut.withOutput(volts));
         followerMotor.setControl(follower);
     }
 
     @Override
-    public void toSlideTorqueCurrent(final double sliderTorqueCurrentAmps) {
-        masterMotor.setControl(torqueCurrentFOC.withOutput(sliderTorqueCurrentAmps));
+    public void toSlideTorqueCurrent(final double torqueCurrent) {
+        masterMotor.setControl(torqueCurrentFOC.withOutput(torqueCurrent));
         followerMotor.setControl(follower);
     }
 }

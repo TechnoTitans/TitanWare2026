@@ -16,9 +16,6 @@ public interface IntakeSlideIO {
         public double followerVoltage = 0.0;
         public double followerTorqueCurrentAmps = 0.0;
         public double followerTempCelsius = 0.0;
-
-        public double encoderPositionRots = 0.0;
-        public double encoderVelocityRotsPerSec = 0.0;
     }
 
     default void updateInputs(final IntakeSlideIOInputs inputs) {}
