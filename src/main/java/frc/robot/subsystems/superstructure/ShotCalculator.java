@@ -1,6 +1,7 @@
 package frc.robot.subsystems.superstructure;
 
 import edu.wpi.first.math.MathUtil;
+import edu.wpi.first.math.filter.LinearFilter;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
@@ -62,6 +63,11 @@ public class ShotCalculator {
             InverseInterpolator.forDouble(),
             HoodShooterCalculation.interpolator
     );
+
+    private static final LinearFilter turretAngleFilter = LinearFilter.movingAverage(
+            5
+    );
+
     //TODO: Temp values
 
     static {
@@ -189,7 +195,7 @@ public class ShotCalculator {
         final double turretToTargetDistance = targetTranslation.getDistance(turretPose.getTranslation());
 
         final Rotation2d desiredTurretAngle = targetTranslation.minus(turretPose.getTranslation()).getAngle().minus(
-                turretPose.getRotation().plus(Rotation2d.fromRadians(fieldRelativeChassisSpeeds.omegaRadiansPerSecond * 0.02))
+                turretPose.getRotation().minus(Rotation2d.fromRadians(fieldRelativeChassisSpeeds.omegaRadiansPerSecond * 5))
         );
 
         return new ShotCalculation(

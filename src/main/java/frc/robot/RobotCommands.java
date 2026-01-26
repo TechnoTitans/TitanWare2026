@@ -54,7 +54,7 @@ public class RobotCommands {
     }
 
     public Command shootWhileMoving() {
-        return Commands.deadline(
+        return Commands.parallel(
                 superstructure.toGoal(Superstructure.Goal.SHOOTING),
                 spindexer.toGoal(Spindexer.Goal.FEED)
         ).withName("ShootWhileMoving");
