@@ -30,24 +30,32 @@ public class HardwareConstants {
         }
     }
 
-    public record IntakeConstants(
+    public record IntakeRollerConstants(
             CANBus CANBus,
-            int rollerMotorID,
-            double rollerGearing,
-            int masterSliderMotorID,
-            int followerSliderMotorID,
+            int motorID,
+            double rollerGearing
+    ) {}
+
+    public static IntakeRollerConstants INTAKE_ROLLER = new IntakeRollerConstants(
+            CANBus.RIO,
+            14,
+            10
+    );
+
+    public record IntakeSlideConstants(
+            CANBus CANBus,
+            int masterMotorID,
+            int followerMotorID,
             int encoderID,
             double encoderOffset,
-            double sliderGearing,
+            double slideGearing,
             double gearPitchCircumferenceMeters,
             double upperLimitRots,
             double lowerLimitRots
     ) {}
 
-    public static IntakeConstants INTAKE = new IntakeConstants(
+    public static IntakeSlideConstants INTAKE_SLIDE = new IntakeSlideConstants(
             CANBus.RIO,
-            14,
-            10,
             15,
             16,
             17,

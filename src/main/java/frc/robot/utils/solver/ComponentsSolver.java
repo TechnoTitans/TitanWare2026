@@ -13,7 +13,7 @@ import java.util.function.Supplier;
 public class ComponentsSolver {
     final Supplier<Rotation2d> turretRotationSupplier;
     final Supplier<Rotation2d> hoodRotationSupplier;
-    final Supplier<Rotation2d> intakeSliderRotationSupplier;
+    final Supplier<Rotation2d> intakeSlideRotationSupplier;
 
     public ComponentsSolver(
             final Supplier<Rotation2d> turretRotationSupplier,
@@ -22,7 +22,7 @@ public class ComponentsSolver {
     ) {
         this.turretRotationSupplier = turretRotationSupplier;
         this.hoodRotationSupplier = hoodRotationSupplier;
-        this.intakeSliderRotationSupplier = intakeSliderRotationSupplier;
+        this.intakeSlideRotationSupplier = intakeSliderRotationSupplier;
     }
 
     public void periodic() {
@@ -61,8 +61,8 @@ public class ComponentsSolver {
     }
 
     private Pose3d[] getIntakeHopperPoses() {
-        final double dt = intakeSliderRotationSupplier.get().getRotations()
-                        / (HardwareConstants.INTAKE.upperLimitRots() - HardwareConstants.INTAKE.lowerLimitRots());
+        final double dt = intakeSlideRotationSupplier.get().getRotations()
+                        / (HardwareConstants.INTAKE_SLIDE.upperLimitRots() - HardwareConstants.INTAKE_SLIDE.lowerLimitRots());
 
         final Pose3d intakePose = SimConstants.IntakeSlider.RETRACTED_POSE
                 .interpolate(SimConstants.IntakeSlider.EXTENDED_POSE, dt);

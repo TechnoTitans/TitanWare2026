@@ -4,7 +4,8 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.constants.Constants;
-import frc.robot.subsystems.intake.Intake;
+import frc.robot.subsystems.intakeRoller.IntakeRoller;
+import frc.robot.subsystems.intakeSlide.IntakeSlide;
 import frc.robot.utils.subsystems.VirtualSubsystem;
 import org.littletonrobotics.junction.Logger;
 
@@ -13,7 +14,8 @@ import java.util.function.Supplier;
 public class IntakeState extends VirtualSubsystem {
     protected static final String LogKey = "IntakeState";
 
-    private final Intake intake;
+    private final IntakeRoller intakeRoller;
+    private final IntakeSlide intakeSlide;
 
     public enum State {
         NONE,
@@ -29,9 +31,11 @@ public class IntakeState extends VirtualSubsystem {
 
     public IntakeState(
             final Constants.RobotMode mode,
-            final Intake intake
+            final IntakeRoller intakeRoller,
+            final IntakeSlide intakeSlide
     ) {
-        this.intake = intake;
+        this.intakeRoller = intakeRoller;
+        this.intakeSlide = intakeSlide;
 
         configureStateTriggers();
 
