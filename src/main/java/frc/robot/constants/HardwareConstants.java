@@ -66,13 +66,13 @@ public class HardwareConstants {
             0
     );
 
-    public record HopperConstants(
+    public record SpindexerConstants(
             CANBus CANBus,
             int motorID,
             double rollerGearing
     ) {}
 
-    public static HopperConstants HOPPER = new HopperConstants(
+    public static SpindexerConstants SPINDEXER = new SpindexerConstants(
             CANBus.RIO,
             18,
             10
