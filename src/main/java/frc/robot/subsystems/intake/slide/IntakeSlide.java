@@ -106,12 +106,18 @@ public class IntakeSlide extends SubsystemBase {
 
     public Command toGoal(final Goal goal) {
         return runEnd(
-                () -> setGoal(goal),
-                () -> setGoal(Goal.STOW)
+                () -> setDesiredGoal(goal),
+                () -> setDesiredGoal(Goal.STOW)
         ).withName("ToGoal");
     }
 
-    public void setGoal(final Goal goal) {
+    public Command setGoal(final Goal goal) {
+        return runOnce(
+                () -> setDesiredGoal(goal)
+        ).withName("ToGoal");
+    }
+
+    private void setDesiredGoal(final Goal goal) {
         this.desiredGoal = goal;
         Logger.recordOutput(LogKey + "/CurrentGoal", currentGoal.toString());
         Logger.recordOutput(LogKey + "/DesiredGoal", desiredGoal.toString());
