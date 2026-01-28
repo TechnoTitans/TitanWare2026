@@ -74,7 +74,7 @@ public class RobotCommands {
                 ),
                 swerve.faceAngle(rotation2dSupplier),
                 spindexer.toGoal(Spindexer.Goal.FEED).onlyIf(ableToShoot),
-                intakeSlide.toGoal(IntakeSlide.Goal.SHOOTING)
+                intakeSlide.toGoal(IntakeSlide.Goal.SHOOTING).onlyIf(ableToShoot)
         ).withName("ShootStationary");
     }
 }

@@ -23,8 +23,7 @@ public class IntakeRoller extends SubsystemBase {
 
     public enum Goal {
         STOW(0),
-        INTAKE(10),
-        EJECT(-9);
+        INTAKE(10);
 
         private final double rollerVelocityGoalRotsPerSec;
 

@@ -160,6 +160,7 @@ public class IntakeSlideIOReal implements IntakeSlideIO {
                 .withPosition(positionRots)
                 .withVelocity(velocityRotsPerSec)
         );
+        followerMotor.setControl(follower);
     }
 
     @Override

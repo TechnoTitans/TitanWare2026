@@ -22,8 +22,7 @@ public class Spindexer extends SubsystemBase {
     public enum Goal {
         STOP(0),
         INTAKE(4),
-        FEED(5),
-        EJECT(-5);
+        FEED(5);
 
         private final double rollerVelocitySetpoint;
 
