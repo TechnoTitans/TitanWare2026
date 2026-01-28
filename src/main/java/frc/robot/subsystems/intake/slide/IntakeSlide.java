@@ -12,13 +12,11 @@ import frc.robot.constants.Constants;
 import frc.robot.constants.HardwareConstants;
 import org.littletonrobotics.junction.Logger;
 
-import static edu.wpi.first.hal.simulation.PowerDistributionDataJNI.getCurrent;
-
 public class IntakeSlide extends SubsystemBase {
     protected static final String LogKey = "/Intake/Slide";
     private static final double PositionToleranceRots = 0.02;
     private static final double VelocityToleranceRotsPerSec = 0.02;
-    private static final double HardstopCurrentThreshold = 1;
+    private static final double HardstopCurrentThresholdAmps = 1;
 
     private final HardwareConstants.IntakeSlideConstants constants;
 
@@ -28,7 +26,6 @@ public class IntakeSlide extends SubsystemBase {
     private Goal previousGoal = Goal.STOW;
     private Goal desiredGoal = previousGoal;
     private Goal currentGoal = desiredGoal;
-    private Goal temporaryGoal = currentGoal;
 
     public final Trigger atSlideSetpoint = new Trigger(this::atSlidePositionSetpoint);
     public final Trigger atSlideLowerLimit = new Trigger(this::atSlideLowerLimit);
@@ -84,7 +81,6 @@ public class IntakeSlide extends SubsystemBase {
             this.currentGoal = desiredGoal;
         }
 
-
         Logger.recordOutput(LogKey + "/CurrentGoal", currentGoal.toString());
         Logger.recordOutput(LogKey + "/DesiredGoal", desiredGoal.toString());
 
@@ -104,7 +100,7 @@ public class IntakeSlide extends SubsystemBase {
         return Commands.sequence(
                 Commands.runOnce(intakeSlideIO::home),
                 Commands.waitUntil(
-                        () -> getCurrent() >= HardstopCurrentThreshold
+                        () -> getCurrent() >= HardstopCurrentThresholdAmps
                 ),
                 Commands.runOnce(() -> {
                             intakeSlideIO.zeroMotor();
@@ -112,11 +108,9 @@ public class IntakeSlide extends SubsystemBase {
                     }
                 )
                         .finallyDo(() -> {
-                                this.currentGoal = previousGoal;
-                                this.temporaryGoal = currentGoal;
-                            }
+                                    this.currentGoal = previousGoal;
+                                }
                         )
-
         );
     }
 

@@ -2,14 +2,17 @@ package frc.robot.subsystems.intake.slide;
 
 import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.StatusSignal;
-import com.ctre.phoenix6.configs.CANcoderConfiguration;
 import com.ctre.phoenix6.configs.Slot0Configs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
-import com.ctre.phoenix6.controls.*;
-import com.ctre.phoenix6.hardware.CANcoder;
+import com.ctre.phoenix6.controls.Follower;
+import com.ctre.phoenix6.controls.MotionMagicExpoVoltage;
+import com.ctre.phoenix6.controls.TorqueCurrentFOC;
+import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.ParentDevice;
 import com.ctre.phoenix6.hardware.TalonFX;
-import com.ctre.phoenix6.signals.*;
+import com.ctre.phoenix6.signals.InvertedValue;
+import com.ctre.phoenix6.signals.MotorAlignmentValue;
+import com.ctre.phoenix6.signals.NeutralModeValue;
 import com.ctre.phoenix6.sim.ChassisReference;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.system.plant.LinearSystemId;
@@ -20,7 +23,6 @@ import frc.robot.constants.HardwareConstants;
 import frc.robot.utils.closeables.ToClose;
 import frc.robot.utils.control.DeltaTime;
 import frc.robot.utils.ctre.RefreshAll;
-import frc.robot.utils.sim.feedback.SimCANCoder;
 import frc.robot.utils.sim.motors.TalonFXSim;
 
 import java.util.List;
@@ -213,11 +215,18 @@ public class IntakeSlideIOSim implements IntakeSlideIO {
     }
 
     @Override
+    public void home() {
+        motorConfig.TorqueCurrent.PeakReverseTorqueCurrent = -1;
+        masterMotor.setControl(voltageOut.withOutput(0.1));
+        followerMotor.setControl(voltageOut.withOutput(0.1));
+        motorConfig.TorqueCurrent.PeakReverseTorqueCurrent = -60;
+    }
+
+    @Override
     public void zeroMotor(){
         masterMotor.setPosition(0);
         followerMotor.setPosition(0);
         motorConfig.SoftwareLimitSwitch.ForwardSoftLimitThreshold = constants.slideGearing();
         motorConfig.SoftwareLimitSwitch.ReverseSoftLimitThreshold = 0;
-        toSlidePosition(0);
     }
 }
