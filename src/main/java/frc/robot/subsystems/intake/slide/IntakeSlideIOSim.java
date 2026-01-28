@@ -33,6 +33,7 @@ public class IntakeSlideIOSim implements IntakeSlideIO {
 
     private final TalonFX masterMotor;
     private final TalonFX followerMotor;
+    private final TalonFXConfiguration motorConfig;
 
     private final TalonFXSim motorsSim;
 
@@ -59,7 +60,8 @@ public class IntakeSlideIOSim implements IntakeSlideIO {
 
         this.masterMotor = new TalonFX(constants.masterMotorID(), constants.CANBus().toPhoenix6CANBus());
         this.followerMotor = new TalonFX(constants.followerMotorID(), constants.CANBus().toPhoenix6CANBus());
-        
+        this.motorConfig = new TalonFXConfiguration();
+
         final DCMotorSim motorsSim = new DCMotorSim(
                 LinearSystemId.createDCMotorSystem(
                         3 / (2 * Math.PI),
@@ -67,7 +69,7 @@ public class IntakeSlideIOSim implements IntakeSlideIO {
                 ),
                 DCMotor.getKrakenX44Foc(1)
         );
-        
+
         this.motorsSim = new TalonFXSim(
                 List.of(masterMotor, followerMotor),
                 constants.slideGearing(),
@@ -81,6 +83,7 @@ public class IntakeSlideIOSim implements IntakeSlideIO {
         this.torqueCurrentFOC = new TorqueCurrentFOC(0);
         this.voltageOut = new VoltageOut(0);
         this.follower = new Follower(masterMotor.getDeviceID(), MotorAlignmentValue.Opposed);
+
 
         this.masterPosition = masterMotor.getPosition(false);
         this.masterVelocity = masterMotor.getVelocity(false);
@@ -137,7 +140,7 @@ public class IntakeSlideIOSim implements IntakeSlideIO {
         motorConfig.CurrentLimits.SupplyCurrentLimitEnable = true;
         motorConfig.Feedback.RotorToSensorRatio = constants.slideGearing();
         motorConfig.Feedback.SensorToMechanismRatio = 1;
-        motorConfig.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
+        motorConfig.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
         motorConfig.MotorOutput.NeutralMode = NeutralModeValue.Brake;
         motorConfig.SoftwareLimitSwitch.ForwardSoftLimitThreshold = constants.upperLimitRots();
         motorConfig.SoftwareLimitSwitch.ForwardSoftLimitEnable = true;
@@ -207,5 +210,14 @@ public class IntakeSlideIOSim implements IntakeSlideIO {
     public void toSlideTorqueCurrent(final double torqueCurrent) {
         masterMotor.setControl(torqueCurrentFOC.withOutput(torqueCurrent));
         followerMotor.setControl(follower);
+    }
+
+    @Override
+    public void zeroMotor(){
+        masterMotor.setPosition(0);
+        followerMotor.setPosition(0);
+        motorConfig.SoftwareLimitSwitch.ForwardSoftLimitThreshold = constants.slideGearing();
+        motorConfig.SoftwareLimitSwitch.ReverseSoftLimitThreshold = 0;
+        toSlidePosition(0);
     }
 }

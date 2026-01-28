@@ -322,9 +322,10 @@ public class Robot extends LoggedRobot {
 
     public void configureStateTriggers() {
         autonomousEnabled.onTrue(hood.home());
+        autonomousEnabled.onTrue(intakeSlide.home());
 
         teleopEnabled.and(() -> Constants.CURRENT_MODE != Constants.RobotMode.SIM).and(hood::isHomed).negate().onTrue(hood.home());
-
+        teleopEnabled.and(() -> Constants.CURRENT_MODE != Constants.RobotMode.SIM).and(intakeSlide::isHomed).negate().onTrue(intakeSlide.home());
 
         endgameTrigger.onTrue(ControllerUtils.rumbleForDurationCommand(
                 driverController.getHID(), GenericHID.RumbleType.kBothRumble, 0.5, 1)

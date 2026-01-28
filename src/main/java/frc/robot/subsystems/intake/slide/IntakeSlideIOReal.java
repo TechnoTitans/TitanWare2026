@@ -4,6 +4,7 @@ import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.Slot0Configs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
+import com.ctre.phoenix6.configs.TalonFXSConfiguration;
 import com.ctre.phoenix6.controls.*;
 import com.ctre.phoenix6.hardware.ParentDevice;
 import com.ctre.phoenix6.hardware.TalonFX;
@@ -17,6 +18,7 @@ public class IntakeSlideIOReal implements IntakeSlideIO {
 
     private final TalonFX masterMotor;
     private final TalonFX followerMotor;
+    private final TalonFXConfiguration motorConfiguration;
 
     private final StatusSignal<Angle> masterPosition;
     private final StatusSignal<AngularVelocity> masterVelocity;
@@ -40,6 +42,7 @@ public class IntakeSlideIOReal implements IntakeSlideIO {
         
         this.masterMotor = new TalonFX(constants.masterMotorID(), constants.CANBus().toPhoenix6CANBus());
         this.followerMotor = new TalonFX(constants.followerMotorID(), constants.CANBus().toPhoenix6CANBus());
+        this.motorConfiguration = new TalonFXConfiguration();
 
         this.masterPosition = masterMotor.getPosition(false);
         this.masterVelocity = masterMotor.getVelocity(false);
@@ -113,9 +116,9 @@ public class IntakeSlideIOReal implements IntakeSlideIO {
                 masterVoltage,
                 masterTorqueCurrent,
                 followerPosition,
-                masterVelocity,
-                masterVoltage,
-                masterTorqueCurrent
+                followerVelocity,
+                followerVoltage,
+                followerTorqueCurrent
         );
         
         BaseStatusSignal.setUpdateFrequencyForAll(
@@ -162,5 +165,22 @@ public class IntakeSlideIOReal implements IntakeSlideIO {
     public void toSlideTorqueCurrent(double torqueCurrent) {
         masterMotor.setControl(torqueCurrentFOC.withOutput(torqueCurrent));
         followerMotor.setControl(follower);
+    }
+
+    @Override
+    public void home(){
+        masterMotor.setControl(voltageOut.withOutput(0.1));
+        followerMotor.setControl(voltageOut.withOutput(0.1));
+        motorConfiguration.TorqueCurrent.PeakReverseTorqueCurrent = 1;
+    }
+
+    @Override
+    public void zeroMotor(){
+        masterMotor.setPosition(0);
+        followerMotor.setPosition(0);
+        motorConfiguration.SoftwareLimitSwitch.ForwardSoftLimitThreshold = constants.slideGearing();
+        motorConfiguration.SoftwareLimitSwitch.ReverseSoftLimitThreshold = 0;
+        toSlidePosition(0);
+
     }
 }
