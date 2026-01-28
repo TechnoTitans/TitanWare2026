@@ -53,7 +53,7 @@ public class RobotCommands {
     public Command intake() {
         return Commands.parallel(
                 intakeRoller.toGoal(IntakeRoller.Goal.INTAKE),
-                intakeSlide.toGoal(IntakeSlide.Goal.INTAKE),
+                intakeSlide.setGoal(IntakeSlide.Goal.INTAKE),
                 spindexer.toGoal(Spindexer.Goal.INTAKE)
         ).withName("Intake");
     }

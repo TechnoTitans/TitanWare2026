@@ -368,5 +368,9 @@ public class Robot extends LoggedRobot {
         coController.povDown().onTrue(
                 Commands.run(() -> this.scoringType = ShotCalculator.ScoringType.Moving)
         );
+
+        coController.povRight().onTrue(
+                intakeSlide.setGoal(IntakeSlide.Goal.STOW)
+        );
     }
 }

@@ -62,17 +62,17 @@ public class IntakeSlide extends SubsystemBase {
             case REPLAY, DISABLED -> new IntakeSlideIO() {};
         };
 
-        isHomed = Constants.CURRENT_MODE == Constants.RobotMode.SIM;
-
         this.inputs = new IntakeSlideIOInputsAutoLogged();
 
         this.intakeSlideIO.config();
+
         intakeSlideIO.toSlidePosition(desiredGoal.getSlideGoalRots(constants.gearPitchCircumferenceMeters()));
     }
 
     @Override
     public void periodic() {
         final double IntakeSlidePeriodicUpdateStart = Timer.getFPGATimestamp();
+
         intakeSlideIO.updateInputs(inputs);
         Logger.processInputs(LogKey, inputs);
 
@@ -114,12 +114,6 @@ public class IntakeSlide extends SubsystemBase {
         );
     }
 
-    public void setGoal(final Goal goal) {
-        this.desiredGoal = goal;
-        Logger.recordOutput(LogKey + "/CurrentGoal", currentGoal.toString());
-        Logger.recordOutput(LogKey + "/DesiredGoal", desiredGoal.toString());
-    }
-
     public boolean isHomed(){
         return isHomed;
     }
@@ -140,9 +134,21 @@ public class IntakeSlide extends SubsystemBase {
 
     public Command toGoal(final Goal goal) {
         return runEnd(
-                () -> setGoal(goal),
-                () -> setGoal(Goal.STOW)
+                () -> setDesiredGoal(goal),
+                () -> setDesiredGoal(Goal.STOW)
         ).withName("ToGoal");
+    }
+
+    public Command setGoal(final Goal goal) {
+        return runOnce(
+                () -> setDesiredGoal(goal)
+        ).withName("ToGoal");
+    }
+
+    private void setDesiredGoal(final Goal goal) {
+        this.desiredGoal = goal;
+        Logger.recordOutput(LogKey + "/CurrentGoal", currentGoal.toString());
+        Logger.recordOutput(LogKey + "/DesiredGoal", desiredGoal.toString());
     }
 
     public Rotation2d getIntakeSlidePositionRots() {
