@@ -31,7 +31,8 @@ public class IntakeSlide extends SubsystemBase {
     public enum Goal {
         STOW(0),
         INTAKE(1),
-        EJECT(1);
+        EJECT(1),
+        SHOOTING(0);
 
         private final double slideExtensionGoalMeters;
 
@@ -71,7 +72,12 @@ public class IntakeSlide extends SubsystemBase {
         Logger.processInputs(LogKey, inputs);
 
         if (desiredGoal != currentGoal) {
-            intakeSlideIO.toSlidePosition(desiredGoal.getSlideGoalRots(constants.gearPitchCircumferenceMeters()));
+            if (desiredGoal == Goal.SHOOTING) {
+                intakeSlideIO.toSlidePositionUnprofiled(desiredGoal.getSlideGoalRots(constants.gearPitchCircumferenceMeters()), 0.00001);
+            }
+            else {
+                intakeSlideIO.toSlidePosition(desiredGoal.getSlideGoalRots(constants.gearPitchCircumferenceMeters()));
+            }
             this.currentGoal = desiredGoal;
         }
 

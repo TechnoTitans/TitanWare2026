@@ -2,11 +2,9 @@ package frc.robot.subsystems.intake.slide;
 
 import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.StatusSignal;
-import com.ctre.phoenix6.configs.CANcoderConfiguration;
 import com.ctre.phoenix6.configs.Slot0Configs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.*;
-import com.ctre.phoenix6.hardware.CANcoder;
 import com.ctre.phoenix6.hardware.ParentDevice;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.*;
@@ -20,9 +18,9 @@ import frc.robot.constants.HardwareConstants;
 import frc.robot.utils.closeables.ToClose;
 import frc.robot.utils.control.DeltaTime;
 import frc.robot.utils.ctre.RefreshAll;
-import frc.robot.utils.sim.feedback.SimCANCoder;
 import frc.robot.utils.sim.motors.TalonFXSim;
 
+import javax.swing.text.Position;
 import java.util.List;
 
 public class IntakeSlideIOSim implements IntakeSlideIO {
@@ -37,6 +35,7 @@ public class IntakeSlideIOSim implements IntakeSlideIO {
     private final TalonFXSim motorsSim;
 
     private final MotionMagicExpoVoltage motionMagicExpoVoltage;
+    private final PositionVoltage positionVoltage;
     private final TorqueCurrentFOC torqueCurrentFOC;
     private final VoltageOut voltageOut;
     private final Follower follower;
@@ -78,6 +77,7 @@ public class IntakeSlideIOSim implements IntakeSlideIO {
         );
 
         this.motionMagicExpoVoltage = new MotionMagicExpoVoltage(0);
+        this.positionVoltage = new PositionVoltage(0);
         this.torqueCurrentFOC = new TorqueCurrentFOC(0);
         this.voltageOut = new VoltageOut(0);
         this.follower = new Follower(masterMotor.getDeviceID(), MotorAlignmentValue.Opposed);
@@ -195,6 +195,14 @@ public class IntakeSlideIOSim implements IntakeSlideIO {
     public void toSlidePosition(final double positionRots) {
         masterMotor.setControl(motionMagicExpoVoltage.withPosition(positionRots));
         followerMotor.setControl(follower);
+    }
+
+    @Override
+    public void toSlidePositionUnprofiled(double positionRots, double velocityRotsPerSec) {
+        masterMotor.setControl(positionVoltage
+                .withPosition(positionRots)
+                .withVelocity(velocityRotsPerSec)
+        );
     }
 
     @Override

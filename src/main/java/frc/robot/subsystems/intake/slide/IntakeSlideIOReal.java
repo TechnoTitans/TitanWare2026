@@ -31,6 +31,7 @@ public class IntakeSlideIOReal implements IntakeSlideIO {
     private final StatusSignal<Temperature> followerDeviceTemp;
 
     private final MotionMagicExpoVoltage motionMagicExpoVoltage;
+    private final PositionVoltage positionVoltage;
     private final TorqueCurrentFOC torqueCurrentFOC;
     private final VoltageOut voltageOut;
     private final Follower follower;
@@ -54,6 +55,7 @@ public class IntakeSlideIOReal implements IntakeSlideIO {
         this.followerDeviceTemp = followerMotor.getDeviceTemp(false);
 
         this.motionMagicExpoVoltage = new MotionMagicExpoVoltage(0);
+        this.positionVoltage = new PositionVoltage(0);
         this.torqueCurrentFOC = new TorqueCurrentFOC(0);
         this.voltageOut = new VoltageOut(0);
         this.follower = new Follower(masterMotor.getDeviceID(), MotorAlignmentValue.Opposed);
@@ -150,6 +152,14 @@ public class IntakeSlideIOReal implements IntakeSlideIO {
     public void toSlidePosition(double positionRots) {
         masterMotor.setControl(motionMagicExpoVoltage.withPosition(positionRots));
         followerMotor.setControl(follower);
+    }
+
+    @Override
+    public void toSlidePositionUnprofiled(double positionRots, double velocityRotsPerSec) {
+        masterMotor.setControl(positionVoltage
+                .withPosition(positionRots)
+                .withVelocity(velocityRotsPerSec)
+        );
     }
 
     @Override
