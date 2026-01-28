@@ -31,6 +31,7 @@ public class IntakeSlideIOReal implements IntakeSlideIO {
     private final StatusSignal<Temperature> followerDeviceTemp;
 
     private final MotionMagicExpoVoltage motionMagicExpoVoltage;
+    private final PositionVoltage positionVoltage;
     private final TorqueCurrentFOC torqueCurrentFOC;
     private final VoltageOut voltageOut;
     private final Follower follower;
@@ -54,6 +55,7 @@ public class IntakeSlideIOReal implements IntakeSlideIO {
         this.followerDeviceTemp = followerMotor.getDeviceTemp(false);
 
         this.motionMagicExpoVoltage = new MotionMagicExpoVoltage(0);
+        this.positionVoltage = new PositionVoltage(0);
         this.torqueCurrentFOC = new TorqueCurrentFOC(0);
         this.voltageOut = new VoltageOut(0);
         this.follower = new Follower(masterMotor.getDeviceID(), MotorAlignmentValue.Opposed);
@@ -83,16 +85,16 @@ public class IntakeSlideIOReal implements IntakeSlideIO {
                 .withKP(10)
                 .withKD(0.1);
         motorConfiguration.MotionMagic.MotionMagicCruiseVelocity = 0;
-        motorConfiguration.MotionMagic.MotionMagicExpo_kV = 9.263;
-        motorConfiguration.MotionMagic.MotionMagicExpo_kA = 2.1;
-        motorConfiguration.TorqueCurrent.PeakForwardTorqueCurrent = 80;
-        motorConfiguration.TorqueCurrent.PeakReverseTorqueCurrent = -80;
-        motorConfiguration.CurrentLimits.StatorCurrentLimit = 50;
-        motorConfiguration.CurrentLimits.StatorCurrentLimitEnable = true;
-        motorConfiguration.CurrentLimits.SupplyCurrentLimit = 40;
-        motorConfiguration.CurrentLimits.SupplyCurrentLowerLimit = 30;
-        motorConfiguration.CurrentLimits.SupplyCurrentLowerTime = 1;
-        motorConfiguration.CurrentLimits.SupplyCurrentLimitEnable = true;
+        motorConfiguration.MotionMagic.MotionMagicExpo_kV = 9.263; //motor velocity constant
+        motorConfiguration.MotionMagic.MotionMagicExpo_kA = 2.1; //amount of voltage necessary to achieve an acceleration
+        motorConfiguration.TorqueCurrent.PeakForwardTorqueCurrent = 80; //torque current to slide forward
+        motorConfiguration.TorqueCurrent.PeakReverseTorqueCurrent = -80; //torque current to slide backwards
+        motorConfiguration.CurrentLimits.StatorCurrentLimit = 50; //current limit in motor
+        motorConfiguration.CurrentLimits.StatorCurrentLimitEnable = true; //enables limit to be followed
+        motorConfiguration.CurrentLimits.SupplyCurrentLimit = 40; //current drawn from battery
+        motorConfiguration.CurrentLimits.SupplyCurrentLowerLimit = 30; //min threshold for current drawn from battery
+        motorConfiguration.CurrentLimits.SupplyCurrentLowerTime = 1; //reduces supply current to min for time period after limit is reached
+        motorConfiguration.CurrentLimits.SupplyCurrentLimitEnable = true; //enables limit to be followed
         motorConfiguration.Feedback.SensorToMechanismRatio = 1;
         motorConfiguration.Feedback.RotorToSensorRatio = 112.84;
         motorConfiguration.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
@@ -150,6 +152,14 @@ public class IntakeSlideIOReal implements IntakeSlideIO {
     public void toSlidePosition(double positionRots) {
         masterMotor.setControl(motionMagicExpoVoltage.withPosition(positionRots));
         followerMotor.setControl(follower);
+    }
+
+    @Override
+    public void toSlidePositionUnprofiled(final double positionRots, final double velocityRotsPerSec) {
+        masterMotor.setControl(positionVoltage
+                .withPosition(positionRots)
+                .withVelocity(velocityRotsPerSec)
+        );
     }
 
     @Override

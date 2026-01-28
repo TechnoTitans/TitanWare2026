@@ -61,20 +61,20 @@ public class RobotCommands {
     public Command shootWhileMoving() {
         return Commands.parallel(
                 superstructure.toGoal(Superstructure.Goal.SHOOTING),
-                spindexer.toGoal(Spindexer.Goal.FEED)
+                spindexer.toGoal(Spindexer.Goal.FEED),
+                intakeSlide.toGoal(IntakeSlide.Goal.SHOOTING)
         ).withName("ShootWhileMoving");
     }
 
     public Command shootStationary(final Supplier<Rotation2d> rotation2dSupplier) {
         return Commands.deadline(
                 Commands.sequence(
-                        Commands.waitUntil(ableToShoot),
+                        Commands.waitUntil(ableToShoot), //swerve is slow enough in order to shoot
                         superstructure.toGoal(Superstructure.Goal.SHOOTING)
                 ),
-                Commands.sequence(
-                        swerve.faceAngle(rotation2dSupplier)
-                ),
-                spindexer.toGoal(Spindexer.Goal.FEED).onlyIf(ableToShoot)
+                swerve.faceAngle(rotation2dSupplier),
+                spindexer.toGoal(Spindexer.Goal.FEED).onlyIf(ableToShoot),
+                intakeSlide.toGoal(IntakeSlide.Goal.INTAKE)
         ).withName("ShootStationary");
     }
 }

@@ -9,6 +9,7 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.constants.Constants;
 import frc.robot.constants.HardwareConstants;
+import frc.robot.subsystems.superstructure.Superstructure;
 import org.littletonrobotics.junction.Logger;
 
 public class IntakeSlide extends SubsystemBase {
@@ -31,7 +32,8 @@ public class IntakeSlide extends SubsystemBase {
     public enum Goal {
         STOW(0),
         INTAKE(1),
-        EJECT(1);
+        EJECT(1),
+        SHOOTING(0);
 
         private final double slideExtensionGoalMeters;
 
@@ -71,6 +73,11 @@ public class IntakeSlide extends SubsystemBase {
         Logger.processInputs(LogKey, inputs);
 
         if (desiredGoal != currentGoal) {
+            if (desiredGoal == Goal.SHOOTING){
+                intakeSlideIO.toSlidePositionUnprofiled(desiredGoal.getSlideGoalRots(constants.gearPitchCircumferenceMeters()), 0.01);
+            }else {
+                intakeSlideIO.toSlidePosition(desiredGoal.getSlideGoalRots(constants.gearPitchCircumferenceMeters()));
+            }
             intakeSlideIO.toSlidePosition(desiredGoal.getSlideGoalRots(constants.gearPitchCircumferenceMeters()));
             this.currentGoal = desiredGoal;
         }
