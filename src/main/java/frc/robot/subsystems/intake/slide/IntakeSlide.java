@@ -5,6 +5,7 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.constants.Constants;
@@ -15,18 +16,22 @@ public class IntakeSlide extends SubsystemBase {
     protected static final String LogKey = "/Intake/Slide";
     private static final double PositionToleranceRots = 0.02;
     private static final double VelocityToleranceRotsPerSec = 0.02;
+    private static final double HardstopCurrentThresholdAmps = 1;
 
     private final HardwareConstants.IntakeSlideConstants constants;
 
     private final IntakeSlideIO intakeSlideIO;
     private final IntakeSlideIOInputsAutoLogged inputs;
 
-    private Goal desiredGoal = Goal.STOW;
+    private Goal previousGoal = Goal.STOW;
+    private Goal desiredGoal = previousGoal;
     private Goal currentGoal = desiredGoal;
 
     public final Trigger atSlideSetpoint = new Trigger(this::atSlidePositionSetpoint);
     public final Trigger atSlideLowerLimit = new Trigger(this::atSlideLowerLimit);
     public final Trigger atSlideUpperLimit = new Trigger(this::atSlideUpperLimit);
+
+    private boolean isHomed;
 
     public enum Goal {
         STOW(0),
@@ -58,6 +63,7 @@ public class IntakeSlide extends SubsystemBase {
         };
 
         this.inputs = new IntakeSlideIOInputsAutoLogged();
+
         this.intakeSlideIO.config();
 
         intakeSlideIO.toSlidePosition(desiredGoal.getSlideGoalRots(constants.gearPitchCircumferenceMeters()));
@@ -88,6 +94,28 @@ public class IntakeSlide extends SubsystemBase {
                 LogKey + "/PeriodicIOPeriodMs",
                 Units.secondsToMilliseconds(Timer.getFPGATimestamp() - IntakeSlidePeriodicUpdateStart)
         );
+    }
+
+    public Command home(){
+        return Commands.sequence(
+                Commands.runOnce(intakeSlideIO::home),
+                Commands.waitUntil(
+                        () -> getCurrent() >= HardstopCurrentThresholdAmps
+                ),
+                Commands.runOnce(() -> {
+                            intakeSlideIO.zeroMotor();
+                            this.isHomed = true;
+                    }
+                )
+                        .finallyDo(() -> {
+                                    this.currentGoal = previousGoal;
+                                }
+                        )
+        );
+    }
+
+    public boolean isHomed(){
+        return isHomed;
     }
 
     private boolean atSlidePositionSetpoint() {
@@ -126,4 +154,9 @@ public class IntakeSlide extends SubsystemBase {
     public Rotation2d getIntakeSlidePositionRots() {
         return Rotation2d.fromRotations(inputs.masterPositionRots);
     }
+
+    private double getCurrent(){
+        return inputs.masterTorqueCurrentAmps;
+    }
+
 }
