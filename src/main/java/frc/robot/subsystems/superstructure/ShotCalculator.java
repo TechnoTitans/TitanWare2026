@@ -1,7 +1,6 @@
 package frc.robot.subsystems.superstructure;
 
 import edu.wpi.first.math.MathUtil;
-import edu.wpi.first.math.filter.LinearFilter;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
@@ -9,8 +8,8 @@ import edu.wpi.first.math.interpolation.Interpolatable;
 import edu.wpi.first.math.interpolation.InterpolatingTreeMap;
 import edu.wpi.first.math.interpolation.Interpolator;
 import edu.wpi.first.math.interpolation.InverseInterpolator;
-import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.util.Units;
+import frc.robot.RobotCommands;
 import frc.robot.constants.FieldConstants;
 import frc.robot.constants.SimConstants;
 import frc.robot.utils.geometry.AllianceFlipUtil;
@@ -32,12 +31,6 @@ public class ShotCalculator {
             return targetTranslation;
         }
     }
-
-    public enum ScoringType {
-        Stationary,
-        Moving
-    }
-
     public record HoodShooterCalculation(
             Rotation2d hoodRotation,
             double flywheelVelocity,
@@ -62,10 +55,6 @@ public class ShotCalculator {
     private static final InterpolatingTreeMap<Double, HoodShooterCalculation> shotDataMap = new InterpolatingTreeMap<>(
             InverseInterpolator.forDouble(),
             HoodShooterCalculation.interpolator
-    );
-
-    private static final LinearFilter turretAngleFilter = LinearFilter.movingAverage(
-            5
     );
 
     //TODO: Temp values
@@ -134,20 +123,18 @@ public class ShotCalculator {
 
     public static ShotCalculation getShotCalculation(
             final Supplier<Pose2d> swervePoseSupplier,
-            final Supplier<ChassisSpeeds> robotRelativeChassisSpeedsSupplier,
-            final Supplier<ChassisSpeeds> fieldRelativeChassisSpeedsSupplier
+            final Supplier<RobotCommands.ScoringMode> scoringModeSupplier
     ) {
-        return getShotCalculation(
-                swervePoseSupplier.get(),
-                robotRelativeChassisSpeedsSupplier.get(),
-                fieldRelativeChassisSpeedsSupplier.get()
-        );
+        final RobotCommands.ScoringMode scoringMode = scoringModeSupplier.get();
+
+        return switch (scoringMode) {
+            case Stationary, Turret_Off -> getShotCalculation(swervePoseSupplier.get());
+            case Moving -> getMovingShotCalculation(swervePoseSupplier.get());
+        };
     }
 
     private static ShotCalculation getShotCalculation(
-            final Pose2d swervePose,
-            final ChassisSpeeds robotRelativeChassisSpeeds,
-            final ChassisSpeeds fieldRelativeChassisSpeeds
+            final Pose2d swervePose
     ) {
         final Pose2d turretPose = swervePose.transformBy(SimConstants.Turret.TURRET_TO_ROBOT_TRANSFORM);
 
@@ -157,7 +144,7 @@ public class ShotCalculator {
         final double turretToTargetDistance = targetTranslation.getDistance(turretPose.getTranslation());
 
         final Rotation2d desiredTurretAngle = targetTranslation.minus(turretPose.getTranslation()).getAngle().minus(
-                turretPose.getRotation().plus(Rotation2d.fromRadians(fieldRelativeChassisSpeeds.omegaRadiansPerSecond * 0.02))
+                turretPose.getRotation()
         );
 
         return new ShotCalculation(
@@ -168,24 +155,9 @@ public class ShotCalculator {
                 target
         );
     }
-
-    public static ShotCalculation getMovingShotCalculation(
-            final Supplier<Pose2d> swervePoseSupplier,
-            final Supplier<ChassisSpeeds> robotRelativeChassisSpeedsSupplier,
-            final Supplier<ChassisSpeeds> swerveChassisSpeedsSupplier
-    ) {
-        return getMovingShotCalculation(
-                swervePoseSupplier.get(),
-                robotRelativeChassisSpeedsSupplier.get(),
-                swerveChassisSpeedsSupplier.get()
-        );
-    }
-
     //TODO: Needs to be implemented
     private static ShotCalculation getMovingShotCalculation(
-            final Pose2d swervePose,
-            final ChassisSpeeds robotRelativeChassisSpeeds,
-            final ChassisSpeeds fieldRelativeChassisSpeeds
+            final Pose2d swervePose
     ) {
         final Pose2d turretPose = swervePose.transformBy(SimConstants.Turret.TURRET_TO_ROBOT_TRANSFORM);
 

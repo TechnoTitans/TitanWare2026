@@ -35,8 +35,7 @@ public class IntakeSlide extends SubsystemBase {
 
     public enum Goal {
         STOW(0),
-        INTAKE(1),
-        EJECT(1);
+        INTAKE(1);
 
         private final double slideExtensionGoalMeters;
 

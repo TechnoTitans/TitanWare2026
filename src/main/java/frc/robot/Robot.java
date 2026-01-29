@@ -17,7 +17,6 @@ import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.constants.Constants;
-import frc.robot.constants.FieldConstants;
 import frc.robot.constants.HardwareConstants;
 import frc.robot.constants.RobotMap;
 import frc.robot.subsystems.drive.Swerve;
@@ -120,16 +119,16 @@ public class Robot extends LoggedRobot {
             HardwareConstants.SPINDEXER
     );
 
+    //TODO: Change to Moving when SOTM is implemented
+    private RobotCommands.ScoringMode scoringMode =
+            RobotCommands.ScoringMode.Stationary;
+
     private final Supplier<ShotCalculator.ShotCalculation> shotCalculationSupplier =
             () -> ShotCalculator.getShotCalculation(
                     swerve::getPose,
-                    swerve::getRobotRelativeSpeeds,
-                    swerve::getFieldRelativeSpeeds
+                    () -> scoringMode
             );
 
-    //TODO: Change to Moving when SOTM is implemented
-    private ShotCalculator.ScoringType scoringType =
-            ShotCalculator.ScoringType.Stationary;
 
     public final Superstructure superstructure = new Superstructure(
             feeder,
@@ -283,7 +282,7 @@ public class Robot extends LoggedRobot {
 
         LoggedCommandScheduler.periodic();
         Logger.recordOutput("ShotCalculation", shotCalculationSupplier.get());
-        Logger.recordOutput("ScoringType", scoringType);
+        Logger.recordOutput("ScoringType", scoringMode);
         componentsSolver.periodic();
         robotCommands.periodic();
 
@@ -322,16 +321,22 @@ public class Robot extends LoggedRobot {
 
     public void configureStateTriggers() {
         autonomousEnabled.onTrue(
-                Commands.parallel(
-                        hood.home(),
-                        intakeSlide.home()
+                Commands.sequence(
+                        Commands.parallel(
+                                hood.home(),
+                                intakeSlide.home()
+                        ),
+                        Commands.parallel(
+                                intakeSlide.setGoal(IntakeSlide.Goal.INTAKE),
+                                intakeRoller.setGoal(IntakeRoller.Goal.INTAKE)
+                        )
                 )
         );
 
-        teleopEnabled.and(() -> Constants.CURRENT_MODE != Constants.RobotMode.SIM).and(hood::isHomed).negate().onTrue(
+        teleopEnabled.onTrue(
                 Commands.parallel(
-                        hood.home(),
-                        intakeSlide.home()
+                        intakeSlide.setGoal(IntakeSlide.Goal.INTAKE),
+                        intakeRoller.setGoal(IntakeRoller.Goal.INTAKE)
                 )
         );
 
@@ -347,29 +352,29 @@ public class Robot extends LoggedRobot {
     }
 
     public void configureButtonBindings(final EventLoop teleopEventLoop) {
-        driverController.leftTrigger(0.5, teleopEventLoop).whileTrue(
-                robotCommands.intake()
-        );
-
+        //TODO: Might be to complex
         driverController.rightTrigger(0.5, teleopEventLoop).whileTrue(
-                robotCommands.shootWhileMoving()
+                robotCommands.shoot(() -> scoringMode)
+
         );
 
-        coController.rightTrigger(0.5, teleopEventLoop).whileTrue(
-                robotCommands.shootStationary(
-                        FieldConstants.Hub.hubCenterPoint::getAngle
-                )
+        driverController.leftTrigger(0.5, teleopEventLoop).whileTrue(
+                robotCommands.manualIntake()
         );
 
-        coController.povDown().onTrue(
-                Commands.runOnce(() -> this.scoringType = ShotCalculator.ScoringType.Stationary)
+        driverController.povUp().onTrue(
+                Commands.runOnce(() -> this.scoringMode = RobotCommands.ScoringMode.Stationary)
         );
 
-        coController.povDown().onTrue(
-                Commands.run(() -> this.scoringType = ShotCalculator.ScoringType.Moving)
+        driverController.povLeft().onTrue(
+                Commands.runOnce(() -> this.scoringMode = RobotCommands.ScoringMode.Turret_Off)
         );
 
-        coController.povRight().onTrue(
+        driverController.povDown().onTrue(
+                Commands.runOnce(() -> this.scoringMode = RobotCommands.ScoringMode.Moving)
+        );
+
+        driverController.povRight().onTrue(
                 intakeSlide.setGoal(IntakeSlide.Goal.STOW)
         );
     }
