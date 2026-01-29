@@ -1,6 +1,7 @@
 package frc.robot.subsystems.intake.slide;
 
 import edu.wpi.first.math.MathUtil;
+import edu.wpi.first.math.filter.Debouncer;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.Timer;
@@ -17,6 +18,8 @@ public class IntakeSlide extends SubsystemBase {
     private static final double PositionToleranceRots = 0.02;
     private static final double VelocityToleranceRotsPerSec = 0.02;
     private static final double HardstopCurrentThresholdAmps = 1;
+
+    private final Debouncer currentDebouncer = new Debouncer(0.15, Debouncer.DebounceType.kRising);
 
     private final HardwareConstants.IntakeSlideConstants constants;
 
@@ -95,21 +98,18 @@ public class IntakeSlide extends SubsystemBase {
         );
     }
 
+    //TODO: Previous goal might not be used well
     public Command home(){
         return Commands.sequence(
                 Commands.runOnce(intakeSlideIO::home),
                 Commands.waitUntil(
-                        () -> getCurrent() >= HardstopCurrentThresholdAmps
+                        () -> currentDebouncer.calculate(getCurrent() >= HardstopCurrentThresholdAmps)
                 ),
                 Commands.runOnce(() -> {
-                            intakeSlideIO.zeroMotor();
-                            this.isHomed = true;
+                        intakeSlideIO.zeroMotor();
+                        this.isHomed = true;
                     }
-                )
-                        .finallyDo(() -> {
-                                    this.currentGoal = previousGoal;
-                                }
-                        )
+                ).finallyDo(() -> this.currentGoal = previousGoal)
         );
     }
 

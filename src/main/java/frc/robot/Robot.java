@@ -334,9 +334,17 @@ public class Robot extends LoggedRobot {
         );
 
         teleopEnabled.onTrue(
-                Commands.parallel(
-                        intakeSlide.setGoal(IntakeSlide.Goal.INTAKE),
-                        intakeRoller.setGoal(IntakeRoller.Goal.INTAKE)
+                Commands.sequence(
+                        Commands.parallel(
+                                hood.home()
+                                        .onlyIf(hood::isHomed),
+                                intakeSlide.home()
+                                        .onlyIf(intakeSlide::isHomed)
+                        ),
+                        Commands.parallel(
+                                intakeSlide.setGoal(IntakeSlide.Goal.INTAKE),
+                                intakeRoller.setGoal(IntakeRoller.Goal.INTAKE)
+                        )
                 )
         );
 
@@ -352,7 +360,7 @@ public class Robot extends LoggedRobot {
     }
 
     public void configureButtonBindings(final EventLoop teleopEventLoop) {
-        //TODO: Might be to complex
+        //TODO: Might be too complex
         driverController.rightTrigger(0.5, teleopEventLoop).whileTrue(
                 robotCommands.shoot(() -> scoringMode)
 
