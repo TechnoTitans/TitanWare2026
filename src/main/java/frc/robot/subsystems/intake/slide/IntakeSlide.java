@@ -135,13 +135,13 @@ public class IntakeSlide extends SubsystemBase {
         return runEnd(
                 () -> setDesiredGoal(goal),
                 () -> setDesiredGoal(Goal.STOW)
-        ).withName("ToGoal");
+        ).withName("ToGoal: " + goal);
     }
 
     public Command setGoal(final Goal goal) {
         return runOnce(
                 () -> setDesiredGoal(goal)
-        ).withName("ToGoal");
+        ).withName("ToGoalL: " + goal);
     }
 
     private void setDesiredGoal(final Goal goal) {

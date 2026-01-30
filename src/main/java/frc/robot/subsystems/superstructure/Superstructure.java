@@ -142,24 +142,24 @@ public class Superstructure extends VirtualSubsystem {
     public Command setGoal(final Goal goal ){
         return Commands.runOnce(
                 () -> setDesiredGoal(goal)
-        ).withName("SetGoal");
+        ).withName("SetGoal: " + goal);
     }
     public Command toGoal(final Supplier<Goal> goal) {
         return runEnd(
                 () -> setDesiredGoal(goal.get()),
                 () -> setDesiredGoal(Goal.TRACKING)
-        ).withName("ToGoal");
+        ).withName("ToGoal: " + goal);
     }
 
     public Command toGoal(final Goal goal) {
         return runEnd(
                 () -> setDesiredGoal(goal),
                 () -> setDesiredGoal(Goal.TRACKING)
-        ).withName("ToGoal");
+        ).withName("ToGoal: " + goal);
     }
 
     public Command runGoal(final Supplier<Goal> goalSupplier) {
         return run(() -> setDesiredGoal(goalSupplier.get()))
-                .withName("RunGoal");
+                .withName("RunGoal :" + goalSupplier.get());
     }
 }
