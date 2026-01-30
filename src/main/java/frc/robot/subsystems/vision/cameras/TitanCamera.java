@@ -10,9 +10,9 @@ import org.photonvision.PhotonPoseEstimator;
 import org.photonvision.simulation.SimCameraProperties;
 
 public enum TitanCamera {
-    PHOTON_FR_APRILTAG(
-            "FR_AprilTag",
-            Constants.Vision.FRONT_RIGHT_CAMERA,
+    PHOTON_BL_APRILTAG(
+            "BL_AprilTag",
+            Constants.Vision.BACK_LEFT_CAMERA,
             new PhotonPoseEstimator.ConstrainedSolvepnpParams(false, 1),
             CameraProperties.SEE3CAM_24CUG,
             1,
@@ -62,9 +62,9 @@ public enum TitanCamera {
                     ),
             false
     ),
-    PHOTON_FL_APRILTAG(
-            "FL_AprilTag",
-            Constants.Vision.FRONT_LEFT_CAMERA,
+    PHOTON_BR_APRILTAG(
+            "BR_AprilTag",
+            Constants.Vision.BACK_RIGHT_CAMERA,
             new PhotonPoseEstimator.ConstrainedSolvepnpParams(false, 1),
             CameraProperties.SEE3CAM_24CUG,
             1,
@@ -114,9 +114,9 @@ public enum TitanCamera {
                     ),
             false
     ),
-    PHOTON_F_APRILTAG(
-            "F_AprilTag",
-            Constants.Vision.FRONT_CAMERA,
+    PHOTON_BC_APRILTAG(
+            "BC_AprilTag",
+            Constants.Vision.BACK_CENTER_CAMERA,
             new PhotonPoseEstimator.ConstrainedSolvepnpParams(false, 1),
             CameraProperties.ARDUCAM_OV9281,
             1,
@@ -166,9 +166,9 @@ public enum TitanCamera {
                     ),
             false
     ),
-    PHOTON_B_APRILTAG(
-            "B_AprilTag",
-            Constants.Vision.BACK_CAMERA,
+    PHOTON_FH_APRILTAG(
+            "FH_AprilTag",
+            Constants.Vision.FRONT_HOPPER_CAMERA,
             new PhotonPoseEstimator.ConstrainedSolvepnpParams(false, 1),
             CameraProperties.ARDUCAM_OV9281,
             1,

@@ -8,8 +8,6 @@ import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.math.util.Units;
 
-import javax.xml.crypto.dsig.Transform;
-
 public interface Constants {
     RobotMode CURRENT_MODE = RobotMode.SIM;
     CompetitionType CURRENT_COMPETITION_TYPE = CompetitionType.COMPETITION;
@@ -39,24 +37,24 @@ public interface Constants {
 
         double MAX_ACCEPT_BEST_POSE_AMBIGUITY = 0.15;
 
-        Transform3d FRONT_LEFT_CAMERA = new Transform3d(
-                new Translation3d(Units.inchesToMeters(-5.8), Units.inchesToMeters(-11.2), Units.inchesToMeters(18)),
-                new Rotation3d(0, Units.degreesToRadians(-15), Units.degreesToRadians(-90))
+        Transform3d FRONT_HOPPER_CAMERA = new Transform3d(
+                new Translation3d(Units.inchesToMeters(-4), Units.inchesToMeters(-11.5), Units.inchesToMeters(21.5)),
+                new Rotation3d(0, Units.degreesToRadians(-22), Units.degreesToRadians(22))
         );
 
-        Transform3d FRONT_RIGHT_CAMERA = new Transform3d(
-                new Translation3d(Units.inchesToMeters(-5.8), Units.inchesToMeters(11.2), Units.inchesToMeters(18)),
-                new Rotation3d(0, Units.degreesToRadians(-15), Units.degreesToRadians(90))
-        );
-
-        Transform3d FRONT_CAMERA = new Transform3d(
+        Transform3d BACK_CENTER_CAMERA = new Transform3d(
                 new Translation3d(Units.inchesToMeters(-6.8), Units.inchesToMeters(11.2), Units.inchesToMeters(18)),
                 new Rotation3d(0, Units.degreesToRadians(-15), Units.degreesToRadians(180))
         );
 
-        Transform3d BACK_CAMERA = new Transform3d(
-                new Translation3d(Units.inchesToMeters(-5.4), Units.inchesToMeters(-10.5), Units.inchesToMeters(21)),
-                new Rotation3d(0, Units.degreesToRadians(-22), Units.degreesToRadians(22))
+        Transform3d BACK_LEFT_CAMERA = new Transform3d(
+                new Translation3d(Units.inchesToMeters(-6.3), Units.inchesToMeters(11.2), Units.inchesToMeters(18)),
+                new Rotation3d(0, Units.degreesToRadians(-15), Units.degreesToRadians(90))
+        );
+
+        Transform3d BACK_RIGHT_CAMERA = new Transform3d(
+                new Translation3d(Units.inchesToMeters(-6.3), Units.inchesToMeters(-11.2), Units.inchesToMeters(18)),
+                new Rotation3d(0, Units.degreesToRadians(-15), Units.degreesToRadians(-90))
         );
     }
 }

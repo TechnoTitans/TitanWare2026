@@ -24,6 +24,7 @@ import frc.robot.subsystems.drive.constants.SwerveConstants;
 import frc.robot.subsystems.intake.roller.IntakeRoller;
 import frc.robot.subsystems.intake.slide.IntakeSlide;
 import frc.robot.subsystems.spindexer.Spindexer;
+import frc.robot.subsystems.superstructure.ShotCalculationData;
 import frc.robot.subsystems.superstructure.ShotCalculator;
 import frc.robot.subsystems.superstructure.Superstructure;
 import frc.robot.subsystems.superstructure.feeder.Feeder;
@@ -123,7 +124,7 @@ public class Robot extends LoggedRobot {
     private RobotCommands.ScoringMode scoringMode =
             RobotCommands.ScoringMode.Stationary;
 
-    private final Supplier<ShotCalculator.ShotCalculation> shotCalculationSupplier =
+    private final Supplier<ShotCalculationData.ShotCalculation> shotCalculationSupplier =
             () -> ShotCalculator.getShotCalculation(
                     swerve::getPose,
                     () -> scoringMode

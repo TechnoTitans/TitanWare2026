@@ -31,7 +31,7 @@ public class Superstructure extends VirtualSubsystem {
 
     public final Trigger atSuperstructureSetpoint;
 
-    private final Supplier<ShotCalculator.ShotCalculation> shotCalculationSupplier;
+    private final Supplier<ShotCalculationData.ShotCalculation> shotCalculationSupplier;
 
     public enum Goal {
         STOW(Feeder.Goal.STOP, Turret.Goal.STOW, Hood.Goal.STOW, Shooter.Goal.STOP, false),
@@ -60,7 +60,7 @@ public class Superstructure extends VirtualSubsystem {
             final Turret turret,
             final Hood hood,
             final Shooter shooter,
-            final Supplier<ShotCalculator.ShotCalculation> shotCalculationSupplier
+            final Supplier<ShotCalculationData.ShotCalculation> shotCalculationSupplier
     ) {
         this.feeder = feeder;
         this.turret = turret;
@@ -105,7 +105,7 @@ public class Superstructure extends VirtualSubsystem {
         eventLoop.poll();
 
         if (desiredGoal.isDynamic) {
-            final ShotCalculator.ShotCalculation shotCalculation = shotCalculationSupplier.get();
+            final ShotCalculationData.ShotCalculation shotCalculation = shotCalculationSupplier.get();
 
             turret.updatePositionSetpoint(shotCalculation.desiredTurretRotation().getRotations());
             hood.updateDesiredHoodPosition(shotCalculation.hoodShooterCalculation().hoodRotation().getRotations());
