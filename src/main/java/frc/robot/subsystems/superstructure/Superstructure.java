@@ -130,7 +130,6 @@ public class Superstructure extends VirtualSubsystem {
         Logger.recordOutput(LogKey + "/Triggers/DesiredGoalChanged", desiredGoalChanged);
     }
 
-    //TODO: Swapping w/ running goal might be wrong logic
     public Trigger atSetpoint(final Supplier<Goal> goalSupplier) {
         return atSuperstructureSetpoint.and(() -> runningGoal == goalSupplier.get());
     }
