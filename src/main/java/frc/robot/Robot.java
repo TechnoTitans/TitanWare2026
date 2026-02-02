@@ -130,7 +130,6 @@ public class Robot extends LoggedRobot {
                     () -> scoringMode
             );
 
-
     public final Superstructure superstructure = new Superstructure(
             feeder,
             turret,
@@ -283,7 +282,7 @@ public class Robot extends LoggedRobot {
 
         LoggedCommandScheduler.periodic();
         Logger.recordOutput("ShotCalculation", shotCalculationSupplier.get());
-        Logger.recordOutput("ScoringType", scoringMode);
+        Logger.recordOutput("ScoringMode", scoringMode);
         componentsSolver.periodic();
         robotCommands.periodic();
 
