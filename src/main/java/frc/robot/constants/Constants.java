@@ -38,23 +38,23 @@ public interface Constants {
         double MAX_ACCEPT_BEST_POSE_AMBIGUITY = 0.15;
 
         Transform3d FRONT_HOPPER_CAMERA = new Transform3d(
-                new Translation3d(Units.inchesToMeters(-4), Units.inchesToMeters(-11.5), Units.inchesToMeters(21.5)),
+                new Translation3d(Units.inchesToMeters(-2.5), Units.inchesToMeters(-11), Units.inchesToMeters(20)),
                 new Rotation3d(0, Units.degreesToRadians(-22), Units.degreesToRadians(22))
         );
 
         Transform3d BACK_CENTER_CAMERA = new Transform3d(
-                new Translation3d(Units.inchesToMeters(-6.8), Units.inchesToMeters(11.2), Units.inchesToMeters(18)),
-                new Rotation3d(0, Units.degreesToRadians(-15), Units.degreesToRadians(180))
+                new Translation3d(Units.inchesToMeters(-9.0), Units.inchesToMeters(10.825), Units.inchesToMeters(18.125)),
+                new Rotation3d(0, Units.degreesToRadians(-25), Units.degreesToRadians(180))
         );
 
         Transform3d BACK_LEFT_CAMERA = new Transform3d(
-                new Translation3d(Units.inchesToMeters(-6.3), Units.inchesToMeters(11.2), Units.inchesToMeters(18)),
-                new Rotation3d(0, Units.degreesToRadians(-15), Units.degreesToRadians(90))
+                new Translation3d(Units.inchesToMeters(-6.3), Units.inchesToMeters(13.0), Units.inchesToMeters(18)),
+                new Rotation3d(0, Units.degreesToRadians(-20), Units.degreesToRadians(90))
         );
 
         Transform3d BACK_RIGHT_CAMERA = new Transform3d(
-                new Translation3d(Units.inchesToMeters(-6.3), Units.inchesToMeters(-11.2), Units.inchesToMeters(18)),
-                new Rotation3d(0, Units.degreesToRadians(-15), Units.degreesToRadians(-90))
+                new Translation3d(Units.inchesToMeters(-6.3), Units.inchesToMeters(-13.0), Units.inchesToMeters(18)),
+                new Rotation3d(0, Units.degreesToRadians(-20), Units.degreesToRadians(-90))
         );
     }
 }
