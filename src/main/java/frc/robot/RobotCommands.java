@@ -10,6 +10,7 @@ import frc.robot.subsystems.drive.Swerve;
 import frc.robot.subsystems.intake.roller.IntakeRoller;
 import frc.robot.subsystems.intake.slide.IntakeSlide;
 import frc.robot.subsystems.spindexer.Spindexer;
+import frc.robot.subsystems.superstructure.ShotCalculator;
 import frc.robot.subsystems.superstructure.Superstructure;
 import org.littletonrobotics.junction.Logger;
 
@@ -66,7 +67,7 @@ public class RobotCommands {
         ).withName("Intake");
     }
 
-    public Command shoot(final Supplier<ScoringMode> scoringType) {
+    public Command shoot(final Supplier<ScoringMode> scoringType, final Supplier<ShotCalculator.Target> target) {
         return Commands.select(
                 Map.of(
                         ScoringMode.Moving,
@@ -74,7 +75,7 @@ public class RobotCommands {
                         ScoringMode.Stationary,
                         shootStationary(),
                         ScoringMode.Turret_Off,
-                        alignSwerveAndShoot(() -> FieldConstants.Hub.hubCenterPoint.minus(swerve.getPose().getTranslation()).getAngle())
+                        alignSwerveAndShoot(() -> target.get().getTargetTranslation().minus(swerve.getPose().getTranslation()).getAngle())
                 ),
                 scoringType
         );

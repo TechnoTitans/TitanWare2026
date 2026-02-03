@@ -362,7 +362,7 @@ public class Robot extends LoggedRobot {
     public void configureButtonBindings(final EventLoop teleopEventLoop) {
         //TODO: Might be too complex
         driverController.rightTrigger(0.5, teleopEventLoop).whileTrue(
-                robotCommands.shoot(() -> scoringMode)
+                robotCommands.shoot(() -> scoringMode, () -> shotCalculationSupplier.get().target())
 
         );
 
