@@ -20,6 +20,7 @@ import frc.robot.constants.Constants;
 import frc.robot.constants.FieldConstants;
 import frc.robot.constants.HardwareConstants;
 import frc.robot.constants.RobotMap;
+import frc.robot.subsystems.climb.Climb;
 import frc.robot.subsystems.drive.Swerve;
 import frc.robot.subsystems.drive.constants.SwerveConstants;
 import frc.robot.subsystems.intake.roller.IntakeRoller;
@@ -139,6 +140,11 @@ public class Robot extends LoggedRobot {
             shotCalculationSupplier
     );
 
+    public final Climb climb = new Climb(
+            Constants.CURRENT_MODE,
+            HardwareConstants.CLIMB
+    );
+
     private final ComponentsSolver componentsSolver = new ComponentsSolver(
             turret::getTurretPosition,
             hood::getHoodPosition,
@@ -150,7 +156,8 @@ public class Robot extends LoggedRobot {
             intakeRoller,
             intakeSlide,
             superstructure,
-            spindexer
+            spindexer,
+            climb
     );
 
     public final CommandXboxController driverController = new CommandXboxController(RobotMap.MainController);
@@ -344,6 +351,10 @@ public class Robot extends LoggedRobot {
 
         driverController.rightTrigger(0.5, teleopEventLoop).whileTrue(
                 robotCommands.shootWhileMoving()
+        );
+
+        this.driverController.y(teleopEventLoop).whileTrue(
+                robotCommands.startClimb()
         );
 
         coController.rightTrigger(0.5, teleopEventLoop).whileTrue(

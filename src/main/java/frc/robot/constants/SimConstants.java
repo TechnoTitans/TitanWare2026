@@ -63,4 +63,8 @@ public interface SimConstants {
 
         Pose3d EXTENDED_POSE = new Pose3d(new Translation3d(0.212,0, 0.501), Rotation3d.kZero);
     }
+
+    interface Climb {
+        double MASS_KG = 0.0;
+    }
 }
