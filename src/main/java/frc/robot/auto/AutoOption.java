@@ -1,0 +1,47 @@
+package frc.robot.auto;
+
+import choreo.auto.AutoRoutine;
+import frc.robot.constants.Constants;
+
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.function.Supplier;
+
+public record AutoOption(
+        String name,
+        Supplier<AutoRoutine> autoRoutine,
+        Set<Constants.CompetitionType> competitionTypes
+) {
+    public static final List<Constants.CompetitionType> defaultCompetitionTypes =
+            List.of(Constants.CompetitionType.TESTING);
+
+    public AutoOption(final String name, final Supplier<AutoRoutine> autoRoutine) {
+        this(name, autoRoutine, new HashSet<>(defaultCompetitionTypes));
+    }
+
+    public AutoOption(
+            final String name,
+            final Supplier<AutoRoutine> autoRoutine,
+            final Constants.CompetitionType... competitionTypes
+    ) {
+        this(
+                name,
+                autoRoutine,
+                addDefaultCompetitionType(competitionTypes)
+        );
+    }
+
+    private static Set<Constants.CompetitionType> addDefaultCompetitionType(
+            final Constants.CompetitionType[] competitionTypes
+    ) {
+        final HashSet<Constants.CompetitionType> set = new HashSet<>(defaultCompetitionTypes);
+        set.addAll(Arrays.asList(competitionTypes));
+        return set;
+    }
+
+    public boolean hasCompetitionType(final Constants.CompetitionType competitionType) {
+        return competitionTypes.contains(competitionType);
+    }
+}

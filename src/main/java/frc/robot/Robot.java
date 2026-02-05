@@ -16,6 +16,9 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
+import frc.robot.auto.AutoChooser;
+import frc.robot.auto.AutoOption;
+import frc.robot.auto.Autos;
 import frc.robot.constants.Constants;
 import frc.robot.constants.HardwareConstants;
 import frc.robot.constants.RobotMap;
@@ -150,6 +153,21 @@ public class Robot extends LoggedRobot {
             intakeSlide,
             superstructure,
             spindexer
+    );
+
+    public final Autos autos = new Autos(
+            swerve,
+            superstructure,
+            photonVision,
+            robotCommands
+    );
+
+    private final AutoChooser autoChooser = new AutoChooser(
+            new AutoOption(
+                    "DoNothing",
+                    autos::doNothing,
+                    Constants.CompetitionType.COMPETITION
+            )
     );
 
     public final CommandXboxController driverController = new CommandXboxController(RobotMap.MainController);
@@ -356,7 +374,7 @@ public class Robot extends LoggedRobot {
     }
 
     public void configureAutos() {
-
+        autonomousEnabled.whileTrue(Commands.deferredProxy(() -> autoChooser.getSelected().cmd()));
     }
 
     public void configureButtonBindings(final EventLoop teleopEventLoop) {

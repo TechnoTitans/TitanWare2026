@@ -84,6 +84,7 @@ public class RobotCommands {
         return Commands.parallel(
                 superstructure.toGoal(Superstructure.Goal.SHOOTING),
                 spindexer.toGoal(Spindexer.Goal.FEED)
+                        .onlyIf(superstructure.atSuperstructureSetpoint)
         ).withName("ShootWhileMoving");
     }
 
@@ -93,7 +94,8 @@ public class RobotCommands {
                         Commands.waitUntil(ableToShoot),
                         superstructure.toGoal(Superstructure.Goal.SHOOTING)
                 ),
-                spindexer.toGoal(Spindexer.Goal.FEED).onlyIf(ableToShoot)
+                spindexer.toGoal(Spindexer.Goal.FEED)
+                        .onlyIf(ableToShoot.and(superstructure.atSuperstructureSetpoint))
         );
     }
 
@@ -104,7 +106,8 @@ public class RobotCommands {
                         superstructure.toGoal(Superstructure.Goal.SHOOTING)
                 ),
                 swerve.faceAngle(rotation2dSupplier),
-                spindexer.toGoal(Spindexer.Goal.FEED).onlyIf(ableToShoot)
+                spindexer.toGoal(Spindexer.Goal.FEED)
+                        .onlyIf(ableToShoot.and(superstructure.atSuperstructureSetpoint))
         ).withName("ShootStationary");
     }
 }
