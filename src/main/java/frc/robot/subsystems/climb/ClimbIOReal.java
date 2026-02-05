@@ -7,7 +7,6 @@ import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.DynamicMotionMagicVoltage;
 import com.ctre.phoenix6.controls.MotionMagicExpoVoltage;
 import com.ctre.phoenix6.controls.TorqueCurrentFOC;
-import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.ParentDevice;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.FeedbackSensorSourceValue;
@@ -28,7 +27,6 @@ public class ClimbIOReal implements ClimbIO{
     private final MotionMagicExpoVoltage motionMagicExpoVoltage;
     private final DynamicMotionMagicVoltage dynamicMotionMagicVoltage;
     private final TorqueCurrentFOC torqueCurrentFOC;
-    private final VoltageOut voltageOut;
 
     private final StatusSignal<Angle> motorPosition;
     private final StatusSignal<AngularVelocity> motorVelocity;
@@ -44,7 +42,6 @@ public class ClimbIOReal implements ClimbIO{
         this.motionMagicExpoVoltage = new MotionMagicExpoVoltage(0);
         this.dynamicMotionMagicVoltage = new DynamicMotionMagicVoltage(0, 0, 0);
         this.torqueCurrentFOC = new TorqueCurrentFOC(0);
-        this.voltageOut = new VoltageOut(0);
 
         this.motorPosition = climbMotor.getPosition(false);
         this.motorVelocity = climbMotor.getVelocity(false);
@@ -138,11 +135,6 @@ public class ClimbIOReal implements ClimbIO{
                 .withVelocity(velocityRotsPerSec)
                 .withAcceleration(accelerationRotsPerSec2)
         );
-    }
-
-    @Override
-    public void toVoltage(final double volts) {
-        climbMotor.setControl(voltageOut.withOutput(volts));
     }
 
     @Override

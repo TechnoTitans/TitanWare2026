@@ -29,8 +29,6 @@ import frc.robot.utils.ctre.Phoenix6Utils;
 import frc.robot.utils.ctre.RefreshAll;
 import frc.robot.utils.sim.motors.TalonFXSim;
 
-import java.util.List;
-
 public class ClimbIOSim implements ClimbIO {
     private static final double SIM_UPDATE_PERIOD_SEC = 0.0;
 

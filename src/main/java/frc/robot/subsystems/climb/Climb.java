@@ -16,7 +16,6 @@ import edu.wpi.first.wpilibj2.command.button.Trigger;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.constants.Constants;
 import frc.robot.constants.HardwareConstants;
-import frc.robot.subsystems.spindexer.Spindexer;
 import frc.robot.utils.logging.LogUtils;
 import org.littletonrobotics.junction.Logger;
 
@@ -40,46 +39,14 @@ public class Climb extends SubsystemBase {
     private Goal desiredGoal = Goal.STOW;
     private Goal currentGoal = desiredGoal;
 
-    private final PositionSetpoint setpoint;
-    private final PositionSetpoint climbLowerLimit;
-    private final PositionSetpoint climbUpperLimit;
-
     public final Trigger atSetpoint = new Trigger(this::atPositionSetpoint);
     public final Trigger atLowerLimit = new Trigger(this::atLowerLimit);
     public final Trigger atUpperLimit = new Trigger(this::atUpperLimit);
 
-    public static class PositionSetpoint {
-        public double climbPositionRots = 0.0;
-
-        public PositionSetpoint withClimbPositionRots(final double climbPositionRots) {
-            this.climbPositionRots = climbPositionRots;
-            return this;
-        }
-
-        public static boolean atSetpoint(
-                final double setpointClimbPositionRots,
-                final double climbPositionRots,
-                final double climbVelocityRotsPerSec
-        ) {
-            return MathUtil.isNear(setpointClimbPositionRots, climbPositionRots, PositionToleranceRots)
-                    && MathUtil.isNear(0, climbVelocityRotsPerSec, VelocityToleranceRotsPerSec);
-        }
-
-        public boolean atSetpoint(final double climbPositionRots, final double climbVelocityRotsPerSec) {
-            return PositionSetpoint.atSetpoint(
-                    this.climbPositionRots,
-                    climbPositionRots,
-                    climbVelocityRotsPerSec
-            );
-        }
-    }
-
     public enum Goal {
         DYNAMIC(0),
         STOW(0),
-        CLIMB_DOWN(0),
-        HP(0),
-        AUTO_L1(0);
+        CLIMB_DOWN(0);
 
         private final double positionGoalMeters;
         Goal(final double positionGoalMeters) {
@@ -119,15 +86,11 @@ public class Climb extends SubsystemBase {
                 Amps.of(0),
                 Seconds.of(0)
         );
-
-        this.setpoint = new PositionSetpoint()
-                .withClimbPositionRots(desiredGoal.getPositionGoalRots(constants));
-        this.climbLowerLimit = new PositionSetpoint().withClimbPositionRots(constants.lowerLimitRots());
-        this.climbUpperLimit = new PositionSetpoint().withClimbPositionRots(constants.upperLimitRots());
+        final double initialPositionRots = desiredGoal.getPositionGoalRots(constants);
 
         this.climbIO.config();
-        this.home();
-        this.climbIO.toPosition(setpoint.climbPositionRots);
+        this.zero();
+        this.climbIO.toPosition(initialPositionRots);
     }
 
     @Override
@@ -137,10 +100,8 @@ public class Climb extends SubsystemBase {
         climbIO.updateInputs(inputs);
         Logger.processInputs(LogKey, inputs);
 
-        if (desiredGoal != currentGoal) {
-            if (desiredGoal != Goal.DYNAMIC) {
-                setpoint.climbPositionRots = desiredGoal.getPositionGoalRots(constants);
-            }
+        if (desiredGoal != currentGoal && desiredGoal != Goal.DYNAMIC) {
+            climbIO.toPosition(desiredGoal.getPositionGoalRots(constants));
         }
 
         this.currentGoal = desiredGoal;
@@ -148,8 +109,8 @@ public class Climb extends SubsystemBase {
 
         Logger.recordOutput(LogKey + "/CurrentGoal", currentGoal.toString());
         Logger.recordOutput(LogKey + "/DesiredGoal", desiredGoal.toString());
-        Logger.recordOutput(LogKey + "/PositionSetpoint/PositionRots", setpoint.climbPositionRots);
-        Logger.recordOutput(LogKey + "/AtPositionSetpoint", atPositionSetpoint());
+        Logger.recordOutput(LogKey + "/GoalTargetPositionRots", desiredGoal.getPositionGoalRots(constants));
+        Logger.recordOutput(LogKey + "/CurrentPositionRots", atPositionSetpoint());
         Logger.recordOutput(LogKey + "/AtLowerLimit", atLowerLimit());
         Logger.recordOutput(LogKey + "/AtUpperLimit", atUpperLimit());
         Logger.recordOutput(LogKey + "/ExtensionMeters", getExtensionMeters());
@@ -161,31 +122,31 @@ public class Climb extends SubsystemBase {
     }
 
     public boolean atGoal(final Goal goal) {
-        return PositionSetpoint.atSetpoint(
-                goal.getPositionGoalRots(constants),
-                inputs.motorPositionRots,
-                inputs.motorVelocityRotsPerSec
-        );
+        double goalRots = goal.getPositionGoalRots(constants);
+        return MathUtil.isNear(goalRots, inputs.motorPositionRots, PositionToleranceRots)
+                && MathUtil.isNear(0, inputs.motorVelocityRotsPerSec, VelocityToleranceRotsPerSec);
     }
 
     private boolean atPositionSetpoint() {
-        return setpoint.atSetpoint(inputs.motorPositionRots, inputs.motorVelocityRotsPerSec)
+        double goalRots = desiredGoal.getPositionGoalRots(constants);
+        return MathUtil.isNear(goalRots, inputs.motorPositionRots, PositionToleranceRots)
+                && MathUtil.isNear(0, inputs.motorVelocityRotsPerSec, VelocityToleranceRotsPerSec)
                 && currentGoal == desiredGoal;
     }
 
     private boolean atLowerLimit() {
-        return inputs.motorPositionRots <= climbLowerLimit.climbPositionRots;
+        return inputs.motorPositionRots <= constants.lowerLimitRots();
     }
 
     private boolean atUpperLimit() {
-        return inputs.motorPositionRots >= climbUpperLimit.climbPositionRots;
+        return inputs.motorPositionRots >= constants.upperLimitRots();
     }
 
     public double getExtensionMeters() {
         return inputs.motorPositionRots;
     }
 
-    public void home() {
+    public void zero() {
         this.climbIO.setPosition(0);
     }
 
@@ -205,8 +166,8 @@ public class Climb extends SubsystemBase {
     public Command runPositionMetersCommand(final DoubleSupplier positionMeters) {
         return run(() -> {
             this.desiredGoal = Goal.DYNAMIC;
-            setpoint.climbPositionRots = positionMeters.getAsDouble();
-            climbIO.toPosition(setpoint.climbPositionRots);
+            double goalPosition = positionMeters.getAsDouble();
+            climbIO.toPosition(goalPosition);
         });
     }
 
