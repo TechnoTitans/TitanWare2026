@@ -391,12 +391,13 @@ public class Robot extends LoggedRobot {
         //TODO: Might be too complex
         driverController.rightTrigger(0.5, teleopEventLoop).whileTrue(
                 robotCommands.shoot(() -> scoringMode, () -> shotCalculationSupplier.get().target())
-
         );
 
         driverController.leftTrigger(0.5, teleopEventLoop).whileTrue(
                 robotCommands.manualIntake()
         );
+
+        driverController.y().onTrue(robotCommands.climb());
 
         driverController.povUp().onTrue(
                 Commands.runOnce(() -> this.scoringMode = RobotCommands.ScoringMode.Stationary)
@@ -404,12 +405,6 @@ public class Robot extends LoggedRobot {
 
         driverController.povLeft().onTrue(
                 Commands.runOnce(() -> this.scoringMode = RobotCommands.ScoringMode.Turret_Off)
-        driverController.y().onTrue(robotCommands.climb());
-
-        coController.rightTrigger(0.5, teleopEventLoop).whileTrue(
-                robotCommands.shootStationary(
-                        FieldConstants.Hub.hubCenterPoint::getAngle
-                )
         );
 
         driverController.povDown().onTrue(

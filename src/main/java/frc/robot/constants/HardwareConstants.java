@@ -164,7 +164,7 @@ public class HardwareConstants {
 
     public static final ClimbConstants CLIMB = new ClimbConstants(
             CANBus.RIO,
-            25,
+            26,
             26,
             0.0,
             5.0,

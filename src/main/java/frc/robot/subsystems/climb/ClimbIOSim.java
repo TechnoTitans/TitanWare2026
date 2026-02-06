@@ -108,7 +108,7 @@ public class ClimbIOSim implements ClimbIO {
     });
     ToClose.add(simUpdateNotifier);
     simUpdateNotifier.setName(String.format(
-            "SimUpdate(%d,%d)",
+            "SimUpdate(%d)",
             climbMotor.getDeviceID()
     ));
     simUpdateNotifier.startPeriodic(SIM_UPDATE_PERIOD_SEC);
