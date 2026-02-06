@@ -125,19 +125,6 @@ public class ClimbIOReal implements ClimbIO{
     }
 
     @Override
-    public void toPosition(
-            final double positionRots,
-            final double velocityRotsPerSec,
-            final double accelerationRotsPerSec2
-    ) {
-        climbMotor.setControl(dynamicMotionMagicVoltage
-                .withPosition(positionRots)
-                .withVelocity(velocityRotsPerSec)
-                .withAcceleration(accelerationRotsPerSec2)
-        );
-    }
-
-    @Override
     public void toTorqueCurrent(final double torqueCurrentAmps) {
         climbMotor.setControl(torqueCurrentFOC.withOutput(torqueCurrentAmps));
     }

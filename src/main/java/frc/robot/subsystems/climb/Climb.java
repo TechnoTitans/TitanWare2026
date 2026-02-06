@@ -18,9 +18,6 @@ import frc.robot.constants.Constants;
 import frc.robot.constants.HardwareConstants;
 import frc.robot.utils.logging.LogUtils;
 import org.littletonrobotics.junction.Logger;
-
-import java.util.function.DoubleSupplier;
-
 import static edu.wpi.first.units.Units.*;
 
 public class Climb extends SubsystemBase {
@@ -44,7 +41,6 @@ public class Climb extends SubsystemBase {
     public final Trigger atUpperLimit = new Trigger(this::atUpperLimit);
 
     public enum Goal {
-        DYNAMIC(0),
         STOW(0),
         CLIMB_DOWN(0);
 
@@ -86,11 +82,10 @@ public class Climb extends SubsystemBase {
                 Amps.of(0),
                 Seconds.of(0)
         );
-        final double initialPositionRots = desiredGoal.getPositionGoalRots(constants);
 
         this.climbIO.config();
         this.zero();
-        this.climbIO.toPosition(initialPositionRots);
+        this.climbIO.toPosition(desiredGoal.getPositionGoalRots(constants));
     }
 
     @Override
@@ -100,7 +95,7 @@ public class Climb extends SubsystemBase {
         climbIO.updateInputs(inputs);
         Logger.processInputs(LogKey, inputs);
 
-        if (desiredGoal != currentGoal && desiredGoal != Goal.DYNAMIC) {
+        if (desiredGoal != currentGoal) {
             climbIO.toPosition(desiredGoal.getPositionGoalRots(constants));
         }
 
@@ -108,9 +103,7 @@ public class Climb extends SubsystemBase {
 
 
         Logger.recordOutput(LogKey + "/CurrentGoal", currentGoal.toString());
-        Logger.recordOutput(LogKey + "/DesiredGoal", desiredGoal.toString());
-        Logger.recordOutput(LogKey + "/GoalTargetPositionRots", desiredGoal.getPositionGoalRots(constants));
-        Logger.recordOutput(LogKey + "/CurrentPositionRots", atPositionSetpoint());
+        Logger.recordOutput(LogKey + "/DesiredGoal", desiredGoal.getPositionGoalRots(constants));
         Logger.recordOutput(LogKey + "/AtLowerLimit", atLowerLimit());
         Logger.recordOutput(LogKey + "/AtUpperLimit", atUpperLimit());
         Logger.recordOutput(LogKey + "/ExtensionMeters", getExtensionMeters());
@@ -122,8 +115,7 @@ public class Climb extends SubsystemBase {
     }
 
     public boolean atGoal(final Goal goal) {
-        double goalRots = goal.getPositionGoalRots(constants);
-        return MathUtil.isNear(goalRots, inputs.motorPositionRots, PositionToleranceRots)
+        return MathUtil.isNear(goal.getPositionGoalRots(constants), inputs.motorPositionRots, PositionToleranceRots)
                 && MathUtil.isNear(0, inputs.motorVelocityRotsPerSec, VelocityToleranceRotsPerSec);
     }
 
@@ -161,14 +153,6 @@ public class Climb extends SubsystemBase {
         this.desiredGoal = goal;
         Logger.recordOutput(LogKey + "/CurrentGoal", currentGoal.toString());
         Logger.recordOutput(LogKey + "/DesiredGoal", desiredGoal.toString());
-    }
-
-    public Command runPositionMetersCommand(final DoubleSupplier positionMeters) {
-        return run(() -> {
-            this.desiredGoal = Goal.DYNAMIC;
-            double goalPosition = positionMeters.getAsDouble();
-            climbIO.toPosition(goalPosition);
-        });
     }
 
     private SysIdRoutine makeVoltageSysIdRoutine(

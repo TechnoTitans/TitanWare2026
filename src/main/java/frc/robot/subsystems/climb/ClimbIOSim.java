@@ -182,18 +182,6 @@ public class ClimbIOSim implements ClimbIO {
         climbMotor.setControl(motionMagicExpoVoltage.withPosition(positionRots));
     }
 
-    @Override
-    public void toPosition(
-            final double positionRots,
-            final double velocityRotsPerSec,
-            final double accelerationRotsPerSec2
-    ) {
-        climbMotor.setControl(dynamicMotionMagicVoltage
-                .withPosition(positionRots)
-                .withVelocity(velocityRotsPerSec)
-                .withAcceleration(accelerationRotsPerSec2)
-        );
-    }
 
     @Override
     public void toVoltage(final double volts) {
