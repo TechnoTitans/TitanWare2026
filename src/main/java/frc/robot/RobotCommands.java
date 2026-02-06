@@ -5,18 +5,27 @@ import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
+import frc.robot.constants.FieldConstants;
 import frc.robot.subsystems.climb.Climb;
 import frc.robot.subsystems.drive.Swerve;
-import frc.robot.subsystems.spindexer.Spindexer;
 import frc.robot.subsystems.intake.roller.IntakeRoller;
 import frc.robot.subsystems.intake.slide.IntakeSlide;
+import frc.robot.subsystems.spindexer.Spindexer;
+import frc.robot.subsystems.superstructure.ShotCalculator;
 import frc.robot.subsystems.superstructure.Superstructure;
 import org.littletonrobotics.junction.Logger;
 
 import java.util.function.DoubleSupplier;
+import java.util.Map;
 import java.util.function.Supplier;
 
 public class RobotCommands {
+    public enum ScoringMode {
+        Stationary,
+        Moving,
+        Turret_Off
+    }
+
     protected static final String LogKey = "RobotCommands";
     protected static final double AllowableSpeedToShootMetersPerSec = 0.1;
 
@@ -55,7 +64,7 @@ public class RobotCommands {
         Logger.recordOutput(LogKey + "/AbleToShoot", ableToShoot);
     }
 
-    public Command intake() {
+    public Command manualIntake() {
         return Commands.parallel(
                 intakeRoller.toGoal(IntakeRoller.Goal.INTAKE),
                 intakeSlide.setGoal(IntakeSlide.Goal.INTAKE),
@@ -63,23 +72,48 @@ public class RobotCommands {
         ).withName("Intake");
     }
 
-    public Command shootWhileMoving() {
+    public Command shoot(final Supplier<ScoringMode> scoringType, final Supplier<ShotCalculator.Target> target) {
+        return Commands.select(
+                Map.of(
+                        ScoringMode.Moving,
+                        shootWhileMoving(),
+                        ScoringMode.Stationary,
+                        shootStationary(),
+                        ScoringMode.Turret_Off,
+                        alignSwerveAndShoot(() -> target.get().getTargetTranslation().minus(swerve.getPose().getTranslation()).getAngle())
+                ),
+                scoringType
+        );
+    }
+
+    private Command shootWhileMoving() {
         return Commands.parallel(
                 superstructure.toGoal(Superstructure.Goal.SHOOTING),
                 spindexer.toGoal(Spindexer.Goal.FEED)
+                        .onlyIf(superstructure.atSuperstructureSetpoint)
         ).withName("ShootWhileMoving");
     }
 
-    public Command shootStationary(final Supplier<Rotation2d> rotation2dSupplier) {
-        return Commands.deadline(
+    private Command shootStationary() {
+        return Commands.parallel(
                 Commands.sequence(
                         Commands.waitUntil(ableToShoot),
                         superstructure.toGoal(Superstructure.Goal.SHOOTING)
                 ),
+                spindexer.toGoal(Spindexer.Goal.FEED)
+                        .onlyIf(ableToShoot.and(superstructure.atSuperstructureSetpoint))
+        );
+    }
+
+    private Command alignSwerveAndShoot(final Supplier<Rotation2d> rotation2dSupplier) {
+        return Commands.parallel(
                 Commands.sequence(
-                        swerve.faceAngle(rotation2dSupplier)
+                        Commands.waitUntil(ableToShoot),
+                        superstructure.toGoal(Superstructure.Goal.SHOOTING)
                 ),
-                spindexer.toGoal(Spindexer.Goal.FEED).onlyIf(ableToShoot)
+                swerve.faceAngle(rotation2dSupplier),
+                spindexer.toGoal(Spindexer.Goal.FEED)
+                        .onlyIf(ableToShoot.and(superstructure.atSuperstructureSetpoint))
         ).withName("ShootStationary");
     }
 

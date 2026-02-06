@@ -31,7 +31,7 @@ public class Superstructure extends VirtualSubsystem {
 
     public final Trigger atSuperstructureSetpoint;
 
-    private final Supplier<ShotCalculator.ShotCalculation> shotCalculationSupplier;
+    private final Supplier<ShotCalculationData.ShotCalculation> shotCalculationSupplier;
 
     public enum Goal {
         STOW(Feeder.Goal.STOP, Turret.Goal.STOW, Hood.Goal.STOW, Shooter.Goal.STOP, false),
@@ -60,7 +60,7 @@ public class Superstructure extends VirtualSubsystem {
             final Turret turret,
             final Hood hood,
             final Shooter shooter,
-            final Supplier<ShotCalculator.ShotCalculation> shotCalculationSupplier
+            final Supplier<ShotCalculationData.ShotCalculation> shotCalculationSupplier
     ) {
         this.feeder = feeder;
         this.turret = turret;
@@ -105,7 +105,7 @@ public class Superstructure extends VirtualSubsystem {
         eventLoop.poll();
 
         if (desiredGoal.isDynamic) {
-            final ShotCalculator.ShotCalculation shotCalculation = shotCalculationSupplier.get();
+            final ShotCalculationData.ShotCalculation shotCalculation = shotCalculationSupplier.get();
 
             turret.updatePositionSetpoint(shotCalculation.desiredTurretRotation().getRotations());
             hood.updateDesiredHoodPosition(shotCalculation.hoodShooterCalculation().hoodRotation().getRotations());
@@ -130,7 +130,6 @@ public class Superstructure extends VirtualSubsystem {
         Logger.recordOutput(LogKey + "/Triggers/DesiredGoalChanged", desiredGoalChanged);
     }
 
-    //TODO: Swapping w/ running goal might be wrong logic
     public Trigger atSetpoint(final Supplier<Goal> goalSupplier) {
         return atSuperstructureSetpoint.and(() -> runningGoal == goalSupplier.get());
     }
@@ -142,24 +141,24 @@ public class Superstructure extends VirtualSubsystem {
     public Command setGoal(final Goal goal ){
         return Commands.runOnce(
                 () -> setDesiredGoal(goal)
-        ).withName("SetGoal");
+        ).withName("SetGoal: " + goal);
     }
     public Command toGoal(final Supplier<Goal> goal) {
         return runEnd(
                 () -> setDesiredGoal(goal.get()),
                 () -> setDesiredGoal(Goal.TRACKING)
-        ).withName("ToGoal");
+        ).withName("ToGoal: " + goal);
     }
 
     public Command toGoal(final Goal goal) {
         return runEnd(
                 () -> setDesiredGoal(goal),
                 () -> setDesiredGoal(Goal.TRACKING)
-        ).withName("ToGoal");
+        ).withName("ToGoal: " + goal);
     }
 
     public Command runGoal(final Supplier<Goal> goalSupplier) {
         return run(() -> setDesiredGoal(goalSupplier.get()))
-                .withName("RunGoal");
+                .withName("RunGoal :" + goalSupplier.get());
     }
 }

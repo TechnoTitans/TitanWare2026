@@ -109,7 +109,6 @@ public class HoodIOSim implements HoodIO {
 
     @Override
     public void config() {
-
         motorConfig.Slot0 = new Slot0Configs()
                 .withKP(50);
         motorConfig.CurrentLimits.StatorCurrentLimit = 60;
@@ -176,13 +175,14 @@ public class HoodIOSim implements HoodIO {
 
     @Override
     public void home() {
-        motorConfig.TorqueCurrent.PeakForwardTorqueCurrent = 1;
+        motorConfig.CurrentLimits.StatorCurrentLimit = 1;
         hoodMotor.setControl(voltageOut.withOutput(-0.1));
     }
 
     @Override
     public void zeroMotor() {
         hoodMotor.setPosition(0);
+        motorConfig.CurrentLimits.StatorCurrentLimit = 60;
         motorConfig.SoftwareLimitSwitch.ForwardSoftLimitThreshold = constants.hoodUpperLimitRots();
         motorConfig.SoftwareLimitSwitch.ReverseSoftLimitThreshold = 0;
         toHoodPosition(0);

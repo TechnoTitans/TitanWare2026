@@ -84,10 +84,15 @@ public class IntakeRoller extends SubsystemBase {
         return runEnd(
                 () -> setGoal(goal),
                 () -> setGoal(Goal.STOW)
-        ).withName("ToGoal");
+        ).withName("ToGoal: " + goal);
     }
 
-    public void setGoal(final Goal goal) {
+    public Command setGoal(final Goal goal) {
+        return runOnce(() -> setDesiredGoal(goal))
+                .withName("SetGoal: " + goal);
+    }
+
+    private void setDesiredGoal(final Goal goal) {
         this.desiredGoal = goal;
         Logger.recordOutput(LogKey + "/CurrentGoal", currentGoal.toString());
         Logger.recordOutput(LogKey + "/DesiredGoal", desiredGoal.toString());

@@ -27,4 +27,8 @@ public interface IntakeSlideIO {
     default void toSlideVoltage(final double volts) {}
 
     default void toSlideTorqueCurrent(final double torqueCurrentAmps) {}
+
+    default void home() {}
+
+    default void zeroMotor() {}
 }

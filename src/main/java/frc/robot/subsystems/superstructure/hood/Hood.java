@@ -1,6 +1,7 @@
 package frc.robot.subsystems.superstructure.hood;
 
 import edu.wpi.first.math.MathUtil;
+import edu.wpi.first.math.filter.Debouncer;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.Timer;
@@ -17,6 +18,8 @@ public class Hood extends SubsystemBase {
     private static final double PositionToleranceRots = 0.001;
     private static final double VelocityToleranceRotsPerSec = 0.001;
     private static final double HardstopCurrentThreshold = 1;
+
+    private final Debouncer currentDebouncer = new Debouncer(0.15, Debouncer.DebounceType.kRising);
 
     private final HardwareConstants.HoodConstants constants;
 
@@ -107,17 +110,16 @@ public class Hood extends SubsystemBase {
         return Commands.sequence(
                 Commands.runOnce(hoodIO::home),
                 Commands.waitUntil(
-                        () -> getCurrent() >= HardstopCurrentThreshold
+                        () -> currentDebouncer.calculate(getCurrent() >= HardstopCurrentThreshold)
                 ),
                 Commands.runOnce(() -> {
-                                    hoodIO.zeroMotor();
-                                    this.isHomed = true;
-                                }
-                        )
-                        .finallyDo(() -> {
-                            this.currentGoal = previousGoal;
-                            this.previousGoal = Goal.TRACKING;
-                        })
+                        hoodIO.zeroMotor();
+                        this.isHomed = true;
+                    }
+                ).finallyDo(() -> {
+                    this.currentGoal = previousGoal;
+                    this.previousGoal = Goal.TRACKING;
+                })
         );
     }
 
