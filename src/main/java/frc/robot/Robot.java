@@ -158,6 +158,8 @@ public class Robot extends LoggedRobot {
             superstructure,
             spindexer,
             climb
+
+
     );
 
     public final CommandXboxController driverController = new CommandXboxController(RobotMap.MainController);
@@ -341,7 +343,6 @@ public class Robot extends LoggedRobot {
     }
 
     public void configureAutos() {
-
     }
 
     public void configureButtonBindings(final EventLoop teleopEventLoop) {
@@ -355,6 +356,10 @@ public class Robot extends LoggedRobot {
 
         this.driverController.y(teleopEventLoop).whileTrue(
                 robotCommands.startClimb()
+        );
+
+        this.driverController.a(teleopEventLoop).whileTrue(
+                robotCommands.prepClimb(driverController::getLeftY, driverController::getLeftX)
         );
 
         coController.rightTrigger(0.5, teleopEventLoop).whileTrue(

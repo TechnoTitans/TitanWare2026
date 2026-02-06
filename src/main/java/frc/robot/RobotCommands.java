@@ -13,6 +13,7 @@ import frc.robot.subsystems.intake.slide.IntakeSlide;
 import frc.robot.subsystems.superstructure.Superstructure;
 import org.littletonrobotics.junction.Logger;
 
+import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
 
 public class RobotCommands {
@@ -82,13 +83,31 @@ public class RobotCommands {
         ).withName("ShootStationary");
     }
 
+    public Command prepClimb(
+            final DoubleSupplier leftStickYInput,
+            final DoubleSupplier leftStickXInput
+    ) {
+        return Commands.parallel(
+                climb.toGoal(Climb.Goal.STOW),
+                swerve.teleopFacingAngle(
+                        leftStickYInput,
+                        leftStickXInput,
+                        () -> Robot.IsRedAlliance.getAsBoolean() ? Rotation2d.kZero : Rotation2d.k180deg
+                )
+        ).withName("prepClimb");
+    }
+
     public Command startClimb() {
         return Commands.parallel((
-                        climb.toGoal(Climb.Goal.STOW),
+                        climb.toGoal(Climb.Goal.STOW)),
                         intakeRoller.toGoal(IntakeRoller.Goal.STOW),
                         intakeSlide.toGoal(IntakeSlide.Goal.STOW),
                         superstructure.toGoal(Superstructure.Goal.CLIMB)
                 ).withName("Climb");
 
+    }
+
+    public Command endClimb() {
+        return climb.toGoal(Climb.Goal.STOW).withName("EndClimb");
     }
 }
