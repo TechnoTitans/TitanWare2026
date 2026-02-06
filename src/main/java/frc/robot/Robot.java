@@ -334,6 +334,7 @@ public class Robot extends LoggedRobot {
 
         teleopEnabled.and(() -> Constants.CURRENT_MODE != Constants.RobotMode.SIM).and(hood::isHomed).negate().onTrue(hood.home());
 
+        teleopEnabled.and(climb::isExtended).onTrue(superstructure.setGoal(Superstructure.Goal.TRACKING));
 
         endgameTrigger.onTrue(ControllerUtils.rumbleForDurationCommand(
                 driverController.getHID(), GenericHID.RumbleType.kBothRumble, 0.5, 1)
@@ -354,13 +355,7 @@ public class Robot extends LoggedRobot {
                 robotCommands.shootWhileMoving()
         );
 
-        this.driverController.y(teleopEventLoop).whileTrue(
-                robotCommands.startClimb()
-        );
-
-        this.driverController.a(teleopEventLoop).whileTrue(
-                robotCommands.prepClimb(driverController::getLeftY, driverController::getLeftX)
-        );
+        driverController.y().onTrue(robotCommands.climb());
 
         coController.rightTrigger(0.5, teleopEventLoop).whileTrue(
                 robotCommands.shootStationary(

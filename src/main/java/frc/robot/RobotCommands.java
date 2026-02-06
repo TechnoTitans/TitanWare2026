@@ -83,31 +83,10 @@ public class RobotCommands {
         ).withName("ShootStationary");
     }
 
-    public Command prepClimb(
-            final DoubleSupplier leftStickYInput,
-            final DoubleSupplier leftStickXInput
-    ) {
+    public Command climb() {
         return Commands.parallel(
-                climb.toGoal(Climb.Goal.STOW),
-                swerve.teleopFacingAngle(
-                        leftStickYInput,
-                        leftStickXInput,
-                        () -> Robot.IsRedAlliance.getAsBoolean() ? Rotation2d.kZero : Rotation2d.k180deg
-                )
-        ).withName("prepClimb");
-    }
-
-    public Command startClimb() {
-        return Commands.parallel((
-                        climb.toGoal(Climb.Goal.STOW)),
-                        intakeRoller.toGoal(IntakeRoller.Goal.STOW),
-                        intakeSlide.toGoal(IntakeSlide.Goal.STOW),
-                        superstructure.toGoal(Superstructure.Goal.CLIMB)
-                ).withName("Climb");
-
-    }
-
-    public Command endClimb() {
-        return climb.toGoal(Climb.Goal.STOW).withName("EndClimb");
+                superstructure.setGoal(Superstructure.Goal.CLIMB),
+                climb.toGoal(Climb.Goal.EXTEND)
+        ).withName("Climb");
     }
 }

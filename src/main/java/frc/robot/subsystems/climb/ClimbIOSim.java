@@ -4,7 +4,6 @@ import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.Slot0Configs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
-import com.ctre.phoenix6.controls.DynamicMotionMagicVoltage;
 import com.ctre.phoenix6.controls.MotionMagicExpoVoltage;
 import com.ctre.phoenix6.controls.TorqueCurrentFOC;
 import com.ctre.phoenix6.controls.VoltageOut;
@@ -17,10 +16,10 @@ import com.ctre.phoenix6.signals.NeutralModeValue;
 import com.ctre.phoenix6.sim.ChassisReference;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.system.plant.LinearSystemId;
-import edu.wpi.first.wpilibj.simulation.ElevatorSim;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.units.measure.*;
 import edu.wpi.first.wpilibj.Notifier;
+import edu.wpi.first.wpilibj.simulation.ElevatorSim;
 import frc.robot.constants.HardwareConstants;
 import frc.robot.constants.SimConstants;
 import frc.robot.utils.closeables.ToClose;
@@ -42,7 +41,6 @@ public class ClimbIOSim implements ClimbIO {
     private final TalonFXSim motorsSim;
 
     private final MotionMagicExpoVoltage motionMagicExpoVoltage;
-    private final DynamicMotionMagicVoltage dynamicMotionMagicVoltage;
     private final TorqueCurrentFOC torqueCurrentFOC;
     private final VoltageOut voltageOut;
 
@@ -75,7 +73,7 @@ public class ClimbIOSim implements ClimbIO {
         lowerLimitMeters
     );
 
-    this.climbMotor = new TalonFX(constants.motorId(), constants.CANBus());
+        this.climbMotor = new TalonFX(constants.motorID(), constants.CANBus().toPhoenix6CANBus());
 
     this.motorsSim = new TalonFXSim(
             climbMotor,
@@ -86,7 +84,6 @@ public class ClimbIOSim implements ClimbIO {
             () -> Units.rotationsToRadians(climbSim.getVelocityMetersPerSecond()/drumCircumferenceMeters)
     );
     this.motionMagicExpoVoltage = new MotionMagicExpoVoltage(0);
-    this.dynamicMotionMagicVoltage = new DynamicMotionMagicVoltage(0,0,0);
     this.torqueCurrentFOC = new TorqueCurrentFOC(0);
     this.voltageOut = new VoltageOut(0);
 
@@ -121,13 +118,11 @@ public class ClimbIOSim implements ClimbIO {
     public void config() {
         final TalonFXConfiguration motorConfiguration = new TalonFXConfiguration();
         motorConfiguration.Slot0 = new Slot0Configs()
-                .withKS(0.0)
-                .withKG(0.0)
+                .withKS(0.1)
+                .withKG(0.15)
                 .withGravityType(GravityTypeValue.Elevator_Static)
-                .withKV(0.0)
-                .withKA(0.0)
-                .withKP(0.0)
-                .withKD(0);
+                .withKP(2.0)
+                .withKD(0.01);
         motorConfiguration.MotionMagic.MotionMagicCruiseVelocity = 0;
         motorConfiguration.MotionMagic.MotionMagicExpo_kV = 0.0;
         motorConfiguration.MotionMagic.MotionMagicExpo_kA = 0.0;
@@ -181,7 +176,6 @@ public class ClimbIOSim implements ClimbIO {
     public void toPosition(final double positionRots) {
         climbMotor.setControl(motionMagicExpoVoltage.withPosition(positionRots));
     }
-
 
     @Override
     public void toVoltage(final double volts) {

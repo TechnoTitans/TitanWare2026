@@ -2,13 +2,14 @@ package frc.robot.subsystems.climb;
 
 import com.ctre.phoenix6.SignalLogger;
 import edu.wpi.first.math.MathUtil;
+import edu.wpi.first.math.util.Units;
 import edu.wpi.first.units.CurrentUnit;
 import edu.wpi.first.units.VoltageUnit;
 import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.units.measure.Time;
 import edu.wpi.first.units.measure.Velocity;
 import edu.wpi.first.units.measure.Voltage;
-import edu.wpi.first.wpilibj.RobotController;
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
@@ -16,14 +17,13 @@ import edu.wpi.first.wpilibj2.command.button.Trigger;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.constants.Constants;
 import frc.robot.constants.HardwareConstants;
-import frc.robot.utils.logging.LogUtils;
 import org.littletonrobotics.junction.Logger;
 import static edu.wpi.first.units.Units.*;
 
 public class Climb extends SubsystemBase {
     protected static final String LogKey = "Climb";
-    private static final double PositionToleranceRots = 0.0;
-    private static final double VelocityToleranceRotsPerSec = 0.0;
+    private static final double PositionToleranceRots = 0.03;
+    private static final double VelocityToleranceRotsPerSec = 0.03;
 
     private final HardwareConstants.ClimbConstants constants;
 
@@ -42,7 +42,7 @@ public class Climb extends SubsystemBase {
 
     public enum Goal {
         STOW(0),
-        CLIMB_DOWN(0);
+        EXTEND(5);
 
         private final double positionGoalMeters;
         Goal(final double positionGoalMeters) {
@@ -90,27 +90,26 @@ public class Climb extends SubsystemBase {
 
     @Override
     public void periodic() {
-        final double climbPeriodicUpdateStart = RobotController.getFPGATime();
+        final double climbPeriodicUpdateStart = Timer.getFPGATimestamp();
 
         climbIO.updateInputs(inputs);
         Logger.processInputs(LogKey, inputs);
 
         if (desiredGoal != currentGoal) {
             climbIO.toPosition(desiredGoal.getPositionGoalRots(constants));
+            this.currentGoal = desiredGoal;
         }
 
-        this.currentGoal = desiredGoal;
-
-
         Logger.recordOutput(LogKey + "/CurrentGoal", currentGoal.toString());
-        Logger.recordOutput(LogKey + "/DesiredGoal", desiredGoal.getPositionGoalRots(constants));
-        Logger.recordOutput(LogKey + "/AtLowerLimit", atLowerLimit());
-        Logger.recordOutput(LogKey + "/AtUpperLimit", atUpperLimit());
+        Logger.recordOutput(LogKey + "/DesiredGoal", desiredGoal);
+        Logger.recordOutput(LogKey + "/DesiredGoal/ClimbPositionRots", desiredGoal.getPositionGoalRots(constants));
         Logger.recordOutput(LogKey + "/ExtensionMeters", getExtensionMeters());
+        Logger.recordOutput(LogKey + "/Triggers/AtLowerLimit", atLowerLimit());
+        Logger.recordOutput(LogKey + "/Triggers/AtUpperLimit", atUpperLimit());
 
         Logger.recordOutput(
                 LogKey + "/PeriodicIOPeriodMs",
-                LogUtils.microsecondsToMilliseconds(RobotController.getFPGATime() - climbPeriodicUpdateStart)
+                Units.secondsToMilliseconds(Timer.getFPGATimestamp() - climbPeriodicUpdateStart)
         );
     }
 
@@ -126,14 +125,6 @@ public class Climb extends SubsystemBase {
                 && currentGoal == desiredGoal;
     }
 
-    private boolean atLowerLimit() {
-        return inputs.motorPositionRots <= constants.lowerLimitRots();
-    }
-
-    private boolean atUpperLimit() {
-        return inputs.motorPositionRots >= constants.upperLimitRots();
-    }
-
     public double getExtensionMeters() {
         return inputs.motorPositionRots;
     }
@@ -142,17 +133,35 @@ public class Climb extends SubsystemBase {
         this.climbIO.setPosition(0);
     }
 
-    public Command toGoal(final Goal desiredGoal){
-        return runEnd(
-                () -> setGoal(desiredGoal),
-                () -> setGoal(Goal.CLIMB_DOWN)
-        ).withName("ToGoal");
+    public boolean isExtended() {
+        return atGoal(Goal.EXTEND);
     }
 
-    public void setGoal(final Goal goal) {
+    public Command toGoal(final Goal goal){
+        return runEnd(
+                () -> setDesiredGoal(goal),
+                () -> setDesiredGoal(Goal.EXTEND)
+        ).withName("ToGoal: " + goal);
+    }
+
+    public Command setGoal(final Goal goal) {
+        return runOnce(
+                () -> setDesiredGoal(goal)
+        ).withName("SetGoal: " + goal);
+    }
+
+    private void setDesiredGoal(final Goal goal) {
         this.desiredGoal = goal;
         Logger.recordOutput(LogKey + "/CurrentGoal", currentGoal.toString());
         Logger.recordOutput(LogKey + "/DesiredGoal", desiredGoal.toString());
+    }
+
+    private boolean atLowerLimit() {
+        return inputs.motorPositionRots <= constants.lowerLimitRots();
+    }
+
+    private boolean atUpperLimit() {
+        return inputs.motorPositionRots >= constants.upperLimitRots();
     }
 
     private SysIdRoutine makeVoltageSysIdRoutine(
@@ -219,5 +228,4 @@ public class Climb extends SubsystemBase {
     public Command torqueCurrentSysIdCommand() {
         return makeSysIdCommand(torqueCurrentSysIdRoutine);
     }
-
 }

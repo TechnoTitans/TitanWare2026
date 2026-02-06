@@ -154,8 +154,8 @@ public class HardwareConstants {
     );
 
     public record ClimbConstants(
-            String CANBus,
-            int motorId,
+            CANBus CANBus,
+            int motorID,
             double climbGearing,
             double lowerLimitRots,
             double upperLimitRots,
@@ -163,11 +163,11 @@ public class HardwareConstants {
     ){}
 
     public static final ClimbConstants CLIMB = new ClimbConstants(
-            RobotMap.CanivoreCANBus,
+            CANBus.RIO,
             25,
             26,
             0.0,
-            0.0,
-            0.0
+            5.0,
+            0.1
     );
 }

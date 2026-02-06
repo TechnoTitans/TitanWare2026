@@ -4,7 +4,6 @@ import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.Slot0Configs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
-import com.ctre.phoenix6.controls.DynamicMotionMagicVoltage;
 import com.ctre.phoenix6.controls.MotionMagicExpoVoltage;
 import com.ctre.phoenix6.controls.TorqueCurrentFOC;
 import com.ctre.phoenix6.hardware.ParentDevice;
@@ -25,7 +24,6 @@ public class ClimbIOReal implements ClimbIO{
     private final TalonFX climbMotor;
 
     private final MotionMagicExpoVoltage motionMagicExpoVoltage;
-    private final DynamicMotionMagicVoltage dynamicMotionMagicVoltage;
     private final TorqueCurrentFOC torqueCurrentFOC;
 
     private final StatusSignal<Angle> motorPosition;
@@ -37,10 +35,9 @@ public class ClimbIOReal implements ClimbIO{
     public ClimbIOReal(final HardwareConstants.ClimbConstants constants) {
         this.constants = constants;
 
-        this.climbMotor = new TalonFX(constants.motorId(), constants.CANBus());
+        this.climbMotor = new TalonFX(constants.motorID(), constants.CANBus().toPhoenix6CANBus());
 
         this.motionMagicExpoVoltage = new MotionMagicExpoVoltage(0);
-        this.dynamicMotionMagicVoltage = new DynamicMotionMagicVoltage(0, 0, 0);
         this.torqueCurrentFOC = new TorqueCurrentFOC(0);
 
         this.motorPosition = climbMotor.getPosition(false);
@@ -96,15 +93,12 @@ public class ClimbIOReal implements ClimbIO{
                 motorTorqueCurrent
         );
         BaseStatusSignal.setUpdateFrequencyForAll(
-                0,
+                4,
                 motorDeviceTemp
         );
         ParentDevice.optimizeBusUtilizationForAll(
-                0,
                 climbMotor
         );
-
-        climbMotor.getSimState().Orientation = ChassisReference.Clockwise_Positive;
     }
     @Override
     public void updateInputs(final ClimbIOInputs inputs) {

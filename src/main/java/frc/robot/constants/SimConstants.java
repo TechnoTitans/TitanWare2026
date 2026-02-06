@@ -65,6 +65,6 @@ public interface SimConstants {
     }
 
     interface Climb {
-        double MASS_KG = 0.0;
+        double MASS_KG = 10;
     }
 }
