@@ -31,10 +31,9 @@ public class Superstructure extends VirtualSubsystem {
 
     public final Trigger atSuperstructureSetpoint;
 
-    private final Supplier<ShotCalculationData.ShotCalculation> shotCalculationSupplier;
+    private final Supplier<ShotCalculationStructs.ShotCalculation> shotCalculationSupplier;
 
     public enum Goal {
-        STOW(Feeder.Goal.STOP, Turret.Goal.STOW, Hood.Goal.STOW, Shooter.Goal.STOP, false),
         CLIMB(Feeder.Goal.STOP, Turret.Goal.CLIMB, Hood.Goal.CLIMB, Shooter.Goal.STOP, false),
         TRACKING(Feeder.Goal.STOP, Turret.Goal.TRACKING, Hood.Goal.TRACKING, Shooter.Goal.STOP, true),
         SHOOTING(Feeder.Goal.FEED, Turret.Goal.TRACKING, Hood.Goal.TRACKING, Shooter.Goal.TRACKING, true);
@@ -60,7 +59,7 @@ public class Superstructure extends VirtualSubsystem {
             final Turret turret,
             final Hood hood,
             final Shooter shooter,
-            final Supplier<ShotCalculationData.ShotCalculation> shotCalculationSupplier
+            final Supplier<ShotCalculationStructs.ShotCalculation> shotCalculationSupplier
     ) {
         this.feeder = feeder;
         this.turret = turret;
@@ -105,7 +104,7 @@ public class Superstructure extends VirtualSubsystem {
         eventLoop.poll();
 
         if (desiredGoal.isDynamic) {
-            final ShotCalculationData.ShotCalculation shotCalculation = shotCalculationSupplier.get();
+            final ShotCalculationStructs.ShotCalculation shotCalculation = shotCalculationSupplier.get();
 
             turret.updatePositionSetpoint(shotCalculation.desiredTurretRotation().getRotations());
             hood.updateDesiredHoodPosition(shotCalculation.hoodShooterCalculation().hoodRotation().getRotations());
