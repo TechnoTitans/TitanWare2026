@@ -5,6 +5,7 @@ import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.Slot0Configs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.MotionMagicExpoVoltage;
+import com.ctre.phoenix6.controls.PositionVoltage;
 import com.ctre.phoenix6.controls.TorqueCurrentFOC;
 import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.ParentDevice;
@@ -20,6 +21,7 @@ import edu.wpi.first.math.util.Units;
 import edu.wpi.first.units.measure.*;
 import edu.wpi.first.wpilibj.Notifier;
 import edu.wpi.first.wpilibj.simulation.ElevatorSim;
+import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.constants.HardwareConstants;
 import frc.robot.constants.SimConstants;
 import frc.robot.utils.closeables.ToClose;
@@ -40,12 +42,12 @@ public class ClimbIOSim implements ClimbIO {
     private final TalonFX climbMotor;
     private final TalonFXSim motorsSim;
 
-    private final MotionMagicExpoVoltage motionMagicExpoVoltage;
+    private final PositionVoltage positionVoltage;
     private final TorqueCurrentFOC torqueCurrentFOC;
     private final VoltageOut voltageOut;
 
     private final StatusSignal<Angle> motorPosition;
-    private final StatusSignal<AngularVelocity>motorVelocity;
+    private final StatusSignal<AngularVelocity> motorVelocity;
     private final StatusSignal<Voltage> motorVoltage;
     private final StatusSignal<Current> motorTorqueCurrent;
     private final StatusSignal<Temperature> motorDeviceTemp;
@@ -55,80 +57,76 @@ public class ClimbIOSim implements ClimbIO {
         this.constants = constants;
         this.drumCircumferenceMeters = constants.spoolDiameterMeters() * Math.PI;
 
-        final DCMotor dcMotors = DCMotor.getKrakenX60(1);
+        final DCMotor dcMotor = DCMotor.getKrakenX60Foc(1);
 
-        final double lowerLimitMeters = constants.lowerLimitRots();
-        final double upperLimitMeters = constants.upperLimitRots();
+        final double lowerLimitMeters = constants.lowerLimitRots() * drumCircumferenceMeters;
+        final double upperLimitMeters = constants.upperLimitRots() * drumCircumferenceMeters;
         this.climbSim = new ElevatorSim(
                 LinearSystemId.createElevatorSystem(
-                        dcMotors,
+                        dcMotor,
                         SimConstants.Climb.MASS_KG,
                         constants.spoolDiameterMeters() * 0.5,
                         constants.climbGearing()
                 ),
-        dcMotors,
-        lowerLimitMeters,
-        upperLimitMeters,
-        true,
-        lowerLimitMeters
-    );
+                dcMotor,
+                lowerLimitMeters,
+                upperLimitMeters,
+                true,
+                lowerLimitMeters
+        );
 
         this.climbMotor = new TalonFX(constants.motorID(), constants.CANBus().toPhoenix6CANBus());
 
-    this.motorsSim = new TalonFXSim(
-            climbMotor,
-            constants.climbGearing(),
-            climbSim::update,
-            climbSim::setInputVoltage,
-            () -> Units.rotationsToRadians(climbSim.getPositionMeters()/drumCircumferenceMeters),
-            () -> Units.rotationsToRadians(climbSim.getVelocityMetersPerSecond()/drumCircumferenceMeters)
-    );
-    this.motionMagicExpoVoltage = new MotionMagicExpoVoltage(0);
-    this.torqueCurrentFOC = new TorqueCurrentFOC(0);
-    this.voltageOut = new VoltageOut(0);
+        this.motorsSim = new TalonFXSim(
+                climbMotor,
+                constants.climbGearing(),
+                climbSim::update,
+                climbSim::setInputVoltage,
+                () -> Units.rotationsToRadians(climbSim.getPositionMeters() / drumCircumferenceMeters),
+                () -> Units.rotationsToRadians(climbSim.getVelocityMetersPerSecond() / drumCircumferenceMeters)
+        );
 
-    this.motorPosition = climbMotor.getPosition(false);
-    this.motorVelocity = climbMotor.getVelocity(false);
-    this.motorVoltage = climbMotor.getMotorVoltage(false);
-    this.motorTorqueCurrent = climbMotor.getTorqueCurrent(false);
-    this.motorDeviceTemp = climbMotor.getDeviceTemp(false);
+        this.positionVoltage = new PositionVoltage(0);
+        this.torqueCurrentFOC = new TorqueCurrentFOC(0);
+        this.voltageOut = new VoltageOut(0);
 
-    RefreshAll.add(
-                HardwareConstants.CANBus.CANIVORE,
+        this.motorPosition = climbMotor.getPosition(false);
+        this.motorVelocity = climbMotor.getVelocity(false);
+        this.motorVoltage = climbMotor.getMotorVoltage(false);
+        this.motorTorqueCurrent = climbMotor.getTorqueCurrent(false);
+        this.motorDeviceTemp = climbMotor.getDeviceTemp(false);
+
+        RefreshAll.add(
+                constants.CANBus(),
                 motorPosition,
                 motorVelocity,
                 motorVoltage,
                 motorTorqueCurrent,
                 motorDeviceTemp
-    );
+        );
 
-    final Notifier simUpdateNotifier = new Notifier(() -> {
-        final double dt = deltaTime.get();
-        motorsSim.update(dt);
-    });
-    ToClose.add(simUpdateNotifier);
-    simUpdateNotifier.setName(String.format(
-            "SimUpdate(%d)",
-            climbMotor.getDeviceID()
-    ));
-    simUpdateNotifier.startPeriodic(SIM_UPDATE_PERIOD_SEC);
+        final Notifier simUpdateNotifier = new Notifier(() -> {
+            final double dt = deltaTime.get();
+            motorsSim.update(dt);
+        });
+        ToClose.add(simUpdateNotifier);
+        simUpdateNotifier.setName(String.format(
+                "SimUpdate(%d)",
+                climbMotor.getDeviceID()
+        ));
+        simUpdateNotifier.startPeriodic(SIM_UPDATE_PERIOD_SEC);
     }
 
     @Override
     public void config() {
         final TalonFXConfiguration motorConfiguration = new TalonFXConfiguration();
         motorConfiguration.Slot0 = new Slot0Configs()
-                .withKS(0.1)
-                .withKG(0.15)
-                .withGravityType(GravityTypeValue.Elevator_Static)
-                .withKP(2.0)
+//                .withGravityType(GravityTypeValue.Elevator_Static)
+                .withKP(100.0)
                 .withKD(0.01);
-        motorConfiguration.MotionMagic.MotionMagicCruiseVelocity = 0;
-        motorConfiguration.MotionMagic.MotionMagicExpo_kV = 0.0;
-        motorConfiguration.MotionMagic.MotionMagicExpo_kA = 0.0;
-        motorConfiguration.TorqueCurrent.PeakForwardTorqueCurrent = 0;
-        motorConfiguration.TorqueCurrent.PeakReverseTorqueCurrent = 0;
-        motorConfiguration.CurrentLimits.StatorCurrentLimit = 0;
+        motorConfiguration.TorqueCurrent.PeakForwardTorqueCurrent = 80;
+        motorConfiguration.TorqueCurrent.PeakReverseTorqueCurrent = -80;
+        motorConfiguration.CurrentLimits.StatorCurrentLimit = 80;
         motorConfiguration.CurrentLimits.StatorCurrentLimitEnable = true;
         motorConfiguration.Feedback.SensorToMechanismRatio = constants.climbGearing();
         motorConfiguration.Feedback.FeedbackSensorSource = FeedbackSensorSourceValue.RotorSensor;
@@ -155,7 +153,7 @@ public class ClimbIOSim implements ClimbIO {
                 climbMotor
         );
 
-        climbMotor.getSimState().Orientation = ChassisReference.Clockwise_Positive;
+        climbMotor.getSimState().Orientation = ChassisReference.CounterClockwise_Positive;
     }
 
     @Override
@@ -174,7 +172,7 @@ public class ClimbIOSim implements ClimbIO {
 
     @Override
     public void toPosition(final double positionRots) {
-        climbMotor.setControl(motionMagicExpoVoltage.withPosition(positionRots));
+        climbMotor.setControl(positionVoltage.withPosition(positionRots));
     }
 
     @Override

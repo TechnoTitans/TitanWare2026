@@ -42,7 +42,7 @@ public class Climb extends SubsystemBase {
 
     public enum Goal {
         STOW(0),
-        EXTEND(5);
+        EXTEND(2);
 
         private final double positionGoalMeters;
         Goal(final double positionGoalMeters) {
@@ -106,6 +106,7 @@ public class Climb extends SubsystemBase {
         Logger.recordOutput(LogKey + "/ExtensionMeters", getExtensionMeters());
         Logger.recordOutput(LogKey + "/Triggers/AtLowerLimit", atLowerLimit());
         Logger.recordOutput(LogKey + "/Triggers/AtUpperLimit", atUpperLimit());
+        Logger.recordOutput(LogKey + "/Triggers/AtSetpoint", atSetpoint);
 
         Logger.recordOutput(
                 LogKey + "/PeriodicIOPeriodMs",
@@ -140,7 +141,7 @@ public class Climb extends SubsystemBase {
     public Command toGoal(final Goal goal){
         return runEnd(
                 () -> setDesiredGoal(goal),
-                () -> setDesiredGoal(Goal.EXTEND)
+                () -> setDesiredGoal(Goal.STOW)
         ).withName("ToGoal: " + goal);
     }
 

@@ -52,6 +52,7 @@ import org.littletonrobotics.junction.wpilog.WPILOGWriter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.Arrays;
 import java.util.Optional;
 import java.util.function.BooleanSupplier;
 import java.util.function.Supplier;
@@ -150,7 +151,8 @@ public class Robot extends LoggedRobot {
     private final ComponentsSolver componentsSolver = new ComponentsSolver(
             turret::getTurretPosition,
             hood::getHoodPosition,
-            intakeSlide::getIntakeSlidePositionRots
+            intakeSlide::getIntakeSlidePositionRots,
+            climb::getExtensionMeters
     );
 
     private final RobotCommands robotCommands = new RobotCommands(
@@ -291,7 +293,11 @@ public class Robot extends LoggedRobot {
 
         Logger.start();
 
-        Logger.recordOutput("EmptyPose", Pose3d.kZero);
+        Pose3d[] emptyPoseArray = new Pose3d[6];
+
+        Arrays.fill(emptyPoseArray, Pose3d.kZero);
+
+        Logger.recordOutput("EmptyPoses", emptyPoseArray);
     }
 
     @Override
@@ -358,9 +364,8 @@ public class Robot extends LoggedRobot {
                 )
         );
 
-        teleopEnabled.and(() -> Constants.CURRENT_MODE != Constants.RobotMode.SIM).and(hood::isHomed).negate().onTrue(hood.home());
-
         teleopEnabled.and(climb::isExtended).onTrue(superstructure.setGoal(Superstructure.Goal.TRACKING));
+
         teleopEnabled.onTrue(
                 Commands.sequence(
                         Commands.parallel(
@@ -397,7 +402,9 @@ public class Robot extends LoggedRobot {
                 robotCommands.manualIntake()
         );
 
-        driverController.y().onTrue(robotCommands.climb());
+        driverController.y().whileTrue(robotCommands.climb());
+
+        driverController.a().onTrue(robotCommands.manualUnclimb());
 
         driverController.povUp().onTrue(
                 Commands.runOnce(() -> this.scoringMode = RobotCommands.ScoringMode.Stationary)

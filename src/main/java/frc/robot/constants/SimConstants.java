@@ -66,5 +66,13 @@ public interface SimConstants {
 
     interface Climb {
         double MASS_KG = 10;
+
+        Pose3d ORIGIN = new Pose3d(new Translation3d(-0.162, 0.193, 0.104), Rotation3d.kZero);
+
+        Rotation3d ANGLE_FROM_HORIZONTAL = new Rotation3d(Units.degreesToRadians(-114.495), 0, 0);
+
+        double STAGE_1_MAX_EXTENSION = Units.inchesToMeters(9.160);
+
+        double STAGE_2_MAX_EXTENSION = Units.inchesToMeters(7.963);
     }
 }

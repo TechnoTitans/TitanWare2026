@@ -1,5 +1,7 @@
 package frc.robot.constants;
 
+import edu.wpi.first.math.util.Units;
+
 import java.util.HashMap;
 import java.util.Objects;
 
@@ -163,11 +165,11 @@ public class HardwareConstants {
     ){}
 
     public static final ClimbConstants CLIMB = new ClimbConstants(
-            CANBus.RIO,
+            CANBus.CANIVORE,
             26,
-            26,
+            48,
             0.0,
-            5.0,
-            0.1
+            50.0,
+            Units.inchesToMeters(2)
     );
 }

@@ -123,4 +123,11 @@ public class RobotCommands {
                 climb.toGoal(Climb.Goal.EXTEND)
         ).withName("Climb");
     }
+
+    public Command manualUnclimb() {
+        return Commands.parallel(
+                superstructure.setGoal(Superstructure.Goal.TRACKING),
+                climb.setGoal(Climb.Goal.STOW)
+        ).withName("Manual Unclimb");
+    }
 }
