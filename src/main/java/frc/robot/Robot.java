@@ -11,6 +11,7 @@ import edu.wpi.first.wpilibj.*;
 import edu.wpi.first.wpilibj.event.EventLoop;
 import edu.wpi.first.wpilibj.livewindow.LiveWindow;
 import edu.wpi.first.wpilibj.simulation.DriverStationSim;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
@@ -60,6 +61,8 @@ public class Robot extends LoggedRobot {
     private static final String AKitLogPath = "/U/logs";
     private static final String HootLogPath = "/U/logs";
 
+    private FuelSim fuelSim;
+
     public static final BooleanSupplier IsRedAlliance = () -> {
         final Optional<DriverStation.Alliance> alliance = DriverStation.getAlliance();
         return alliance.isPresent() && alliance.get() == DriverStation.Alliance.Red;
@@ -104,14 +107,16 @@ public class Robot extends LoggedRobot {
             HardwareConstants.FEEDER
     );
 
-    public final Turret turret = new Turret(
-            Constants.CURRENT_MODE,
-            HardwareConstants.TURRET
-    );
-
     public final Hood hood = new Hood(
             Constants.CURRENT_MODE,
             HardwareConstants.HOOD
+    );
+
+    public final Turret turret = new Turret(
+            Constants.CURRENT_MODE,
+            HardwareConstants.TURRET,
+            fuelSim,
+            hood
     );
 
     public final Shooter shooter = new Shooter(
@@ -257,6 +262,9 @@ public class Robot extends LoggedRobot {
                                     DriverStationSim.notifyNewData();
                                 })
                 );
+
+                configureFuelSim();
+                configureFuelSimRobot(() -> turret.getTurretIO().canIntake(), () -> turret.getTurretIO().intakeFuel());
             }
             case REPLAY -> {
                 setUseTiming(false);
@@ -277,22 +285,6 @@ public class Robot extends LoggedRobot {
         configureStateTriggers();
         configureAutos();
         configureButtonBindings(teleopEventLoop);
-
-        FuelSim fuelSim = new FuelSim("Fuel Sim"); // creates a new fuelSim of FuelSim
-
-        // Register a robot for collision with fuel
-        fuelSim.registerRobot(
-                0.533, // from left to right in meters
-                0.680, // from front to back in meters
-                0.127, // from floor to top of bumpers in meters
-                swerve::getPose, // Supplier<Pose2d> of robot pose
-                swerve::getFieldRelativeSpeeds); // Supplier<ChassisSpeeds> of field-centric chassis speeds
-        // Register an intake to remove fuel from the field as a rectangular bounding box
-        fuelSim.registerIntake(
-                -0.34, 0.340, -0.267, 0.267, // robot-centric coordinates for bounding box in meters
-                intakeRoller::isIntaking); // (optional) BooleanSupplier for whether the intake should be active at a given moment
-
-        fuelSim.setSubticks(5); // sets the number of physics iterations to perform per 20ms loop. Default = 5
 
         LoggedCommandScheduler.init(CommandScheduler.getInstance());
 
@@ -355,6 +347,34 @@ public class Robot extends LoggedRobot {
     @Override
     public void simulationPeriodic() {
         fuelSim.updateSim();
+    }
+
+    private void configureFuelSim() {
+        fuelSim = new FuelSim(); // creates a new fuelSim of FuelSim
+        fuelSim.spawnStartingFuel(); // spawns fuel in the depots and neutral zone
+
+        fuelSim.start();
+        SmartDashboard.putData(Commands.runOnce(() -> {
+                    fuelSim.clearFuel();
+                    fuelSim.spawnStartingFuel();
+                })
+                .withName("Reset Fuel")
+                .ignoringDisable(true));
+    }
+
+    private void configureFuelSimRobot(BooleanSupplier ableToIntake, Runnable intakeCallback) {
+        // Register a robot for collision with fuel
+        fuelSim.registerRobot(
+                0.533, // from left to right in meters
+                0.680, // from front to back in meters
+                0.127, // from floor to top of bumpers in meters
+                swerve::getPose, // Supplier<Pose2d> of robot pose
+                swerve::getFieldRelativeSpeeds); // Supplier<ChassisSpeeds> of field-centric chassis speeds
+        // Register an intake to remove fuel from the field as a rectangular bounding box
+        fuelSim.registerIntake(
+                -0.34, 0.340, -0.267, 0.267, // robot-centric coordinates for bounding box in meters
+                () -> intakeRoller.isIntaking() && ableToIntake.getAsBoolean(), // (optional) BooleanSupplier for whether the intake should be active at a given moment
+                intakeCallback); // (optional) Runnable called whenever a fuel is intaked
     }
 
     public void configureStateTriggers() {

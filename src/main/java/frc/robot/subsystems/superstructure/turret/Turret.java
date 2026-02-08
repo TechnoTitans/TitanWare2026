@@ -8,6 +8,8 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.constants.Constants;
 import frc.robot.constants.HardwareConstants;
+import frc.robot.subsystems.superstructure.hood.Hood;
+import frc.robot.utils.FuelSim;
 import frc.robot.utils.position.ChineseRemainder;
 import org.littletonrobotics.junction.Logger;
 
@@ -52,11 +54,13 @@ public class Turret extends SubsystemBase {
         }
     }
 
-    public Turret(final Constants.RobotMode mode, HardwareConstants.TurretConstants constants) {
+    public Turret(final Constants.RobotMode mode, HardwareConstants.TurretConstants constants,
+                  final FuelSim fuelSim,
+                  final Hood hood) {
         this.constants = constants;
         this.turretIO = switch (mode) {
             case REAL -> new TurretIOReal(constants);
-            case SIM -> new TurretIOSim(constants);
+            case SIM -> new TurretIOSim(constants, fuelSim, hood, this);
             case REPLAY, DISABLED -> new TurretIO() {};
         };
 
@@ -134,4 +138,6 @@ public class Turret extends SubsystemBase {
     private boolean atTurretUpperLimit() {
         return inputs.turretPositionRots >= constants.upperLimitRots();
     }
+
+    public TurretIO getTurretIO() { return turretIO; }
 }

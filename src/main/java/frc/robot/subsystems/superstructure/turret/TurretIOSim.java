@@ -25,16 +25,27 @@ import edu.wpi.first.wpilibj.Notifier;
 import edu.wpi.first.wpilibj.simulation.DCMotorSim;
 import frc.robot.constants.HardwareConstants;
 import frc.robot.constants.SimConstants;
+import frc.robot.subsystems.superstructure.hood.Hood;
+import frc.robot.utils.FuelSim;
 import frc.robot.utils.closeables.ToClose;
 import frc.robot.utils.control.DeltaTime;
 import frc.robot.utils.ctre.RefreshAll;
 import frc.robot.utils.sim.motors.TalonFXSim;
 
+import static edu.wpi.first.units.Units.*;
+
 public class TurretIOSim implements TurretIO {
     private static final double SIM_UPDATE_PERIOD_SEC = 0.005;
 
+    private static final int CAPACITY = 40;
+    private int fuelStored = 0;
+
     private final DeltaTime deltaTime;
     private final HardwareConstants.TurretConstants constants;
+
+    private final FuelSim fuelSim;
+    private final Hood hood;
+    private final Turret turret;
 
     private final TalonFX turretMotor;
     private final CANcoder leftEncoder;
@@ -56,9 +67,16 @@ public class TurretIOSim implements TurretIO {
     private final VoltageOut voltageOut;
     private final TorqueCurrentFOC torqueCurrentFOC;
 
-    public TurretIOSim(final HardwareConstants.TurretConstants constants) {
+    public TurretIOSim(final HardwareConstants.TurretConstants constants,
+                       final FuelSim fuelSim,
+                       final Hood hood,
+                       final Turret turret) {
         this.deltaTime = new DeltaTime(true);
         this.constants = constants;
+
+        this.fuelSim = fuelSim;
+        this.hood = hood;
+        this.turret = turret;
 
         this.turretMotor = new TalonFX(constants.turretMotorID(), constants.CANBus().toPhoenix6CANBus());
         this.leftEncoder = new CANcoder(constants.leftEncoderID(), constants.CANBus().toPhoenix6CANBus());
@@ -200,6 +218,8 @@ public class TurretIOSim implements TurretIO {
 
         inputs.leftPositionRots = leftEncoderPosition.getValueAsDouble();
         inputs.rightPositionRots = rightEncoderPosition.getValueAsDouble();
+
+        launchFuel(hood, turret);
     }
 
     @Override
@@ -225,5 +245,24 @@ public class TurretIOSim implements TurretIO {
     @Override
     public void setTurretPosition(final double turretAbsolutePosition) {
         this.turretMotor.setPosition(turretAbsolutePosition);
+    }
+
+    public boolean canIntake() {
+        return fuelStored < CAPACITY;
+    }
+
+    public void intakeFuel() {
+        fuelStored++;
+    }
+
+    public void launchFuel(Hood hood, Turret turret) {
+        if (fuelStored == 0) return;
+        fuelStored--;
+
+        fuelSim.launchFuel(
+                MetersPerSecond.of(5.35),
+                hood.getHoodPosition().getMeasure(),
+                turret.getTurretPosition().getMeasure(),
+                Inches.of(15.2));
     }
 }
