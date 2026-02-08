@@ -88,7 +88,7 @@ public class Robot extends LoggedRobot {
     );
 
     public final PhotonVision photonVision = new PhotonVision(
-            Constants.CURRENT_MODE,
+            Constants.RobotMode.DISABLED,
             swerve
     );
 
@@ -373,7 +373,7 @@ public class Robot extends LoggedRobot {
         // Register an intake to remove fuel from the field as a rectangular bounding box
         fuelSim.registerIntake(
                 -0.34, 0.340, -0.267, 0.267, // robot-centric coordinates for bounding box in meters
-                () -> intakeRoller.isIntaking() && ableToIntake.getAsBoolean(), // (optional) BooleanSupplier for whether the intake should be active at a given moment
+                () -> intakeSlide.isIntaking() && ableToIntake.getAsBoolean(), // (optional) BooleanSupplier for whether the intake should be active at a given moment
                 intakeCallback); // (optional) Runnable called whenever a fuel is intaked
     }
 

@@ -247,10 +247,12 @@ public class TurretIOSim implements TurretIO {
         this.turretMotor.setPosition(turretAbsolutePosition);
     }
 
+    @Override
     public boolean canIntake() {
         return fuelStored < CAPACITY;
     }
 
+    @Override
     public void intakeFuel() {
         fuelStored++;
     }

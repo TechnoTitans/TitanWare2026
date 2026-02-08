@@ -30,7 +30,7 @@ public interface TurretIO {
 
     default void setTurretPosition(final double turretAbsolutePosition) {}
 
-    default boolean canIntake() { return false; }
+    default boolean canIntake() { return true; }
 
     default void intakeFuel() {}
 }

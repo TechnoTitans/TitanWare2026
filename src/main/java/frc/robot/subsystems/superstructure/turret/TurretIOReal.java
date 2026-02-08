@@ -162,10 +162,4 @@ public class TurretIOReal implements TurretIO {
     public void toTurretTorqueCurrent(double torqueCurrent) {
         turretMotor.setControl(torqueCurrentFOC.withOutput(torqueCurrent));
     }
-
-    public boolean canIntake() {
-        return false;
-    }
-
-    public void intakeFuel() {}
 }
