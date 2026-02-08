@@ -48,7 +48,7 @@ public class ShotCalculator {
     }
 
     private static ShotCalculationStructs.ShotCalculation getShotCalculation(final Pose2d swervePose, final ChassisSpeeds swerveSpeeds) {
-        final Pose2d turretPose = swervePose.transformBy(SimConstants.Turret.TURRET_TO_ROBOT_TRANSFORM)
+        final Pose2d turretPose = swervePose.transformBy(SimConstants.Turret.ROBOT_TO_TURRET_TRANSFORM_2D)
                 .exp(new Twist2d(
                         swerveSpeeds.vxMetersPerSecond * 0.01,
                         swerveSpeeds.vyMetersPerSecond * 0.01,
@@ -74,7 +74,7 @@ public class ShotCalculator {
     }
     //TODO: Needs to be implemented
     private static ShotCalculationStructs.ShotCalculation getMovingShotCalculation(final Pose2d swervePose, final ChassisSpeeds swerveSpeeds) {
-        final Pose2d turretPose = swervePose.transformBy(SimConstants.Turret.TURRET_TO_ROBOT_TRANSFORM)
+        final Pose2d turretPose = swervePose.transformBy(SimConstants.Turret.ROBOT_TO_TURRET_TRANSFORM_2D)
                 .exp(new Twist2d(
                         swerveSpeeds.vxMetersPerSecond * DelayTimeSec,
                         swerveSpeeds.vyMetersPerSecond * DelayTimeSec,
@@ -100,7 +100,7 @@ public class ShotCalculator {
     }
 
     private static ShotCalculationStructs.ShotCalculation getTurretOffShotShotCalculation(Pose2d swervePose) {
-        final Pose2d turretPose = swervePose.transformBy(SimConstants.Turret.TURRET_TO_ROBOT_TRANSFORM);
+        final Pose2d turretPose = swervePose.transformBy(SimConstants.Turret.ROBOT_TO_TURRET_TRANSFORM_2D);
 
         Target target = turretPose.getX() > FerryXBoundary ? Target.FERRYING : Target.HUB;
         final Translation2d targetTranslation = AllianceFlipUtil.apply(target.getTargetTranslation());

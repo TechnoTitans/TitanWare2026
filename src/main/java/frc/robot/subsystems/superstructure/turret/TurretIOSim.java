@@ -43,10 +43,6 @@ public class TurretIOSim implements TurretIO {
     private final DeltaTime deltaTime;
     private final HardwareConstants.TurretConstants constants;
 
-    private final FuelSim fuelSim;
-    private final Hood hood;
-    private final Turret turret;
-
     private final TalonFX turretMotor;
     private final CANcoder leftEncoder;
     private final CANcoder rightEncoder;
@@ -67,16 +63,9 @@ public class TurretIOSim implements TurretIO {
     private final VoltageOut voltageOut;
     private final TorqueCurrentFOC torqueCurrentFOC;
 
-    public TurretIOSim(final HardwareConstants.TurretConstants constants,
-                       final FuelSim fuelSim,
-                       final Hood hood,
-                       final Turret turret) {
+    public TurretIOSim(final HardwareConstants.TurretConstants constants) {
         this.deltaTime = new DeltaTime(true);
         this.constants = constants;
-
-        this.fuelSim = fuelSim;
-        this.hood = hood;
-        this.turret = turret;
 
         this.turretMotor = new TalonFX(constants.turretMotorID(), constants.CANBus().toPhoenix6CANBus());
         this.leftEncoder = new CANcoder(constants.leftEncoderID(), constants.CANBus().toPhoenix6CANBus());
@@ -218,8 +207,6 @@ public class TurretIOSim implements TurretIO {
 
         inputs.leftPositionRots = leftEncoderPosition.getValueAsDouble();
         inputs.rightPositionRots = rightEncoderPosition.getValueAsDouble();
-
-        launchFuel(hood, turret);
     }
 
     @Override
@@ -245,26 +232,5 @@ public class TurretIOSim implements TurretIO {
     @Override
     public void setTurretPosition(final double turretAbsolutePosition) {
         this.turretMotor.setPosition(turretAbsolutePosition);
-    }
-
-    @Override
-    public boolean canIntake() {
-        return fuelStored < CAPACITY;
-    }
-
-    @Override
-    public void intakeFuel() {
-        fuelStored++;
-    }
-
-    public void launchFuel(Hood hood, Turret turret) {
-        if (fuelStored == 0) return;
-        fuelStored--;
-
-        fuelSim.launchFuel(
-                MetersPerSecond.of(5.35),
-                hood.getHoodPosition().getMeasure(),
-                turret.getTurretPosition().getMeasure(),
-                Inches.of(15.2));
     }
 }

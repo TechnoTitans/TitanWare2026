@@ -114,9 +114,7 @@ public class Robot extends LoggedRobot {
 
     public final Turret turret = new Turret(
             Constants.CURRENT_MODE,
-            HardwareConstants.TURRET,
-            fuelSim,
-            hood
+            HardwareConstants.TURRET
     );
 
     public final Shooter shooter = new Shooter(
@@ -152,6 +150,15 @@ public class Robot extends LoggedRobot {
             turret::getTurretPosition,
             hood::getHoodPosition,
             intakeSlide::getIntakeSlidePositionRots
+    );
+
+    private final FuelSimManager fuelSimManager = new FuelSimManager(
+            hood::getHoodPosition,
+            turret::getTurretPosition,
+            swerve::getPose,
+            swerve::getFieldRelativeSpeeds,
+            intakeRoller::isIntaking,
+            shooter::isShooting
     );
 
     private final RobotCommands robotCommands = new RobotCommands(
@@ -262,9 +269,6 @@ public class Robot extends LoggedRobot {
                                     DriverStationSim.notifyNewData();
                                 })
                 );
-
-                configureFuelSim();
-                configureFuelSimRobot(() -> turret.getTurretIO().canIntake(), () -> turret.getTurretIO().intakeFuel());
             }
             case REPLAY -> {
                 setUseTiming(false);
@@ -311,6 +315,7 @@ public class Robot extends LoggedRobot {
         LoggedCommandScheduler.periodic();
         Logger.recordOutput("ShotCalculation", shotCalculationSupplier.get());
         Logger.recordOutput("ScoringMode", scoringMode);
+
         componentsSolver.periodic();
         robotCommands.periodic();
 
@@ -346,35 +351,7 @@ public class Robot extends LoggedRobot {
 
     @Override
     public void simulationPeriodic() {
-        fuelSim.updateSim();
-    }
-
-    private void configureFuelSim() {
-        fuelSim = new FuelSim(); // creates a new fuelSim of FuelSim
-        fuelSim.spawnStartingFuel(); // spawns fuel in the depots and neutral zone
-
-        fuelSim.start();
-        SmartDashboard.putData(Commands.runOnce(() -> {
-                    fuelSim.clearFuel();
-                    fuelSim.spawnStartingFuel();
-                })
-                .withName("Reset Fuel")
-                .ignoringDisable(true));
-    }
-
-    private void configureFuelSimRobot(BooleanSupplier ableToIntake, Runnable intakeCallback) {
-        // Register a robot for collision with fuel
-        fuelSim.registerRobot(
-                0.533, // from left to right in meters
-                0.680, // from front to back in meters
-                0.127, // from floor to top of bumpers in meters
-                swerve::getPose, // Supplier<Pose2d> of robot pose
-                swerve::getFieldRelativeSpeeds); // Supplier<ChassisSpeeds> of field-centric chassis speeds
-        // Register an intake to remove fuel from the field as a rectangular bounding box
-        fuelSim.registerIntake(
-                -0.34, 0.340, -0.267, 0.267, // robot-centric coordinates for bounding box in meters
-                () -> intakeSlide.isIntaking() && ableToIntake.getAsBoolean(), // (optional) BooleanSupplier for whether the intake should be active at a given moment
-                intakeCallback); // (optional) Runnable called whenever a fuel is intaked
+        fuelSimManager.periodic();
     }
 
     public void configureStateTriggers() {
@@ -440,7 +417,10 @@ public class Robot extends LoggedRobot {
         );
 
         driverController.povRight().onTrue(
-                intakeSlide.setGoal(IntakeSlide.Goal.STOW)
+                Commands.parallel(
+                    intakeSlide.setGoal(IntakeSlide.Goal.STOW),
+                    intakeRoller.setGoal(IntakeRoller.Goal.STOW)
+                )
         );
     }
 }

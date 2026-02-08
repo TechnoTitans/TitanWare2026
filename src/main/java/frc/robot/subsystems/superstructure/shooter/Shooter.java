@@ -84,6 +84,10 @@ public class Shooter extends SubsystemBase {
         );
     }
 
+    public boolean isShooting() {
+        return atVelocitySetpoint.getAsBoolean() && currentGoal == Goal.TRACKING;
+    }
+
     public void setGoal(final Goal desiredGoal) {
         this.desiredGoal = desiredGoal;
         Logger.recordOutput(LogKey + "/CurrentGoal", currentGoal.toString());

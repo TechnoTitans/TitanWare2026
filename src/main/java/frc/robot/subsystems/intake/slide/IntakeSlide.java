@@ -158,8 +158,4 @@ public class IntakeSlide extends SubsystemBase {
     private double getCurrent(){
         return inputs.masterTorqueCurrentAmps;
     }
-
-    public boolean isIntaking() {
-        return desiredGoal == IntakeSlide.Goal.INTAKE;
-    }
 }

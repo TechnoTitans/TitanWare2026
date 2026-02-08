@@ -29,8 +29,4 @@ public interface TurretIO {
     default void toTurretTorqueCurrent(final double torqueCurrent) {}
 
     default void setTurretPosition(final double turretAbsolutePosition) {}
-
-    default boolean canIntake() { return true; }
-
-    default void intakeFuel() {}
 }

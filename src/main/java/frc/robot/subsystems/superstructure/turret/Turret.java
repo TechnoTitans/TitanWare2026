@@ -54,13 +54,11 @@ public class Turret extends SubsystemBase {
         }
     }
 
-    public Turret(final Constants.RobotMode mode, HardwareConstants.TurretConstants constants,
-                  final FuelSim fuelSim,
-                  final Hood hood) {
+    public Turret(final Constants.RobotMode mode, HardwareConstants.TurretConstants constants) {
         this.constants = constants;
         this.turretIO = switch (mode) {
             case REAL -> new TurretIOReal(constants);
-            case SIM -> new TurretIOSim(constants, fuelSim, hood, this);
+            case SIM -> new TurretIOSim(constants);
             case REPLAY, DISABLED -> new TurretIO() {};
         };
 
