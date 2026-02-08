@@ -97,4 +97,8 @@ public class IntakeRoller extends SubsystemBase {
         Logger.recordOutput(LogKey + "/CurrentGoal", currentGoal.toString());
         Logger.recordOutput(LogKey + "/DesiredGoal", desiredGoal.toString());
     }
+
+    public boolean isIntaking() {
+        return desiredGoal == Goal.INTAKE;
+    }
 }

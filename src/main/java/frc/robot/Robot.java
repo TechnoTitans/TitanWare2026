@@ -35,6 +35,7 @@ import frc.robot.subsystems.superstructure.hood.Hood;
 import frc.robot.subsystems.superstructure.shooter.Shooter;
 import frc.robot.subsystems.superstructure.turret.Turret;
 import frc.robot.subsystems.vision.PhotonVision;
+import frc.robot.utils.FuelSim;
 import frc.robot.utils.closeables.ToClose;
 import frc.robot.utils.ctre.RefreshAll;
 import frc.robot.utils.logging.LoggedCommandScheduler;
@@ -277,6 +278,22 @@ public class Robot extends LoggedRobot {
         configureAutos();
         configureButtonBindings(teleopEventLoop);
 
+        FuelSim fuelSim = new FuelSim("Fuel Sim"); // creates a new fuelSim of FuelSim
+
+        // Register a robot for collision with fuel
+        fuelSim.registerRobot(
+                0.533, // from left to right in meters
+                0.680, // from front to back in meters
+                0.127, // from floor to top of bumpers in meters
+                swerve::getPose, // Supplier<Pose2d> of robot pose
+                swerve::getFieldRelativeSpeeds); // Supplier<ChassisSpeeds> of field-centric chassis speeds
+        // Register an intake to remove fuel from the field as a rectangular bounding box
+        fuelSim.registerIntake(
+                -0.34, 0.340, -0.267, 0.267, // robot-centric coordinates for bounding box in meters
+                intakeRoller::isIntaking); // (optional) BooleanSupplier for whether the intake should be active at a given moment
+
+        fuelSim.setSubticks(5); // sets the number of physics iterations to perform per 20ms loop. Default = 5
+
         LoggedCommandScheduler.init(CommandScheduler.getInstance());
 
         SignalLogger.enableAutoLogging(true);
@@ -336,7 +353,9 @@ public class Robot extends LoggedRobot {
     }
 
     @Override
-    public void simulationPeriodic() {}
+    public void simulationPeriodic() {
+        fuelSim.updateSim();
+    }
 
     public void configureStateTriggers() {
         autonomousEnabled.onTrue(
