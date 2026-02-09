@@ -25,14 +25,10 @@ import edu.wpi.first.wpilibj.Notifier;
 import edu.wpi.first.wpilibj.simulation.DCMotorSim;
 import frc.robot.constants.HardwareConstants;
 import frc.robot.constants.SimConstants;
-import frc.robot.subsystems.superstructure.hood.Hood;
-import frc.robot.utils.FuelSim;
 import frc.robot.utils.closeables.ToClose;
 import frc.robot.utils.control.DeltaTime;
 import frc.robot.utils.ctre.RefreshAll;
 import frc.robot.utils.sim.motors.TalonFXSim;
-
-import static edu.wpi.first.units.Units.*;
 
 public class TurretIOSim implements TurretIO {
     private static final double SIM_UPDATE_PERIOD_SEC = 0.005;

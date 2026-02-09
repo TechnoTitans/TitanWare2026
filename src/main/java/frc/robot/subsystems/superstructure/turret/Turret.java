@@ -8,8 +8,6 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.constants.Constants;
 import frc.robot.constants.HardwareConstants;
-import frc.robot.subsystems.superstructure.hood.Hood;
-import frc.robot.utils.FuelSim;
 import frc.robot.utils.position.ChineseRemainder;
 import org.littletonrobotics.junction.Logger;
 

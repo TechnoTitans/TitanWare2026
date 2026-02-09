@@ -1,5 +1,5 @@
 // https://github.com/hammerheads5000/FuelSim
-package frc.robot.utils;
+package frc.robot.utils.fuel;
 
 import static edu.wpi.first.units.Units.Meters;
 import static edu.wpi.first.units.Units.MetersPerSecond;
@@ -8,7 +8,6 @@ import static edu.wpi.first.units.Units.Radians;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.geometry.Translation3d;
@@ -507,7 +506,6 @@ public class FuelSim {
      * @param launchVelocity Initial launch velocity
      * @param hoodAngle Hood angle where 0 is launching horizontally and 90 degrees is launching straight up
      * @param turretYaw <i>Robot-relative</i> turret yaw
-     * @param launchHeight Height of the fuel to launch at. Make sure this is higher than your robot's bumper height, or else it will collide with your robot immediately.
      * @throws IllegalStateException if robot is not registered
      */
     public void launchFuel(

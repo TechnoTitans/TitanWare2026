@@ -1,4 +1,4 @@
-package frc.robot;
+package frc.robot.utils.fuel;
 
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -9,7 +9,6 @@ import edu.wpi.first.units.measure.LinearVelocity;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.constants.SimConstants;
-import frc.robot.utils.FuelSim;
 
 import java.util.function.BooleanSupplier;
 import java.util.function.Supplier;
@@ -19,7 +18,6 @@ import static edu.wpi.first.units.Units.*;
 public class FuelSimManager {
     private static final int CAPACITY = 50;
     private static final LinearVelocity BALL_SPEED = MetersPerSecond.of(5.35);
-    private static final Distance LAUNCH_HEIGHT = Inches.of(15.2);
 
     private FuelSim fuelSim;
     private int fuelStored = 0;
@@ -67,7 +65,6 @@ public class FuelSimManager {
             );
         }
 
-        fuelSim.stepSim();
         fuelSim.updateSim();
     }
 
