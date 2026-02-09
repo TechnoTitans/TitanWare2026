@@ -27,7 +27,7 @@ import frc.robot.subsystems.drive.constants.SwerveConstants;
 import frc.robot.subsystems.intake.roller.IntakeRoller;
 import frc.robot.subsystems.intake.slide.IntakeSlide;
 import frc.robot.subsystems.spindexer.Spindexer;
-import frc.robot.subsystems.superstructure.ShotCalculationData;
+import frc.robot.subsystems.superstructure.ShotCalculationStructs;
 import frc.robot.subsystems.superstructure.ShotCalculator;
 import frc.robot.subsystems.superstructure.Superstructure;
 import frc.robot.subsystems.superstructure.feeder.Feeder;
@@ -127,10 +127,11 @@ public class Robot extends LoggedRobot {
     private RobotCommands.ScoringMode scoringMode =
             RobotCommands.ScoringMode.Stationary;
 
-    private final Supplier<ShotCalculationData.ShotCalculation> shotCalculationSupplier =
+    private final Supplier<ShotCalculationStructs.ShotCalculation> shotCalculationSupplier =
             () -> ShotCalculator.getShotCalculation(
                     swerve::getPose,
-                    () -> scoringMode
+                    () -> scoringMode,
+                    swerve::getFieldRelativeSpeeds
             );
 
     public final Superstructure superstructure = new Superstructure(
@@ -381,7 +382,6 @@ public class Robot extends LoggedRobot {
         //TODO: Might be too complex
         driverController.rightTrigger(0.5, teleopEventLoop).whileTrue(
                 robotCommands.shoot(() -> scoringMode, () -> shotCalculationSupplier.get().target())
-
         );
 
         driverController.leftTrigger(0.5, teleopEventLoop).whileTrue(

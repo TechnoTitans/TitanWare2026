@@ -2,13 +2,15 @@ package frc.robot.subsystems.superstructure;
 
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.interpolation.Interpolatable;
 import edu.wpi.first.math.interpolation.InterpolatingTreeMap;
 import edu.wpi.first.math.interpolation.Interpolator;
 import edu.wpi.first.math.interpolation.InverseInterpolator;
 import edu.wpi.first.math.util.Units;
+import frc.robot.constants.FieldConstants;
 
-public class ShotCalculationData {
+public class ShotCalculationStructs {
     public record HoodShooterCalculation(
             Rotation2d hoodRotation,
             double flywheelVelocity,
@@ -97,4 +99,19 @@ public class ShotCalculationData {
             HoodShooterCalculation hoodShooterCalculation,
             ShotCalculator.Target target
     ) {}
+
+    public enum Target {
+        HUB(FieldConstants.Hub.hubCenterPoint),
+        FERRYING(FieldConstants.ferryTarget);
+
+        private final Translation2d targetTranslation;
+
+        Target(final Translation2d targetTranslation) {
+            this.targetTranslation = targetTranslation;
+        }
+
+        public Translation2d getTargetTranslation() {
+            return targetTranslation;
+        }
+    }
 }

@@ -22,7 +22,7 @@ public class Turret extends SubsystemBase {
     private final TurretIO turretIO;
     private final TurretIOInputsAutoLogged inputs;
 
-    private Goal desiredGoal = Goal.STOW;
+    private Goal desiredGoal = Goal.TRACKING;
     private Goal currentGoal = desiredGoal;
 
     public final Trigger atSetpoint = new Trigger(this::atTurretPositionSetpoint);
@@ -30,7 +30,6 @@ public class Turret extends SubsystemBase {
     public final Trigger atTurretUpperLimit = new Trigger(this::atTurretUpperLimit);
 
     public enum Goal {
-        STOW(0, false),
         CLIMB(0, false),
         TRACKING(0, true);
 
