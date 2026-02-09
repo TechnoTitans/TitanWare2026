@@ -4,7 +4,6 @@ import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.util.Units;
-import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.units.measure.LinearVelocity;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Commands;
@@ -13,7 +12,7 @@ import frc.robot.constants.SimConstants;
 import java.util.function.BooleanSupplier;
 import java.util.function.Supplier;
 
-import static edu.wpi.first.units.Units.*;
+import static edu.wpi.first.units.Units.MetersPerSecond;
 
 public class FuelSimManager {
     private static final int CAPACITY = 50;
@@ -52,17 +51,16 @@ public class FuelSimManager {
 
     public void periodic() {
         if (isShooting.getAsBoolean()) {
-            if (fuelStored == 0)
-                return;
-
-            fuelStored--;
-
-            fuelSim.launchFuel(
-                    BALL_SPEED,
-                    Rotation2d.fromDegrees(45).getMeasure(),
-                    turretYawSupplier.get().getMeasure(),
-                    SimConstants.Turret.ROBOT_TO_TURRET_TRANSFORM_3D
-            );
+            if (fuelStored != 0)
+            {
+                fuelStored--;
+                fuelSim.launchFuel(
+                        BALL_SPEED,
+                        Rotation2d.fromDegrees(80).getMeasure(),
+                        turretYawSupplier.get().getMeasure(),
+                        SimConstants.Turret.ROBOT_TO_TURRET_TRANSFORM_3D
+                );
+            }
         }
 
         fuelSim.updateSim();
