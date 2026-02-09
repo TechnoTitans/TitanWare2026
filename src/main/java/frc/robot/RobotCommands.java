@@ -67,17 +67,11 @@ public class RobotCommands {
     }
 
     public Command shoot(final Supplier<ScoringMode> scoringType, final Supplier<ShotCalculator.Target> target) {
-        return Commands.select(
-                Map.of(
-                        ScoringMode.Moving,
-                        shootWhileMoving(),
-                        ScoringMode.Stationary,
-                        shootStationary(),
-                        ScoringMode.Turret_Off,
-                        alignSwerveAndShoot(() -> target.get().getTargetTranslation().minus(swerve.getPose().getTranslation()).getAngle())
-                ),
-                scoringType
-        );
+        return switch (scoringType.get()) {
+            case Moving -> shootWhileMoving();
+            case Stationary -> shootStationary();
+            case Turret_Off -> alignSwerveAndShoot(() -> target.get().getTargetTranslation().minus(swerve.getPose().getTranslation()).getAngle());
+        };
     }
 
     private Command shootWhileMoving() {
