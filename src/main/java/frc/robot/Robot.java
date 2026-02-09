@@ -35,8 +35,10 @@ import frc.robot.subsystems.superstructure.hood.Hood;
 import frc.robot.subsystems.superstructure.shooter.Shooter;
 import frc.robot.subsystems.superstructure.turret.Turret;
 import frc.robot.subsystems.vision.PhotonVision;
+import frc.robot.utils.fuel.FuelSim;
 import frc.robot.utils.closeables.ToClose;
 import frc.robot.utils.ctre.RefreshAll;
+import frc.robot.utils.fuel.FuelSimManager;
 import frc.robot.utils.logging.LoggedCommandScheduler;
 import frc.robot.utils.solver.ComponentsSolver;
 import frc.robot.utils.subsystems.VirtualSubsystem;
@@ -58,6 +60,8 @@ import java.util.function.Supplier;
 public class Robot extends LoggedRobot {
     private static final String AKitLogPath = "/U/logs";
     private static final String HootLogPath = "/U/logs";
+
+    private FuelSim fuelSim;
 
     public static final BooleanSupplier IsRedAlliance = () -> {
         final Optional<DriverStation.Alliance> alliance = DriverStation.getAlliance();
@@ -84,7 +88,7 @@ public class Robot extends LoggedRobot {
     );
 
     public final PhotonVision photonVision = new PhotonVision(
-            Constants.CURRENT_MODE,
+            Constants.RobotMode.DISABLED,
             swerve
     );
 
@@ -103,14 +107,14 @@ public class Robot extends LoggedRobot {
             HardwareConstants.FEEDER
     );
 
-    public final Turret turret = new Turret(
-            Constants.CURRENT_MODE,
-            HardwareConstants.TURRET
-    );
-
     public final Hood hood = new Hood(
             Constants.CURRENT_MODE,
             HardwareConstants.HOOD
+    );
+
+    public final Turret turret = new Turret(
+            Constants.CURRENT_MODE,
+            HardwareConstants.TURRET
     );
 
     public final Shooter shooter = new Shooter(
@@ -146,6 +150,15 @@ public class Robot extends LoggedRobot {
             turret::getTurretPosition,
             hood::getHoodPosition,
             intakeSlide::getIntakeSlidePositionRots
+    );
+
+    private final FuelSimManager fuelSimManager = new FuelSimManager(
+            hood::getHoodPosition,
+            turret::getTurretPosition,
+            swerve::getPose,
+            swerve::getFieldRelativeSpeeds,
+            intakeRoller::isIntaking,
+            shooter::isShooting
     );
 
     private final RobotCommands robotCommands = new RobotCommands(
@@ -302,6 +315,7 @@ public class Robot extends LoggedRobot {
         LoggedCommandScheduler.periodic();
         Logger.recordOutput("ShotCalculation", shotCalculationSupplier.get());
         Logger.recordOutput("ScoringMode", scoringMode);
+
         componentsSolver.periodic();
         robotCommands.periodic();
 
@@ -336,7 +350,9 @@ public class Robot extends LoggedRobot {
     }
 
     @Override
-    public void simulationPeriodic() {}
+    public void simulationPeriodic() {
+        fuelSimManager.periodic();
+    }
 
     public void configureStateTriggers() {
         autonomousEnabled.onTrue(
@@ -401,7 +417,10 @@ public class Robot extends LoggedRobot {
         );
 
         driverController.povRight().onTrue(
-                intakeSlide.setGoal(IntakeSlide.Goal.STOW)
+                Commands.parallel(
+                    intakeSlide.setGoal(IntakeSlide.Goal.STOW),
+                    intakeRoller.setGoal(IntakeRoller.Goal.STOW)
+                )
         );
     }
 }

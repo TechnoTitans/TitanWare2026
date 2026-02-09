@@ -33,6 +33,9 @@ import frc.robot.utils.sim.motors.TalonFXSim;
 public class TurretIOSim implements TurretIO {
     private static final double SIM_UPDATE_PERIOD_SEC = 0.005;
 
+    private static final int CAPACITY = 40;
+    private int fuelStored = 0;
+
     private final DeltaTime deltaTime;
     private final HardwareConstants.TurretConstants constants;
 

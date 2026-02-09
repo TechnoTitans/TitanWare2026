@@ -134,4 +134,6 @@ public class Turret extends SubsystemBase {
     private boolean atTurretUpperLimit() {
         return inputs.turretPositionRots >= constants.upperLimitRots();
     }
+
+    public TurretIO getTurretIO() { return turretIO; }
 }

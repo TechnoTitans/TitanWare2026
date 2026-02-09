@@ -47,7 +47,9 @@ public interface SimConstants {
     interface Turret {
         Translation3d ORIGIN = new Translation3d(-0.127, 0, 0.384);
 
-        Transform2d TURRET_TO_ROBOT_TRANSFORM = new Transform2d(ORIGIN.toTranslation2d(), Rotation2d.kZero);
+        Transform2d ROBOT_TO_TURRET_TRANSFORM_2D = new Transform2d(ORIGIN.toTranslation2d(), Rotation2d.kZero);
+
+        Transform3d ROBOT_TO_TURRET_TRANSFORM_3D = new Transform3d(ORIGIN, Rotation3d.kZero);
 
         double MOMENT_OF_INERTIA = 0.1068;
     }
