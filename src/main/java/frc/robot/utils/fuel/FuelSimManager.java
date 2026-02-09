@@ -16,7 +16,7 @@ import static edu.wpi.first.units.Units.MetersPerSecond;
 
 public class FuelSimManager {
     private static final int CAPACITY = 50;
-    private static final LinearVelocity BALL_SPEED = MetersPerSecond.of(5.35);
+    private static final LinearVelocity BALL_SPEED = MetersPerSecond.of(7.5);
 
     private FuelSim fuelSim;
     private int fuelStored = 0;
@@ -56,7 +56,7 @@ public class FuelSimManager {
                 fuelStored--;
                 fuelSim.launchFuel(
                         BALL_SPEED,
-                        Rotation2d.fromDegrees(80).getMeasure(),
+                        (Rotation2d.kCCW_90deg.minus(hoodAngleSupplier.get())).getMeasure(),
                         turretYawSupplier.get().getMeasure(),
                         SimConstants.Turret.ROBOT_TO_TURRET_TRANSFORM_3D
                 );
