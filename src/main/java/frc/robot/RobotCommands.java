@@ -1,6 +1,5 @@
 package frc.robot;
 
-import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
@@ -9,12 +8,9 @@ import frc.robot.subsystems.drive.Swerve;
 import frc.robot.subsystems.intake.roller.IntakeRoller;
 import frc.robot.subsystems.intake.slide.IntakeSlide;
 import frc.robot.subsystems.spindexer.Spindexer;
-import frc.robot.subsystems.superstructure.ShotCalculator;
 import frc.robot.subsystems.superstructure.Superstructure;
+import frc.robot.utils.teleop.SwerveSpeed;
 import org.littletonrobotics.junction.Logger;
-
-import java.util.Map;
-import java.util.function.Supplier;
 
 public class RobotCommands {
     public enum ScoringMode {
@@ -50,7 +46,10 @@ public class RobotCommands {
         this.ableToShoot = new Trigger(() -> {
             final ChassisSpeeds swerveChassisSpeed = swerve.getRobotRelativeSpeeds();
 
-            return Math.hypot(swerveChassisSpeed.vxMetersPerSecond, swerveChassisSpeed.vyMetersPerSecond) < AllowableSpeedToShootMetersPerSec;
+            return Math.hypot(
+                    swerveChassisSpeed.vxMetersPerSecond,
+                    swerveChassisSpeed.vyMetersPerSecond
+            ) < AllowableSpeedToShootMetersPerSec;
         });
     }
 
@@ -60,48 +59,40 @@ public class RobotCommands {
 
     public Command manualIntake() {
         return Commands.parallel(
-                intakeRoller.toGoal(IntakeRoller.Goal.INTAKE),
-                intakeSlide.setGoal(IntakeSlide.Goal.INTAKE),
-                spindexer.toGoal(Spindexer.Goal.INTAKE)
-        ).withName("Intake");
+                intakeRoller.setGoal(IntakeRoller.Goal.INTAKE),
+                intakeSlide.setGoal(IntakeSlide.Goal.INTAKE)
+        ).withName("ManualIntake");
     }
 
-    public Command shoot(final Supplier<ScoringMode> scoringType, final Supplier<ShotCalculator.Target> target) {
-        return switch (scoringType.get()) {
-            case Moving -> shootWhileMoving();
-            case Stationary -> shootStationary();
-            case Turret_Off -> alignSwerveAndShoot(() -> target.get().getTargetTranslation().minus(swerve.getPose().getTranslation()).getAngle());
-        };
+    public Command stowIntake() {
+        return Commands.parallel(
+                intakeSlide.setGoal(IntakeSlide.Goal.STOW),
+                intakeRoller.setGoal(IntakeRoller.Goal.STOW)
+        ).withName("StowIntake");
     }
 
-    private Command shootWhileMoving() {
+    //TODO: Might need to change the feeding
+    public Command shootWhileMoving() {
+        //TODO: Potentially need to change the swerve speed
         return Commands.parallel(
                 superstructure.toGoal(Superstructure.Goal.SHOOTING),
                 spindexer.toGoal(Spindexer.Goal.FEED)
-                        .onlyIf(superstructure.atSuperstructureSetpoint)
-        ).withName("ShootWhileMoving");
+                        .onlyIf(superstructure.atSuperstructureSetpoint),
+                        Commands.runOnce(() -> SwerveSpeed.setSwerveSpeed(SwerveSpeed.Speeds.SLOW))
+                )
+                .finallyDo(() -> SwerveSpeed.setSwerveSpeed(SwerveSpeed.Speeds.NORMAL))
+                .withName("ShootWhileMoving");
     }
 
-    private Command shootStationary() {
+    public Command shootStationary() {
         return Commands.parallel(
                 Commands.sequence(
                         Commands.waitUntil(ableToShoot),
                         superstructure.toGoal(Superstructure.Goal.SHOOTING)
                 ),
                 spindexer.toGoal(Spindexer.Goal.FEED)
-                        .onlyIf(ableToShoot.and(superstructure.atSuperstructureSetpoint))
-        );
-    }
-
-    private Command alignSwerveAndShoot(final Supplier<Rotation2d> rotation2dSupplier) {
-        return Commands.parallel(
-                Commands.sequence(
-                        Commands.waitUntil(ableToShoot),
-                        superstructure.toGoal(Superstructure.Goal.SHOOTING)
-                ),
-                swerve.faceAngle(rotation2dSupplier),
-                spindexer.toGoal(Spindexer.Goal.FEED)
-                        .onlyIf(ableToShoot.and(superstructure.atSuperstructureSetpoint))
+                        .onlyIf(ableToShoot.and(superstructure.atSuperstructureSetpoint)),
+                swerve.runWheelXCommand()
         ).withName("ShootStationary");
     }
 }

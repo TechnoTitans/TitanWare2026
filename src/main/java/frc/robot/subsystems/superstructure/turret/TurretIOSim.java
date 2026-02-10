@@ -133,11 +133,14 @@ public class TurretIOSim implements TurretIO {
     public void config() {
         final TalonFXConfiguration motorConfig = new TalonFXConfiguration();
         motorConfig.Slot0 = new Slot0Configs()
-                .withKP(70)
-                .withKD(0.01);
+                .withKS(0.1)
+                .withKV(5)
+                .withKP(60)
+                .withKD(0.1);
         motorConfig.Slot1 = new Slot1Configs()
-                .withKP(50)
-                .withKD(0.01);
+                .withKS(0.1)
+                .withKP(40)
+                .withKD(10);
         motorConfig.MotionMagic.MotionMagicCruiseVelocity = 0;
         motorConfig.MotionMagic.MotionMagicExpo_kV = 0;
         motorConfig.MotionMagic.MotionMagicExpo_kA = 0;
@@ -206,14 +209,15 @@ public class TurretIOSim implements TurretIO {
     }
 
     @Override
-    public void toTurretPosition(final double positionRots) {
-        turretMotor.setControl(motionMagicExpoVoltage.withPosition(positionRots).withSlot(1));
+    public void toTurretContinuousPosition(final double positionRots, final double velocityRotsPerSec) {
+        turretMotor.setControl(positionVoltage.withPosition(positionRots).withVelocity(-velocityRotsPerSec));
     }
 
     @Override
-    public void toTurretContinuousPosition(final double positionRots) {
-        turretMotor.setControl(positionVoltage.withPosition(positionRots));
+    public void toTurretPosition(final double positionRots) {
+        turretMotor.setControl(motionMagicExpoVoltage.withPosition(positionRots).withSlot(1));
     }
+    //TODO: Add .withVelocity() to negate robot velocity
 
     @Override
     public void toTurretVoltage(final double volts) {

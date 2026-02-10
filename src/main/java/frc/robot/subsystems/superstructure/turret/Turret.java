@@ -11,6 +11,9 @@ import frc.robot.constants.HardwareConstants;
 import frc.robot.utils.position.ChineseRemainder;
 import org.littletonrobotics.junction.Logger;
 
+import java.util.function.DoubleSupplier;
+import java.util.function.Supplier;
+
 public class Turret extends SubsystemBase {
     protected static final String LogKey = "Superstructure/Turret";
 
@@ -18,6 +21,7 @@ public class Turret extends SubsystemBase {
     private static final double VelocityToleranceRotsPerSec = 0.02;
 
     private final HardwareConstants.TurretConstants constants;
+    private final DoubleSupplier robotAngularVelocitySupplier;
 
     private final TurretIO turretIO;
     private final TurretIOInputsAutoLogged inputs;
@@ -52,7 +56,11 @@ public class Turret extends SubsystemBase {
         }
     }
 
-    public Turret(final Constants.RobotMode mode, HardwareConstants.TurretConstants constants) {
+    public Turret(
+            final Constants.RobotMode mode,
+            final HardwareConstants.TurretConstants constants,
+            final DoubleSupplier robotAngularVelocitySupplier
+    ) {
         this.constants = constants;
         this.turretIO = switch (mode) {
             case REAL -> new TurretIOReal(constants);
@@ -62,6 +70,8 @@ public class Turret extends SubsystemBase {
 
         this.inputs = new TurretIOInputsAutoLogged();
         this.turretIO.config();
+
+        this.robotAngularVelocitySupplier = robotAngularVelocitySupplier;
 
         turretIO.updateInputs(inputs);
 
@@ -87,11 +97,16 @@ public class Turret extends SubsystemBase {
         turretIO.updateInputs(inputs);
         Logger.processInputs(LogKey, inputs);
 
+        //TODO: Simplify logic
         if (desiredGoal != currentGoal) {
             turretIO.toTurretPosition(desiredGoal.getTurretPositionGoalRots());
             this.currentGoal = desiredGoal;
         } else if (desiredGoal.isDynamic) {
-            turretIO.toTurretContinuousPosition(desiredGoal.getTurretPositionGoalRots());
+            if (Math.abs(inputs.turretPositionRots - desiredGoal.getTurretPositionGoalRots()) > 0.3) {
+                turretIO.toTurretPosition(desiredGoal.getTurretPositionGoalRots());
+            } else {
+                turretIO.toTurretContinuousPosition(desiredGoal.getTurretPositionGoalRots(), Units.radiansToRotations(robotAngularVelocitySupplier.getAsDouble()));
+            }
         }
 
         Logger.recordOutput(LogKey + "/CurrentGoal", currentGoal.toString());

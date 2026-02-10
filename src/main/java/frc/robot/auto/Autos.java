@@ -73,4 +73,18 @@ public class Autos {
 
         return routine;
     }
+
+//    public AutoRoutine rightSideCenterLine() {
+//        final AutoRoutine routine = autoFactory.newRoutine("RightSideCenterLine");
+//        final AutoTrajectory
+//
+//
+//
+//        routine.active().whileTrue(
+//                Commands.waitUntil(RobotModeTriggers.autonomous().negate())
+//        );
+//
+//
+//        return routine;
+//    }
 }

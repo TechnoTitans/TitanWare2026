@@ -35,14 +35,15 @@ import frc.robot.subsystems.superstructure.hood.Hood;
 import frc.robot.subsystems.superstructure.shooter.Shooter;
 import frc.robot.subsystems.superstructure.turret.Turret;
 import frc.robot.subsystems.vision.PhotonVision;
-import frc.robot.utils.fuel.FuelSim;
 import frc.robot.utils.closeables.ToClose;
 import frc.robot.utils.ctre.RefreshAll;
+import frc.robot.utils.fuel.FuelSim;
 import frc.robot.utils.fuel.FuelSimManager;
 import frc.robot.utils.logging.LoggedCommandScheduler;
 import frc.robot.utils.solver.ComponentsSolver;
 import frc.robot.utils.subsystems.VirtualSubsystem;
 import frc.robot.utils.teleop.ControllerUtils;
+import frc.robot.utils.teleop.SwerveSpeed;
 import org.littletonrobotics.junction.LogFileUtil;
 import org.littletonrobotics.junction.LoggedRobot;
 import org.littletonrobotics.junction.Logger;
@@ -114,7 +115,8 @@ public class Robot extends LoggedRobot {
 
     public final Turret turret = new Turret(
             Constants.CURRENT_MODE,
-            HardwareConstants.TURRET
+            HardwareConstants.TURRET,
+            () -> swerve.getFieldRelativeSpeeds().omegaRadiansPerSecond
     );
 
     public final Shooter shooter = new Shooter(
@@ -395,32 +397,24 @@ public class Robot extends LoggedRobot {
     }
 
     public void configureButtonBindings(final EventLoop teleopEventLoop) {
-        //TODO: Might be too complex
-        driverController.rightTrigger(0.5, teleopEventLoop).whileTrue(
-                robotCommands.shoot(() -> scoringMode, () -> shotCalculationSupplier.get().target())
-        );
+        driverController.rightBumper(teleopEventLoop)
+                .whileTrue(Commands.startEnd(
+                        () -> SwerveSpeed.setSwerveSpeed(SwerveSpeed.Speeds.FAST),
+                        () -> SwerveSpeed.setSwerveSpeed(SwerveSpeed.Speeds.NORMAL)
+                ).withName("SwerveSpeedFast"));
 
-        driverController.leftTrigger(0.5, teleopEventLoop).whileTrue(
-                robotCommands.manualIntake()
-        );
+        driverController.leftBumper(teleopEventLoop)
+                .whileTrue(Commands.startEnd(
+                        () -> SwerveSpeed.setSwerveSpeed(SwerveSpeed.Speeds.SLOW),
+                        () -> SwerveSpeed.setSwerveSpeed(SwerveSpeed.Speeds.NORMAL)
+                ).withName("SwerveSpeedSlow"));
 
-        driverController.povUp().onTrue(
-                Commands.runOnce(() -> this.scoringMode = RobotCommands.ScoringMode.Stationary)
-        );
+        driverController.rightTrigger(0.5, teleopEventLoop).whileTrue(robotCommands.shootWhileMoving());
 
-        driverController.povLeft().onTrue(
-                Commands.runOnce(() -> this.scoringMode = RobotCommands.ScoringMode.Turret_Off)
-        );
+        coController.y(teleopEventLoop).onTrue(robotCommands.manualIntake());
 
-        driverController.povDown().onTrue(
-                Commands.runOnce(() -> this.scoringMode = RobotCommands.ScoringMode.Moving)
-        );
+        coController.a(teleopEventLoop).onTrue(robotCommands.stowIntake());
 
-        driverController.povRight().onTrue(
-                Commands.parallel(
-                    intakeSlide.setGoal(IntakeSlide.Goal.STOW),
-                    intakeRoller.setGoal(IntakeRoller.Goal.STOW)
-                )
-        );
+        coController.rightTrigger(0.5, teleopEventLoop).whileTrue(robotCommands.shootStationary());
     }
 }

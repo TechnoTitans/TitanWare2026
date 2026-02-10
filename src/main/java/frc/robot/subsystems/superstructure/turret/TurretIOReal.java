@@ -149,8 +149,8 @@ public class TurretIOReal implements TurretIO {
     }
 
     @Override
-    public void toTurretContinuousPosition(double positionRots) {
-        turretMotor.setControl(positionVoltage.withPosition(positionRots));
+    public void toTurretContinuousPosition(final double positionRots, final double velocityRotsPerSec) {
+        turretMotor.setControl(positionVoltage.withPosition(positionRots).withVelocity(velocityRotsPerSec));
     }
 
     @Override

@@ -3,10 +3,8 @@ package frc.robot.utils.fuel;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
-import edu.wpi.first.math.util.Units;
 import edu.wpi.first.units.measure.LinearVelocity;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
-import edu.wpi.first.wpilibj2.command.Commands;
+import edu.wpi.first.wpilibj.Timer;
 import frc.robot.constants.SimConstants;
 
 import java.util.function.BooleanSupplier;
@@ -15,11 +13,10 @@ import java.util.function.Supplier;
 import static edu.wpi.first.units.Units.MetersPerSecond;
 
 public class FuelSimManager {
-    private static final int CAPACITY = 50;
     private static final LinearVelocity BALL_SPEED = MetersPerSecond.of(7.5);
 
-    private FuelSim fuelSim;
-    private int fuelStored = 0;
+    private final Timer timer;
+    private final FuelSim fuelSim;
 
     private final Supplier<Rotation2d> hoodAngleSupplier;
     private final Supplier<Rotation2d> turretYawSupplier;
@@ -37,6 +34,7 @@ public class FuelSimManager {
             BooleanSupplier isShooting
     ) {
         this.fuelSim = new FuelSim();
+        this.timer = new Timer();
 
         this.hoodAngleSupplier = hoodAngleSupplier;
         this.turretYawSupplier = turretYawSupplier;
@@ -45,15 +43,15 @@ public class FuelSimManager {
         this.isIntaking = isIntaking;
         this.isShooting = isShooting;
 
-        configureFuelSim();
+        timer.start();
+        fuelSim.start();
+
         configureFuelSimRobot();
     }
 
     public void periodic() {
         if (isShooting.getAsBoolean()) {
-            if (fuelStored != 0)
-            {
-                fuelStored--;
+            if (timer.advanceIfElapsed(0.25)) {
                 fuelSim.launchFuel(
                         BALL_SPEED,
                         (Rotation2d.kCCW_90deg.minus(hoodAngleSupplier.get())).getMeasure(),
@@ -61,31 +59,13 @@ public class FuelSimManager {
                         SimConstants.Turret.ROBOT_TO_TURRET_TRANSFORM_3D
                 );
             }
+        } else {
+            timer.reset();
         }
 
         fuelSim.updateSim();
     }
 
-    private boolean canIntake() {
-        return fuelStored < CAPACITY;
-    }
-
-    private void intakeFuel() {
-        fuelStored++;
-    }
-
-    private void configureFuelSim() {
-        fuelSim.spawnStartingFuel(); // spawns fuel in the depots and neutral zone
-        fuelSim.enableAirResistance();
-
-        fuelSim.start();
-        SmartDashboard.putData(Commands.runOnce(() -> {
-                    fuelSim.clearFuel();
-                    fuelSim.spawnStartingFuel();
-                })
-                .withName("Reset Fuel")
-                .ignoringDisable(true));
-    }
 
 
     private void configureFuelSimRobot() {
@@ -97,10 +77,5 @@ public class FuelSimManager {
                 swervePoseSupplier, // Supplier<Pose2d> of robot pose
                 swerveSpeedsSupplier); // Supplier<ChassisSpeeds> of field-centric chassis speeds
         // Register an intake to remove fuel from the field as a rectangular bounding box
-
-        fuelSim.registerIntake(
-                Units.inchesToMeters(19), Units.inchesToMeters(25), Units.inchesToMeters(-16.5), Units.inchesToMeters(16.5), // robot-centric coordinates for bounding box in meters
-                () -> isIntaking.getAsBoolean() && canIntake(), // (optional) BooleanSupplier for whether the intake should be active at a given moment
-                this::intakeFuel); // (optional) Runnable called whenever a fuel is intaked
     }
 }

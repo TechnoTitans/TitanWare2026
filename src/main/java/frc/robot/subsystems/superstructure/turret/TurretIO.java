@@ -22,7 +22,7 @@ public interface TurretIO {
 
     default void toTurretPosition(final double positionRots) {}
 
-    default void toTurretContinuousPosition(final double positionRots) {}
+    default void toTurretContinuousPosition(final double positionRots, final double velocityRotsPerSec) {}
 
     default void toTurretVoltage(final double volts) {}
 

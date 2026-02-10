@@ -27,8 +27,7 @@ public class IntakeSlide extends SubsystemBase {
     private final IntakeSlideIO intakeSlideIO;
     private final IntakeSlideIOInputsAutoLogged inputs;
 
-    private Goal previousGoal = Goal.STOW;
-    private Goal desiredGoal = previousGoal;
+    private Goal desiredGoal = Goal.STOW;
     private Goal currentGoal = desiredGoal;
 
     public final Trigger atSlideSetpoint = new Trigger(this::atSlidePositionSetpoint);
@@ -99,7 +98,6 @@ public class IntakeSlide extends SubsystemBase {
         );
     }
 
-    //TODO: Previous goal might not be used well
     public Command home(){
         return Commands.sequence(
                 Commands.runOnce(intakeSlideIO::home),
@@ -110,7 +108,7 @@ public class IntakeSlide extends SubsystemBase {
                         intakeSlideIO.zeroMotor();
                         this.isHomed = true;
                     }
-                ).finallyDo(() -> this.currentGoal = previousGoal)
+                ).finallyDo(() -> this.currentGoal = Goal.INTAKE)
         );
     }
 

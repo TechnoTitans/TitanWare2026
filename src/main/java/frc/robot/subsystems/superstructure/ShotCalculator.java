@@ -32,7 +32,8 @@ public class ShotCalculator {
         }
     }
 
-    private static final double DelayTimeSec = 0.03;
+    private static final double DelayTimeSec = 0.01;
+    //TODO: Try to see if this is worth it
     private static final LinearFilter turretFilter = LinearFilter.movingAverage(5);
 
     public static ShotCalculationStructs.ShotCalculation getShotCalculation(
@@ -52,11 +53,12 @@ public class ShotCalculator {
     private static ShotCalculationStructs.ShotCalculation getShotCalculation(final Pose2d swervePose, final ChassisSpeeds swerveSpeeds) {
         final Pose2d turretPose = swervePose.transformBy(SimConstants.Turret.ROBOT_TO_TURRET_TRANSFORM_2D)
                 .exp(new Twist2d(
-                        swerveSpeeds.vxMetersPerSecond * 0.01,
-                        swerveSpeeds.vyMetersPerSecond * 0.01,
-                        swerveSpeeds.omegaRadiansPerSecond * 0.01
+                        swerveSpeeds.vxMetersPerSecond * DelayTimeSec,
+                        swerveSpeeds.vyMetersPerSecond * DelayTimeSec,
+                        swerveSpeeds.omegaRadiansPerSecond * DelayTimeSec
                 ));
 
+        //TODO: Remove alliance flip util and do what we did last year
         Target target = turretPose.getX() > FerryXBoundary ? Target.FERRYING : Target.HUB;
         final Translation2d targetTranslation = AllianceFlipUtil.apply(target.getTargetTranslation());
 
@@ -101,6 +103,7 @@ public class ShotCalculator {
         );
     }
 
+    //TODO: Might remove this
     private static ShotCalculationStructs.ShotCalculation getTurretOffShotShotCalculation(Pose2d swervePose) {
         final Pose2d turretPose = swervePose.transformBy(SimConstants.Turret.ROBOT_TO_TURRET_TRANSFORM_2D);
 

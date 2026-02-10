@@ -12,6 +12,7 @@ import java.io.IOException;
 
 //Credit to FRC Team 6328
 public class FieldConstants {
+    //TODO: Redo field constants to match 2025 style
     public static final FieldType fieldType = FieldType.WELDED;
 
     // AprilTag related constants
