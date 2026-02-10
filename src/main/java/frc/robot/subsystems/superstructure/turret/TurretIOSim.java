@@ -136,7 +136,7 @@ public class TurretIOSim implements TurretIO {
                 .withKP(70)
                 .withKD(0.01);
         motorConfig.Slot1 = new Slot1Configs()
-                .withKD(50)
+                .withKP(50)
                 .withKD(0.01);
         motorConfig.MotionMagic.MotionMagicCruiseVelocity = 0;
         motorConfig.MotionMagic.MotionMagicExpo_kV = 0;

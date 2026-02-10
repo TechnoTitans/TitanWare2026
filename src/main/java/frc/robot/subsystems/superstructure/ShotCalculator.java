@@ -1,5 +1,6 @@
 package frc.robot.subsystems.superstructure;
 
+import edu.wpi.first.math.filter.LinearFilter;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
@@ -32,6 +33,7 @@ public class ShotCalculator {
     }
 
     private static final double DelayTimeSec = 0.03;
+    private static final LinearFilter turretFilter = LinearFilter.movingAverage(5);
 
     public static ShotCalculationStructs.ShotCalculation getShotCalculation(
             final Supplier<Pose2d> swervePoseSupplier,
@@ -60,9 +62,9 @@ public class ShotCalculator {
 
         final double turretToTargetDistance = targetTranslation.getDistance(turretPose.getTranslation());
 
-        final Rotation2d desiredTurretAngle = targetTranslation.minus(turretPose.getTranslation()).getAngle().minus(
+        final Rotation2d desiredTurretAngle = Rotation2d.fromRotations(turretFilter.calculate(targetTranslation.minus(turretPose.getTranslation()).getAngle().minus(
                 turretPose.getRotation()
-        );
+        ).getRotations()));
 
         return new ShotCalculationStructs.ShotCalculation(
                 desiredTurretAngle,

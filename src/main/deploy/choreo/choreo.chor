@@ -1,0 +1,127 @@
+{
+ "name":"2026 choreo",
+ "version":2,
+ "type":"Swerve",
+ "variables":{
+  "expressions":{},
+  "poses":{
+   "LEFT_HP":{
+    "x":{
+     "exp":"1.1414624452590942 m",
+     "val":1.1414624452590942
+    },
+    "y":{
+     "exp":"7.070015907287598 m",
+     "val":7.070015907287598
+    },
+    "heading":{
+     "exp":"2.199592594931264 rad",
+     "val":2.199592594931264
+    }
+   },
+   "RIGHT_HP":{
+    "x":{
+     "exp":"1.0939141511917114 m",
+     "val":1.0939141511917114
+    },
+    "y":{
+     "exp":"0.9950283765792847 m",
+     "val":0.9950283765792848
+    },
+    "heading":{
+     "exp":"-2.196721171294748 rad",
+     "val":-2.196721171294748
+    }
+   },
+   "Reef3AlgaeSafe":{
+    "x":{
+     "exp":"209.489 in + 25 in + 12 in",
+     "val":6.2608206
+    },
+    "y":{
+     "exp":"158.502 in",
+     "val":4.0259508
+    },
+    "heading":{
+     "exp":"pi rad",
+     "val":3.141592653589793
+    }
+   }
+  }
+ },
+ "config":{
+  "frontLeft":{
+   "x":{
+    "exp":"10.875 in",
+    "val":0.276225
+   },
+   "y":{
+    "exp":"10.625 in",
+    "val":0.269875
+   }
+  },
+  "backLeft":{
+   "x":{
+    "exp":"-10.875 in",
+    "val":-0.276225
+   },
+   "y":{
+    "exp":"10.625 in",
+    "val":0.269875
+   }
+  },
+  "mass":{
+   "exp":"130 lbs",
+   "val":58.9670081
+  },
+  "inertia":{
+   "exp":"5.7 kg m ^ 2",
+   "val":5.7
+  },
+  "gearing":{
+   "exp":"6.75",
+   "val":6.75
+  },
+  "radius":{
+   "exp":"2 in",
+   "val":0.0508
+  },
+  "vmax":{
+   "exp":"4800 RPM",
+   "val":502.6548245743669
+  },
+  "tmax":{
+   "exp":"0.0194 * 60 N * m",
+   "val":1.164
+  },
+  "cof":{
+   "exp":"2.255",
+   "val":2.255
+  },
+  "bumper":{
+   "front":{
+    "exp":"16.75 in",
+    "val":0.42545
+   },
+   "side":{
+    "exp":"16.5 in",
+    "val":0.4191
+   },
+   "back":{
+    "exp":"16.75 in",
+    "val":0.42545
+   }
+  },
+  "differentialTrackWidth":{
+   "exp":"22 in",
+   "val":0.5588
+  }
+ },
+ "generationFeatures":[],
+ "codegen":{
+  "root":null,
+  "genVars":true,
+  "genTrajData":true,
+  "useChoreoLib":true
+ }
+}
