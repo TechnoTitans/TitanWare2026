@@ -217,7 +217,6 @@ public class TurretIOSim implements TurretIO {
     public void toTurretPosition(final double positionRots) {
         turretMotor.setControl(motionMagicExpoVoltage.withPosition(positionRots).withSlot(1));
     }
-    //TODO: Add .withVelocity() to negate robot velocity
 
     @Override
     public void toTurretVoltage(final double volts) {
