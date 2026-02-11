@@ -1,4 +1,4 @@
-package frc.robot.subsystems.superstructure.feeder;
+package frc.robot.subsystems.feeder;
 
 import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.Slot0Configs;

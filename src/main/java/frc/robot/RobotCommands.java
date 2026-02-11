@@ -5,6 +5,7 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.subsystems.drive.Swerve;
+import frc.robot.subsystems.feeder.Feeder;
 import frc.robot.subsystems.intake.roller.IntakeRoller;
 import frc.robot.subsystems.intake.slide.IntakeSlide;
 import frc.robot.subsystems.spindexer.Spindexer;
@@ -27,6 +28,7 @@ public class RobotCommands {
     private final IntakeSlide intakeSlide;
     private final Superstructure superstructure;
     private final Spindexer spindexer;
+    private final Feeder feeder;
 
     private final Trigger ableToShoot;
 
@@ -35,13 +37,15 @@ public class RobotCommands {
             final IntakeRoller intakeRoller,
             final IntakeSlide intakeSlide,
             final Superstructure superstructure,
-            final Spindexer spindexer
+            final Spindexer spindexer,
+            final Feeder feeder
     ) {
         this.swerve = swerve;
         this.intakeRoller = intakeRoller;
         this.intakeSlide = intakeSlide;
         this.superstructure = superstructure;
         this.spindexer = spindexer;
+        this.feeder = feeder;
 
         this.ableToShoot = new Trigger(() -> {
             final ChassisSpeeds swerveChassisSpeed = swerve.getRobotRelativeSpeeds();
@@ -76,9 +80,14 @@ public class RobotCommands {
         //TODO: Potentially need to change the swerve speed
         return Commands.parallel(
                 superstructure.toGoal(Superstructure.Goal.SHOOTING),
+                Commands.repeatingSequence(
+                        Commands.waitUntil(superstructure.atSuperstructureSetpoint),
+                        feeder.toGoal(Feeder.Goal.FEED)
+                                .until(superstructure.atSuperstructureSetpoint.negate())
+                ),
                 spindexer.toGoal(Spindexer.Goal.FEED)
                         .onlyIf(superstructure.atSuperstructureSetpoint),
-                        Commands.runOnce(() -> SwerveSpeed.setSwerveSpeed(SwerveSpeed.Speeds.SLOW))
+                        Commands.runOnce(() -> SwerveSpeed.setSwerveSpeed(SwerveSpeed.Speeds.SHOOTING))
                 )
                 .finallyDo(() -> SwerveSpeed.setSwerveSpeed(SwerveSpeed.Speeds.NORMAL))
                 .withName("ShootWhileMoving");
@@ -88,7 +97,14 @@ public class RobotCommands {
         return Commands.parallel(
                 Commands.sequence(
                         Commands.waitUntil(ableToShoot),
-                        superstructure.toGoal(Superstructure.Goal.SHOOTING)
+                        Commands.parallel(
+                                superstructure.toGoal(Superstructure.Goal.SHOOTING),
+                                Commands.repeatingSequence(
+                                        Commands.waitUntil(superstructure.atSuperstructureSetpoint),
+                                        feeder.toGoal(Feeder.Goal.FEED)
+                                                .until(superstructure.atSuperstructureSetpoint.negate())
+                                )
+                        )
                 ),
                 spindexer.toGoal(Spindexer.Goal.FEED)
                         .onlyIf(ableToShoot.and(superstructure.atSuperstructureSetpoint)),

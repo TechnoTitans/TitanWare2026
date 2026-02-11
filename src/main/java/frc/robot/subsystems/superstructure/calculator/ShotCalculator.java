@@ -1,4 +1,4 @@
-package frc.robot.subsystems.superstructure;
+package frc.robot.subsystems.superstructure.calculator;
 
 import edu.wpi.first.math.filter.LinearFilter;
 import edu.wpi.first.math.geometry.Pose2d;
@@ -13,8 +13,8 @@ import frc.robot.utils.geometry.AllianceFlipUtil;
 
 import java.util.function.Supplier;
 
-import static frc.robot.subsystems.superstructure.ShotCalculationStructs.FerryXBoundary;
-import static frc.robot.subsystems.superstructure.ShotCalculationStructs.shotDataMap;
+import static frc.robot.subsystems.superstructure.calculator.ShotCalculationStructs.FerryXBoundary;
+import static frc.robot.subsystems.superstructure.calculator.ShotCalculationStructs.shotDataMap;
 
 public class ShotCalculator {
     public enum Target {

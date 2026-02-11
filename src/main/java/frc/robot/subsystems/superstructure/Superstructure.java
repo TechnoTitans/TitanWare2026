@@ -4,7 +4,7 @@ import edu.wpi.first.wpilibj.event.EventLoop;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
-import frc.robot.subsystems.superstructure.feeder.Feeder;
+import frc.robot.subsystems.superstructure.calculator.ShotCalculationStructs;
 import frc.robot.subsystems.superstructure.hood.Hood;
 import frc.robot.subsystems.superstructure.shooter.Shooter;
 import frc.robot.subsystems.superstructure.turret.Turret;
@@ -16,7 +16,6 @@ import java.util.function.Supplier;
 public class Superstructure extends VirtualSubsystem {
     protected static final String LogKey = "Superstructure";
 
-    private final Feeder feeder;
     private final Turret turret;
     private final Hood hood;
     private final Shooter shooter;
@@ -34,19 +33,17 @@ public class Superstructure extends VirtualSubsystem {
     private final Supplier<ShotCalculationStructs.ShotCalculation> shotCalculationSupplier;
 
     public enum Goal {
-        CLIMB(Feeder.Goal.STOP, Turret.Goal.CLIMB, Hood.Goal.CLIMB, Shooter.Goal.STOP, false),
-        TRACKING(Feeder.Goal.STOP, Turret.Goal.TRACKING, Hood.Goal.TRACKING, Shooter.Goal.STOP, true),
-        SHOOTING(Feeder.Goal.FEED, Turret.Goal.TRACKING, Hood.Goal.TRACKING, Shooter.Goal.TRACKING, true);
+        CLIMB(Turret.Goal.CLIMB, Hood.Goal.CLIMB, Shooter.Goal.STOP, false),
+        TRACKING(Turret.Goal.TRACKING, Hood.Goal.TRACKING, Shooter.Goal.STOP, true),
+        SHOOTING(Turret.Goal.TRACKING, Hood.Goal.TRACKING, Shooter.Goal.TRACKING, true);
 
-        private final Feeder.Goal feederGoal;
         private final Turret.Goal turretGoal;
         private final Hood.Goal hoodGoal;
         private final Shooter.Goal shooterGoal;
 
         private final boolean isDynamic;
 
-        Goal(final Feeder.Goal feederGoal, final Turret.Goal turretGoal, final Hood.Goal hoodGoal, final Shooter.Goal shooterGoal, final boolean isDynamic) {
-            this.feederGoal = feederGoal;
+        Goal(final Turret.Goal turretGoal, final Hood.Goal hoodGoal, final Shooter.Goal shooterGoal, final boolean isDynamic) {
             this.turretGoal = turretGoal;
             this.hoodGoal = hoodGoal;
             this.shooterGoal = shooterGoal;
@@ -55,13 +52,11 @@ public class Superstructure extends VirtualSubsystem {
     }
 
     public Superstructure(
-            final Feeder feeder,
             final Turret turret,
             final Hood hood,
             final Shooter shooter,
             final Supplier<ShotCalculationStructs.ShotCalculation> shotCalculationSupplier
     ) {
-        this.feeder = feeder;
         this.turret = turret;
         this.hood = hood;
         this.shooter = shooter;
@@ -76,7 +71,6 @@ public class Superstructure extends VirtualSubsystem {
 
         this.shotCalculationSupplier = shotCalculationSupplier;
 
-        feeder.setGoal(desiredGoal.feederGoal);
         turret.setGoal(desiredGoal.turretGoal);
         hood.setGoal(desiredGoal.hoodGoal);
         shooter.setGoal(desiredGoal.shooterGoal);
@@ -115,7 +109,6 @@ public class Superstructure extends VirtualSubsystem {
             turret.setGoal(desiredGoal.turretGoal);
             hood.setGoal(desiredGoal.hoodGoal);
             shooter.setGoal(desiredGoal.shooterGoal);
-            feeder.setGoal(desiredGoal.feederGoal);
 
             this.runningGoal = desiredGoal;
         }

@@ -22,15 +22,16 @@ import frc.robot.auto.Autos;
 import frc.robot.constants.Constants;
 import frc.robot.constants.HardwareConstants;
 import frc.robot.constants.RobotMap;
+import frc.robot.constants.SimConstants;
 import frc.robot.subsystems.drive.Swerve;
 import frc.robot.subsystems.drive.constants.SwerveConstants;
 import frc.robot.subsystems.intake.roller.IntakeRoller;
 import frc.robot.subsystems.intake.slide.IntakeSlide;
 import frc.robot.subsystems.spindexer.Spindexer;
-import frc.robot.subsystems.superstructure.ShotCalculationStructs;
-import frc.robot.subsystems.superstructure.ShotCalculator;
+import frc.robot.subsystems.superstructure.calculator.ShotCalculationStructs;
+import frc.robot.subsystems.superstructure.calculator.ShotCalculator;
 import frc.robot.subsystems.superstructure.Superstructure;
-import frc.robot.subsystems.superstructure.feeder.Feeder;
+import frc.robot.subsystems.feeder.Feeder;
 import frc.robot.subsystems.superstructure.hood.Hood;
 import frc.robot.subsystems.superstructure.shooter.Shooter;
 import frc.robot.subsystems.superstructure.turret.Turret;
@@ -61,8 +62,6 @@ import java.util.function.Supplier;
 public class Robot extends LoggedRobot {
     private static final String AKitLogPath = "/U/logs";
     private static final String HootLogPath = "/U/logs";
-
-    private FuelSim fuelSim;
 
     public static final BooleanSupplier IsRedAlliance = () -> {
         final Optional<DriverStation.Alliance> alliance = DriverStation.getAlliance();
@@ -141,7 +140,6 @@ public class Robot extends LoggedRobot {
             );
 
     public final Superstructure superstructure = new Superstructure(
-            feeder,
             turret,
             hood,
             shooter,
@@ -168,7 +166,8 @@ public class Robot extends LoggedRobot {
             intakeRoller,
             intakeSlide,
             superstructure,
-            spindexer
+            spindexer,
+            feeder
     );
 
     public final Autos autos = new Autos(
@@ -353,7 +352,9 @@ public class Robot extends LoggedRobot {
 
     @Override
     public void simulationPeriodic() {
-        fuelSimManager.periodic();
+        if (SimConstants.FuelSimEnabled) {
+            fuelSimManager.periodic();
+        }
     }
 
     public void configureStateTriggers() {
@@ -415,6 +416,7 @@ public class Robot extends LoggedRobot {
 
         coController.a(teleopEventLoop).onTrue(robotCommands.stowIntake());
 
+        //TODO: Change scoring mode so that stationary is used
         coController.rightTrigger(0.5, teleopEventLoop).whileTrue(robotCommands.shootStationary());
     }
 }

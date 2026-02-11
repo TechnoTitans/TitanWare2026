@@ -5,6 +5,8 @@ import edu.wpi.first.math.util.Units;
 import frc.robot.subsystems.drive.constants.SwerveConstants;
 
 public interface SimConstants {
+    boolean FuelSimEnabled = true;
+
     // Assume 2mOhm resistance for voltage drop calculation
     double FALCON_MOTOR_RESISTANCE = 0.002;
 

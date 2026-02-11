@@ -5,12 +5,7 @@ import static edu.wpi.first.units.Units.Meters;
 import static edu.wpi.first.units.Units.MetersPerSecond;
 import static edu.wpi.first.units.Units.Radians;
 
-import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.geometry.Pose3d;
-import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.geometry.Transform3d;
-import edu.wpi.first.math.geometry.Translation2d;
-import edu.wpi.first.math.geometry.Translation3d;
+import edu.wpi.first.math.geometry.*;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.networktables.StructArrayPublisher;
@@ -519,7 +514,7 @@ public class FuelSim {
         }
 
         Pose3d launchPose = new Pose3d(this.robotPoseSupplier.get())
-                .plus(robotToTurretTransform);
+                .plus(robotToTurretTransform.plus(new Transform3d(new Translation3d(FUEL_RADIUS, 0, 0), Rotation3d.kZero)));
         ChassisSpeeds fieldSpeeds = this.robotFieldSpeedsSupplier.get();
 
         double horizontalVel = Math.cos(hoodAngle.in(Radians)) * launchVelocity.in(MetersPerSecond);

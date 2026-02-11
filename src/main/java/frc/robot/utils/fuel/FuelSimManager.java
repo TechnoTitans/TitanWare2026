@@ -5,6 +5,8 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.units.measure.LinearVelocity;
 import edu.wpi.first.wpilibj.Timer;
+import edu.wpi.first.wpilibj2.command.Commands;
+import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.constants.SimConstants;
 
 import java.util.function.BooleanSupplier;
@@ -23,7 +25,7 @@ public class FuelSimManager {
     private final Supplier<Pose2d> swervePoseSupplier;
     private final Supplier<ChassisSpeeds> swerveSpeedsSupplier;
     private final BooleanSupplier isIntaking;
-    private final BooleanSupplier isShooting;
+    private final Trigger isShooting;
 
     public FuelSimManager(
             Supplier<Rotation2d> hoodAngleSupplier,
@@ -41,7 +43,10 @@ public class FuelSimManager {
         this.swervePoseSupplier = swervePoseSupplier;
         this.swerveSpeedsSupplier = swerveSpeedsSupplier;
         this.isIntaking = isIntaking;
-        this.isShooting = isShooting;
+        this.isShooting = new Trigger(isShooting);
+
+        this.isShooting.onTrue(Commands.runOnce(timer::reset));
+        this.isShooting.onFalse(Commands.runOnce(fuelSim::clearFuel));
 
         timer.start();
         fuelSim.start();
@@ -59,8 +64,6 @@ public class FuelSimManager {
                         SimConstants.Turret.ROBOT_TO_TURRET_TRANSFORM_3D
                 );
             }
-        } else {
-            timer.reset();
         }
 
         fuelSim.updateSim();

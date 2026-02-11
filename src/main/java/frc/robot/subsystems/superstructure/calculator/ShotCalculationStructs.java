@@ -1,4 +1,4 @@
-package frc.robot.subsystems.superstructure;
+package frc.robot.subsystems.superstructure.calculator;
 
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -99,19 +99,4 @@ public class ShotCalculationStructs {
             HoodShooterCalculation hoodShooterCalculation,
             ShotCalculator.Target target
     ) {}
-
-    public enum Target {
-        HUB(FieldConstants.Hub.hubCenterPoint),
-        FERRYING(FieldConstants.ferryTarget);
-
-        private final Translation2d targetTranslation;
-
-        Target(final Translation2d targetTranslation) {
-            this.targetTranslation = targetTranslation;
-        }
-
-        public Translation2d getTargetTranslation() {
-            return targetTranslation;
-        }
-    }
 }
