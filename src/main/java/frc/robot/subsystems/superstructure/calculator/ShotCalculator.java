@@ -6,6 +6,7 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.geometry.Twist2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
+import edu.wpi.first.wpilibj.DriverStation;
 import frc.robot.RobotCommands;
 import frc.robot.constants.FieldConstants;
 import frc.robot.constants.SimConstants;
@@ -18,18 +19,8 @@ import static frc.robot.subsystems.superstructure.calculator.ShotCalculationStru
 
 public class ShotCalculator {
     public enum Target {
-        HUB(FieldConstants.Hub.hubCenterPoint),
-        FERRYING(FieldConstants.ferryTarget);
-
-        private final Translation2d targetTranslation;
-
-        Target(final Translation2d targetTranslation) {
-            this.targetTranslation = targetTranslation;
-        }
-
-        public Translation2d getTargetTranslation() {
-            return targetTranslation;
-        }
+        HUB,
+        FERRYING
     }
 
     private static final double DelayTimeSec = 0.01;
@@ -58,9 +49,18 @@ public class ShotCalculator {
                         swerveSpeeds.omegaRadiansPerSecond * DelayTimeSec
                 ));
 
-        //TODO: Remove alliance flip util and do what we did last year
-        Target target = turretPose.getX() > FerryXBoundary ? Target.FERRYING : Target.HUB;
-        final Translation2d targetTranslation = AllianceFlipUtil.apply(target.getTargetTranslation());
+        final Pose2d calculationPose = DriverStation.getAlliance().get() == DriverStation.Alliance.Blue
+                ? turretPose : turretPose.relativeTo(FieldConstants.RED_ORIGIN);
+
+        final Target target =
+                calculationPose.getX()
+                        > FerryXBoundary ? Target.FERRYING : Target.HUB;
+
+        final Translation2d targetTranslation =
+                switch (target) {
+                    case HUB -> FieldConstants.getHubTarget();
+                    case FERRYING -> FieldConstants.getFerryingTarget(calculationPose.getY());
+                };
 
         final double turretToTargetDistance = targetTranslation.getDistance(turretPose.getTranslation());
 
@@ -85,8 +85,18 @@ public class ShotCalculator {
                         swerveSpeeds.omegaRadiansPerSecond * DelayTimeSec
                 ));
 
-        Target target = turretPose.getX() > FerryXBoundary ? Target.FERRYING : Target.HUB;
-        final Translation2d targetTranslation = AllianceFlipUtil.apply(target.getTargetTranslation());
+        final Pose2d calculationPose = DriverStation.getAlliance().get() == DriverStation.Alliance.Blue
+                ? turretPose : turretPose.relativeTo(FieldConstants.RED_ORIGIN);
+
+        final Target target =
+                calculationPose.getX()
+                        > FerryXBoundary ? Target.FERRYING : Target.HUB;
+
+        final Translation2d targetTranslation =
+                switch (target) {
+                    case HUB -> FieldConstants.getHubTarget();
+                    case FERRYING -> FieldConstants.getFerryingTarget(calculationPose.getY());
+                };
 
         final double turretToTargetDistance = targetTranslation.getDistance(turretPose.getTranslation());
 
@@ -107,8 +117,18 @@ public class ShotCalculator {
     private static ShotCalculationStructs.ShotCalculation getTurretOffShotShotCalculation(Pose2d swervePose) {
         final Pose2d turretPose = swervePose.transformBy(SimConstants.Turret.ROBOT_TO_TURRET_TRANSFORM_2D);
 
-        Target target = turretPose.getX() > FerryXBoundary ? Target.FERRYING : Target.HUB;
-        final Translation2d targetTranslation = AllianceFlipUtil.apply(target.getTargetTranslation());
+        final Pose2d calculationPose = DriverStation.getAlliance().get() == DriverStation.Alliance.Blue
+                ? turretPose : turretPose.relativeTo(FieldConstants.RED_ORIGIN);
+
+        final Target target =
+                calculationPose.getX()
+                        > FerryXBoundary ? Target.FERRYING : Target.HUB;
+
+        final Translation2d targetTranslation =
+                switch (target) {
+                    case HUB -> FieldConstants.getHubTarget();
+                    case FERRYING -> FieldConstants.getFerryingTarget(calculationPose.getY());
+                };
 
         final double turretToTargetDistance = targetTranslation.getDistance(turretPose.getTranslation());
 

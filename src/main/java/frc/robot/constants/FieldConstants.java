@@ -2,8 +2,7 @@ package frc.robot.constants;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
-import edu.wpi.first.math.geometry.Translation2d;
-import edu.wpi.first.math.geometry.Translation3d;
+import edu.wpi.first.math.geometry.*;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Filesystem;
@@ -12,39 +11,33 @@ import java.io.IOException;
 
 //Credit to FRC Team 6328
 public class FieldConstants {
-    //TODO: Redo field constants to match 2025 style
-    public static final FieldType fieldType = FieldType.WELDED;
-
-    // AprilTag related constants
-    public static final int aprilTagCount = AprilTagLayoutType.OFFICIAL.getLayout().getTags().size();
-    public static final double aprilTagWidth = Units.inchesToMeters(6.5);
-    public static final AprilTagLayoutType defaultAprilTagType = AprilTagLayoutType.OFFICIAL;
-
     // Field dimensions
-    public static final double fieldLength = AprilTagLayoutType.OFFICIAL.getLayout().getFieldLength();
-    public static final double fieldWidth = AprilTagLayoutType.OFFICIAL.getLayout().getFieldWidth();
-
-    public static final Translation2d ferryTarget  = Translation2d.kZero;
-
+    public static final double FIELD_LENGTH_X_METERS = AprilTagLayoutType.OFFICIAL.getLayout().getFieldLength();
+    public static final double FIELD_WIDTH_Y_METERS = AprilTagLayoutType.OFFICIAL.getLayout().getFieldWidth();
+    public static final Pose2d RED_ORIGIN = new Pose2d(FIELD_LENGTH_X_METERS, FIELD_WIDTH_Y_METERS, Rotation2d.k180deg);
 
     /** Hub related constants */
     public static class Hub {
+        public static final double WIDTH = Units.inchesToMeters(47.0);
 
-        // Dimensions
-        public static final double width = Units.inchesToMeters(47.0);
-        public static final double height =
-                Units.inchesToMeters(72.0); // includes the catcher at the top
-        public static final double innerWidth = Units.inchesToMeters(41.7);
-        public static final double innerHeight = Units.inchesToMeters(56.5);
+        public static final Pose2d HUB_CENTER_BLUE =
+                new Pose2d(new Translation2d(
+                        AprilTagLayoutType.OFFICIAL.getLayout().getTagPose(26).get().getX() + WIDTH / 2.0,
+                        FIELD_WIDTH_Y_METERS / 2.0), Rotation2d.kZero);
 
-        // Relevant reference points on alliance side
-        public static final Translation3d topCenterPoint =
-                new Translation3d(
-                        AprilTagLayoutType.OFFICIAL.getLayout().getTagPose(26).get().getX() + width / 2.0,
-                        fieldWidth / 2.0,
-                        height);
+        public static final Pose2d HUB_CENTER_RED = HUB_CENTER_BLUE.relativeTo(RED_ORIGIN);
+    }
 
-        public static final Translation2d hubCenterPoint = topCenterPoint.toTranslation2d();
+    public static class FERRYING {
+        public static final Pose2d TOP_FERRYING_BLUE =
+                new Pose2d(new Translation2d(2,FIELD_WIDTH_Y_METERS - 2.0), Rotation2d.kZero);
+
+        public static final Pose2d TOP_FERRYING_RED = TOP_FERRYING_BLUE.relativeTo(RED_ORIGIN);
+
+        public static final Pose2d BOTTOM_FERRYING_BLUE =
+                new Pose2d(new Translation2d(2, 2), Rotation2d.kZero);
+
+        public static final Pose2d BOTTOM_FERRYING_RED = BOTTOM_FERRYING_BLUE.relativeTo(RED_ORIGIN);
     }
 
     /** Tower related constants */
@@ -83,17 +76,17 @@ public class FieldConstants {
         // Relevant reference points on opposing side
         public static final Translation2d oppCenterPoint =
                 new Translation2d(
-                        fieldLength - frontFaceX,
+                        FIELD_LENGTH_X_METERS - frontFaceX,
                         AprilTagLayoutType.OFFICIAL.getLayout().getTagPose(15).get().getY());
         public static final Translation2d oppLeftUpright =
                 new Translation2d(
-                        fieldLength - frontFaceX,
+                        FIELD_LENGTH_X_METERS - frontFaceX,
                         (AprilTagLayoutType.OFFICIAL.getLayout().getTagPose(15).get().getY())
                                 + innerOpeningWidth / 2
                                 + Units.inchesToMeters(0.75));
         public static final Translation2d oppRightUpright =
                 new Translation2d(
-                        fieldLength - frontFaceX,
+                        FIELD_LENGTH_X_METERS - frontFaceX,
                         (AprilTagLayoutType.OFFICIAL.getLayout().getTagPose(15).get().getY())
                                 - innerOpeningWidth / 2
                                 - Units.inchesToMeters(0.75));
@@ -108,11 +101,11 @@ public class FieldConstants {
 
         // Relevant reference points on alliance side
         public static final Translation3d depotCenter =
-                new Translation3d(depth, (fieldWidth / 2) + distanceFromCenterY, height);
+                new Translation3d(depth, (FIELD_WIDTH_Y_METERS / 2) + distanceFromCenterY, height);
         public static final Translation3d leftCorner =
-                new Translation3d(depth, (fieldWidth / 2) + distanceFromCenterY + (width / 2), height);
+                new Translation3d(depth, (FIELD_WIDTH_Y_METERS / 2) + distanceFromCenterY + (width / 2), height);
         public static final Translation3d rightCorner =
-                new Translation3d(depth, (fieldWidth / 2) + distanceFromCenterY - (width / 2), height);
+                new Translation3d(depth, (FIELD_WIDTH_Y_METERS / 2) + distanceFromCenterY - (width / 2), height);
     }
 
     public static class Outpost {
@@ -130,6 +123,16 @@ public class FieldConstants {
         return DriverStation.getAlliance()
                 .map(alliance -> alliance == DriverStation.Alliance.Red ? redAlliance : blueAlliance)
                 .orElse(blueAlliance);
+    }
+
+    public static Translation2d getHubTarget() {
+        return getAllianceFlipped(Hub.HUB_CENTER_BLUE, Hub.HUB_CENTER_RED).getTranslation();
+    }
+
+    public static Translation2d getFerryingTarget(final double robotYPositionMeters) {
+        return (robotYPositionMeters > FIELD_WIDTH_Y_METERS/2 ?
+                getAllianceFlipped(FERRYING.TOP_FERRYING_BLUE, FERRYING.TOP_FERRYING_RED)
+                    : getAllianceFlipped(FERRYING.BOTTOM_FERRYING_BLUE, FERRYING.BOTTOM_FERRYING_RED)).getTranslation();
     }
 
     public enum FieldType {
