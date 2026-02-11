@@ -28,6 +28,8 @@ import frc.robot.constants.SimConstants;
 import frc.robot.utils.closeables.ToClose;
 import frc.robot.utils.control.DeltaTime;
 import frc.robot.utils.ctre.RefreshAll;
+import frc.robot.utils.sim.feedback.CRTSim;
+import frc.robot.utils.sim.feedback.SimCANCoder;
 import frc.robot.utils.sim.motors.TalonFXSim;
 
 public class TurretIOSim implements TurretIO {
@@ -110,16 +112,20 @@ public class TurretIOSim implements TurretIO {
                 rightEncoderPosition
         );
 
+        //TODO: This might create a new CRT Sim object every time. Not sure
+        final CRTSim CRTSim = new CRTSim(
+                new SimCANCoder(leftEncoder),
+                new SimCANCoder(rightEncoder),
+                turretTalonFXSim,
+                constants.leftEncoderGearing(),
+                constants.rightEncoderGearing(),
+                constants.turretTooth()
+        );
+
         final Notifier simUpdateNotifier = new Notifier(() -> {
             final double dt = deltaTime.get();
             turretTalonFXSim.update(dt);
-
-
-            leftEncoder.getSimState().setRawPosition(turretTalonFXSim.getAngularPositionRots() *
-                    constants.turretTooth() / constants.leftEncoderGearing());
-
-            rightEncoder.getSimState().setRawPosition(leftEncoder.getPosition().getValueAsDouble() *
-                    constants.leftEncoderGearing() / constants.rightEncoderGearing());
+            CRTSim.update();
         });
         ToClose.add(simUpdateNotifier);
         simUpdateNotifier.setName(String.format(

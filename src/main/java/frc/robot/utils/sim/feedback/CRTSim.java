@@ -1,14 +1,18 @@
+package frc.robot.utils.sim.feedback;
+
+import frc.robot.utils.sim.motors.TalonFXSim;
+
 public class CRTSim {
-	private final SimCanCoder encoder1;
-	private final SimCanCoder encoder2;
-	private final TalonFxSim motorSim;
+	private final SimCANCoder encoder1;
+	private final SimCANCoder encoder2;
+	private final TalonFXSim motorSim;
 
 	private final double encoder1Gearing;
 	private final double encoder2Gearing;
 
 	public CRTSim (
-		final SimCanCoder encoder1,
-		final SimCanCoder encoder2,
+		final SimCANCoder encoder1,
+		final SimCANCoder encoder2,
 		final TalonFXSim motorSim,
 		final double encoder1Gearing,
 		final double encoder2Gearing,
