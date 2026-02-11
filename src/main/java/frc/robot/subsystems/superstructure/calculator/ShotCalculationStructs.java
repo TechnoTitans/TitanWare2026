@@ -2,13 +2,11 @@ package frc.robot.subsystems.superstructure.calculator;
 
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.interpolation.Interpolatable;
 import edu.wpi.first.math.interpolation.InterpolatingTreeMap;
 import edu.wpi.first.math.interpolation.Interpolator;
 import edu.wpi.first.math.interpolation.InverseInterpolator;
 import edu.wpi.first.math.util.Units;
-import frc.robot.constants.FieldConstants;
 
 public class ShotCalculationStructs {
     public record HoodShooterCalculation(

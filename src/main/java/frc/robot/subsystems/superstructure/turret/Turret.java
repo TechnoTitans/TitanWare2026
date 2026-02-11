@@ -12,7 +12,6 @@ import frc.robot.utils.position.ChineseRemainder;
 import org.littletonrobotics.junction.Logger;
 
 import java.util.function.DoubleSupplier;
-import java.util.function.Supplier;
 
 public class Turret extends SubsystemBase {
     protected static final String LogKey = "Superstructure/Turret";

@@ -11,7 +11,6 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.constants.Constants;
 import frc.robot.constants.HardwareConstants;
-import frc.robot.subsystems.intake.roller.IntakeRoller;
 import org.littletonrobotics.junction.Logger;
 
 public class IntakeSlide extends SubsystemBase {

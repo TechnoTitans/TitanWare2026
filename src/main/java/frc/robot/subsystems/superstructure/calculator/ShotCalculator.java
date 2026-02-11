@@ -10,7 +10,6 @@ import edu.wpi.first.wpilibj.DriverStation;
 import frc.robot.RobotCommands;
 import frc.robot.constants.FieldConstants;
 import frc.robot.constants.SimConstants;
-import frc.robot.utils.geometry.AllianceFlipUtil;
 
 import java.util.function.Supplier;
 
