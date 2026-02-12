@@ -39,7 +39,7 @@ public class HardwareConstants {
     public static IntakeRollerConstants INTAKE_ROLLER = new IntakeRollerConstants(
             CANBus.RIO,
             14,
-            10
+            0.6
     );
 
     public record IntakeSlideConstants(

@@ -77,7 +77,6 @@ public class RobotCommands {
 
     //TODO: Might need to change the feeding
     public Command shootWhileMoving() {
-        //TODO: Potentially need to change the swerve speed
         return Commands.parallel(
                 superstructure.toGoal(Superstructure.Goal.SHOOTING),
                 Commands.repeatingSequence(

@@ -60,16 +60,15 @@ public class IntakeRollerIOReal implements IntakeRollerIO{
     public void config() {
         final TalonFXConfiguration motorConfiguration = new TalonFXConfiguration();
         motorConfiguration.Slot0 = new Slot0Configs()
-                .withKS(0.01)
-                .withKP(2);
-        motorConfiguration.CurrentLimits.StatorCurrentLimit = 40;
+                .withKS(0.465);
+        motorConfiguration.CurrentLimits.StatorCurrentLimit = 60;
         motorConfiguration.CurrentLimits.StatorCurrentLimitEnable = true;
-        motorConfiguration.CurrentLimits.SupplyCurrentLimit = 40;
+        motorConfiguration.CurrentLimits.SupplyCurrentLimit = 50;
         motorConfiguration.CurrentLimits.SupplyCurrentLowerLimit = 40;
         motorConfiguration.CurrentLimits.SupplyCurrentLowerTime = 1;
         motorConfiguration.CurrentLimits.SupplyCurrentLimitEnable = true;
         motorConfiguration.MotorOutput.NeutralMode = NeutralModeValue.Brake;
-        motorConfiguration.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
+        motorConfiguration.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
         motorConfiguration.Feedback.FeedbackSensorSource = FeedbackSensorSourceValue.RotorSensor;
         motorConfiguration.Feedback.SensorToMechanismRatio = constants.rollerGearing();
         rollerMotor.getConfigurator().apply(motorConfiguration);
