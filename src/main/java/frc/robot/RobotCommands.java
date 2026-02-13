@@ -16,20 +16,17 @@ import org.littletonrobotics.junction.Logger;
 public class RobotCommands {
     public enum ScoringMode {
         Stationary,
-        Moving,
-        Turret_Off
+        Moving
     }
 
     protected static final String LogKey = "RobotCommands";
     protected static final double AllowableSpeedToShootMetersPerSec = 0.1;
-
     private final Swerve swerve;
     private final IntakeRoller intakeRoller;
     private final IntakeSlide intakeSlide;
     private final Superstructure superstructure;
     private final Spindexer spindexer;
     private final Feeder feeder;
-
     private final Trigger ableToShoot;
 
     public RobotCommands(
@@ -78,14 +75,13 @@ public class RobotCommands {
     //TODO: Might need to change the feeding
     public Command shootWhileMoving() {
         return Commands.parallel(
-                superstructure.toGoal(Superstructure.Goal.SHOOTING),
-                Commands.repeatingSequence(
-                        Commands.waitUntil(superstructure.atSuperstructureSetpoint),
-                        feeder.toGoal(Feeder.Goal.FEED)
-                                .until(superstructure.atSuperstructureSetpoint.negate())
-                ),
-                spindexer.toGoal(Spindexer.Goal.FEED)
-                        .onlyIf(superstructure.atSuperstructureSetpoint),
+                        superstructure.toGoal(Superstructure.Goal.SHOOTING),
+                        Commands.repeatingSequence(
+                                Commands.waitUntil(superstructure.atSuperstructureSetpoint),
+                                feeder.toGoal(Feeder.Goal.FEED)
+                                        .until(superstructure.atSuperstructureSetpoint.negate())
+                        ),
+                        spindexer.toGoal(Spindexer.Goal.FEED),
                         Commands.runOnce(() -> SwerveSpeed.setSwerveSpeed(SwerveSpeed.Speeds.SHOOTING))
                 )
                 .finallyDo(() -> SwerveSpeed.setSwerveSpeed(SwerveSpeed.Speeds.NORMAL))
@@ -106,7 +102,7 @@ public class RobotCommands {
                         )
                 ),
                 spindexer.toGoal(Spindexer.Goal.FEED)
-                        .onlyIf(ableToShoot.and(superstructure.atSuperstructureSetpoint)),
+                        .onlyIf(ableToShoot),
                 swerve.runWheelXCommand()
         ).withName("ShootStationary");
     }

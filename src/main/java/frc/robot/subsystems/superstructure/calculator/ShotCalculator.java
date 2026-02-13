@@ -36,7 +36,6 @@ public class ShotCalculator {
         return switch (scoringMode) {
             case Stationary -> getShotCalculation(swervePoseSupplier.get(), fieldRelativeSwerveSpeedsSupplier.get());
             case Moving -> getMovingShotCalculation(swervePoseSupplier.get(), fieldRelativeSwerveSpeedsSupplier.get());
-            case Turret_Off -> getTurretOffShotShotCalculation(swervePoseSupplier.get());
         };
     }
 
@@ -105,34 +104,6 @@ public class ShotCalculator {
 
         return new ShotCalculationStructs.ShotCalculation(
                 desiredTurretAngle,
-                shotDataMap.get(
-                        turretToTargetDistance
-                ),
-                target
-        );
-    }
-
-    //TODO: Might remove this
-    private static ShotCalculationStructs.ShotCalculation getTurretOffShotShotCalculation(Pose2d swervePose) {
-        final Pose2d turretPose = swervePose.transformBy(SimConstants.Turret.ROBOT_TO_TURRET_TRANSFORM_2D);
-
-        final Pose2d calculationPose = DriverStation.getAlliance().get() == DriverStation.Alliance.Blue
-                ? turretPose : turretPose.relativeTo(FieldConstants.RED_ORIGIN);
-
-        final Target target =
-                calculationPose.getX()
-                        > FerryXBoundary ? Target.FERRYING : Target.HUB;
-
-        final Translation2d targetTranslation =
-                switch (target) {
-                    case HUB -> FieldConstants.getHubTarget();
-                    case FERRYING -> FieldConstants.getFerryingTarget(calculationPose.getY());
-                };
-
-        final double turretToTargetDistance = targetTranslation.getDistance(turretPose.getTranslation());
-
-        return new ShotCalculationStructs.ShotCalculation(
-                Rotation2d.kZero,
                 shotDataMap.get(
                         turretToTargetDistance
                 ),

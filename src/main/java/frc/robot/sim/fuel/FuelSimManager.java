@@ -8,6 +8,7 @@ import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.constants.SimConstants;
+import org.littletonrobotics.junction.Logger;
 
 import java.util.function.BooleanSupplier;
 import java.util.function.Supplier;
@@ -26,6 +27,8 @@ public class FuelSimManager {
     private final Supplier<ChassisSpeeds> swerveSpeedsSupplier;
     private final BooleanSupplier isIntaking;
     private final Trigger isShooting;
+
+    private double ballCount = 0;
 
     public FuelSimManager(
             Supplier<Rotation2d> hoodAngleSupplier,
@@ -51,11 +54,17 @@ public class FuelSimManager {
         timer.start();
         fuelSim.start();
 
+        Logger.recordOutput("FuelSim/BallCount", ballCount);
+
         configureFuelSimRobot();
     }
 
     public void periodic() {
-        if (isShooting.getAsBoolean()) {
+        if (isIntaking.getAsBoolean()) {
+            ballCount++;
+        }
+
+        if (isShooting.getAsBoolean() && ballCount > 0) {
             if (timer.advanceIfElapsed(0.25)) {
                 fuelSim.launchFuel(
                         BALL_SPEED,
@@ -63,14 +72,16 @@ public class FuelSimManager {
                         turretYawSupplier.get().getMeasure(),
                         SimConstants.Turret.ROBOT_TO_TURRET_TRANSFORM_3D
                 );
+
+                ballCount--;
             }
         }
 
         fuelSim.updateSim();
+        Logger.recordOutput("FuelSim/BallCount", ballCount);
     }
 
-
-
+    //TODO: Might remove this
     private void configureFuelSimRobot() {
         // Register a robot for collision with fuel
         fuelSim.registerRobot(

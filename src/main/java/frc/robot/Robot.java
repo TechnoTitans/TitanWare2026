@@ -23,6 +23,7 @@ import frc.robot.constants.Constants;
 import frc.robot.constants.HardwareConstants;
 import frc.robot.constants.RobotMap;
 import frc.robot.constants.SimConstants;
+import frc.robot.sim.fuel.FuelSimManager;
 import frc.robot.subsystems.drive.Swerve;
 import frc.robot.subsystems.drive.constants.SwerveConstants;
 import frc.robot.subsystems.feeder.Feeder;
@@ -38,9 +39,7 @@ import frc.robot.subsystems.superstructure.turret.Turret;
 import frc.robot.subsystems.vision.PhotonVision;
 import frc.robot.utils.closeables.ToClose;
 import frc.robot.utils.ctre.RefreshAll;
-import frc.robot.utils.fuel.FuelSimManager;
 import frc.robot.utils.logging.LoggedCommandScheduler;
-import frc.robot.utils.solver.ComponentsSolver;
 import frc.robot.utils.subsystems.VirtualSubsystem;
 import frc.robot.utils.teleop.ControllerUtils;
 import frc.robot.utils.teleop.SwerveSpeed;
@@ -201,9 +200,14 @@ public class Robot extends LoggedRobot {
     private final Trigger disabled = RobotModeTriggers.disabled();
     public final Trigger autonomousEnabled = RobotModeTriggers.autonomous();
     public final Trigger teleopEnabled = RobotModeTriggers.teleop();
-    private final Trigger endgameTrigger = new Trigger(() -> DriverStation.getMatchTime() <= 20)
+    private final Trigger endgameTrigger = new Trigger(() -> DriverStation.getMatchTime() <= 30)
             .and(DriverStation::isFMSAttached)
             .and(RobotModeTriggers.teleop());
+
+    private final Timer shiftTimer = new Timer();
+    private final Trigger firstShiftStartTrigger = new Trigger(() -> DriverStation.getMatchTime() == 130);
+    private final Trigger shiftRumbleTrigger = new Trigger(() -> shiftTimer.hasElapsed(23));
+    private final Trigger shiftChangeTrigger = new Trigger(() -> shiftTimer.hasElapsed(25));
 
 
     @Override
@@ -299,6 +303,7 @@ public class Robot extends LoggedRobot {
         Logger.start();
 
         Logger.recordOutput("EmptyPose", Pose3d.kZero);
+        shiftTimer.stop();
     }
 
     @Override
@@ -385,8 +390,22 @@ public class Robot extends LoggedRobot {
                 )
         );
 
-        endgameTrigger.onTrue(ControllerUtils.rumbleForDurationCommand(
+        firstShiftStartTrigger.onTrue(Commands.runOnce(shiftTimer::start));
+
+        shiftRumbleTrigger.onTrue(ControllerUtils.rumbleForDurationCommand(
                 driverController.getHID(), GenericHID.RumbleType.kBothRumble, 0.5, 1)
+        );
+
+        shiftChangeTrigger.onTrue(Commands.runOnce(shiftTimer::reset));
+
+        endgameTrigger.onTrue(
+                Commands.sequence(
+                        Commands.runOnce(shiftTimer::stop),
+                        ControllerUtils.rumbleForDurationCommand(
+                                driverController.getHID(), GenericHID.RumbleType.kBothRumble, 0.5, 1
+                        )
+                )
+
         );
 
         disabled.onTrue(swerve.stopCommand());
@@ -416,6 +435,12 @@ public class Robot extends LoggedRobot {
         coController.a(teleopEventLoop).onTrue(robotCommands.stowIntake());
 
         //TODO: Change scoring mode so that stationary is used
-        coController.rightTrigger(0.5, teleopEventLoop).whileTrue(robotCommands.shootStationary());
+        coController.rightTrigger(0.5, teleopEventLoop).whileTrue(
+                Commands.parallel(
+                        Commands.runOnce(() -> scoringMode = RobotCommands.ScoringMode.Stationary),
+                        robotCommands.shootStationary()
+                )
+                        .finallyDo(() -> scoringMode = RobotCommands.ScoringMode.Moving)
+        );
     }
 }
