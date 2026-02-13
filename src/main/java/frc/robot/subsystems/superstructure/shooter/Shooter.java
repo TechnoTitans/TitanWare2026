@@ -3,7 +3,6 @@ package frc.robot.subsystems.superstructure.shooter;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.Timer;
-import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.constants.Constants;
@@ -83,6 +82,10 @@ public class Shooter extends SubsystemBase {
                 LogKey + "/PeriodicIOPeriodMs",
                 Units.secondsToMilliseconds(Timer.getFPGATimestamp() - ShooterPeriodicUpdateStart)
         );
+    }
+
+    public boolean isShooting() {
+        return atVelocitySetpoint.getAsBoolean() && currentGoal == Goal.TRACKING;
     }
 
     public void setGoal(final Goal desiredGoal) {

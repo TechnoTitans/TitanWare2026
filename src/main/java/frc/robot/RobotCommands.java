@@ -1,6 +1,5 @@
 package frc.robot;
 
-import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
@@ -8,11 +7,12 @@ import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.constants.FieldConstants;
 import frc.robot.subsystems.climb.Climb;
 import frc.robot.subsystems.drive.Swerve;
+import frc.robot.subsystems.feeder.Feeder;
 import frc.robot.subsystems.intake.roller.IntakeRoller;
 import frc.robot.subsystems.intake.slide.IntakeSlide;
 import frc.robot.subsystems.spindexer.Spindexer;
-import frc.robot.subsystems.superstructure.ShotCalculator;
 import frc.robot.subsystems.superstructure.Superstructure;
+import frc.robot.utils.teleop.SwerveSpeed;
 import org.littletonrobotics.junction.Logger;
 
 import java.util.function.DoubleSupplier;
@@ -22,8 +22,7 @@ import java.util.function.Supplier;
 public class RobotCommands {
     public enum ScoringMode {
         Stationary,
-        Moving,
-        Turret_Off
+        Moving
     }
 
     protected static final String LogKey = "RobotCommands";
@@ -34,6 +33,7 @@ public class RobotCommands {
     private final IntakeSlide intakeSlide;
     private final Superstructure superstructure;
     private final Spindexer spindexer;
+    private final Feeder feeder;
     private final Climb climb;
 
     private final Trigger ableToShoot;
@@ -44,6 +44,7 @@ public class RobotCommands {
             final IntakeSlide intakeSlide,
             final Superstructure superstructure,
             final Spindexer spindexer,
+            final Feeder feeder,
             final Climb climb
     ) {
         this.swerve = swerve;
@@ -51,12 +52,16 @@ public class RobotCommands {
         this.intakeSlide = intakeSlide;
         this.superstructure = superstructure;
         this.spindexer = spindexer;
+        this.feeder = feeder;
         this.climb = climb;
 
         this.ableToShoot = new Trigger(() -> {
             final ChassisSpeeds swerveChassisSpeed = swerve.getRobotRelativeSpeeds();
 
-            return Math.hypot(swerveChassisSpeed.vxMetersPerSecond, swerveChassisSpeed.vyMetersPerSecond) < AllowableSpeedToShootMetersPerSec;
+            return Math.hypot(
+                    swerveChassisSpeed.vxMetersPerSecond,
+                    swerveChassisSpeed.vyMetersPerSecond
+            ) < AllowableSpeedToShootMetersPerSec;
         });
     }
 
@@ -66,54 +71,50 @@ public class RobotCommands {
 
     public Command manualIntake() {
         return Commands.parallel(
-                intakeRoller.toGoal(IntakeRoller.Goal.INTAKE),
-                intakeSlide.setGoal(IntakeSlide.Goal.INTAKE),
-                spindexer.toGoal(Spindexer.Goal.INTAKE)
-        ).withName("Intake");
+                intakeRoller.setGoal(IntakeRoller.Goal.INTAKE),
+                intakeSlide.setGoal(IntakeSlide.Goal.INTAKE)
+        ).withName("ManualIntake");
     }
 
-    public Command shoot(final Supplier<ScoringMode> scoringType, final Supplier<ShotCalculator.Target> target) {
-        return Commands.select(
-                Map.of(
-                        ScoringMode.Moving,
-                        shootWhileMoving(),
-                        ScoringMode.Stationary,
-                        shootStationary(),
-                        ScoringMode.Turret_Off,
-                        alignSwerveAndShoot(() -> target.get().getTargetTranslation().minus(swerve.getPose().getTranslation()).getAngle())
-                ),
-                scoringType
-        );
-    }
-
-    private Command shootWhileMoving() {
+    public Command stowIntake() {
         return Commands.parallel(
-                superstructure.toGoal(Superstructure.Goal.SHOOTING),
-                spindexer.toGoal(Spindexer.Goal.FEED)
-                        .onlyIf(superstructure.atSuperstructureSetpoint)
-        ).withName("ShootWhileMoving");
+                intakeSlide.setGoal(IntakeSlide.Goal.STOW),
+                intakeRoller.setGoal(IntakeRoller.Goal.STOW)
+        ).withName("StowIntake");
     }
 
-    private Command shootStationary() {
+    //TODO: Might need to change the feeding
+    public Command shootWhileMoving() {
         return Commands.parallel(
-                Commands.sequence(
-                        Commands.waitUntil(ableToShoot),
-                        superstructure.toGoal(Superstructure.Goal.SHOOTING)
-                ),
-                spindexer.toGoal(Spindexer.Goal.FEED)
-                        .onlyIf(ableToShoot.and(superstructure.atSuperstructureSetpoint))
-        );
+                        superstructure.toGoal(Superstructure.Goal.SHOOTING),
+                        Commands.repeatingSequence(
+                                Commands.waitUntil(superstructure.atSuperstructureSetpoint),
+                                feeder.toGoal(Feeder.Goal.FEED)
+                                        .until(superstructure.atSuperstructureSetpoint.negate())
+                        ),
+                        spindexer.toGoal(Spindexer.Goal.FEED),
+                        Commands.runOnce(() -> SwerveSpeed.setSwerveSpeed(SwerveSpeed.Speeds.SHOOTING))
+                )
+                .finallyDo(() -> SwerveSpeed.setSwerveSpeed(SwerveSpeed.Speeds.NORMAL))
+                .withName("ShootWhileMoving");
     }
 
-    private Command alignSwerveAndShoot(final Supplier<Rotation2d> rotation2dSupplier) {
+    public Command shootStationary() {
         return Commands.parallel(
                 Commands.sequence(
                         Commands.waitUntil(ableToShoot),
-                        superstructure.toGoal(Superstructure.Goal.SHOOTING)
+                        Commands.parallel(
+                                superstructure.toGoal(Superstructure.Goal.SHOOTING),
+                                Commands.repeatingSequence(
+                                        Commands.waitUntil(superstructure.atSuperstructureSetpoint),
+                                        feeder.toGoal(Feeder.Goal.FEED)
+                                                .until(superstructure.atSuperstructureSetpoint.negate())
+                                )
+                        )
                 ),
-                swerve.faceAngle(rotation2dSupplier),
                 spindexer.toGoal(Spindexer.Goal.FEED)
-                        .onlyIf(ableToShoot.and(superstructure.atSuperstructureSetpoint))
+                        .onlyIf(ableToShoot),
+                swerve.runWheelXCommand()
         ).withName("ShootStationary");
     }
 

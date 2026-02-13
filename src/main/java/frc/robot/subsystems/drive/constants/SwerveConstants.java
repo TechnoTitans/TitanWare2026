@@ -29,10 +29,10 @@ public class SwerveConstants {
     public static final int ModuleCount = 4;
     public static final SwerveConfig Config = new SwerveConfig(
             HardwareConstants.CANBus.CANIVORE,
-            0.048819,
-            6.746031746031747,
-            150.0 / 7.0,
-            50.0 / 17.0,
+            Units.inchesToMeters(2),
+            5.27,
+            287.0 / 11.0,
+            3.375,
             Units.inchesToMeters(22.75),
             Units.inchesToMeters(22.75),
             Units.feetToMeters(15.0),
@@ -58,7 +58,7 @@ public class SwerveConstants {
             1,
             2,
             3,
-            0,
+            -0.076,
             SwerveConstants.KrakenX60Foc.KtNMPerAmp
     );
 
@@ -69,7 +69,7 @@ public class SwerveConstants {
             4,
             5,
             6,
-            0,
+            -0.125,
             SwerveConstants.KrakenX60Foc.KtNMPerAmp
     );
 
@@ -80,7 +80,7 @@ public class SwerveConstants {
             7,
             8,
             9,
-            0,
+            0.435,
             SwerveConstants.KrakenX60Foc.KtNMPerAmp
     );
 
@@ -91,7 +91,7 @@ public class SwerveConstants {
             10,
             11,
             12,
-            0,
+            -0.319,
             SwerveConstants.KrakenX60Foc.KtNMPerAmp
     );
 
@@ -110,18 +110,18 @@ public class SwerveConstants {
         }
 
         private static final Slot0Configs DriveGains = new Slot0Configs()
-                .withKS(2.2557).withKV(0).withKA(3.1912)
+                .withKS(2).withKV(0.1).withKA(3)
                 .withKP(30).withKD(0);
 
         private static final Slot0Configs SteerGains = new Slot0Configs()
-                .withKS(0.3).withKV(2.66).withKA(0)
-                .withKP(100).withKD(0.5)
+                .withKS(0).withKV(0).withKA(0)
+                .withKP(4.5).withKD(0.5)
                 .withStaticFeedforwardSign(StaticFeedforwardSignValue.UseClosedLoopSign);
 
         private static final Pigeon2Configuration Pigeon2Configuration = new Pigeon2Configuration(); static {
-            Pigeon2Configuration.MountPose.MountPoseRoll = -0.2720952332019806;
-            Pigeon2Configuration.MountPose.MountPosePitch = 0.06304807960987091;
-            Pigeon2Configuration.MountPose.MountPoseYaw = -1.072310447692871;
+            Pigeon2Configuration.MountPose.MountPoseRoll = 0;
+            Pigeon2Configuration.MountPose.MountPosePitch = 0;
+            Pigeon2Configuration.MountPose.MountPoseYaw = 0;
         }
 
         private static final double SlipCurrentAmps = 70;

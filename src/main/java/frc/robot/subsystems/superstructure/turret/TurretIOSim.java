@@ -28,10 +28,15 @@ import frc.robot.constants.SimConstants;
 import frc.robot.utils.closeables.ToClose;
 import frc.robot.utils.control.DeltaTime;
 import frc.robot.utils.ctre.RefreshAll;
+import frc.robot.utils.sim.feedback.CRTSim;
+import frc.robot.utils.sim.feedback.SimCANCoder;
 import frc.robot.utils.sim.motors.TalonFXSim;
 
 public class TurretIOSim implements TurretIO {
     private static final double SIM_UPDATE_PERIOD_SEC = 0.005;
+
+    private static final int CAPACITY = 40;
+    private int fuelStored = 0;
 
     private final DeltaTime deltaTime;
     private final HardwareConstants.TurretConstants constants;
@@ -107,16 +112,20 @@ public class TurretIOSim implements TurretIO {
                 rightEncoderPosition
         );
 
+        //TODO: This might create a new CRT Sim object every time. Not sure
+        final CRTSim CRTSim = new CRTSim(
+                new SimCANCoder(leftEncoder),
+                new SimCANCoder(rightEncoder),
+                turretTalonFXSim,
+                constants.leftEncoderGearing(),
+                constants.rightEncoderGearing(),
+                constants.turretTooth()
+        );
+
         final Notifier simUpdateNotifier = new Notifier(() -> {
             final double dt = deltaTime.get();
             turretTalonFXSim.update(dt);
-
-
-            leftEncoder.getSimState().setRawPosition(turretTalonFXSim.getAngularPositionRots() *
-                    constants.turretTooth() / constants.leftEncoderGearing());
-
-            rightEncoder.getSimState().setRawPosition(leftEncoder.getPosition().getValueAsDouble() *
-                    constants.leftEncoderGearing() / constants.rightEncoderGearing());
+            CRTSim.update();
         });
         ToClose.add(simUpdateNotifier);
         simUpdateNotifier.setName(String.format(
@@ -130,11 +139,14 @@ public class TurretIOSim implements TurretIO {
     public void config() {
         final TalonFXConfiguration motorConfig = new TalonFXConfiguration();
         motorConfig.Slot0 = new Slot0Configs()
-                .withKP(70)
-                .withKD(0.01);
+                .withKS(0.1)
+                .withKV(5)
+                .withKP(60)
+                .withKD(0.1);
         motorConfig.Slot1 = new Slot1Configs()
-                .withKD(50)
-                .withKD(0.01);
+                .withKS(0.1)
+                .withKP(36)
+                .withKD(9.5);
         motorConfig.MotionMagic.MotionMagicCruiseVelocity = 0;
         motorConfig.MotionMagic.MotionMagicExpo_kV = 0;
         motorConfig.MotionMagic.MotionMagicExpo_kA = 0;
@@ -203,13 +215,15 @@ public class TurretIOSim implements TurretIO {
     }
 
     @Override
-    public void toTurretPosition(final double positionRots) {
-        turretMotor.setControl(motionMagicExpoVoltage.withPosition(positionRots).withSlot(1));
+    public void toTurretContinuousPosition(final double positionRots, final double velocityRotsPerSec) {
+        turretMotor.setControl(
+                positionVoltage.withPosition(positionRots).withVelocity(-velocityRotsPerSec).withSlot(0)
+        );
     }
 
     @Override
-    public void toTurretContinuousPosition(final double positionRots) {
-        turretMotor.setControl(positionVoltage.withPosition(positionRots));
+    public void toTurretPosition(final double positionRots) {
+        turretMotor.setControl(motionMagicExpoVoltage.withPosition(positionRots).withSlot(1));
     }
 
     @Override

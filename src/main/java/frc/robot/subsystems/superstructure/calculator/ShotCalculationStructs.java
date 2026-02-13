@@ -1,4 +1,4 @@
-package frc.robot.subsystems.superstructure;
+package frc.robot.subsystems.superstructure.calculator;
 
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -8,7 +8,7 @@ import edu.wpi.first.math.interpolation.Interpolator;
 import edu.wpi.first.math.interpolation.InverseInterpolator;
 import edu.wpi.first.math.util.Units;
 
-public class ShotCalculationData {
+public class ShotCalculationStructs {
     public record HoodShooterCalculation(
             Rotation2d hoodRotation,
             double flywheelVelocity,

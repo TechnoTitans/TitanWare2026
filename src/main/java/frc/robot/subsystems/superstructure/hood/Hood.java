@@ -26,7 +26,7 @@ public class Hood extends SubsystemBase {
     private final HoodIO hoodIO;
     private final HoodIOInputsAutoLogged inputs;
 
-    private Goal previousGoal = Goal.STOW;
+    private Goal previousGoal = Goal.TRACKING;
     private Goal desiredGoal = previousGoal;
     private Goal currentGoal = desiredGoal;
 

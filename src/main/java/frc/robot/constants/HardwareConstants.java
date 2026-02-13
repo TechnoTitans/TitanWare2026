@@ -41,15 +41,13 @@ public class HardwareConstants {
     public static IntakeRollerConstants INTAKE_ROLLER = new IntakeRollerConstants(
             CANBus.RIO,
             14,
-            10
+            5.0 / 3
     );
 
     public record IntakeSlideConstants(
             CANBus CANBus,
             int masterMotorID,
             int followerMotorID,
-            int encoderID,
-            double encoderOffset,
             double slideGearing,
             double gearPitchCircumferenceMeters,
             double upperLimitRots,
@@ -60,9 +58,7 @@ public class HardwareConstants {
             CANBus.RIO,
             15,
             16,
-            17,
-            0,
-            20,
+            10,
             0.1,
             10,
             0
@@ -76,7 +72,7 @@ public class HardwareConstants {
 
     public static SpindexerConstants SPINDEXER = new SpindexerConstants(
             CANBus.RIO,
-            18,
+            17,
             10
     );
 
@@ -89,7 +85,7 @@ public class HardwareConstants {
 
     public static FeederConstants FEEDER = new FeederConstants(
             CANBus.RIO,
-            19,
+            18,
             30
     );
 
@@ -110,9 +106,9 @@ public class HardwareConstants {
 
     public static TurretConstants TURRET = new TurretConstants(
             CANBus.CANIVORE,
+            19,
             20,
             21,
-            22,
             24,
             80,
             13.0,
@@ -134,7 +130,7 @@ public class HardwareConstants {
     //TODO: Change numbers
     public static HoodConstants HOOD = new HoodConstants(
             CANBus.RIO,
-            23,
+            22,
             50,
             0.25,
             0
@@ -150,8 +146,8 @@ public class HardwareConstants {
     //TODO: Change numbers
     public static ShooterConstants SHOOTER = new ShooterConstants(
             CANBus.RIO,
+            23,
             24,
-            25,
             2
     );
 

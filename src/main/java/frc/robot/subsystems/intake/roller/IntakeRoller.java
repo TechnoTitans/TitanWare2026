@@ -80,6 +80,10 @@ public class IntakeRoller extends SubsystemBase {
                 && MathUtil.isNear(desiredGoal.rollerVelocityGoalRotsPerSec, inputs.rollerVelocityRotsPerSec, VelocityToleranceRotsPerSec);
     }
 
+    public boolean isIntaking() {
+        return currentGoal == Goal.INTAKE;
+    }
+
     public Command toGoal(final Goal goal) {
         return runEnd(
                 () -> setGoal(goal),

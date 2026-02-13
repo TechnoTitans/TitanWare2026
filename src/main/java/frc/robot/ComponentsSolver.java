@@ -1,4 +1,4 @@
-package frc.robot.utils.solver;
+package frc.robot;
 
 import edu.wpi.first.math.Vector;
 import edu.wpi.first.math.geometry.*;

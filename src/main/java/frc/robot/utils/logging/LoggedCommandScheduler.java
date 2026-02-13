@@ -14,7 +14,8 @@ public class LoggedCommandScheduler {
     private static final String AlertType = "Alerts";
 
     private static final Set<Command> RunningNonInterrupters = new HashSet<>();
-    private static final Map<Command, Command> RunningInterrupters = new HashMap<>();
+    private static final Set<Command> RunningInterrupters = new HashSet<>();
+    private static final Map<Command, Command> Interrupted = new HashMap<>();
     private static final Map<Subsystem, Command> RequiredSubsystems = new HashMap<>();
 
     private static final Map<Command, LoggedTrigger> ScheduledBy = new HashMap<>();
@@ -26,7 +27,7 @@ public class LoggedCommandScheduler {
     }
 
     private static void commandStarted(final Command command) {
-        if (!RunningInterrupters.containsKey(command)) {
+        if (!RunningInterrupters.contains(command)) {
             RunningNonInterrupters.add(command);
         }
 
@@ -50,7 +51,10 @@ public class LoggedCommandScheduler {
         commandScheduler.onCommandFinish(LoggedCommandScheduler::commandEnded);
 
         commandScheduler.onCommandInterrupt((interrupted, interrupting) -> {
-            interrupting.ifPresent(interrupter -> RunningInterrupters.put(interrupter, interrupted));
+            interrupting.ifPresent(interrupter -> {
+                RunningInterrupters.add(interrupter);
+                Interrupted.put(interrupted, interrupter);
+            });
             commandEnded(interrupted);
         });
     }
@@ -62,11 +66,10 @@ public class LoggedCommandScheduler {
     private static void logRunningCommands() {
         Logger.recordOutput(LogKey + "/Running/.type", AlertType);
 
-        final Set<Command> runningNonInterrupters = LoggedCommandScheduler.RunningNonInterrupters;
-        final String[] running = new String[runningNonInterrupters.size()];
+        final String[] running = new String[RunningNonInterrupters.size()];
         {
             int i = 0;
-            for (final Command command : runningNonInterrupters) {
+            for (final Command command : RunningNonInterrupters) {
                 running[i] = command.getName();
                 if (ScheduledBy.containsKey(command)) {
                     ScheduledBuffer.add(command);
@@ -76,38 +79,40 @@ public class LoggedCommandScheduler {
             }
         }
 
-        final Map<Command, Command> runningInterrupters = LoggedCommandScheduler.RunningInterrupters;
-        final String[] interrupters = new String[runningInterrupters.size()];
+        final List<String> interrupters = new ArrayList<>();
         {
-            int i = 0;
-            for (final Map.Entry<Command, Command> entry : runningInterrupters.entrySet()) {
-                final Command interrupter = entry.getKey();
-                final Command interrupted = entry.getValue();
-
-                final Set<Subsystem> commonRequirements = new HashSet<>(interrupter.getRequirements());
-                commonRequirements.retainAll(interrupted.getRequirements());
-
-                final StringBuilder requirements = new StringBuilder();
-                int j = 1;
-                for (final Subsystem subsystem : commonRequirements) {
-                    requirements.append(subsystem.getName());
-                    if (j < commonRequirements.size()) {
-                        requirements.append(",");
+            for (final Command interrupter : RunningInterrupters) {
+                for (final Map.Entry<Command, Command> interruptEntry : Interrupted.entrySet()) {
+                    if (interruptEntry.getValue() != interrupter) {
+                        continue;
                     }
 
-                    j++;
+                    final Command interrupted = interruptEntry.getKey();
+                    final Set<Subsystem> commonRequirements = new HashSet<>(interrupter.getRequirements());
+                    commonRequirements.retainAll(interrupted.getRequirements());
+
+                    final StringBuilder requirements = new StringBuilder();
+                    int j = 1;
+                    for (final Subsystem subsystem : commonRequirements) {
+                        requirements.append(subsystem.getName());
+                        if (j < commonRequirements.size()) {
+                            requirements.append(",");
+                        }
+
+                        j++;
+                    }
+
+                    interrupters.add(
+                            interrupter.getName()
+                                    + " interrupted "
+                                    + interrupted.getName()
+                                    + " (" + requirements + ")"
+                    );
+
+                    if (ScheduledBy.containsKey(interrupter)) {
+                        ScheduledBuffer.add(interrupter);
+                    }
                 }
-
-                interrupters[i] = interrupter.getName()
-                        + " interrupted "
-                        + interrupted.getName()
-                        + " (" + requirements + ")";
-
-                if (ScheduledBy.containsKey(interrupter)) {
-                    ScheduledBuffer.add(interrupter);
-                }
-
-                i++;
             }
         }
 
@@ -136,17 +141,16 @@ public class LoggedCommandScheduler {
 
         Logger.recordOutput(LogKey + "/Running/infos", annotations);
         Logger.recordOutput(LogKey + "/Running/warnings", running);
-        Logger.recordOutput(LogKey + "/Running/errors", interrupters);
+        Logger.recordOutput(LogKey + "/Running/errors", interrupters.toArray(String[]::new));
     }
 
     private static void logRequiredSubsystems() {
         Logger.recordOutput(LogKey + "/Subsystems/.type", AlertType);
 
-        final Map<Subsystem, Command> requiredSubsystems = LoggedCommandScheduler.RequiredSubsystems;
-        final String[] subsystems = new String[requiredSubsystems.size()];
+        final String[] subsystems = new String[RequiredSubsystems.size()];
         {
             int i = 0;
-            for (final Map.Entry<Subsystem, Command> entry : requiredSubsystems.entrySet()) {
+            for (final Map.Entry<Subsystem, Command> entry : RequiredSubsystems.entrySet()) {
                 final Subsystem required = entry.getKey();
                 final Command command = entry.getValue();
 

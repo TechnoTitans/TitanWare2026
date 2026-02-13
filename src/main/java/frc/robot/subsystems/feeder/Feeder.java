@@ -1,15 +1,16 @@
-package frc.robot.subsystems.superstructure.feeder;
+package frc.robot.subsystems.feeder;
 
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.Timer;
+import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.constants.Constants;
 import frc.robot.constants.HardwareConstants;
 import org.littletonrobotics.junction.Logger;
 
 public class Feeder extends SubsystemBase {
-    protected static final String LogKey = "Superstructure/Feeder";
+    protected static final String LogKey = "Feeder";
     private static final double VelocityToleranceRotsPerSec = 0.002;
 
     private final FeederIO feederIO;
@@ -70,10 +71,17 @@ public class Feeder extends SubsystemBase {
         );
     }
 
-    public void setGoal(final Goal desiredGoal) {
-        this.desiredGoal = desiredGoal;
+    public Command toGoal(final Goal goal) {
+        return runEnd(
+                () -> setDesiredGoal(goal),
+                () -> setDesiredGoal(Goal.STOP)
+        ).withName("ToGoal: " + goal);
+    }
+
+    private void setDesiredGoal(final Goal goal) {
+        this.desiredGoal = goal;
         Logger.recordOutput(LogKey + "/CurrentGoal", currentGoal.toString());
-        Logger.recordOutput(LogKey + "/DesiredGoal", desiredGoal.toString());
+        Logger.recordOutput(LogKey + "/DesiredGoal", goal.toString());
     }
 
     private boolean atVelocitySetpoint() {
