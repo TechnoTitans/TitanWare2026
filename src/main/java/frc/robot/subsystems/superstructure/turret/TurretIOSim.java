@@ -145,8 +145,8 @@ public class TurretIOSim implements TurretIO {
                 .withKD(0.1);
         motorConfig.Slot1 = new Slot1Configs()
                 .withKS(0.1)
-                .withKP(40)
-                .withKD(10);
+                .withKP(36)
+                .withKD(9.5);
         motorConfig.MotionMagic.MotionMagicCruiseVelocity = 0;
         motorConfig.MotionMagic.MotionMagicExpo_kV = 0;
         motorConfig.MotionMagic.MotionMagicExpo_kA = 0;
@@ -216,7 +216,9 @@ public class TurretIOSim implements TurretIO {
 
     @Override
     public void toTurretContinuousPosition(final double positionRots, final double velocityRotsPerSec) {
-        turretMotor.setControl(positionVoltage.withPosition(positionRots).withVelocity(-velocityRotsPerSec));
+        turretMotor.setControl(
+                positionVoltage.withPosition(positionRots).withVelocity(-velocityRotsPerSec).withSlot(0)
+        );
     }
 
     @Override

@@ -1,6 +1,5 @@
 package frc.robot.subsystems.superstructure.calculator;
 
-import edu.wpi.first.math.filter.LinearFilter;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
@@ -22,9 +21,9 @@ public class ShotCalculator {
         FERRYING
     }
 
-    private static final double DelayTimeSec = 0.01;
+    private static final double DelayTimeSec = 0.005;
     //TODO: Try to see if this is worth it
-    private static final LinearFilter turretFilter = LinearFilter.movingAverage(5);
+//    private static final LinearFilter turretFilter = LinearFilter.movingAverage(5);
 
     public static ShotCalculationStructs.ShotCalculation getShotCalculation(
             final Supplier<Pose2d> swervePoseSupplier,
@@ -39,7 +38,10 @@ public class ShotCalculator {
         };
     }
 
-    private static ShotCalculationStructs.ShotCalculation getShotCalculation(final Pose2d swervePose, final ChassisSpeeds swerveSpeeds) {
+    private static ShotCalculationStructs.ShotCalculation getShotCalculation(
+            final Pose2d swervePose,
+            final ChassisSpeeds swerveSpeeds
+    ) {
         final Pose2d turretPose = swervePose.transformBy(SimConstants.Turret.ROBOT_TO_TURRET_TRANSFORM_2D)
                 .exp(new Twist2d(
                         swerveSpeeds.vxMetersPerSecond * DelayTimeSec,
@@ -62,9 +64,9 @@ public class ShotCalculator {
 
         final double turretToTargetDistance = targetTranslation.getDistance(turretPose.getTranslation());
 
-        final Rotation2d desiredTurretAngle = Rotation2d.fromRotations(turretFilter.calculate(targetTranslation.minus(turretPose.getTranslation()).getAngle().minus(
+        final Rotation2d desiredTurretAngle = targetTranslation.minus(turretPose.getTranslation()).getAngle().minus(
                 turretPose.getRotation()
-        ).getRotations()));
+        );
 
         return new ShotCalculationStructs.ShotCalculation(
                 desiredTurretAngle,
@@ -75,7 +77,10 @@ public class ShotCalculator {
         );
     }
     //TODO: Needs to be implemented
-    private static ShotCalculationStructs.ShotCalculation getMovingShotCalculation(final Pose2d swervePose, final ChassisSpeeds swerveSpeeds) {
+    private static ShotCalculationStructs.ShotCalculation getMovingShotCalculation(
+            final Pose2d swervePose,
+            final ChassisSpeeds swerveSpeeds
+    ) {
         final Pose2d turretPose = swervePose.transformBy(SimConstants.Turret.ROBOT_TO_TURRET_TRANSFORM_2D)
                 .exp(new Twist2d(
                         swerveSpeeds.vxMetersPerSecond * DelayTimeSec,

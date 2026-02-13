@@ -110,8 +110,8 @@ public class SwerveConstants {
         }
 
         private static final Slot0Configs DriveGains = new Slot0Configs()
-                .withKS(0).withKV(0).withKA(0)
-                .withKP(0).withKD(0);
+                .withKS(2).withKV(0.1).withKA(3)
+                .withKP(30).withKD(0);
 
         private static final Slot0Configs SteerGains = new Slot0Configs()
                 .withKS(0).withKV(0).withKA(0)
