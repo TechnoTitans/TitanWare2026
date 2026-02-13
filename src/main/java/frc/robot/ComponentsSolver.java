@@ -1,6 +1,5 @@
 package frc.robot;
 
-import edu.wpi.first.math.Vector;
 import edu.wpi.first.math.geometry.*;
 import frc.robot.constants.HardwareConstants;
 import frc.robot.constants.SimConstants;

@@ -22,9 +22,9 @@ import frc.robot.auto.Autos;
 import frc.robot.constants.Constants;
 import frc.robot.constants.HardwareConstants;
 import frc.robot.constants.RobotMap;
-import frc.robot.subsystems.climb.Climb;
 import frc.robot.constants.SimConstants;
 import frc.robot.sim.fuel.FuelSimManager;
+import frc.robot.subsystems.climb.Climb;
 import frc.robot.subsystems.drive.Swerve;
 import frc.robot.subsystems.drive.constants.SwerveConstants;
 import frc.robot.subsystems.feeder.Feeder;
@@ -445,6 +445,10 @@ public class Robot extends LoggedRobot {
                 ).withName("SwerveSpeedSlow"));
 
         driverController.rightTrigger(0.5, teleopEventLoop).whileTrue(robotCommands.shootWhileMoving());
+
+        driverController.y().whileTrue(robotCommands.climb());
+
+        driverController.a().onTrue(robotCommands.manualUnclimb());
 
         coController.y(teleopEventLoop).onTrue(robotCommands.manualIntake());
 
