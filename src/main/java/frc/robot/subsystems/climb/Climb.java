@@ -101,6 +101,10 @@ public class Climb extends SubsystemBase {
             this.currentGoal = desiredGoal;
         }
 
+        //Todo:
+        // Might need to add something like ElevatorArm last year where we control climb diff when climbing
+        // Might also need to slow down when unclimbing
+
         Logger.recordOutput(LogKey + "/CurrentGoal", currentGoal.toString());
         Logger.recordOutput(LogKey + "/DesiredGoal", desiredGoal);
         Logger.recordOutput(LogKey + "/DesiredGoal/ClimbPositionRots", desiredGoal.getPositionGoalRots(constants));

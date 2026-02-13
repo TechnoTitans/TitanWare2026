@@ -31,7 +31,7 @@ public class FieldConstants {
         public static final Pose2d HUB_CENTER_RED = HUB_CENTER_BLUE.relativeTo(RED_ORIGIN);
     }
 
-    public static class FERRYING {
+    public static class Ferrying {
         public static final Pose2d TOP_FERRYING_BLUE =
                 new Pose2d(new Translation2d(2,FIELD_WIDTH_Y_METERS - 2.0), Rotation2d.kZero);
 
@@ -43,56 +43,10 @@ public class FieldConstants {
         public static final Pose2d BOTTOM_FERRYING_RED = BOTTOM_FERRYING_BLUE.relativeTo(RED_ORIGIN);
     }
 
-    /** Tower related constants */
-    public static class Tower {
-        // Dimensions
-        public static final double width = Units.inchesToMeters(49.25);
-        public static final double depth = Units.inchesToMeters(45.0);
-        public static final double height = Units.inchesToMeters(78.25);
-        public static final double innerOpeningWidth = Units.inchesToMeters(32.250);
-        public static final double frontFaceX = Units.inchesToMeters(43.51);
+    public static class Climb {
+        public static final Pose2d CLIMB_ALIGN_BLUE = new Pose2d(new Translation2d(2, 2), Rotation2d.k180deg);
 
-        public static final double uprightHeight = Units.inchesToMeters(72.1);
-
-        // Rung heights from the floor
-        public static final double lowRungHeight = Units.inchesToMeters(27.0);
-        public static final double midRungHeight = Units.inchesToMeters(45.0);
-        public static final double highRungHeight = Units.inchesToMeters(63.0);
-
-        // Relevant reference points on alliance side
-        public static final Translation2d centerPoint =
-                new Translation2d(
-                        frontFaceX, AprilTagLayoutType.OFFICIAL.getLayout().getTagPose(31).get().getY());
-        public static final Translation2d leftUpright =
-                new Translation2d(
-                        frontFaceX,
-                        (AprilTagLayoutType.OFFICIAL.getLayout().getTagPose(31).get().getY())
-                                + innerOpeningWidth / 2
-                                + Units.inchesToMeters(0.75));
-        public static final Translation2d rightUpright =
-                new Translation2d(
-                        frontFaceX,
-                        (AprilTagLayoutType.OFFICIAL.getLayout().getTagPose(31).get().getY())
-                                - innerOpeningWidth / 2
-                                - Units.inchesToMeters(0.75));
-
-        // Relevant reference points on opposing side
-        public static final Translation2d oppCenterPoint =
-                new Translation2d(
-                        FIELD_LENGTH_X_METERS - frontFaceX,
-                        AprilTagLayoutType.OFFICIAL.getLayout().getTagPose(15).get().getY());
-        public static final Translation2d oppLeftUpright =
-                new Translation2d(
-                        FIELD_LENGTH_X_METERS - frontFaceX,
-                        (AprilTagLayoutType.OFFICIAL.getLayout().getTagPose(15).get().getY())
-                                + innerOpeningWidth / 2
-                                + Units.inchesToMeters(0.75));
-        public static final Translation2d oppRightUpright =
-                new Translation2d(
-                        FIELD_LENGTH_X_METERS - frontFaceX,
-                        (AprilTagLayoutType.OFFICIAL.getLayout().getTagPose(15).get().getY())
-                                - innerOpeningWidth / 2
-                                - Units.inchesToMeters(0.75));
+        public static final Pose2d CLIMB_ALIGN_RED = CLIMB_ALIGN_BLUE.relativeTo(RED_ORIGIN);
     }
 
     public static class Depot {
@@ -134,8 +88,12 @@ public class FieldConstants {
 
     public static Translation2d getFerryingTarget(final double robotYPositionMeters) {
         return (robotYPositionMeters > FIELD_WIDTH_Y_METERS/2 ?
-                getAllianceFlipped(FERRYING.TOP_FERRYING_BLUE, FERRYING.TOP_FERRYING_RED)
-                    : getAllianceFlipped(FERRYING.BOTTOM_FERRYING_BLUE, FERRYING.BOTTOM_FERRYING_RED)).getTranslation();
+                getAllianceFlipped(Ferrying.TOP_FERRYING_BLUE, Ferrying.TOP_FERRYING_RED)
+                    : getAllianceFlipped(Ferrying.BOTTOM_FERRYING_BLUE, Ferrying.BOTTOM_FERRYING_RED)).getTranslation();
+    }
+
+    public static Pose2d getClimbTarget() {
+        return getAllianceFlipped(Climb.CLIMB_ALIGN_BLUE, Climb.CLIMB_ALIGN_RED);
     }
 
     public enum FieldType {

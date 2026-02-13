@@ -4,6 +4,7 @@ import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
+import frc.robot.constants.FieldConstants;
 import frc.robot.subsystems.climb.Climb;
 import frc.robot.subsystems.drive.Swerve;
 import frc.robot.subsystems.feeder.Feeder;
@@ -115,9 +116,12 @@ public class RobotCommands {
 
     public Command climb() {
         return Commands.parallel(
+                swerve.runToPose(FieldConstants::getClimbTarget),
                 superstructure.setGoal(Superstructure.Goal.CLIMB),
                 climb.toGoal(Climb.Goal.EXTEND)
-        ).withName("Climb");
+        )
+                .finallyDo(swerve::wheelXCommand)
+                .withName("Climb");
     }
 
     public Command manualUnclimb() {
