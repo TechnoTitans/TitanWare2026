@@ -31,9 +31,6 @@ public class Climb extends SubsystemBase {
     private final ClimbIO climbIO;
     private final ClimbIOInputsAutoLogged inputs;
 
-    private final SysIdRoutine voltageSysIdRoutine;
-    private final SysIdRoutine torqueCurrentSysIdRoutine;
-
     private Goal desiredGoal = Goal.STOW;
     private Goal currentGoal = desiredGoal;
 
@@ -51,7 +48,7 @@ public class Climb extends SubsystemBase {
         }
 
         public double getPositionGoalRots(final HardwareConstants.ClimbConstants constants) {
-            return positionGoalMeters;
+            return positionGoalMeters / constants.spoolDiameterMeters();
         }
 
         public double getPositionGoalMeters() {
@@ -73,20 +70,8 @@ public class Climb extends SubsystemBase {
 
         this.inputs = new ClimbIOInputsAutoLogged();
 
-        this.voltageSysIdRoutine = makeVoltageSysIdRoutine(
-                Volts.of(0).per(Second),
-                Volts.of(0),
-                Seconds.of(0)
-        );
-        this.torqueCurrentSysIdRoutine = makeTorqueCurrentSysIdRoutine(
-                Amps.of(0).per(Second),
-                Amps.of(0),
-                Seconds.of(0)
-        );
-
         this.climbIO.config();
         this.zero();
-        this.climbIO.toPosition(desiredGoal.getPositionGoalRots(constants));
     }
 
     @Override
@@ -168,70 +153,5 @@ public class Climb extends SubsystemBase {
 
     private boolean atUpperLimit() {
         return inputs.motorPositionRots >= constants.upperLimitRots();
-    }
-
-    private SysIdRoutine makeVoltageSysIdRoutine(
-            final Velocity<VoltageUnit> voltageRampRate,
-            final Voltage stepVoltage,
-            final Time timeout
-    ) {
-        return new SysIdRoutine(
-                new SysIdRoutine.Config(
-                        voltageRampRate,
-                        stepVoltage,
-                        timeout,
-                        state -> SignalLogger.writeString(String.format("%s-state", LogKey), state.toString())
-                ),
-                new SysIdRoutine.Mechanism(
-                        voltageMeasure -> climbIO.toVoltage(
-                                voltageMeasure.in(Volts)
-                        ),
-                        null,
-                        this
-                )
-        );
-    }
-
-    private SysIdRoutine makeTorqueCurrentSysIdRoutine(
-            final Velocity<CurrentUnit> currentRampRate,
-            final Current stepCurrent,
-            final Time timeout
-    ) {
-        return new SysIdRoutine(
-                new SysIdRoutine.Config(
-                        Volts.per(Second).of(currentRampRate.baseUnitMagnitude()),
-                        Volts.of(stepCurrent.baseUnitMagnitude()),
-                        timeout,
-                        state -> SignalLogger.writeString(String.format("%s-state", LogKey), state.toString())
-                ),
-                new SysIdRoutine.Mechanism(
-                        voltageMeasure -> climbIO.toTorqueCurrent(
-                                voltageMeasure.in(Volts)
-                        ),
-                        null,
-                        this
-                )
-
-        );
-    }
-
-    private Command makeSysIdCommand(final SysIdRoutine sysIdRoutine) {
-        return Commands.sequence(
-                sysIdRoutine.quasistatic(SysIdRoutine.Direction.kForward).until(atUpperLimit),
-                Commands.waitSeconds(0.1),
-                sysIdRoutine.quasistatic(SysIdRoutine.Direction.kReverse).until(atLowerLimit),
-                Commands.waitSeconds(0.1),
-                sysIdRoutine.dynamic(SysIdRoutine.Direction.kForward).until(atUpperLimit),
-                Commands.waitSeconds(0.1),
-                sysIdRoutine.dynamic(SysIdRoutine.Direction.kReverse).until(atLowerLimit)
-        );
-    }
-
-    public Command voltageSysIdCommand() {
-        return makeSysIdCommand(voltageSysIdRoutine);
-    }
-
-    public Command torqueCurrentSysIdCommand() {
-        return makeSysIdCommand(torqueCurrentSysIdRoutine);
     }
 }

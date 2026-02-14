@@ -110,12 +110,12 @@ public class SwerveConstants {
         }
 
         private static final Slot0Configs DriveGains = new Slot0Configs()
-                .withKS(2).withKV(0.1).withKA(3)
+                .withKS(2.2557).withKV(0).withKA(3.1912)
                 .withKP(30).withKD(0);
 
         private static final Slot0Configs SteerGains = new Slot0Configs()
-                .withKS(0).withKV(0).withKA(0)
-                .withKP(4.5).withKD(0.5)
+                .withKS(0.3).withKV(2.66).withKA(0)
+                .withKP(100).withKD(0.5)
                 .withStaticFeedforwardSign(StaticFeedforwardSignValue.UseClosedLoopSign);
 
         private static final Pigeon2Configuration Pigeon2Configuration = new Pigeon2Configuration(); static {
