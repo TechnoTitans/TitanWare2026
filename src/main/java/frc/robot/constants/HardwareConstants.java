@@ -47,7 +47,6 @@ public class HardwareConstants {
             int masterMotorID,
             int followerMotorID,
             double slideGearing,
-            double gearPitchCircumferenceMeters,
             double upperLimitRots,
             double lowerLimitRots
     ) {}
@@ -57,8 +56,7 @@ public class HardwareConstants {
             15,
             16,
             10,
-            0.1,
-            10,
+            4,
             0
     );
 

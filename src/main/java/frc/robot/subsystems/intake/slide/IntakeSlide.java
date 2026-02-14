@@ -15,11 +15,11 @@ import org.littletonrobotics.junction.Logger;
 
 public class IntakeSlide extends SubsystemBase {
     protected static final String LogKey = "/Intake/Slide";
-    private static final double PositionToleranceRots = 0.02;
+    private static final double PositionToleranceRots = 0.01;
     private static final double VelocityToleranceRotsPerSec = 0.02;
-    private static final double HardstopCurrentThresholdAmps = 1;
+    private static final double HardstopCurrentThresholdAmps = 30;
 
-    private final Debouncer currentDebouncer = new Debouncer(0.15, Debouncer.DebounceType.kRising);
+    private final Debouncer currentDebouncer = new Debouncer(0.3, Debouncer.DebounceType.kBoth);
 
     private final HardwareConstants.IntakeSlideConstants constants;
 
@@ -33,24 +33,20 @@ public class IntakeSlide extends SubsystemBase {
     public final Trigger atSlideLowerLimit = new Trigger(this::atSlideLowerLimit);
     public final Trigger atSlideUpperLimit = new Trigger(this::atSlideUpperLimit);
 
-    private boolean isHomed;
+    private boolean isHomed = false;
 
     public enum Goal {
         STOW(0),
-        INTAKE(1);
+        INTAKE(3.7);
 
-        private final double slideExtensionGoalMeters;
+        private final double slideGoalRotations;
 
-        Goal(final double slideExtensionGoalMeters) {
-            this.slideExtensionGoalMeters = slideExtensionGoalMeters;
+        Goal(final double slideGoalRotations) {
+            this.slideGoalRotations = slideGoalRotations;
         }
 
-        public double getSlideExtensionGoalMeters() {
-            return slideExtensionGoalMeters;
-        }
-
-        public double getSlideGoalRots(final double gearPitchCircumferenceMeters) {
-            return this.slideExtensionGoalMeters / gearPitchCircumferenceMeters;
+        public double getSlideGoalRotations() {
+            return slideGoalRotations;
         }
     }
 
@@ -67,7 +63,13 @@ public class IntakeSlide extends SubsystemBase {
 
         this.intakeSlideIO.config();
 
-        intakeSlideIO.toSlidePosition(desiredGoal.getSlideGoalRots(constants.gearPitchCircumferenceMeters()));
+//        atSlideSetpoint.onTrue(
+//                Commands.runOnce(() -> intakeSlideIO.changeNeutralMode(NeutralModeValue.Coast))
+//        );
+//
+//        atSlideSetpoint.onFalse(
+//                Commands.runOnce(() -> intakeSlideIO.changeNeutralMode(NeutralModeValue.Brake))
+//        );
     }
 
     @Override
@@ -78,19 +80,21 @@ public class IntakeSlide extends SubsystemBase {
         Logger.processInputs(LogKey, inputs);
 
         if (desiredGoal != currentGoal) {
-            intakeSlideIO.toSlidePosition(desiredGoal.getSlideGoalRots(constants.gearPitchCircumferenceMeters()));
+            intakeSlideIO.toSlidePosition(desiredGoal.getSlideGoalRotations());
             this.currentGoal = desiredGoal;
         }
 
         Logger.recordOutput(LogKey + "/CurrentGoal", currentGoal.toString());
         Logger.recordOutput(LogKey + "/DesiredGoal", desiredGoal.toString());
 
-        Logger.recordOutput(LogKey + "/CurrentGoal/SlidePositionRots", currentGoal.getSlideGoalRots(constants.gearPitchCircumferenceMeters()));
-        Logger.recordOutput(LogKey + "/DesiredGoal/SlidePositionRots", desiredGoal.getSlideGoalRots(constants.gearPitchCircumferenceMeters()));
+        Logger.recordOutput(LogKey + "/CurrentGoal/SlidePositionRots", currentGoal.getSlideGoalRotations());
+        Logger.recordOutput(LogKey + "/DesiredGoal/SlidePositionRots", desiredGoal.getSlideGoalRotations());
 
-        Logger.recordOutput(LogKey + "/Slide/AtPositionSetpoint", atSlidePositionSetpoint());
-        Logger.recordOutput(LogKey + "/Slide/AtSlideLowerLimit", atSlideLowerLimit());
-        Logger.recordOutput(LogKey + "/Slide/AtSlideUpperLimit", atSlideUpperLimit());
+        Logger.recordOutput(LogKey + "/Triggers/AtPositionSetpoint", atSlidePositionSetpoint());
+        Logger.recordOutput(LogKey + "/Triggers/AtSlideLowerLimit", atSlideLowerLimit());
+        Logger.recordOutput(LogKey + "/Triggers/AtSlideUpperLimit", atSlideUpperLimit());
+        Logger.recordOutput(LogKey + "/Triggers/STOWthignie", currentDebouncer.calculate(Math.abs(getCurrent()) >= HardstopCurrentThresholdAmps));
+
         Logger.recordOutput(
                 LogKey + "/PeriodicIOPeriodMs",
                 Units.secondsToMilliseconds(Timer.getFPGATimestamp() - IntakeSlidePeriodicUpdateStart)
@@ -101,32 +105,23 @@ public class IntakeSlide extends SubsystemBase {
         return Commands.sequence(
                 Commands.runOnce(intakeSlideIO::home),
                 Commands.waitUntil(
-                        () -> currentDebouncer.calculate(getCurrent() >= HardstopCurrentThresholdAmps)
+                        () -> currentDebouncer.calculate(Math.abs(getCurrent()) >= HardstopCurrentThresholdAmps)
                 ),
                 Commands.runOnce(() -> {
-                        intakeSlideIO.zeroMotor();
-                        this.isHomed = true;
+                        intakeSlideIO.zeroMotors();
+//                        this.isHomed = true;
                     }
-                ).finallyDo(() -> this.currentGoal = Goal.INTAKE)
-        );
+                ),
+                        setGoal(Goal.INTAKE),
+                Commands.waitUntil(atSlideSetpoint),
+                Commands.runOnce(() -> this.isHomed = true)
+        )
+//                .finallyDo(() -> this.isHomed = true)
+                .withName("IntakeSlideHome");
     }
 
     public boolean isHomed(){
         return isHomed;
-    }
-
-    private boolean atSlidePositionSetpoint() {
-        return currentGoal == desiredGoal
-                && MathUtil.isNear(desiredGoal.getSlideGoalRots(constants.gearPitchCircumferenceMeters()), inputs.masterPositionRots, PositionToleranceRots)
-                && MathUtil.isNear(0, inputs.masterVelocityRotsPerSec, VelocityToleranceRotsPerSec);
-    }
-
-    private boolean atSlideLowerLimit() {
-        return inputs.masterPositionRots <= constants.lowerLimitRots();
-    }
-
-    private boolean atSlideUpperLimit() {
-        return inputs.masterPositionRots >= constants.upperLimitRots();
     }
 
     public Command toGoal(final Goal goal) {
@@ -150,6 +145,20 @@ public class IntakeSlide extends SubsystemBase {
 
     public Rotation2d getIntakeSlidePositionRots() {
         return Rotation2d.fromRotations(inputs.masterPositionRots);
+    }
+
+    private boolean atSlidePositionSetpoint() {
+        return currentGoal == desiredGoal
+                && MathUtil.isNear(desiredGoal.getSlideGoalRotations(), inputs.masterPositionRots, PositionToleranceRots)
+                && MathUtil.isNear(0, inputs.masterVelocityRotsPerSec, VelocityToleranceRotsPerSec);
+    }
+
+    private boolean atSlideLowerLimit() {
+        return inputs.masterPositionRots <= constants.lowerLimitRots();
+    }
+
+    private boolean atSlideUpperLimit() {
+        return inputs.masterPositionRots >= constants.upperLimitRots();
     }
 
     private double getCurrent(){

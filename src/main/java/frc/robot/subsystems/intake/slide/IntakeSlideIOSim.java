@@ -223,7 +223,7 @@ public class IntakeSlideIOSim implements IntakeSlideIO {
     }
 
     @Override
-    public void zeroMotor(){
+    public void zeroMotors(){
         masterMotor.setPosition(0);
         followerMotor.setPosition(0);
         motorConfig.SoftwareLimitSwitch.ForwardSoftLimitThreshold = constants.slideGearing();

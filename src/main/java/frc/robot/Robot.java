@@ -91,7 +91,7 @@ public class Robot extends LoggedRobot {
     );
 
     public final IntakeRoller intakeRoller = new IntakeRoller(
-            Constants.CURRENT_MODE,
+            Constants.RobotMode.DISABLED,
             HardwareConstants.INTAKE_ROLLER
     );
 
@@ -101,28 +101,28 @@ public class Robot extends LoggedRobot {
     );
 
     public final Feeder feeder = new Feeder(
-            Constants.CURRENT_MODE,
+            Constants.RobotMode.DISABLED,
             HardwareConstants.FEEDER
     );
 
     public final Hood hood = new Hood(
-            Constants.CURRENT_MODE,
+            Constants.RobotMode.DISABLED,
             HardwareConstants.HOOD
     );
 
     public final Turret turret = new Turret(
-            Constants.CURRENT_MODE,
+            Constants.RobotMode.DISABLED,
             HardwareConstants.TURRET,
             () -> swerve.getFieldRelativeSpeeds().omegaRadiansPerSecond
     );
 
     public final Shooter shooter = new Shooter(
-            Constants.CURRENT_MODE,
+            Constants.RobotMode.DISABLED,
             HardwareConstants.SHOOTER
     );
 
     public final Spindexer spindexer = new Spindexer(
-            Constants.CURRENT_MODE,
+            Constants.RobotMode.DISABLED,
             HardwareConstants.SPINDEXER
     );
 
@@ -376,18 +376,8 @@ public class Robot extends LoggedRobot {
         );
 
         teleopEnabled.onTrue(
-                Commands.sequence(
-                        Commands.parallel(
-                                hood.home()
-                                        .onlyIf(hood::isHomed),
-                                intakeSlide.home()
-                                        .onlyIf(intakeSlide::isHomed)
-                        ),
-                        Commands.parallel(
-                                intakeSlide.setGoal(IntakeSlide.Goal.INTAKE),
-                                intakeRoller.setGoal(IntakeRoller.Goal.INTAKE)
-                        )
-                )
+                intakeSlide.home()
+                        .onlyIf(() -> !intakeSlide.isHomed())
         );
 
         firstShiftStartTrigger.onTrue(Commands.runOnce(shiftTimer::start));

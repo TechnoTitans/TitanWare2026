@@ -1,5 +1,6 @@
 package frc.robot.subsystems.intake.slide;
 
+import com.ctre.phoenix6.signals.NeutralModeValue;
 import org.littletonrobotics.junction.AutoLog;
 
 public interface IntakeSlideIO {
@@ -30,5 +31,7 @@ public interface IntakeSlideIO {
 
     default void home() {}
 
-    default void zeroMotor() {}
+    default void zeroMotors() {}
+
+    default void changeNeutralMode(final NeutralModeValue neutralModeValue) {}
 }
