@@ -62,14 +62,6 @@ public class IntakeSlide extends SubsystemBase {
         this.inputs = new IntakeSlideIOInputsAutoLogged();
 
         this.intakeSlideIO.config();
-
-//        atSlideSetpoint.onTrue(
-//                Commands.runOnce(() -> intakeSlideIO.changeNeutralMode(NeutralModeValue.Coast))
-//        );
-//
-//        atSlideSetpoint.onFalse(
-//                Commands.runOnce(() -> intakeSlideIO.changeNeutralMode(NeutralModeValue.Brake))
-//        );
     }
 
     @Override
@@ -80,20 +72,25 @@ public class IntakeSlide extends SubsystemBase {
         Logger.processInputs(LogKey, inputs);
 
         if (desiredGoal != currentGoal) {
-            intakeSlideIO.toSlidePosition(desiredGoal.getSlideGoalRotations());
+            switch (desiredGoal) {
+                case STOW -> intakeSlideIO.toSlidePosition(desiredGoal.getSlideGoalRotations());
+                case INTAKE -> intakeSlideIO.holdSlidePosition(desiredGoal.getSlideGoalRotations());
+            }
             this.currentGoal = desiredGoal;
         }
 
         Logger.recordOutput(LogKey + "/CurrentGoal", currentGoal.toString());
         Logger.recordOutput(LogKey + "/DesiredGoal", desiredGoal.toString());
 
-        Logger.recordOutput(LogKey + "/CurrentGoal/SlidePositionRots", currentGoal.getSlideGoalRotations());
         Logger.recordOutput(LogKey + "/DesiredGoal/SlidePositionRots", desiredGoal.getSlideGoalRotations());
 
         Logger.recordOutput(LogKey + "/Triggers/AtPositionSetpoint", atSlidePositionSetpoint());
         Logger.recordOutput(LogKey + "/Triggers/AtSlideLowerLimit", atSlideLowerLimit());
         Logger.recordOutput(LogKey + "/Triggers/AtSlideUpperLimit", atSlideUpperLimit());
-        Logger.recordOutput(LogKey + "/Triggers/STOWthignie", currentDebouncer.calculate(Math.abs(getCurrent()) >= HardstopCurrentThresholdAmps));
+        //TODO: Could be named better
+        Logger.recordOutput(LogKey + "/Triggers/AboveHomingCurrent",
+                currentDebouncer.calculate(Math.abs(getCurrent()) >= HardstopCurrentThresholdAmps)
+        );
 
         Logger.recordOutput(
                 LogKey + "/PeriodicIOPeriodMs",
@@ -109,15 +106,11 @@ public class IntakeSlide extends SubsystemBase {
                 ),
                 Commands.runOnce(() -> {
                         intakeSlideIO.zeroMotors();
-//                        this.isHomed = true;
+                        this.isHomed = true;
                     }
                 ),
-                        setGoal(Goal.INTAKE),
-                Commands.waitUntil(atSlideSetpoint),
-                Commands.runOnce(() -> this.isHomed = true)
-        )
-//                .finallyDo(() -> this.isHomed = true)
-                .withName("IntakeSlideHome");
+                setGoal(Goal.INTAKE)
+        );
     }
 
     public boolean isHomed(){

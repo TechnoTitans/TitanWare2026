@@ -3,6 +3,7 @@ package frc.robot.subsystems.intake.slide;
 import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.Slot0Configs;
+import com.ctre.phoenix6.configs.Slot1Configs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.*;
 import com.ctre.phoenix6.hardware.ParentDevice;
@@ -20,7 +21,6 @@ public class IntakeSlideIOReal implements IntakeSlideIO {
 
     private final TalonFX masterMotor;
     private final TalonFX followerMotor;
-    private final TalonFXConfiguration motorConfig;
 
     private final StatusSignal<Angle> masterPosition;
     private final StatusSignal<AngularVelocity> masterVelocity;
@@ -35,7 +35,7 @@ public class IntakeSlideIOReal implements IntakeSlideIO {
     private final StatusSignal<Temperature> followerDeviceTemp;
 
     private final PositionVoltage positionVoltage;
-    private final TorqueCurrentFOC torqueCurrentFOC;
+    private final PositionTorqueCurrentFOC positionTorqueCurrentFOC;
     private final VoltageOut voltageOut;
     private final Follower follower;
     
@@ -44,7 +44,6 @@ public class IntakeSlideIOReal implements IntakeSlideIO {
         
         this.masterMotor = new TalonFX(constants.masterMotorID(), constants.CANBus().toPhoenix6CANBus());
         this.followerMotor = new TalonFX(constants.followerMotorID(), constants.CANBus().toPhoenix6CANBus());
-        this.motorConfig = new TalonFXConfiguration();
 
         this.masterPosition = masterMotor.getPosition(false);
         this.masterVelocity = masterMotor.getVelocity(false);
@@ -59,7 +58,7 @@ public class IntakeSlideIOReal implements IntakeSlideIO {
         this.followerDeviceTemp = followerMotor.getDeviceTemp(false);
 
         this.positionVoltage = new PositionVoltage(0);
-        this.torqueCurrentFOC = new TorqueCurrentFOC(0);
+        this.positionTorqueCurrentFOC = new PositionTorqueCurrentFOC(0);
         this.voltageOut = new VoltageOut(0);
         this.follower = new Follower(masterMotor.getDeviceID(), MotorAlignmentValue.Opposed);
 
@@ -80,33 +79,43 @@ public class IntakeSlideIOReal implements IntakeSlideIO {
     
     @Override
     public void config() {
-        final TalonFXConfiguration motorConfiguration = new TalonFXConfiguration();
-        motorConfiguration.Slot0 = new Slot0Configs()
+        final TalonFXConfiguration motorConfig = new TalonFXConfiguration();
+        motorConfig.Slot0 = new Slot0Configs()
                 .withKS(0.1)
                 .withKG(0.5)
                 .withGravityType(GravityTypeValue.Elevator_Static)
                 .withKP(50)
                 .withKD(0.1);
-        motorConfiguration.TorqueCurrent.PeakForwardTorqueCurrent = 80;
-        motorConfiguration.TorqueCurrent.PeakReverseTorqueCurrent = -80;
-        motorConfiguration.CurrentLimits.StatorCurrentLimit = 50;
-        motorConfiguration.CurrentLimits.StatorCurrentLimitEnable = true;
-        motorConfiguration.CurrentLimits.SupplyCurrentLimit = 40;
-        motorConfiguration.CurrentLimits.SupplyCurrentLowerLimit = 30;
-        motorConfiguration.CurrentLimits.SupplyCurrentLowerTime = 1;
-        motorConfiguration.CurrentLimits.SupplyCurrentLimitEnable = true;
-        motorConfiguration.Feedback.RotorToSensorRatio = 1;
-        motorConfiguration.Feedback.SensorToMechanismRatio = constants.slideGearing();
-        motorConfiguration.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
-        motorConfiguration.MotorOutput.NeutralMode = NeutralModeValue.Brake;
-        motorConfiguration.SoftwareLimitSwitch.ForwardSoftLimitThreshold = constants.upperLimitRots();
-        motorConfiguration.SoftwareLimitSwitch.ForwardSoftLimitEnable = true;
-        motorConfiguration.SoftwareLimitSwitch.ReverseSoftLimitThreshold = constants.lowerLimitRots();
-        motorConfiguration.SoftwareLimitSwitch.ReverseSoftLimitEnable = false;
+        motorConfig.Slot1 = new Slot1Configs()
+                .withKS(0.1)
+                .withKG(0.5)
+                .withGravityType(GravityTypeValue.Elevator_Static)
+                .withKP(1)
+                .withKD(0.1);
+        motorConfig.TorqueCurrent.PeakForwardTorqueCurrent = 80;
+        motorConfig.TorqueCurrent.PeakReverseTorqueCurrent = -80;
+        motorConfig.CurrentLimits.StatorCurrentLimit = 50;
+        motorConfig.CurrentLimits.StatorCurrentLimitEnable = true;
+        motorConfig.CurrentLimits.SupplyCurrentLimit = 40;
+        motorConfig.CurrentLimits.SupplyCurrentLowerLimit = 30;
+        motorConfig.CurrentLimits.SupplyCurrentLowerTime = 1;
+        motorConfig.CurrentLimits.SupplyCurrentLimitEnable = true;
+        motorConfig.Feedback.RotorToSensorRatio = 1;
+        motorConfig.Feedback.SensorToMechanismRatio = constants.slideGearing();
+        motorConfig.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
+        motorConfig.MotorOutput.NeutralMode = NeutralModeValue.Brake;
+        motorConfig.SoftwareLimitSwitch.ForwardSoftLimitThreshold = constants.upperLimitRots();
+        motorConfig.SoftwareLimitSwitch.ForwardSoftLimitEnable = true;
+        motorConfig.SoftwareLimitSwitch.ReverseSoftLimitThreshold = constants.lowerLimitRots();
+        motorConfig.SoftwareLimitSwitch.ReverseSoftLimitEnable = false;
 
-        masterMotor.getConfigurator().apply(motorConfiguration);
-        motorConfiguration.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
-        followerMotor.getConfigurator().apply(motorConfiguration);
+        masterMotor.getConfigurator().apply(motorConfig);
+        motorConfig.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
+        followerMotor.getConfigurator().apply(motorConfig);
+
+        //So that I don't hit the soft limit
+        masterMotor.setPosition(0.1);
+        followerMotor.setPosition(0);
 
         BaseStatusSignal.setUpdateFrequencyForAll(
                 100,
@@ -150,19 +159,13 @@ public class IntakeSlideIOReal implements IntakeSlideIO {
 
     @Override
     public void toSlidePosition(double positionRots) {
-        masterMotor.setControl(positionVoltage.withPosition(positionRots));
+        masterMotor.setControl(positionVoltage.withPosition(positionRots).withSlot(0));
         followerMotor.setControl(follower);
     }
 
     @Override
-    public void toSlideVoltage(double volts) {
-        masterMotor.setControl(voltageOut.withOutput(volts));
-        followerMotor.setControl(follower);
-    }
-
-    @Override
-    public void toSlideTorqueCurrent(double torqueCurrent) {
-        masterMotor.setControl(torqueCurrentFOC.withOutput(torqueCurrent));
+    public void holdSlidePosition(final double positionRots) {
+        masterMotor.setControl(positionTorqueCurrentFOC.withPosition(positionRots).withSlot(1));
         followerMotor.setControl(follower);
     }
 
@@ -176,21 +179,5 @@ public class IntakeSlideIOReal implements IntakeSlideIO {
     public void zeroMotors() {
         masterMotor.setPosition(0);
         followerMotor.setPosition(0);
-        motorConfig.SoftwareLimitSwitch.ReverseSoftLimitEnable = true;
-        applyMotorConfig();
     }
-
-    private void applyMotorConfig() {
-        motorConfig.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
-        masterMotor.getConfigurator().apply(motorConfig);
-
-        motorConfig.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
-        followerMotor.getConfigurator().apply(motorConfig);
-    }
-
-//    @Override
-//    public void changeNeutralMode(final NeutralModeValue neutralModeValue) {
-//        motorConfig.MotorOutput.NeutralMode = neutralModeValue;
-//        applyMotorConfig();
-//    }
 }

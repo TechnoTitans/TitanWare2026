@@ -378,6 +378,7 @@ public class Robot extends LoggedRobot {
         teleopEnabled.onTrue(
                 intakeSlide.home()
                         .onlyIf(() -> !intakeSlide.isHomed())
+                        .withName("IntakeSlideHome")
         );
 
         firstShiftStartTrigger.onTrue(Commands.runOnce(shiftTimer::start));

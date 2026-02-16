@@ -25,13 +25,9 @@ public interface IntakeSlideIO {
 
     default void toSlidePosition(final double positionRots) {}
 
-    default void toSlideVoltage(final double volts) {}
-
-    default void toSlideTorqueCurrent(final double torqueCurrentAmps) {}
+    default void holdSlidePosition(final double positionRots) {}
 
     default void home() {}
 
     default void zeroMotors() {}
-
-    default void changeNeutralMode(final NeutralModeValue neutralModeValue) {}
 }
