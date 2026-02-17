@@ -145,7 +145,7 @@ public class HoodIOSim implements HoodIO {
     }
 
     @Override
-    public void updateInputs(HoodIOInputs inputs) {
+    public void updateInputs(final HoodIOInputs inputs) {
         inputs.hoodPositionRots = hoodPosition.getValueAsDouble();
         inputs.hoodVelocityRotsPerSec = hoodVelocity.getValueAsDouble();
         inputs.hoodVoltage = hoodVoltage.getValueAsDouble();

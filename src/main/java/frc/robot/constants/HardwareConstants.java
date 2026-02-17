@@ -155,17 +155,17 @@ public class HardwareConstants {
             CANBus CANBus,
             int motorID,
             double climbGearing,
-            double lowerLimitRots,
             double upperLimitRots,
+            double lowerLimitRots,
             double spoolDiameterMeters
     ){}
 
     public static final ClimbConstants CLIMB = new ClimbConstants(
             CANBus.CANIVORE,
-            26,
+            25,
             48,
-            0.0,
             50.0,
-            Units.inchesToMeters(2)
+            0.0,
+            0.051
     );
 }
