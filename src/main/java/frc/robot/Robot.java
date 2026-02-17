@@ -101,28 +101,28 @@ public class Robot extends LoggedRobot {
     );
 
     public final Feeder feeder = new Feeder(
-            Constants.CURRENT_MODE,
+            Constants.RobotMode.DISABLED,
             HardwareConstants.FEEDER
     );
 
     public final Hood hood = new Hood(
-            Constants.CURRENT_MODE,
+            Constants.RobotMode.DISABLED,
             HardwareConstants.HOOD
     );
 
     public final Turret turret = new Turret(
-            Constants.CURRENT_MODE,
+            Constants.RobotMode.DISABLED,
             HardwareConstants.TURRET,
             () -> swerve.getFieldRelativeSpeeds().omegaRadiansPerSecond
     );
 
     public final Shooter shooter = new Shooter(
-            Constants.CURRENT_MODE,
+            Constants.RobotMode.DISABLED,
             HardwareConstants.SHOOTER
     );
 
     public final Spindexer spindexer = new Spindexer(
-            Constants.CURRENT_MODE,
+            Constants.RobotMode.DISABLED,
             HardwareConstants.SPINDEXER
     );
 
@@ -376,9 +376,10 @@ public class Robot extends LoggedRobot {
         );
 
         teleopEnabled.onTrue(
-                intakeSlide.home()
+                Commands.sequence(intakeSlide.home()
                         .onlyIf(() -> !intakeSlide.isHomed())
-                        .withName("IntakeSlideHome")
+                        .withName("IntakeSlideHome"),
+                        intakeRoller.setGoal(IntakeRoller.Goal.INTAKE))
         );
 
         firstShiftStartTrigger.onTrue(Commands.runOnce(shiftTimer::start));

@@ -18,13 +18,12 @@ public class IntakeRoller extends SubsystemBase {
     private final IntakeRollerIO intakeRollerIO;
     private final IntakeRollerIOInputsAutoLogged inputs;
 
-    private Goal desiredGoal = Goal.STOW;
+    private Goal desiredGoal = Goal.STOP;
     private Goal currentGoal = desiredGoal;
 
     public enum Goal {
-        STOW(0),
-        INTAKE(10),
-        EJECT(-9);
+        STOP(0),
+        INTAKE(30);
 
         private final double rollerVelocityGoalRotsPerSec;
 
@@ -64,7 +63,6 @@ public class IntakeRoller extends SubsystemBase {
         Logger.recordOutput(LogKey + "/CurrentGoal", currentGoal.toString());
         Logger.recordOutput(LogKey + "/DesiredGoal", desiredGoal.toString());
 
-        Logger.recordOutput(LogKey + "/CurrentGoal/RollerVelocity", currentGoal.getRollerVelocityGoalRotsPerSec());
         Logger.recordOutput(LogKey + "/DesiredGoal/RollerVelocity", desiredGoal.getRollerVelocityGoalRotsPerSec());
 
         Logger.recordOutput(LogKey + "/Roller/AtRollerVelocitySetpoint", atRollerVelocitySetpoint());
@@ -87,7 +85,7 @@ public class IntakeRoller extends SubsystemBase {
     public Command toGoal(final Goal goal) {
         return runEnd(
                 () -> setGoal(goal),
-                () -> setGoal(Goal.STOW)
+                () -> setGoal(Goal.STOP)
         ).withName("ToGoal: " + goal);
     }
 

@@ -29,15 +29,18 @@ public class IntakeSlide extends SubsystemBase {
     private Goal desiredGoal = Goal.STOW;
     private Goal currentGoal = desiredGoal;
 
+    private ControlMode controlMode = ControlMode.HARD;
+
     public final Trigger atSlideSetpoint = new Trigger(this::atSlidePositionSetpoint);
     public final Trigger atSlideLowerLimit = new Trigger(this::atSlideLowerLimit);
     public final Trigger atSlideUpperLimit = new Trigger(this::atSlideUpperLimit);
+    private final Trigger shouldIntakeHome;
 
     private boolean isHomed = false;
 
     public enum Goal {
-        STOW(0),
-        INTAKE(3.7);
+        STOW(0.1),
+        INTAKE(3.8);
 
         private final double slideGoalRotations;
 
@@ -48,6 +51,11 @@ public class IntakeSlide extends SubsystemBase {
         public double getSlideGoalRotations() {
             return slideGoalRotations;
         }
+    }
+
+    public enum ControlMode {
+        HARD,
+        SOFT
     }
 
     public IntakeSlide(final Constants.RobotMode mode, final HardwareConstants.IntakeSlideConstants constants) {
@@ -62,6 +70,14 @@ public class IntakeSlide extends SubsystemBase {
         this.inputs = new IntakeSlideIOInputsAutoLogged();
 
         this.intakeSlideIO.config();
+
+        this.shouldIntakeHome = new Trigger(atSlideSetpoint.and(() -> currentGoal == Goal.INTAKE))
+                .onTrue(
+
+                        Commands.runOnce(() -> controlMode = ControlMode.HARD)
+                ).onFalse(
+                        Commands.runOnce(() -> controlMode = ControlMode.SOFT)
+                );
     }
 
     @Override
@@ -72,9 +88,9 @@ public class IntakeSlide extends SubsystemBase {
         Logger.processInputs(LogKey, inputs);
 
         if (desiredGoal != currentGoal) {
-            switch (desiredGoal) {
-                case STOW -> intakeSlideIO.toSlidePosition(desiredGoal.getSlideGoalRotations());
-                case INTAKE -> intakeSlideIO.holdSlidePosition(desiredGoal.getSlideGoalRotations());
+            switch (controlMode) {
+                case HARD -> intakeSlideIO.toSlidePosition(desiredGoal.getSlideGoalRotations());
+                case SOFT -> intakeSlideIO.toSlidePosition(desiredGoal.getSlideGoalRotations());
             }
             this.currentGoal = desiredGoal;
         }
@@ -84,12 +100,17 @@ public class IntakeSlide extends SubsystemBase {
 
         Logger.recordOutput(LogKey + "/DesiredGoal/SlidePositionRots", desiredGoal.getSlideGoalRotations());
 
+        Logger.recordOutput(LogKey + "/ControlMode", controlMode);
+
         Logger.recordOutput(LogKey + "/Triggers/AtPositionSetpoint", atSlidePositionSetpoint());
         Logger.recordOutput(LogKey + "/Triggers/AtSlideLowerLimit", atSlideLowerLimit());
         Logger.recordOutput(LogKey + "/Triggers/AtSlideUpperLimit", atSlideUpperLimit());
         //TODO: Could be named better
         Logger.recordOutput(LogKey + "/Triggers/AboveHomingCurrent",
-                currentDebouncer.calculate(Math.abs(getCurrent()) >= HardstopCurrentThresholdAmps)
+                currentDebouncer.calculate(Math.abs(
+                        inputs.masterTorqueCurrentAmps) >= HardstopCurrentThresholdAmps
+                        && Math.abs(inputs.followerTorqueCurrentAmps) >= HardstopCurrentThresholdAmps
+                )
         );
 
         Logger.recordOutput(
@@ -102,7 +123,10 @@ public class IntakeSlide extends SubsystemBase {
         return Commands.sequence(
                 Commands.runOnce(intakeSlideIO::home),
                 Commands.waitUntil(
-                        () -> currentDebouncer.calculate(Math.abs(getCurrent()) >= HardstopCurrentThresholdAmps)
+                        () -> currentDebouncer.calculate(Math.abs(
+                                inputs.masterTorqueCurrentAmps) >= HardstopCurrentThresholdAmps
+                                && Math.abs(inputs.followerTorqueCurrentAmps) >= HardstopCurrentThresholdAmps
+                        )
                 ),
                 Commands.runOnce(() -> {
                         intakeSlideIO.zeroMotors();
@@ -152,9 +176,5 @@ public class IntakeSlide extends SubsystemBase {
 
     private boolean atSlideUpperLimit() {
         return inputs.masterPositionRots >= constants.upperLimitRots();
-    }
-
-    private double getCurrent(){
-        return inputs.masterTorqueCurrentAmps;
     }
 }
