@@ -60,6 +60,8 @@ public interface SimConstants {
         Pose3d RETRACTED_POSE = new Pose3d(new Translation3d(-0.142, 0, 0.443), Rotation3d.kZero);
 
         Pose3d EXTENDED_POSE = new Pose3d(new Translation3d(0.120,0, 0.345), Rotation3d.kZero);
+
+        double MOMENT_OF_INERTIA = 0.3;
     }
 
     interface Hopper {

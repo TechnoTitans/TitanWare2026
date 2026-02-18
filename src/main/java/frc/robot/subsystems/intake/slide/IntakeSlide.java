@@ -29,17 +29,17 @@ public class IntakeSlide extends SubsystemBase {
     private Goal desiredGoal = Goal.STOW;
     private Goal currentGoal = desiredGoal;
 
+    //TODO: Need to implement
     private ControlMode controlMode = ControlMode.HARD;
 
     public final Trigger atSlideSetpoint = new Trigger(this::atSlidePositionSetpoint);
     public final Trigger atSlideLowerLimit = new Trigger(this::atSlideLowerLimit);
     public final Trigger atSlideUpperLimit = new Trigger(this::atSlideUpperLimit);
-    private final Trigger shouldIntakeHome;
 
     private boolean isHomed = false;
 
     public enum Goal {
-        STOW(0.1),
+        STOW(0),
         INTAKE(3.8);
 
         private final double slideGoalRotations;
@@ -68,16 +68,6 @@ public class IntakeSlide extends SubsystemBase {
         };
 
         this.inputs = new IntakeSlideIOInputsAutoLogged();
-
-        this.intakeSlideIO.config();
-
-        this.shouldIntakeHome = new Trigger(atSlideSetpoint.and(() -> currentGoal == Goal.INTAKE))
-                .onTrue(
-
-                        Commands.runOnce(() -> controlMode = ControlMode.HARD)
-                ).onFalse(
-                        Commands.runOnce(() -> controlMode = ControlMode.SOFT)
-                );
     }
 
     @Override
@@ -97,7 +87,6 @@ public class IntakeSlide extends SubsystemBase {
 
         Logger.recordOutput(LogKey + "/CurrentGoal", currentGoal.toString());
         Logger.recordOutput(LogKey + "/DesiredGoal", desiredGoal.toString());
-
         Logger.recordOutput(LogKey + "/DesiredGoal/SlidePositionRots", desiredGoal.getSlideGoalRotations());
 
         Logger.recordOutput(LogKey + "/ControlMode", controlMode);
@@ -161,7 +150,7 @@ public class IntakeSlide extends SubsystemBase {
     }
 
     public Rotation2d getIntakeSlidePositionRots() {
-        return Rotation2d.fromRotations(inputs.masterPositionRots);
+        return Rotation2d.fromRotations(inputs.averagePositionRots);
     }
 
     private boolean atSlidePositionSetpoint() {

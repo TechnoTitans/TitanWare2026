@@ -101,28 +101,28 @@ public class Robot extends LoggedRobot {
     );
 
     public final Feeder feeder = new Feeder(
-            Constants.RobotMode.DISABLED,
+            Constants.CURRENT_MODE,
             HardwareConstants.FEEDER
     );
 
     public final Hood hood = new Hood(
-            Constants.RobotMode.DISABLED,
+            Constants.CURRENT_MODE,
             HardwareConstants.HOOD
     );
 
     public final Turret turret = new Turret(
-            Constants.RobotMode.DISABLED,
+            Constants.CURRENT_MODE,
             HardwareConstants.TURRET,
             () -> swerve.getFieldRelativeSpeeds().omegaRadiansPerSecond
     );
 
     public final Shooter shooter = new Shooter(
-            Constants.RobotMode.DISABLED,
+            Constants.CURRENT_MODE,
             HardwareConstants.SHOOTER
     );
 
     public final Spindexer spindexer = new Spindexer(
-            Constants.RobotMode.DISABLED,
+            Constants.CURRENT_MODE,
             HardwareConstants.SPINDEXER
     );
 
@@ -362,25 +362,27 @@ public class Robot extends LoggedRobot {
     }
 
     public void configureStateTriggers() {
-        autonomousEnabled.onTrue(
-                Commands.sequence(
-                        Commands.parallel(
-                                hood.home(),
-                                intakeSlide.home()
-                        ),
-                        Commands.parallel(
-                                intakeSlide.setGoal(IntakeSlide.Goal.INTAKE),
-                                intakeRoller.setGoal(IntakeRoller.Goal.INTAKE)
-                        )
-                )
-        );
+        if (Constants.CURRENT_MODE == Constants.RobotMode.REAL) {
+            autonomousEnabled.onTrue(
+                    Commands.sequence(
+                            Commands.parallel(
+                                    hood.home(),
+                                    intakeSlide.home()
+                            ),
+                            Commands.parallel(
+                                    intakeSlide.setGoal(IntakeSlide.Goal.INTAKE),
+                                    intakeRoller.setGoal(IntakeRoller.Goal.INTAKE)
+                            )
+                    )
+            );
 
-        teleopEnabled.onTrue(
-                Commands.sequence(intakeSlide.home()
-                        .onlyIf(() -> !intakeSlide.isHomed())
-                        .withName("IntakeSlideHome"),
-                        intakeRoller.setGoal(IntakeRoller.Goal.INTAKE))
-        );
+            teleopEnabled.onTrue(
+                    Commands.sequence(intakeSlide.home()
+                                    .onlyIf(() -> !intakeSlide.isHomed())
+                                    .withName("IntakeSlideHome"),
+                            intakeRoller.setGoal(IntakeRoller.Goal.INTAKE))
+            );
+        }
 
         firstShiftStartTrigger.onTrue(Commands.runOnce(shiftTimer::start));
 

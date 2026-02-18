@@ -52,7 +52,7 @@ public class HardwareConstants {
     ) {}
 
     public static IntakeSlideConstants INTAKE_SLIDE = new IntakeSlideConstants(
-            CANBus.RIO,
+            CANBus.CANIVORE,
             15,
             16,
             10,
@@ -80,9 +80,9 @@ public class HardwareConstants {
 
 
     public static FeederConstants FEEDER = new FeederConstants(
-            CANBus.RIO,
+            CANBus.CANIVORE,
             18,
-            30
+            2
     );
 
     public record TurretConstants (
