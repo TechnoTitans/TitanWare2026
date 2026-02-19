@@ -60,7 +60,12 @@ public class IntakeRollerIOReal implements IntakeRollerIO{
     public void config() {
         final TalonFXConfiguration motorConfiguration = new TalonFXConfiguration();
         motorConfiguration.Slot0 = new Slot0Configs()
-                .withKS(0.465);
+                .withKS(6.3)
+                .withKV(0.265)
+                .withKP(0.55);
+
+        motorConfiguration.TorqueCurrent.PeakForwardTorqueCurrent = 80;
+        motorConfiguration.TorqueCurrent.PeakForwardTorqueCurrent = -80;
         motorConfiguration.CurrentLimits.StatorCurrentLimit = 60;
         motorConfiguration.CurrentLimits.StatorCurrentLimitEnable = true;
         motorConfiguration.CurrentLimits.SupplyCurrentLimit = 50;

@@ -16,19 +16,18 @@ public interface IntakeSlideIO {
         public double followerVoltage = 0.0;
         public double followerTorqueCurrentAmps = 0.0;
         public double followerTempCelsius = 0.0;
+
+        public double averagePositionRots = 0.0;
+        public double differentialPositionRots = 0.0;
     }
 
     default void updateInputs(final IntakeSlideIOInputs inputs) {}
 
-    default void config() {}
-
     default void toSlidePosition(final double positionRots) {}
 
-    default void toSlideVoltage(final double volts) {}
-
-    default void toSlideTorqueCurrent(final double torqueCurrentAmps) {}
+    default void holdSlidePosition(final double positionRots) {}
 
     default void home() {}
 
-    default void zeroMotor() {}
+    default void zeroMotors() {}
 }

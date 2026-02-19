@@ -30,7 +30,7 @@ public class SwerveConstants {
     public static final SwerveConfig Config = new SwerveConfig(
             HardwareConstants.CANBus.CANIVORE,
             Units.inchesToMeters(2),
-            5.27,
+            6.03,
             287.0 / 11.0,
             3.375,
             Units.inchesToMeters(22.75),
@@ -58,7 +58,7 @@ public class SwerveConstants {
             1,
             2,
             3,
-            -0.076,
+            -0.074,
             SwerveConstants.KrakenX60Foc.KtNMPerAmp
     );
 
@@ -69,7 +69,7 @@ public class SwerveConstants {
             4,
             5,
             6,
-            -0.125,
+            -0.662,
             SwerveConstants.KrakenX60Foc.KtNMPerAmp
     );
 
@@ -80,7 +80,7 @@ public class SwerveConstants {
             7,
             8,
             9,
-            0.435,
+            -0.064,
             SwerveConstants.KrakenX60Foc.KtNMPerAmp
     );
 
@@ -110,23 +110,23 @@ public class SwerveConstants {
         }
 
         private static final Slot0Configs DriveGains = new Slot0Configs()
-                .withKS(2.2557).withKV(0).withKA(3.1912)
-                .withKP(30).withKD(0);
+                .withKS(1).withKV(0.1).withKA(2)
+                .withKP(5).withKD(0);
 
         private static final Slot0Configs SteerGains = new Slot0Configs()
-                .withKS(0.3).withKV(2.66).withKA(0)
-                .withKP(100).withKD(0.5)
+                .withKS(0).withKV(0).withKA(0)
+                .withKP(50).withKD(0)
                 .withStaticFeedforwardSign(StaticFeedforwardSignValue.UseClosedLoopSign);
 
         private static final Pigeon2Configuration Pigeon2Configuration = new Pigeon2Configuration(); static {
-            Pigeon2Configuration.MountPose.MountPoseRoll = 0;
-            Pigeon2Configuration.MountPose.MountPosePitch = 0;
-            Pigeon2Configuration.MountPose.MountPoseYaw = 0;
+            Pigeon2Configuration.MountPose.MountPoseRoll = -0.7136042714118958;
+            Pigeon2Configuration.MountPose.MountPosePitch = 0.5430453419685364;
+            Pigeon2Configuration.MountPose.MountPoseYaw = -89.58695220947266;
         }
 
         private static final double SlipCurrentAmps = 70;
-        private static final InvertedValue DriveMotorInverted = InvertedValue.CounterClockwise_Positive;
-        private static final InvertedValue TurnMotorInverted = InvertedValue.Clockwise_Positive;
+        private static final InvertedValue DriveMotorInverted = InvertedValue.Clockwise_Positive;
+        private static final InvertedValue TurnMotorInverted = InvertedValue.CounterClockwise_Positive;
         private static final SensorDirectionValue TurnEncoderDirection = SensorDirectionValue.CounterClockwise_Positive;
 
         private static final TalonFXConfiguration DriveTalonFXConfiguration = new TalonFXConfiguration(); static {

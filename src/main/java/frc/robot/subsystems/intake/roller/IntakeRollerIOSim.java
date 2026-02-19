@@ -101,7 +101,9 @@ public class IntakeRollerIOSim implements IntakeRollerIO {
     public void config() {
         final TalonFXConfiguration motorConfig = new TalonFXConfiguration();
         motorConfig.Slot0 = new Slot0Configs()
-                .withKP(5);
+                .withKS(6.3)
+                .withKV(0.265)
+                .withKP(0.55);
         motorConfig.TorqueCurrent.PeakForwardTorqueCurrent = 80;
         motorConfig.TorqueCurrent.PeakReverseTorqueCurrent = -80;
         motorConfig.CurrentLimits.StatorCurrentLimit = 60;

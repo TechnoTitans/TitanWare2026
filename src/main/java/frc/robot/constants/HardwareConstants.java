@@ -49,18 +49,16 @@ public class HardwareConstants {
             int masterMotorID,
             int followerMotorID,
             double slideGearing,
-            double gearPitchCircumferenceMeters,
             double upperLimitRots,
             double lowerLimitRots
     ) {}
 
     public static IntakeSlideConstants INTAKE_SLIDE = new IntakeSlideConstants(
-            CANBus.RIO,
+            CANBus.CANIVORE,
             15,
             16,
             10,
-            0.1,
-            10,
+            4,
             0
     );
 
@@ -84,9 +82,9 @@ public class HardwareConstants {
 
 
     public static FeederConstants FEEDER = new FeederConstants(
-            CANBus.RIO,
+            CANBus.CANIVORE,
             18,
-            30
+            2
     );
 
     public record TurretConstants (

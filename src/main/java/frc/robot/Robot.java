@@ -88,7 +88,7 @@ public class Robot extends LoggedRobot {
     );
 
     public final PhotonVision photonVision = new PhotonVision(
-            Constants.CURRENT_MODE,
+            Constants.RobotMode.DISABLED,
             swerve
     );
 
@@ -376,35 +376,33 @@ public class Robot extends LoggedRobot {
     }
 
     public void configureStateTriggers() {
-        autonomousEnabled.onTrue(
-                Commands.sequence(
-                        Commands.parallel(
-                                hood.home(),
-                                intakeSlide.home()
-                        ),
-                        Commands.parallel(
-                                intakeSlide.setGoal(IntakeSlide.Goal.INTAKE),
-                                intakeRoller.setGoal(IntakeRoller.Goal.INTAKE)
-                        )
-                )
-        );
+        if (Constants.CURRENT_MODE == Constants.RobotMode.REAL) {
+            autonomousEnabled.onTrue(
+                    Commands.sequence(
+                            Commands.parallel(
+                                    hood.home(),
+                                    intakeSlide.home()
+                            ),
+                            Commands.parallel(
+                                    intakeSlide.setGoal(IntakeSlide.Goal.INTAKE),
+                                    intakeRoller.setGoal(IntakeRoller.Goal.INTAKE)
+                            )
+                    )
+            );
 
-        teleopEnabled.and(climb::isExtended).onTrue(superstructure.setGoal(Superstructure.Goal.TRACKING));
-
-        teleopEnabled.onTrue(
-                Commands.sequence(
-                        Commands.parallel(
-                                hood.home()
-                                        .onlyIf(hood::isHomed),
-                                intakeSlide.home()
-                                        .onlyIf(intakeSlide::isHomed)
-                        ),
-                        Commands.parallel(
-                                intakeSlide.setGoal(IntakeSlide.Goal.INTAKE),
-                                intakeRoller.setGoal(IntakeRoller.Goal.INTAKE)
-                        )
-                )
-        );
+            teleopEnabled.and(climb::isExtended).onTrue(superstructure.setGoal(Superstructure.Goal.TRACKING));
+            teleopEnabled.onTrue(
+                    Commands.parallel(Commands.sequence(
+                            intakeSlide.home()
+                                    .onlyIf(() -> !intakeSlide.isHomed())
+                                    .withName("IntakeSlideHome"),
+                            intakeRoller.setGoal(IntakeRoller.Goal.INTAKE)
+                    ),
+                            Commands.sequence(
+                                    robotCommands.manualUnclimb()
+                            ))
+            );
+        }
 
         firstShiftStartTrigger.onTrue(Commands.runOnce(shiftTimer::start));
 

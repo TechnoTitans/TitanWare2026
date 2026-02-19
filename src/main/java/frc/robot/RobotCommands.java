@@ -75,7 +75,7 @@ public class RobotCommands {
     public Command stowIntake() {
         return Commands.parallel(
                 intakeSlide.setGoal(IntakeSlide.Goal.STOW),
-                intakeRoller.setGoal(IntakeRoller.Goal.STOW)
+                intakeRoller.setGoal(IntakeRoller.Goal.STOP)
         ).withName("StowIntake");
     }
 
