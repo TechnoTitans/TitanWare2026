@@ -46,8 +46,8 @@ public class TurretIOReal implements TurretIO {
         this.constants = constants;
 
         this.turretMotor = new TalonFX(constants.turretMotorID(), constants.CANBus().toPhoenix6CANBus());
-        this.leftEncoder = new CANcoder(constants.leftEncoderID(), constants.CANBus().toPhoenix6CANBus());
-        this.rightEncoder = new CANcoder(constants.rightEncoderID(), constants.CANBus().toPhoenix6CANBus());
+        this.leftEncoder = new CANcoder(constants.smallEncoderID(), constants.CANBus().toPhoenix6CANBus());
+        this.rightEncoder = new CANcoder(constants.largeEncoderID(), constants.CANBus().toPhoenix6CANBus());
 
         this.turretPosition = turretMotor.getPosition(false);
         this.turretVelocity = turretMotor.getVelocity(false);

@@ -71,7 +71,7 @@ public class HardwareConstants {
     public static SpindexerConstants SPINDEXER = new SpindexerConstants(
             CANBus.RIO,
             17,
-            10
+            2
     );
 
     public record FeederConstants(
@@ -84,23 +84,16 @@ public class HardwareConstants {
     public static FeederConstants FEEDER = new FeederConstants(
             CANBus.CANIVORE,
             18,
-            2
+            3
     );
-
-    public record TurretConstants (
-            CANBus CANBus,
-            int turretMotorID,
-            int leftEncoderID,
-            int rightEncoderID,
-            double turretToMechanismGearing,
-            int turretTooth,
-            double leftEncoderGearing,
-            double rightEncoderGearing,
-            double leftEncoderOffset,
-            double rightEncoderOffset,
-            double upperLimitRots,
-            double lowerLimitRots
-    ) {}
+    //TODO: Change numbers
+    public static HoodConstants HOOD = new HoodConstants(
+            CANBus.RIO,
+            22,
+            80,
+            0.25,
+            0
+    );
 
     public static TurretConstants TURRET = new TurretConstants(
             CANBus.CANIVORE,
@@ -125,14 +118,20 @@ public class HardwareConstants {
             double hoodLowerLimitRots
     ) {}
 
-    //TODO: Change numbers
-    public static HoodConstants HOOD = new HoodConstants(
-            CANBus.RIO,
-            22,
-            50,
-            0.25,
-            0
-    );
+    public record TurretConstants (
+            CANBus CANBus,
+            int turretMotorID,
+            int smallEncoderID,
+            int largeEncoderID,
+            double turretToMechanismGearing,
+            int turretTooth,
+            double leftEncoderGearing,
+            double rightEncoderGearing,
+            double leftEncoderOffset,
+            double rightEncoderOffset,
+            double upperLimitRots,
+            double lowerLimitRots
+    ) {}
 
     public record ShooterConstants(
             CANBus CANBus,
