@@ -4,6 +4,8 @@ import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
+import frc.robot.constants.FieldConstants;
+import frc.robot.subsystems.climb.Climb;
 import frc.robot.subsystems.drive.Swerve;
 import frc.robot.subsystems.feeder.Feeder;
 import frc.robot.subsystems.intake.roller.IntakeRoller;
@@ -21,12 +23,15 @@ public class RobotCommands {
 
     protected static final String LogKey = "RobotCommands";
     protected static final double AllowableSpeedToShootMetersPerSec = 0.1;
+
     private final Swerve swerve;
     private final IntakeRoller intakeRoller;
     private final IntakeSlide intakeSlide;
     private final Superstructure superstructure;
     private final Spindexer spindexer;
     private final Feeder feeder;
+    private final Climb climb;
+
     private final Trigger ableToShoot;
 
     public RobotCommands(
@@ -35,7 +40,8 @@ public class RobotCommands {
             final IntakeSlide intakeSlide,
             final Superstructure superstructure,
             final Spindexer spindexer,
-            final Feeder feeder
+            final Feeder feeder,
+            final Climb climb
     ) {
         this.swerve = swerve;
         this.intakeRoller = intakeRoller;
@@ -43,6 +49,7 @@ public class RobotCommands {
         this.superstructure = superstructure;
         this.spindexer = spindexer;
         this.feeder = feeder;
+        this.climb = climb;
 
         this.ableToShoot = new Trigger(() -> {
             final ChassisSpeeds swerveChassisSpeed = swerve.getRobotRelativeSpeeds();
@@ -105,5 +112,25 @@ public class RobotCommands {
                         .onlyIf(ableToShoot),
                 swerve.runWheelXCommand()
         ).withName("ShootStationary");
+    }
+
+    public Command climb() {
+        return Commands.parallel(
+                swerve.runToPose(FieldConstants::getClimbTarget),
+                superstructure.setGoal(Superstructure.Goal.CLIMB),
+                climb.toGoal(Climb.Goal.EXTEND)
+        )
+                .finallyDo(swerve::wheelXCommand)
+                .withName("Climb");
+    }
+
+    public Command manualUnclimb() {
+        return Commands.parallel(
+                Commands.sequence(
+                        Commands.waitUntil(climb.atSetpoint),
+                        superstructure.setGoal(Superstructure.Goal.TRACKING)
+                ),
+                climb.setGoal(Climb.Goal.STOW)
+        ).withName("Manual Unclimb");
     }
 }

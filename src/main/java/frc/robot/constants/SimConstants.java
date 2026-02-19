@@ -7,6 +7,8 @@ import frc.robot.subsystems.drive.constants.SwerveConstants;
 public interface SimConstants {
     boolean FuelSimEnabled = true;
 
+    double SIM_UPDATE_PERIOD_SEC = 0.005;
+
     // Assume 2mOhm resistance for voltage drop calculation
     double FALCON_MOTOR_RESISTANCE = 0.002;
 
@@ -68,5 +70,17 @@ public interface SimConstants {
         Pose3d RETRACTED_POSE = new Pose3d(new Translation3d(-0.087, 0, 0.501),Rotation3d.kZero);
 
         Pose3d EXTENDED_POSE = new Pose3d(new Translation3d(0.212,0, 0.501), Rotation3d.kZero);
+    }
+
+    interface Climb {
+        double MASS_KG = 6;
+
+        Translation3d ORIGIN = new Translation3d(-0.162, -0.176, 0.068);
+
+        Rotation3d ANGLE_FROM_HORIZONTAL = new Rotation3d(0, Units.degreesToRadians(-24.496), 0);
+
+        double STAGE_1_MAX_EXTENSION = Units.inchesToMeters(9.160);
+
+        double STAGE_2_MAX_EXTENSION = Units.inchesToMeters(7.963);
     }
 }

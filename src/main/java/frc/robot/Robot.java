@@ -24,6 +24,7 @@ import frc.robot.constants.HardwareConstants;
 import frc.robot.constants.RobotMap;
 import frc.robot.constants.SimConstants;
 import frc.robot.sim.fuel.FuelSimManager;
+import frc.robot.subsystems.climb.Climb;
 import frc.robot.subsystems.drive.Swerve;
 import frc.robot.subsystems.drive.constants.SwerveConstants;
 import frc.robot.subsystems.feeder.Feeder;
@@ -53,6 +54,7 @@ import org.littletonrobotics.junction.wpilog.WPILOGWriter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.Arrays;
 import java.util.Optional;
 import java.util.function.BooleanSupplier;
 import java.util.function.Supplier;
@@ -144,10 +146,16 @@ public class Robot extends LoggedRobot {
             shotCalculationSupplier
     );
 
+    public final Climb climb = new Climb(
+            Constants.CURRENT_MODE,
+            HardwareConstants.CLIMB
+    );
+
     private final ComponentsSolver componentsSolver = new ComponentsSolver(
             turret::getTurretPosition,
             hood::getHoodPosition,
-            intakeSlide::getIntakeSlidePositionRots
+            intakeSlide::getIntakeSlidePositionRots,
+            climb::getExtensionMeters
     );
 
     private final FuelSimManager fuelSimManager = new FuelSimManager(
@@ -165,7 +173,8 @@ public class Robot extends LoggedRobot {
             intakeSlide,
             superstructure,
             spindexer,
-            feeder
+            feeder,
+            climb
     );
 
     public final Autos autos = new Autos(
@@ -304,6 +313,11 @@ public class Robot extends LoggedRobot {
 
         Logger.recordOutput("EmptyPose", Pose3d.kZero);
         shiftTimer.stop();
+        Pose3d[] emptyPoseArray = new Pose3d[6];
+
+        Arrays.fill(emptyPoseArray, Pose3d.kZero);
+
+        Logger.recordOutput("EmptyPoses", emptyPoseArray);
     }
 
     @Override
@@ -377,10 +391,13 @@ public class Robot extends LoggedRobot {
             );
 
             teleopEnabled.onTrue(
-                    Commands.sequence(intakeSlide.home()
+                    Commands.parallel(
+                            intakeSlide.home()
                                     .onlyIf(() -> !intakeSlide.isHomed())
                                     .withName("IntakeSlideHome"),
-                            intakeRoller.setGoal(IntakeRoller.Goal.INTAKE))
+                            intakeRoller.setGoal(IntakeRoller.Goal.INTAKE),
+                            robotCommands.manualUnclimb()
+                    )
             );
         }
 
@@ -423,6 +440,10 @@ public class Robot extends LoggedRobot {
                 ).withName("SwerveSpeedSlow"));
 
         driverController.rightTrigger(0.5, teleopEventLoop).whileTrue(robotCommands.shootWhileMoving());
+
+        driverController.y().whileTrue(robotCommands.climb());
+
+        driverController.a().onTrue(robotCommands.manualUnclimb());
 
         coController.y(teleopEventLoop).onTrue(robotCommands.manualIntake());
 

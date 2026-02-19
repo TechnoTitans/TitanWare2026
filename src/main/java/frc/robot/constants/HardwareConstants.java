@@ -1,5 +1,7 @@
 package frc.robot.constants;
 
+import edu.wpi.first.math.util.Units;
+
 import java.util.HashMap;
 import java.util.Objects;
 
@@ -145,5 +147,23 @@ public class HardwareConstants {
             23,
             24,
             2
+    );
+
+    public record ClimbConstants(
+            CANBus CANBus,
+            int motorID,
+            double climbGearing,
+            double upperLimitRots,
+            double lowerLimitRots,
+            double spoolDiameterMeters
+    ){}
+
+    public static final ClimbConstants CLIMB = new ClimbConstants(
+            CANBus.CANIVORE,
+            25,
+            48,
+            50.0,
+            0.0,
+            Units.inchesToMeters(1)
     );
 }
