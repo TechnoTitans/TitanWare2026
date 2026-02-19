@@ -390,17 +390,14 @@ public class Robot extends LoggedRobot {
                     )
             );
 
-            teleopEnabled.and(climb::isExtended).onTrue(superstructure.setGoal(Superstructure.Goal.TRACKING));
             teleopEnabled.onTrue(
-                    Commands.parallel(Commands.sequence(
+                    Commands.parallel(
                             intakeSlide.home()
                                     .onlyIf(() -> !intakeSlide.isHomed())
                                     .withName("IntakeSlideHome"),
-                            intakeRoller.setGoal(IntakeRoller.Goal.INTAKE)
-                    ),
-                            Commands.sequence(
-                                    robotCommands.manualUnclimb()
-                            ))
+                            intakeRoller.setGoal(IntakeRoller.Goal.INTAKE),
+                            robotCommands.manualUnclimb()
+                    )
             );
         }
 
