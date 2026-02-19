@@ -79,13 +79,27 @@ public class ComponentsSolver {
         final double extensionMeters = climbExtensionMetersSupplier.getAsDouble();
 
         final double stage1ExtensionMeters = Math.min(extensionMeters, SimConstants.Climb.STAGE_1_MAX_EXTENSION);
-        final Pose3d stage1Pose = SimConstants.Climb.ORIGIN.transformBy(
-                new Transform3d(new Translation3d(stage1ExtensionMeters, Rotation3d.kZero), SimConstants.Climb.ANGLE_FROM_HORIZONTAL)
+
+        final Pose3d stage1Pose = new Pose3d(SimConstants.Climb.ORIGIN,
+                SimConstants.Climb.ANGLE_FROM_HORIZONTAL
+        ).transformBy(
+                new Transform3d(
+                        0,
+                        0,
+                        stage1ExtensionMeters
+                        ,
+                        Rotation3d.kZero
+                )
         );
 
         final double stage2ExtensionMeters = Math.min(extensionMeters - stage1ExtensionMeters, SimConstants.Climb.STAGE_2_MAX_EXTENSION);
-        final Pose3d stage2Pose = SimConstants.Climb.ORIGIN.transformBy(
-                new Transform3d(new Translation3d(stage2ExtensionMeters, Rotation3d.kZero), SimConstants.Climb.ANGLE_FROM_HORIZONTAL)
+        final Pose3d stage2Pose = stage1Pose.transformBy(
+                new Transform3d(
+                        0,
+                        0,
+                        stage2ExtensionMeters,
+                        Rotation3d.kZero
+                )
         );
 
 

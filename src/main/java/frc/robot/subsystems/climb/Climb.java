@@ -40,7 +40,7 @@ public class Climb extends SubsystemBase {
 
     public enum Goal {
         STOW(0),
-        EXTEND(2);
+        EXTEND(0.4);
 
         private final double positionGoalMeters;
         Goal(final double positionGoalMeters) {
@@ -117,7 +117,7 @@ public class Climb extends SubsystemBase {
     }
 
     public double getExtensionMeters() {
-        return inputs.motorPositionRots;
+        return inputs.motorPositionRots * constants.spoolDiameterMeters();
     }
 
     public void zero() {

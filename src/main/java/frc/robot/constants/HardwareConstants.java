@@ -166,6 +166,6 @@ public class HardwareConstants {
             48,
             50.0,
             0.0,
-            0.051
+            Units.inchesToMeters(1)
     );
 }
