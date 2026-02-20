@@ -282,7 +282,7 @@ public class Swerve extends SubsystemBase {
             final SwerveDriveState[] states = inputs.states;
             if (!replayPoseEstimatorReset && states.length != 0) {
                 final SwerveDriveState oldestState = states[0];
-                replayPoseEstimator.resetPosition(oldestState.RawHeading, oldestState.ModulePositions, oldestState.Pose);
+                replayPoseEstimator.resetPosition(oldestState.RawHeading, oldestState.ModulePositions, oldestState.getPose());
                 replayPoseEstimatorReset = true;
             }
 
@@ -304,7 +304,7 @@ public class Swerve extends SubsystemBase {
             double updatePeriodSeconds = 0;
             for (final SwerveDriveState state : inputs.states) {
                 updatePeriodSeconds = odometryPeriodFilter.calculate(state.OdometryPeriod);
-                poseBuffer.addSample(currentTimeToFPGATime(state.Timestamp), state.Pose);
+                poseBuffer.addSample(currentTimeToFPGATime(state.Timestamp), state.getPose());
             }
 
             odometryUpdatePeriodSeconds = updatePeriodSeconds;
@@ -340,8 +340,8 @@ public class Swerve extends SubsystemBase {
         final Pose2d robotPose = getPose();
         final ChassisSpeeds robotRelativeSpeeds = getRobotRelativeSpeeds();
 
-        final Transform2d diff = robotPose.minus(state().Pose);
-        Logger.recordOutput(LogKey + "/Diff", diff);
+        final Transform2d diff = robotPose.minus(state().getPose());
+        Logger.recordOutput("Diff", diff);
 
         Logger.recordOutput(
                 LogKey + "/LinearSpeedMetersPerSecond",
@@ -410,7 +410,7 @@ public class Swerve extends SubsystemBase {
         if (isReplay()) {
             return replayPoseEstimator.getEstimatedPosition();
         }
-        return state().Pose;
+        return state().getPose();
     }
 
     public Optional<Pose2d> getPose(final double atTimestamp) {
@@ -453,6 +453,9 @@ public class Swerve extends SubsystemBase {
         return state().ModulePositions;
     }
 
+    /**
+     * Use {@link frc.robot.subsystems.vision.PhotonVision#resetPose(Pose2d)} instead.
+     */
     public void resetPose(final Pose2d pose) {
         if (isReplay()) {
             replayPoseEstimator.resetPose(pose);
@@ -657,33 +660,33 @@ public class Swerve extends SubsystemBase {
 
     public Command driveToPose(final Supplier<Pose2d> poseSupplier) {
         return Commands.sequence(
-                runOnce(() -> {
-                    holonomicControllerActive = true;
-                    holonomicPoseTarget = poseSupplier.get();
-                    holonomicDriveController.reset(getPose(), holonomicPoseTarget);
-                }),
-                run(() -> {
-                    holonomicPoseTarget = poseSupplier.get();
-                    drive(holonomicDriveController.calculate(getPose(), holonomicPoseTarget));
-                }).until(atHolonomicDrivePose),
-                runOnce(this::stop)
-        )
+                        runOnce(() -> {
+                            holonomicControllerActive = true;
+                            holonomicPoseTarget = poseSupplier.get();
+                            holonomicDriveController.reset(getPose(), holonomicPoseTarget);
+                        }),
+                        run(() -> {
+                            holonomicPoseTarget = poseSupplier.get();
+                            drive(holonomicDriveController.calculate(getPose(), holonomicPoseTarget));
+                        }).until(atHolonomicDrivePose),
+                        runOnce(this::stop)
+                )
                 .finallyDo(() -> holonomicControllerActive = false)
                 .withName("DriveToPose");
     }
 
     public Command runToPose(final Supplier<Pose2d> poseSupplier) {
         return Commands.sequence(
-                runOnce(() -> {
-                    holonomicControllerActive = true;
-                    holonomicPoseTarget = poseSupplier.get();
-                    holonomicDriveController.reset(getPose(), holonomicPoseTarget);
-                }),
-                run(() -> {
-                    holonomicPoseTarget = poseSupplier.get();
-                    drive(holonomicDriveController.calculate(getPose(), holonomicPoseTarget));
-                })
-        )
+                        runOnce(() -> {
+                            holonomicControllerActive = true;
+                            holonomicPoseTarget = poseSupplier.get();
+                            holonomicDriveController.reset(getPose(), holonomicPoseTarget);
+                        }),
+                        run(() -> {
+                            holonomicPoseTarget = poseSupplier.get();
+                            drive(holonomicDriveController.calculate(getPose(), holonomicPoseTarget));
+                        })
+                )
                 .finallyDo(() -> holonomicControllerActive = false)
                 .withName("RunToPose");
     }

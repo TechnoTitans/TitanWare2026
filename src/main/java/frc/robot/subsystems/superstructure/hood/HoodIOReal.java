@@ -64,13 +64,11 @@ public class HoodIOReal implements HoodIO {
     @Override
     public void config() {
         motorConfig.Slot0 = new Slot0Configs()
-                .withKS(0.016887)
-                .withKG(0.25249)
+                .withKS(0)
+                .withKG(0)
                 .withGravityType(GravityTypeValue.Arm_Cosine)
-                .withKV(10.263)
-                .withKA(2.2613)
-                .withKP(76.008)
-                .withKD(40);
+                .withKP(0)
+                .withKD(0);
         motorConfig.MotionMagic.MotionMagicCruiseVelocity = 0;
         motorConfig.MotionMagic.MotionMagicExpo_kV = 9.263;
         motorConfig.MotionMagic.MotionMagicExpo_kA = 2.1;
@@ -80,7 +78,7 @@ public class HoodIOReal implements HoodIO {
         motorConfig.CurrentLimits.SupplyCurrentLowerLimit = 30;
         motorConfig.CurrentLimits.SupplyCurrentLowerTime = 1;
         motorConfig.CurrentLimits.SupplyCurrentLimitEnable = true;
-        motorConfig.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
+        motorConfig.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
         motorConfig.MotorOutput.NeutralMode = NeutralModeValue.Brake;
         motorConfig.SoftwareLimitSwitch.ForwardSoftLimitThreshold = constants.hoodUpperLimitRots();
         motorConfig.SoftwareLimitSwitch.ForwardSoftLimitEnable = true;
