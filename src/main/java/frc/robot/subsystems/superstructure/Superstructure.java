@@ -130,11 +130,12 @@ public class Superstructure extends VirtualSubsystem {
         return atSetpoint(() -> goal);
     }
 
-    public Command setGoal(final Goal goal ){
+    public Command setGoal(final Goal goal) {
         return Commands.runOnce(
                 () -> setDesiredGoal(goal)
         ).withName("SetGoal: " + goal);
     }
+
     public Command toGoal(final Supplier<Goal> goal) {
         return runEnd(
                 () -> setDesiredGoal(goal.get()),

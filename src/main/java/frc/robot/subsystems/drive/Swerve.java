@@ -175,7 +175,7 @@ public class Swerve extends SubsystemBase {
         this.replayPoseEstimator = new SwerveDrivePoseEstimator(
                 kinematics,
                 Rotation2d.kZero,
-                new SwerveModulePosition[] {
+                new SwerveModulePosition[]{
                         new SwerveModulePosition(),
                         new SwerveModulePosition(),
                         new SwerveModulePosition(),
@@ -404,6 +404,7 @@ public class Swerve extends SubsystemBase {
 
     /**
      * Get the estimated {@link Pose2d} of the robot from the {@link SwerveDrivePoseEstimator}.
+     *
      * @return the estimated position of the robot, as a {@link Pose2d}
      */
     public Pose2d getPose() {
@@ -979,8 +980,7 @@ public class Swerve extends SubsystemBase {
 
         public StatusCode apply(
                 final SwerveDrivetrain.SwerveControlParameters parameters,
-                final SwerveModule<?, ?, ?>... modulesToApply)
-        {
+                final SwerveModule<?, ?, ?>... modulesToApply) {
             for (final SwerveModule<?, ?, ?> swerveModule : modulesToApply) {
                 switch (swerveModule.getSteerClosedLoopOutputType()) {
                     case Voltage:
@@ -1020,8 +1020,7 @@ public class Swerve extends SubsystemBase {
 
         public StatusCode apply(
                 final SwerveDrivetrain.SwerveControlParameters parameters,
-                final SwerveModule<?, ?, ?>... modulesToApply)
-        {
+                final SwerveModule<?, ?, ?>... modulesToApply) {
             for (int i = 0; i < modulesToApply.length; ++i) {
                 final var angle = parameters.moduleLocations[i].getAngle().plus(Rotation2d.kCCW_90deg);
                 final var swerveModule = modulesToApply[i];

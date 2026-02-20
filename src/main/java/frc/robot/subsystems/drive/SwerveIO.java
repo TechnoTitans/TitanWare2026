@@ -155,6 +155,7 @@ public interface SwerveIO {
         @SuppressWarnings("unused")
         public static final SwerveDriveStateStruct struct = new SwerveDriveStateStruct();
         public static final SwerveDriveState EmptyState = new SwerveDriveState();
+
         static {
             EmptyState.ModuleStates = new SwerveModuleState[ModuleCount];
             EmptyState.ModuleTargets = new SwerveModuleState[ModuleCount];
@@ -225,7 +226,7 @@ public interface SwerveIO {
 
         @Override
         public Struct<?>[] getNested() {
-            return new Struct<?>[] {
+            return new Struct<?>[]{
                     Pose2d.struct,
                     ChassisSpeeds.struct,
                     SwerveModuleState.struct,

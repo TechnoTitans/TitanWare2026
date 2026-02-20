@@ -42,7 +42,6 @@ public class ShooterIOReal implements ShooterIO {
     private final Follower follower;
 
 
-
     public ShooterIOReal(final HardwareConstants.ShooterConstants constants) {
         this.constants = constants;
 

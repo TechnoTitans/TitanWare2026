@@ -13,8 +13,6 @@ public class IntakeRoller extends SubsystemBase {
     protected static final String LogKey = "/Intake/Roller";
     private static final double VelocityToleranceRotsPerSec = 0.02;
 
-    private final HardwareConstants.IntakeRollerConstants constants;
-
     private final IntakeRollerIO intakeRollerIO;
     private final IntakeRollerIOInputsAutoLogged inputs;
 
@@ -31,12 +29,12 @@ public class IntakeRoller extends SubsystemBase {
             this.rollerVelocityGoalRotsPerSec = rollerVelocityGoalRotsPerSec;
         }
 
-        public double getRollerVelocityGoalRotsPerSec() { return rollerVelocityGoalRotsPerSec; }
+        public double getRollerVelocityGoalRotsPerSec() {
+            return rollerVelocityGoalRotsPerSec;
+        }
     }
 
     public IntakeRoller(final Constants.RobotMode mode, final HardwareConstants.IntakeRollerConstants constants) {
-        this.constants = constants;
-
         this.intakeRollerIO = switch (mode) {
             case REAL -> new IntakeRollerIOReal(constants);
             case SIM -> new IntakeRollerIOSim(constants);

@@ -452,9 +452,9 @@ public class Robot extends LoggedRobot {
         //TODO: Change scoring mode so that stationary is used
         coController.rightTrigger(0.5, teleopEventLoop).whileTrue(
                 Commands.parallel(
-                        Commands.runOnce(() -> scoringMode = RobotCommands.ScoringMode.Stationary),
-                        robotCommands.shootStationary()
-                )
+                                Commands.runOnce(() -> scoringMode = RobotCommands.ScoringMode.Stationary),
+                                robotCommands.shootStationary()
+                        )
                         .finallyDo(() -> scoringMode = RobotCommands.ScoringMode.Moving)
         );
     }

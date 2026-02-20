@@ -20,7 +20,8 @@ import java.util.function.Function;
 public class VisionPoseEstimator {
     private static final int EdgeTolerancePixels = 15;
 
-    private VisionPoseEstimator() {}
+    private VisionPoseEstimator() {
+    }
 
     private static VisionResult constrainedPnpStrategy(
             final AprilTagFieldLayout fieldLayout,

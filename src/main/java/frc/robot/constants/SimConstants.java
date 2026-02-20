@@ -36,7 +36,7 @@ public interface SimConstants {
     //TODO: Change ALL Number
 
     interface Hood {
-        Translation3d TURRET_TO_HOOD_TRANSLATION = new Translation3d(0,0.121, 0.0715);
+        Translation3d TURRET_TO_HOOD_TRANSLATION = new Translation3d(0, 0.121, 0.0715);
 
         double LENGTH_METERS = Units.inchesToMeters(9.4);
 
@@ -61,15 +61,15 @@ public interface SimConstants {
     interface IntakeSlide {
         Pose3d RETRACTED_POSE = new Pose3d(new Translation3d(-0.142, 0, 0.443), Rotation3d.kZero);
 
-        Pose3d EXTENDED_POSE = new Pose3d(new Translation3d(0.120,0, 0.345), Rotation3d.kZero);
+        Pose3d EXTENDED_POSE = new Pose3d(new Translation3d(0.120, 0, 0.345), Rotation3d.kZero);
 
         double MOMENT_OF_INERTIA = 0.3;
     }
 
     interface Hopper {
-        Pose3d RETRACTED_POSE = new Pose3d(new Translation3d(-0.087, 0, 0.501),Rotation3d.kZero);
+        Pose3d RETRACTED_POSE = new Pose3d(new Translation3d(-0.087, 0, 0.501), Rotation3d.kZero);
 
-        Pose3d EXTENDED_POSE = new Pose3d(new Translation3d(0.212,0, 0.501), Rotation3d.kZero);
+        Pose3d EXTENDED_POSE = new Pose3d(new Translation3d(0.212, 0, 0.501), Rotation3d.kZero);
     }
 
     interface Climb {

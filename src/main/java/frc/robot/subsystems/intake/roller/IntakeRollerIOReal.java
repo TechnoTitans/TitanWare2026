@@ -16,7 +16,7 @@ import edu.wpi.first.units.measure.*;
 import frc.robot.constants.HardwareConstants;
 import frc.robot.utils.ctre.RefreshAll;
 
-public class IntakeRollerIOReal implements IntakeRollerIO{
+public class IntakeRollerIOReal implements IntakeRollerIO {
     private final HardwareConstants.IntakeRollerConstants constants;
 
     private final TalonFX rollerMotor;
@@ -112,7 +112,9 @@ public class IntakeRollerIOReal implements IntakeRollerIO{
     }
 
     @Override
-    public void toRollerVoltage(final double volts) { rollerMotor.setControl(voltageOut.withOutput(volts)); }
+    public void toRollerVoltage(final double volts) {
+        rollerMotor.setControl(voltageOut.withOutput(volts));
+    }
 
     @Override
     public void toRollerTorqueCurrent(final double torqueCurrentAmps) {

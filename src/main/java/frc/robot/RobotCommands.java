@@ -116,10 +116,10 @@ public class RobotCommands {
 
     public Command climb() {
         return Commands.parallel(
-                swerve.runToPose(FieldConstants::getClimbTarget),
-                superstructure.setGoal(Superstructure.Goal.CLIMB),
-                climb.toGoal(Climb.Goal.EXTEND)
-        )
+                        swerve.runToPose(FieldConstants::getClimbTarget),
+                        superstructure.setGoal(Superstructure.Goal.CLIMB),
+                        climb.toGoal(Climb.Goal.EXTEND)
+                )
                 .finallyDo(swerve::wheelXCommand)
                 .withName("Climb");
     }

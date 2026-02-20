@@ -20,9 +20,9 @@ import frc.robot.constants.HardwareConstants;
 import frc.robot.utils.ctre.RefreshAll;
 
 public class TurretIOReal implements TurretIO {
-    
+
     private final HardwareConstants.TurretConstants constants;
-    
+
     private final TalonFX turretMotor;
     private final CANcoder leftEncoder;
     private final CANcoder rightEncoder;
@@ -41,8 +41,8 @@ public class TurretIOReal implements TurretIO {
     private final VoltageOut voltageOut;
     private final TorqueCurrentFOC torqueCurrentFOC;
 
-    
-    public TurretIOReal( HardwareConstants.TurretConstants constants) {
+
+    public TurretIOReal(HardwareConstants.TurretConstants constants) {
         this.constants = constants;
 
         this.turretMotor = new TalonFX(constants.turretMotorID(), constants.CANBus().toPhoenix6CANBus());

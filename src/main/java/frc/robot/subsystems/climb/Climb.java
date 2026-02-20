@@ -1,25 +1,14 @@
 package frc.robot.subsystems.climb;
 
-import com.ctre.phoenix6.SignalLogger;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.util.Units;
-import edu.wpi.first.units.CurrentUnit;
-import edu.wpi.first.units.VoltageUnit;
-import edu.wpi.first.units.measure.Current;
-import edu.wpi.first.units.measure.Time;
-import edu.wpi.first.units.measure.Velocity;
-import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
-import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.constants.Constants;
 import frc.robot.constants.HardwareConstants;
 import org.littletonrobotics.junction.Logger;
-
-import static edu.wpi.first.units.Units.*;
 
 public class Climb extends SubsystemBase {
     protected static final String LogKey = "Climb";
@@ -43,6 +32,7 @@ public class Climb extends SubsystemBase {
         EXTEND(0.4);
 
         private final double positionGoalMeters;
+
         Goal(final double positionGoalMeters) {
             this.positionGoalMeters = positionGoalMeters;
         }
@@ -128,7 +118,7 @@ public class Climb extends SubsystemBase {
         return atGoal(Goal.EXTEND);
     }
 
-    public Command toGoal(final Goal goal){
+    public Command toGoal(final Goal goal) {
         return runEnd(
                 () -> setDesiredGoal(goal),
                 () -> setDesiredGoal(Goal.STOW)

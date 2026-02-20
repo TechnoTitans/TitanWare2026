@@ -26,6 +26,7 @@ public class SwerveSpeed {
             return rotationSpeed;
         }
     }
+
     private static Speeds swerveSpeed = Speeds.NORMAL;
 
     private SwerveSpeed() {}

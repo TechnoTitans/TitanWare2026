@@ -108,7 +108,7 @@ public class IntakeSlide extends SubsystemBase {
         );
     }
 
-    public Command home(){
+    public Command home() {
         return Commands.sequence(
                 Commands.runOnce(intakeSlideIO::home),
                 Commands.waitUntil(
@@ -118,15 +118,15 @@ public class IntakeSlide extends SubsystemBase {
                         )
                 ),
                 Commands.runOnce(() -> {
-                        intakeSlideIO.zeroMotors();
-                        this.isHomed = true;
-                    }
+                            intakeSlideIO.zeroMotors();
+                            this.isHomed = true;
+                        }
                 ),
                 setGoal(Goal.INTAKE)
         );
     }
 
-    public boolean isHomed(){
+    public boolean isHomed() {
         return isHomed;
     }
 

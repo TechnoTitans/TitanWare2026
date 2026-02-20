@@ -65,7 +65,7 @@ public class HardwareConstants {
     public record SpindexerConstants(
             CANBus CANBus,
             int motorID,
-            double rollerGearing
+            double wheelGearing
     ) {}
 
     public static SpindexerConstants SPINDEXER = new SpindexerConstants(

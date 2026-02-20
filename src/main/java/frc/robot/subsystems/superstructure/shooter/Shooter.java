@@ -43,6 +43,7 @@ public class Shooter extends SubsystemBase {
             }
         }
     }
+
     public Shooter(final Constants.RobotMode mode, final HardwareConstants.ShooterConstants constants) {
         this.shooterIO = switch (mode) {
             case REAL -> new ShooterIOReal(constants);

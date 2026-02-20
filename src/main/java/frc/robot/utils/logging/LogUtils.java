@@ -121,6 +121,7 @@ public class LogUtils {
             return super.getStates();
         }
     }
+
     public static double microsecondsToMilliseconds(final double microseconds) {
         return microseconds * 1000;
     }

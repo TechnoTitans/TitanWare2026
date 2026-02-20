@@ -11,6 +11,7 @@ public interface FeederIO {
         public double rollerTorqueCurrentAmps = 0.0;
         public double rollerTemperatureCelsius = 0.0;
     }
+
     default void updateInputs(final FeederIOInputs inputs) {}
 
     default void config() {}

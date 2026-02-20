@@ -76,9 +76,9 @@ public class Turret extends SubsystemBase {
 
         try {
             final double absolutePosition = ChineseRemainder.getAbsolutePosition(
-                    constants.leftEncoderGearing()/constants.turretTooth(),
+                    constants.leftEncoderGearing() / constants.turretTooth(),
                     Units.rotationsToDegrees(inputs.leftPositionRots),
-                    constants.rightEncoderGearing()/constants.turretTooth(),
+                    constants.rightEncoderGearing() / constants.turretTooth(),
                     Units.rotationsToDegrees(inputs.rightPositionRots),
                     constants.turretTooth()
             ) % 1.0;
@@ -148,6 +148,4 @@ public class Turret extends SubsystemBase {
     private boolean atTurretUpperLimit() {
         return inputs.turretPositionRots >= constants.upperLimitRots();
     }
-
-    public TurretIO getTurretIO() { return turretIO; }
 }

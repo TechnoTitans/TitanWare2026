@@ -17,7 +17,7 @@ import frc.robot.constants.HardwareConstants;
 import frc.robot.utils.ctre.Phoenix6Utils;
 import frc.robot.utils.ctre.RefreshAll;
 
-public class ClimbIOReal implements ClimbIO{
+public class ClimbIOReal implements ClimbIO {
     private final HardwareConstants.ClimbConstants constants;
 
     private final TalonFX climbMotor;
@@ -54,6 +54,7 @@ public class ClimbIOReal implements ClimbIO{
                 motorDeviceTemp
         );
     }
+
     @Override
     public void config() {
         final TalonFXConfiguration motorConfiguration = new TalonFXConfiguration();
@@ -99,6 +100,7 @@ public class ClimbIOReal implements ClimbIO{
                 climbMotor
         );
     }
+
     @Override
     public void updateInputs(final ClimbIOInputs inputs) {
         inputs.motorPositionRots = motorPosition.getValueAsDouble();
@@ -107,6 +109,7 @@ public class ClimbIOReal implements ClimbIO{
         inputs.motorTorqueCurrentAmps = motorTorqueCurrent.getValueAsDouble();
         inputs.motorTempCelsius = motorDeviceTemp.getValueAsDouble();
     }
+
     @Override
     public void setPosition(final double positionRots) {
         Phoenix6Utils.reportIfNotOk(climbMotor, climbMotor.setPosition(positionRots));

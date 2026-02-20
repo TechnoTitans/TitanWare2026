@@ -40,8 +40,6 @@ public class FeederIOSim implements FeederIO {
     private final StatusSignal<Temperature> rollerTemperature;
 
     private final VelocityTorqueCurrentFOC velocityTorqueCurrentFOC;
-    private final VoltageOut voltageOut;
-    private final TorqueCurrentFOC torqueCurrentFOC;
 
     public FeederIOSim(final HardwareConstants.FeederConstants constants) {
         this.deltaTime = new DeltaTime(true);
@@ -73,8 +71,6 @@ public class FeederIOSim implements FeederIO {
         this.rollerTemperature = rollerMotor.getDeviceTemp(false);
 
         this.velocityTorqueCurrentFOC = new VelocityTorqueCurrentFOC(0);
-        this.voltageOut = new VoltageOut(0);
-        this.torqueCurrentFOC = new TorqueCurrentFOC(0);
 
         RefreshAll.add(
                 constants.CANBus(),
@@ -144,6 +140,7 @@ public class FeederIOSim implements FeederIO {
         inputs.rollerTorqueCurrentAmps = rollerTorqueCurrent.getValueAsDouble();
         inputs.rollerTemperatureCelsius = rollerTemperature.getValueAsDouble();
     }
+
     @Override
     public void toRollerVelocity(final double velocityRotsPerSec) {
         rollerMotor.setControl(velocityTorqueCurrentFOC.withVelocity(velocityRotsPerSec));

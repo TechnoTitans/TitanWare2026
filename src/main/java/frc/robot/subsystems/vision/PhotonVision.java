@@ -39,6 +39,7 @@ public class PhotonVision extends VirtualSubsystem {
     private final double maxAngularVelocity = SwerveConstants.Config.maxAngularVelocityRadsPerSec();
 
     public static final AprilTagFieldLayout apriltagFieldLayout;
+
     static {
         try {
             apriltagFieldLayout = new AprilTagFieldLayout(
@@ -93,7 +94,7 @@ public class PhotonVision extends VirtualSubsystem {
                         new SwerveDriveOdometry(
                                 swerve.getKinematics(),
                                 Rotation2d.kZero,
-                                new SwerveModulePosition[] {
+                                new SwerveModulePosition[]{
                                         new SwerveModulePosition(),
                                         new SwerveModulePosition(),
                                         new SwerveModulePosition(),

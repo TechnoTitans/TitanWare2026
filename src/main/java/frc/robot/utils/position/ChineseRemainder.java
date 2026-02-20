@@ -29,7 +29,7 @@ public class ChineseRemainder {
 
         for (int i = 0; i <= countableRotations; i++) {
             possibleRotations[i] =
-                    (i + (encoderReading/360)) * encoderGearing;
+                    (i + (encoderReading / 360)) * encoderGearing;
         }
 
         return possibleRotations;

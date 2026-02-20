@@ -19,7 +19,9 @@ public class FieldConstants {
     public static final double FIELD_WIDTH_Y_METERS = AprilTagLayoutType.OFFICIAL.getLayout().getFieldWidth();
     public static final Pose2d RED_ORIGIN = new Pose2d(FIELD_LENGTH_X_METERS, FIELD_WIDTH_Y_METERS, Rotation2d.k180deg);
 
-    /** Hub related constants */
+    /**
+     * Hub related constants
+     */
     public static class Hub {
         public static final double WIDTH = Units.inchesToMeters(47.0);
 
@@ -33,7 +35,7 @@ public class FieldConstants {
 
     public static class Ferrying {
         public static final Pose2d TOP_FERRYING_BLUE =
-                new Pose2d(new Translation2d(2,FIELD_WIDTH_Y_METERS - 2.0), Rotation2d.kZero);
+                new Pose2d(new Translation2d(2, FIELD_WIDTH_Y_METERS - 2.0), Rotation2d.kZero);
 
         public static final Pose2d TOP_FERRYING_RED = TOP_FERRYING_BLUE.relativeTo(RED_ORIGIN);
 
@@ -87,9 +89,9 @@ public class FieldConstants {
     }
 
     public static Translation2d getFerryingTarget(final double robotYPositionMeters) {
-        return (robotYPositionMeters > FIELD_WIDTH_Y_METERS/2 ?
+        return (robotYPositionMeters > FIELD_WIDTH_Y_METERS / 2 ?
                 getAllianceFlipped(Ferrying.TOP_FERRYING_BLUE, Ferrying.TOP_FERRYING_RED)
-                    : getAllianceFlipped(Ferrying.BOTTOM_FERRYING_BLUE, Ferrying.BOTTOM_FERRYING_RED)).getTranslation();
+                : getAllianceFlipped(Ferrying.BOTTOM_FERRYING_BLUE, Ferrying.BOTTOM_FERRYING_RED)).getTranslation();
     }
 
     public static Pose2d getClimbTarget() {
@@ -102,7 +104,7 @@ public class FieldConstants {
 
         private final String jsonFolder;
 
-        FieldType(final String jsonFolder){
+        FieldType(final String jsonFolder) {
             this.jsonFolder = jsonFolder;
         }
     }

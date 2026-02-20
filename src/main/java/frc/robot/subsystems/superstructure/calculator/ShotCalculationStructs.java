@@ -13,7 +13,7 @@ public class ShotCalculationStructs {
             Rotation2d hoodRotation,
             double flywheelVelocity,
             double shotTime
-    )  implements Interpolatable<HoodShooterCalculation> {
+    ) implements Interpolatable<HoodShooterCalculation> {
 
         public static final Interpolator<HoodShooterCalculation> interpolator = HoodShooterCalculation::interpolate;
 

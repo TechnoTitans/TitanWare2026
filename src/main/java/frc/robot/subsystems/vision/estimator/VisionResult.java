@@ -30,7 +30,8 @@ public record VisionResult(
             Pose3d ambiguousPose,
             double timestamp,
             List<PhotonTrackedTarget> targetsUsed
-    ) {}
+    ) {
+    }
 
     public static VisionResult invalid(final Result result) {
         return new VisionResult(result, Optional.empty());

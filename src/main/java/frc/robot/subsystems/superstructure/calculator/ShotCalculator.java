@@ -76,6 +76,7 @@ public class ShotCalculator {
                 target
         );
     }
+
     //TODO: Needs to be implemented
     private static ShotCalculationStructs.ShotCalculation getMovingShotCalculation(
             final Pose2d swervePose,

@@ -228,7 +228,7 @@ public class IntakeSlideIOSim implements IntakeSlideIO {
     }
 
     @Override
-    public void zeroMotors(){
+    public void zeroMotors() {
         diffMechanism.setPosition(0);
     }
 }

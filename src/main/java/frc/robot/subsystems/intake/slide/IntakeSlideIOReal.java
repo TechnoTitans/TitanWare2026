@@ -38,7 +38,7 @@ public class IntakeSlideIOReal implements IntakeSlideIO {
     private final PositionVoltage averagePositionVoltage;
     private final PositionVoltage differentialPositionVoltage;
     private final VoltageOut voltageOut;
-    
+
     public IntakeSlideIOReal(final HardwareConstants.IntakeSlideConstants constants) {
         this.averagePositionVoltage = new PositionVoltage(0).withSlot(0);
         this.differentialPositionVoltage = new PositionVoltage(0).withSlot(1);
@@ -170,7 +170,7 @@ public class IntakeSlideIOReal implements IntakeSlideIO {
     }
 
     @Override
-    public void zeroMotors(){
+    public void zeroMotors() {
         diffMechanism.setPosition(0);
     }
 }

@@ -37,7 +37,6 @@ public class Hood extends SubsystemBase {
     private boolean isHomed;
 
     public enum Goal {
-        STOW(0, false),
         CLIMB(0, false),
         TRACKING(0, true);
 
@@ -113,9 +112,9 @@ public class Hood extends SubsystemBase {
                         () -> currentDebouncer.calculate(getCurrent() >= HardstopCurrentThreshold)
                 ),
                 Commands.runOnce(() -> {
-                        hoodIO.zeroMotor();
-                        this.isHomed = true;
-                    }
+                            hoodIO.zeroMotor();
+                            this.isHomed = true;
+                        }
                 ).finallyDo(() -> {
                     this.currentGoal = previousGoal;
                     this.previousGoal = Goal.TRACKING;
