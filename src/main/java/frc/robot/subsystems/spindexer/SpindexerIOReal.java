@@ -54,13 +54,13 @@ public class SpindexerIOReal implements SpindexerIO {
     public void config() {
         final TalonFXConfiguration wheelConfiguration = new TalonFXConfiguration();
         wheelConfiguration.Slot0 = new Slot0Configs()
-                .withKS(4.0212)
-                .withKV(0.40767)
-                .withKA(0.22711)
-                .withKP(30);
-        wheelConfiguration.CurrentLimits.StatorCurrentLimit = 40;
+                .withKS(2.3)
+                .withKV(0.135)
+                .withKP(7.5)
+                .withKD(0.05);
+        wheelConfiguration.CurrentLimits.StatorCurrentLimit = 60;
         wheelConfiguration.CurrentLimits.StatorCurrentLimitEnable = true;
-        wheelConfiguration.CurrentLimits.SupplyCurrentLimit = 40;
+        wheelConfiguration.CurrentLimits.SupplyCurrentLimit = 50;
         wheelConfiguration.CurrentLimits.SupplyCurrentLowerLimit = 40;
         wheelConfiguration.CurrentLimits.SupplyCurrentLowerTime = 1;
         wheelConfiguration.CurrentLimits.SupplyCurrentLimitEnable = true;

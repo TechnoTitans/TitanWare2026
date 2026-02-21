@@ -4,6 +4,7 @@ import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.CANcoderConfiguration;
 import com.ctre.phoenix6.configs.Slot0Configs;
+import com.ctre.phoenix6.configs.Slot1Configs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.MotionMagicExpoVoltage;
 import com.ctre.phoenix6.controls.PositionVoltage;
@@ -15,6 +16,7 @@ import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.FeedbackSensorSourceValue;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
+import com.ctre.phoenix6.signals.SensorDirectionValue;
 import edu.wpi.first.units.measure.*;
 import frc.robot.constants.HardwareConstants;
 import frc.robot.utils.ctre.RefreshAll;
@@ -69,7 +71,9 @@ public class TurretIOReal implements TurretIO {
                 turretVelocity,
                 turretVoltage,
                 turretTorqueCurrent,
-                turretDeviceTemp
+                turretDeviceTemp,
+                leftEncoderPosition,
+                rightEncoderPosition
         );
     }
 
@@ -77,19 +81,19 @@ public class TurretIOReal implements TurretIO {
     public void config() {
         final TalonFXConfiguration motorConfig = new TalonFXConfiguration();
         motorConfig.Slot0 = new Slot0Configs()
-                .withKS(0.016887)
-                .withKV(10.263)
-                .withKA(2.2613)
-                .withKP(76.008)
-                .withKD(40);
-        motorConfig.MotionMagic.MotionMagicCruiseVelocity = 0;
-        motorConfig.MotionMagic.MotionMagicExpo_kV = 9.263;
-        motorConfig.MotionMagic.MotionMagicExpo_kA = 2.1;
+                .withKS(0.366)
+                .withKV(3)
+                .withKP(30)
+                .withKD(0);
+        motorConfig.Slot1 = new Slot1Configs()
+                .withKS(0.366)
+                .withKP(30)
+                .withKD(1);
         motorConfig.TorqueCurrent.PeakForwardTorqueCurrent = 80;
         motorConfig.TorqueCurrent.PeakReverseTorqueCurrent = -80;
-        motorConfig.CurrentLimits.StatorCurrentLimit = 50;
+        motorConfig.CurrentLimits.StatorCurrentLimit = 70;
         motorConfig.CurrentLimits.StatorCurrentLimitEnable = true;
-        motorConfig.CurrentLimits.SupplyCurrentLimit = 40;
+        motorConfig.CurrentLimits.SupplyCurrentLimit = 50;
         motorConfig.CurrentLimits.SupplyCurrentLowerLimit = 30;
         motorConfig.CurrentLimits.SupplyCurrentLowerTime = 1;
         motorConfig.CurrentLimits.SupplyCurrentLimitEnable = true;
@@ -105,9 +109,11 @@ public class TurretIOReal implements TurretIO {
 
         final CANcoderConfiguration encoderConfig = new CANcoderConfiguration();
         encoderConfig.MagnetSensor.MagnetOffset = constants.leftEncoderOffset();
+        encoderConfig.MagnetSensor.SensorDirection = SensorDirectionValue.Clockwise_Positive;
         leftEncoder.getConfigurator().apply(encoderConfig);
 
         encoderConfig.MagnetSensor.MagnetOffset = constants.rightEncoderOffset();
+        encoderConfig.MagnetSensor.SensorDirection = SensorDirectionValue.CounterClockwise_Positive;
         rightEncoder.getConfigurator().apply(encoderConfig);
 
         BaseStatusSignal.setUpdateFrequencyForAll(
@@ -161,5 +167,10 @@ public class TurretIOReal implements TurretIO {
     @Override
     public void toTurretTorqueCurrent(double torqueCurrent) {
         turretMotor.setControl(torqueCurrentFOC.withOutput(torqueCurrent));
+    }
+
+    @Override
+    public void setTurretPosition(final double turretAbsolutePosition) {
+        this.turretMotor.setPosition(turretAbsolutePosition);
     }
 }

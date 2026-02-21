@@ -22,18 +22,16 @@ public class Spindexer extends SubsystemBase {
 
     public enum Goal {
         STOP(0),
-        INTAKE(4),
-        FEED(5),
-        EJECT(-5);
+        FEED(15);
 
-        private final double rollerVelocitySetpoint;
+        private final double wheelVelocitySetpoint;
 
-        Goal(final double rollerVelocitySetpoint) {
-            this.rollerVelocitySetpoint = rollerVelocitySetpoint;
+        Goal(final double wheelVelocitySetpoint) {
+            this.wheelVelocitySetpoint = wheelVelocitySetpoint;
         }
 
-        public double getRollerVelocitySetpoint() {
-            return rollerVelocitySetpoint;
+        public double getWheelVelocitySetpoint() {
+            return wheelVelocitySetpoint;
         }
     }
 
@@ -48,7 +46,7 @@ public class Spindexer extends SubsystemBase {
 
         spindexerIO.config();
 
-        spindexerIO.toWheelVelocity(desiredGoal.getRollerVelocitySetpoint());
+        spindexerIO.toWheelVelocity(desiredGoal.getWheelVelocitySetpoint());
     }
 
     @Override
@@ -59,13 +57,13 @@ public class Spindexer extends SubsystemBase {
         Logger.processInputs(LogKey, inputs);
 
         if (desiredGoal != currentGoal) {
-            spindexerIO.toWheelVelocity(desiredGoal.getRollerVelocitySetpoint());
+            spindexerIO.toWheelVelocity(desiredGoal.getWheelVelocitySetpoint());
             this.currentGoal = desiredGoal;
         }
 
         Logger.recordOutput(LogKey + "/CurrentGoal", currentGoal.toString());
         Logger.recordOutput(LogKey + "/DesiredGoal", desiredGoal.toString());
-        Logger.recordOutput(LogKey + "/DesiredGoal/HopperVelocityRotsPerSec", desiredGoal.getRollerVelocitySetpoint());
+        Logger.recordOutput(LogKey + "/DesiredGoal/WheelVelocityRotsPerSec", desiredGoal.getWheelVelocitySetpoint());
         Logger.recordOutput(LogKey + "/Triggers/AtVelocitySetpoint", atVelocitySetpoint());
 
         Logger.recordOutput(
@@ -76,8 +74,8 @@ public class Spindexer extends SubsystemBase {
 
     public Command toGoal(final Goal goal) {
         return runEnd(
-                () -> setGoal(goal),
-                () -> setGoal(Goal.STOP)
+                () -> setDesiredGoal(goal),
+                () -> setDesiredGoal(Goal.STOP)
         ).withName("ToGoal: " + goal);
     }
 
@@ -94,6 +92,6 @@ public class Spindexer extends SubsystemBase {
     }
 
     private boolean atVelocitySetpoint() {
-        return MathUtil.isNear(desiredGoal.rollerVelocitySetpoint, inputs.wheelVelocityRotsPerSec, VelocityToleranceRotsPerSec);
+        return MathUtil.isNear(desiredGoal.wheelVelocitySetpoint, inputs.wheelVelocityRotsPerSec, VelocityToleranceRotsPerSec);
     }
 }

@@ -26,7 +26,7 @@ public class Hood extends SubsystemBase {
     private final HoodIO hoodIO;
     private final HoodIOInputsAutoLogged inputs = new HoodIOInputsAutoLogged();
 
-    private Goal desiredGoal = Goal.HOMING;
+    private Goal desiredGoal = Goal.TRACKING;
     private Goal currentGoal = desiredGoal;
 
     public final Trigger atSetpoint = new Trigger(this::atHoodPositionSetpoint);
@@ -75,6 +75,8 @@ public class Hood extends SubsystemBase {
         isHomed = Constants.CURRENT_MODE == Constants.RobotMode.SIM;
 
         this.hoodIO.config();
+
+        hoodIO.zeroMotor();
     }
 
     @Override

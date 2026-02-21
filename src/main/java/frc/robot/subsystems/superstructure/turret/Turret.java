@@ -83,10 +83,12 @@ public class Turret extends SubsystemBase {
                     constants.turretTooth()
             ) % 1.0;
 
-            turretIO.setTurretPosition(absolutePosition - 0.5);
+            turretIO.setTurretPosition(absolutePosition);
         } catch (RuntimeException e) {
             turretIO.setTurretPosition(0.0);
         }
+
+//        turretIO.setTurretPosition(0);
     }
 
     @Override

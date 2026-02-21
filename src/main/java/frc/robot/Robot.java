@@ -90,12 +90,12 @@ public class Robot extends LoggedRobot {
     );
 
     public final IntakeRoller intakeRoller = new IntakeRoller(
-            Constants.CURRENT_MODE,
+            Constants.RobotMode.DISABLED,
             HardwareConstants.INTAKE_ROLLER
     );
 
     public final IntakeSlide intakeSlide = new IntakeSlide(
-            Constants.CURRENT_MODE,
+            Constants.RobotMode.DISABLED,
             HardwareConstants.INTAKE_SLIDE
     );
 
@@ -125,6 +125,11 @@ public class Robot extends LoggedRobot {
             HardwareConstants.SPINDEXER
     );
 
+    public final Climb climb = new Climb(
+            Constants.RobotMode.DISABLED,
+            HardwareConstants.CLIMB
+    );
+
     //TODO: Change to Moving when SOTM is implemented
     private RobotCommands.ScoringMode scoringMode =
             RobotCommands.ScoringMode.Stationary;
@@ -141,11 +146,6 @@ public class Robot extends LoggedRobot {
             hood,
             shooter,
             shotCalculationSupplier
-    );
-
-    public final Climb climb = new Climb(
-            Constants.CURRENT_MODE,
-            HardwareConstants.CLIMB
     );
 
     private final ComponentsSolver componentsSolver = new ComponentsSolver(
@@ -389,19 +389,19 @@ public class Robot extends LoggedRobot {
 
             teleopEnabled.onTrue(
                     Commands.parallel(
-                            hood.home()
-                                    .onlyIf(() -> !hood.isHomed()),
-                            intakeSlide.home()
-                                    .onlyIf(() -> !intakeSlide.isHomed()),
-                            Commands.sequence(
-                                    Commands.sequence(
-                                            climb.setGoal(Climb.Goal.EXTEND),
-                                            Commands.waitUntil(() -> !swerve.getPose().equals(FieldConstants.getClimbTarget())),
-                                            climb.setGoal(Climb.Goal.STOW)
-                                    ).onlyIf(climb::isExtended),
-                                    Commands.waitUntil(climb.atSetpoint.and(intakeSlide::isHomed)),
-                                    robotCommands.manualIntake()
-                            )
+//                            hood.home()
+//                                    .onlyIf(() -> !hood.isHomed())
+//                            intakeSlide.home()
+//                                    .onlyIf(() -> !intakeSlide.isHomed()),
+//                            Commands.sequence(
+//                                    Commands.sequence(
+//                                            climb.setGoal(Climb.Goal.EXTEND),
+//                                            Commands.waitUntil(() -> !swerve.getPose().equals(FieldConstants.getClimbTarget())),
+//                                            climb.setGoal(Climb.Goal.STOW)
+//                                    ).onlyIf(climb::isExtended),
+//                                    Commands.waitUntil(climb.atSetpoint.and(intakeSlide::isHomed)),
+//                                    robotCommands.manualIntake()
+//                            )
                     )
             );
         }

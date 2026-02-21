@@ -1,10 +1,12 @@
 package frc.robot.subsystems.superstructure;
 
+import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj.event.EventLoop;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.subsystems.superstructure.calculator.ShotCalculationStructs;
+import frc.robot.subsystems.superstructure.calculator.ShotCalculator;
 import frc.robot.subsystems.superstructure.hood.Hood;
 import frc.robot.subsystems.superstructure.shooter.Shooter;
 import frc.robot.subsystems.superstructure.turret.Turret;
@@ -31,6 +33,8 @@ public class Superstructure extends VirtualSubsystem {
     public final Trigger atSuperstructureSetpoint;
 
     private final Supplier<ShotCalculationStructs.ShotCalculation> shotCalculationSupplier;
+
+    private double hoodTesting = 0.0;
 
     public enum Goal {
         CLIMB(Turret.Goal.CLIMB, Hood.Goal.CLIMB, Shooter.Goal.STOP, false),
@@ -101,7 +105,7 @@ public class Superstructure extends VirtualSubsystem {
             final ShotCalculationStructs.ShotCalculation shotCalculation = shotCalculationSupplier.get();
 
             turret.updatePositionSetpoint(shotCalculation.desiredTurretRotation().getRotations());
-            hood.updateDesiredHoodPosition(shotCalculation.hoodShooterCalculation().hoodRotation().getRotations());
+//            hood.updateDesiredHoodPosition(shotCalculation.hoodShooterCalculation().hoodRotation().getRotations());
             shooter.updateVelocitySetpoint(shotCalculation.hoodShooterCalculation().flywheelVelocity());
         }
 
@@ -153,5 +157,13 @@ public class Superstructure extends VirtualSubsystem {
     public Command runGoal(final Supplier<Goal> goalSupplier) {
         return run(() -> setDesiredGoal(goalSupplier.get()))
                 .withName("RunGoal :" + goalSupplier.get());
+    }
+
+    public Command testHood() {
+        return runEnd(
+                () -> hood.updateDesiredHoodPosition(hoodTesting += 0.001),
+                () -> hood.updateDesiredHoodPosition(0)
+        )
+                .finallyDo(() -> hoodTesting = 0);
     }
 }

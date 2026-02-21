@@ -116,4 +116,12 @@ public class ShotCalculator {
                 target
         );
     }
+
+    public static Rotation2d wrapTurret(final Rotation2d desiredTurretRotation) {
+        if (desiredTurretRotation.getRotations() > 0.25) {
+            return desiredTurretRotation.minus(Rotation2d.fromRotations(0.75));
+        }
+
+        return desiredTurretRotation.rotateBy(Rotation2d.kCCW_90deg);
+    }
 }

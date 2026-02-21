@@ -39,55 +39,55 @@ public class ShotCalculationStructs {
     static {
         shotDataMap.put(1d, new HoodShooterCalculation(
                 Rotation2d.fromDegrees(5),
-                10,
+                20,
                 1
         ));
 
         shotDataMap.put(1.5d, new HoodShooterCalculation(
-                Rotation2d.fromDegrees(10),
-                10,
+                Rotation2d.fromDegrees(20),
+                20,
                 1.05
         ));
 
         shotDataMap.put(2d, new HoodShooterCalculation(
                 Rotation2d.fromDegrees(15),
-                10,
+                20,
                 1.1
         ));
 
         shotDataMap.put(2.5d, new HoodShooterCalculation(
                 Rotation2d.fromDegrees(18),
-                10,
+                20,
                 1.15
         ));
 
         shotDataMap.put(3d, new HoodShooterCalculation(
                 Rotation2d.fromDegrees(19),
-                10,
+                20,
                 1.2
         ));
 
         shotDataMap.put(3.5d, new HoodShooterCalculation(
                 Rotation2d.fromDegrees(20),
-                10,
+                20,
                 1.25
         ));
 
         shotDataMap.put(4d, new HoodShooterCalculation(
                 Rotation2d.fromDegrees(22),
-                10,
+                20,
                 1.3
         ));
 
         shotDataMap.put(4.5d, new HoodShooterCalculation(
                 Rotation2d.fromDegrees(25),
-                10,
+                20,
                 1.35
         ));
 
         shotDataMap.put(5d, new HoodShooterCalculation(
                 Rotation2d.fromDegrees(26),
-                10,
+                20,
                 1.4
         ));
     }

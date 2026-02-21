@@ -64,22 +64,20 @@ public class HoodIOReal implements HoodIO {
     @Override
     public void config() {
         motorConfig.Slot0 = new Slot0Configs()
-                .withKS(0)
-                .withKG(0)
+                .withKS(0.39)
+                .withKG(0.1)
                 .withGravityType(GravityTypeValue.Arm_Cosine)
-                .withKP(0)
+                .withKP(50)
                 .withKD(0);
-        motorConfig.MotionMagic.MotionMagicCruiseVelocity = 0;
-        motorConfig.MotionMagic.MotionMagicExpo_kV = 9.263;
-        motorConfig.MotionMagic.MotionMagicExpo_kA = 2.1;
-        motorConfig.CurrentLimits.StatorCurrentLimit = 50;
+        motorConfig.CurrentLimits.StatorCurrentLimit = 60;
         motorConfig.CurrentLimits.StatorCurrentLimitEnable = true;
-        motorConfig.CurrentLimits.SupplyCurrentLimit = 40;
+        motorConfig.CurrentLimits.SupplyCurrentLimit = 50;
         motorConfig.CurrentLimits.SupplyCurrentLowerLimit = 30;
         motorConfig.CurrentLimits.SupplyCurrentLowerTime = 1;
         motorConfig.CurrentLimits.SupplyCurrentLimitEnable = true;
         motorConfig.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
         motorConfig.MotorOutput.NeutralMode = NeutralModeValue.Brake;
+        motorConfig.Feedback.SensorToMechanismRatio = constants.hoodGearing();
         motorConfig.SoftwareLimitSwitch.ForwardSoftLimitThreshold = constants.hoodUpperLimitRots();
         motorConfig.SoftwareLimitSwitch.ForwardSoftLimitEnable = true;
         motorConfig.SoftwareLimitSwitch.ReverseSoftLimitThreshold = constants.hoodLowerLimitRots();

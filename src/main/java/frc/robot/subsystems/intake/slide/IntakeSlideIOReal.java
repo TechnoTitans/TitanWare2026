@@ -51,7 +51,7 @@ public class IntakeSlideIOReal implements IntakeSlideIO {
                 .withKD(3);
         //Diff Slot
         masterMotorConfig.Slot1 = new Slot1Configs()
-                .withKP(2);
+                .withKP(0.01);
         //Hold Slot
         masterMotorConfig.Slot2 = new Slot2Configs()
                 .withKP(0.1);

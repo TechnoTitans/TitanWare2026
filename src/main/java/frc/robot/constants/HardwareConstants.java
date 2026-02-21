@@ -69,7 +69,7 @@ public class HardwareConstants {
     ) {}
 
     public static SpindexerConstants SPINDEXER = new SpindexerConstants(
-            CANBus.RIO,
+            CANBus.CANIVORE,
             17,
             2
     );
@@ -86,37 +86,6 @@ public class HardwareConstants {
             18,
             3
     );
-    //TODO: Change numbers
-    public static HoodConstants HOOD = new HoodConstants(
-            CANBus.RIO,
-            22,
-            80,
-            0.25,
-            0
-    );
-
-    public static TurretConstants TURRET = new TurretConstants(
-            CANBus.CANIVORE,
-            19,
-            20,
-            21,
-            24,
-            80,
-            13.0,
-            17.0,
-            0,
-            0,
-            0.5,
-            -0.5
-    );
-
-    public record HoodConstants(
-            CANBus CANBus,
-            int motorID,
-            double hoodGearing,
-            double hoodUpperLimitRots,
-            double hoodLowerLimitRots
-    ) {}
 
     public record TurretConstants (
             CANBus CANBus,
@@ -133,6 +102,36 @@ public class HardwareConstants {
             double lowerLimitRots
     ) {}
 
+    public static TurretConstants TURRET = new TurretConstants(
+            CANBus.CANIVORE,
+            19,
+            20,
+            21,
+            24,
+            80,
+            13.0,
+            17.0,
+            0.19,
+            0.15,
+            0.5,
+            -0.5
+    );
+    public record HoodConstants(
+            CANBus CANBus,
+            int motorID,
+            double hoodGearing,
+            double hoodUpperLimitRots,
+            double hoodLowerLimitRots
+    ){}
+
+    public static HoodConstants HOOD = new HoodConstants(
+            CANBus.RIO,
+            22,
+            80,
+            0.25,
+            0
+    );
+
     public record ShooterConstants(
             CANBus CANBus,
             int masterMotorID,
@@ -140,7 +139,6 @@ public class HardwareConstants {
             double gearing
     ) {}
 
-    //TODO: Change numbers
     public static ShooterConstants SHOOTER = new ShooterConstants(
             CANBus.RIO,
             23,
