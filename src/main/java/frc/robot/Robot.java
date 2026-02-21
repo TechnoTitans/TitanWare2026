@@ -19,10 +19,7 @@ import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.auto.AutoChooser;
 import frc.robot.auto.AutoOption;
 import frc.robot.auto.Autos;
-import frc.robot.constants.Constants;
-import frc.robot.constants.HardwareConstants;
-import frc.robot.constants.RobotMap;
-import frc.robot.constants.SimConstants;
+import frc.robot.constants.*;
 import frc.robot.sim.fuel.FuelSimManager;
 import frc.robot.subsystems.climb.Climb;
 import frc.robot.subsystems.drive.Swerve;
@@ -378,25 +375,33 @@ public class Robot extends LoggedRobot {
     public void configureStateTriggers() {
         if (Constants.CURRENT_MODE == Constants.RobotMode.REAL) {
             autonomousEnabled.onTrue(
-                    Commands.sequence(
-                            Commands.parallel(
-                                    hood.home(),
-                                    intakeSlide.home()
+                    Commands.parallel(
+                            Commands.sequence(
+                                    intakeSlide.home(),
+                                    robotCommands.manualIntake()
                             ),
-                            Commands.parallel(
-                                    intakeSlide.setGoal(IntakeSlide.Goal.INTAKE),
-                                    intakeRoller.setGoal(IntakeRoller.Goal.INTAKE)
+                            Commands.sequence(
+                                    hood.home(),
+                                    superstructure.setGoal(Superstructure.Goal.TRACKING)
                             )
                     )
             );
 
             teleopEnabled.onTrue(
                     Commands.parallel(
+                            hood.home()
+                                    .onlyIf(() -> !hood.isHomed()),
                             intakeSlide.home()
-                                    .onlyIf(() -> !intakeSlide.isHomed())
-                                    .withName("IntakeSlideHome"),
-                            intakeRoller.setGoal(IntakeRoller.Goal.INTAKE),
-                            robotCommands.manualUnclimb()
+                                    .onlyIf(() -> !intakeSlide.isHomed()),
+                            Commands.sequence(
+                                    Commands.sequence(
+                                            climb.setGoal(Climb.Goal.EXTEND),
+                                            Commands.waitUntil(() -> !swerve.getPose().equals(FieldConstants.getClimbTarget())),
+                                            climb.setGoal(Climb.Goal.STOW)
+                                    ).onlyIf(climb::isExtended),
+                                    Commands.waitUntil(climb.atSetpoint.and(intakeSlide::isHomed)),
+                                    robotCommands.manualIntake()
+                            )
                     )
             );
         }

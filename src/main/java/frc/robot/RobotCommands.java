@@ -126,10 +126,7 @@ public class RobotCommands {
 
     public Command manualUnclimb() {
         return Commands.parallel(
-                Commands.sequence(
-                        Commands.waitUntil(climb.atSetpoint),
-                        superstructure.setGoal(Superstructure.Goal.TRACKING)
-                ),
+                superstructure.setGoal(Superstructure.Goal.TRACKING),
                 climb.setGoal(Climb.Goal.STOW)
         ).withName("Manual Unclimb");
     }

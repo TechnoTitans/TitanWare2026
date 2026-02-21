@@ -24,9 +24,9 @@ public class IntakeSlide extends SubsystemBase {
     private final HardwareConstants.IntakeSlideConstants constants;
 
     private final IntakeSlideIO intakeSlideIO;
-    private final IntakeSlideIOInputsAutoLogged inputs;
+    private final IntakeSlideIOInputsAutoLogged inputs = new IntakeSlideIOInputsAutoLogged();
 
-    private Goal desiredGoal = Goal.STOW;
+    private Goal desiredGoal = Goal.HOMING;
     private Goal currentGoal = desiredGoal;
 
     //TODO: Need to implement
@@ -35,10 +35,21 @@ public class IntakeSlide extends SubsystemBase {
     public final Trigger atSlideSetpoint = new Trigger(this::atSlidePositionSetpoint);
     public final Trigger atSlideLowerLimit = new Trigger(this::atSlideLowerLimit);
     public final Trigger atSlideUpperLimit = new Trigger(this::atSlideUpperLimit);
+    private final Trigger isAboveHomingCurrent = new Trigger(() -> currentDebouncer.calculate(Math.abs(
+            inputs.masterTorqueCurrentAmps) >= HardstopCurrentThresholdAmps
+            && Math.abs(inputs.followerTorqueCurrentAmps) >= HardstopCurrentThresholdAmps
+    ));
+    private final Trigger shouldUseSoftMode = new Trigger(() -> currentGoal == Goal.INTAKE && atSlideSetpoint.getAsBoolean())
+            .onTrue(
+                    Commands.runOnce(() -> this.controlMode = ControlMode.SOFT)
+            ).onFalse(
+                    Commands.runOnce(() -> this.controlMode = ControlMode.HARD)
+            );
 
     private boolean isHomed = false;
 
     public enum Goal {
+        HOMING(0),
         STOW(0),
         INTAKE(3.8);
 
@@ -54,8 +65,8 @@ public class IntakeSlide extends SubsystemBase {
     }
 
     public enum ControlMode {
-        HARD,
-        SOFT
+        SOFT,
+        HARD
     }
 
     public IntakeSlide(final Constants.RobotMode mode, final HardwareConstants.IntakeSlideConstants constants) {
@@ -66,8 +77,6 @@ public class IntakeSlide extends SubsystemBase {
             case SIM -> new IntakeSlideIOSim(constants);
             case REPLAY, DISABLED -> new IntakeSlideIO() {};
         };
-
-        this.inputs = new IntakeSlideIOInputsAutoLogged();
     }
 
     @Override
@@ -79,8 +88,8 @@ public class IntakeSlide extends SubsystemBase {
 
         if (desiredGoal != currentGoal) {
             switch (controlMode) {
+                case SOFT -> intakeSlideIO.holdSlidePosition(desiredGoal.getSlideGoalRotations());
                 case HARD -> intakeSlideIO.toSlidePosition(desiredGoal.getSlideGoalRotations());
-                case SOFT -> intakeSlideIO.toSlidePosition(desiredGoal.getSlideGoalRotations());
             }
             this.currentGoal = desiredGoal;
         }
@@ -90,17 +99,13 @@ public class IntakeSlide extends SubsystemBase {
         Logger.recordOutput(LogKey + "/DesiredGoal/SlidePositionRots", desiredGoal.getSlideGoalRotations());
 
         Logger.recordOutput(LogKey + "/ControlMode", controlMode);
+        Logger.recordOutput(LogKey + "/IsHomed", isHomed);
 
         Logger.recordOutput(LogKey + "/Triggers/AtPositionSetpoint", atSlidePositionSetpoint());
         Logger.recordOutput(LogKey + "/Triggers/AtSlideLowerLimit", atSlideLowerLimit());
         Logger.recordOutput(LogKey + "/Triggers/AtSlideUpperLimit", atSlideUpperLimit());
-        //TODO: Could be named better
-        Logger.recordOutput(LogKey + "/Triggers/AboveHomingCurrent",
-                currentDebouncer.calculate(Math.abs(
-                        inputs.masterTorqueCurrentAmps) >= HardstopCurrentThresholdAmps
-                        && Math.abs(inputs.followerTorqueCurrentAmps) >= HardstopCurrentThresholdAmps
-                )
-        );
+        Logger.recordOutput(LogKey + "/Triggers/IsAboveHomingCurrent", isAboveHomingCurrent);
+        Logger.recordOutput(LogKey + "/Triggers/ShouldUseSoftMode", shouldUseSoftMode);
 
         Logger.recordOutput(
                 LogKey + "/PeriodicIOPeriodMs",
@@ -111,18 +116,12 @@ public class IntakeSlide extends SubsystemBase {
     public Command home() {
         return Commands.sequence(
                 Commands.runOnce(intakeSlideIO::home),
-                Commands.waitUntil(
-                        () -> currentDebouncer.calculate(Math.abs(
-                                inputs.masterTorqueCurrentAmps) >= HardstopCurrentThresholdAmps
-                                && Math.abs(inputs.followerTorqueCurrentAmps) >= HardstopCurrentThresholdAmps
-                        )
-                ),
+                Commands.waitUntil(isAboveHomingCurrent),
                 Commands.runOnce(() -> {
                             intakeSlideIO.zeroMotors();
                             this.isHomed = true;
                         }
-                ),
-                setGoal(Goal.INTAKE)
+                )
         );
     }
 
