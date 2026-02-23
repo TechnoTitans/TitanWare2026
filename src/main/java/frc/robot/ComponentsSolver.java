@@ -58,7 +58,7 @@ public class ComponentsSolver {
                                 hoodRotationSupplier.get().unaryMinus().plus(SimConstants.Hood.ZEROED_POSITION_TO_HORIZONTAL).getRadians(),
                                 0,
                                 0
-                        ).rotateBy(SimConstants.Turret.ROBOT_TO_TURRET_TRANSFORM_3D.getRotation())
+                        )
                 )
         );
 

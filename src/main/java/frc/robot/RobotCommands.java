@@ -83,7 +83,11 @@ public class RobotCommands {
     public Command shootWhileMoving() {
         return Commands.parallel(
                         superstructure.toGoal(Superstructure.Goal.SHOOTING),
-                        feeder.toGoal(Feeder.Goal.FEED),
+                        Commands.repeatingSequence(
+                                Commands.waitUntil(superstructure.atSuperstructureSetpoint),
+                                feeder.toGoal(Feeder.Goal.FEED)
+                                        .until(superstructure.atSuperstructureSetpoint.negate())
+                        ),
                         spindexer.toGoal(Spindexer.Goal.FEED),
                         Commands.runOnce(() -> SwerveSpeed.setSwerveSpeed(SwerveSpeed.Speeds.SHOOTING))
                 )

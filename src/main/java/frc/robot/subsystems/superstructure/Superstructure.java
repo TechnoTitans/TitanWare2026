@@ -34,8 +34,6 @@ public class Superstructure extends VirtualSubsystem {
 
     private final Supplier<ShotCalculationStructs.ShotCalculation> shotCalculationSupplier;
 
-    private double hoodTesting = 0.0;
-
     public enum Goal {
         CLIMB(Turret.Goal.CLIMB, Hood.Goal.CLIMB, Shooter.Goal.STOP, false),
         TRACKING(Turret.Goal.TRACKING, Hood.Goal.TRACKING, Shooter.Goal.STOP, true),
@@ -105,7 +103,7 @@ public class Superstructure extends VirtualSubsystem {
             final ShotCalculationStructs.ShotCalculation shotCalculation = shotCalculationSupplier.get();
 
             turret.updatePositionSetpoint(shotCalculation.desiredTurretRotation().getRotations());
-//            hood.updateDesiredHoodPosition(shotCalculation.hoodShooterCalculation().hoodRotation().getRotations());
+            hood.updateDesiredHoodPosition(shotCalculation.hoodShooterCalculation().hoodRotation().getRotations());
             shooter.updateVelocitySetpoint(shotCalculation.hoodShooterCalculation().flywheelVelocity());
         }
 
@@ -157,13 +155,5 @@ public class Superstructure extends VirtualSubsystem {
     public Command runGoal(final Supplier<Goal> goalSupplier) {
         return run(() -> setDesiredGoal(goalSupplier.get()))
                 .withName("RunGoal :" + goalSupplier.get());
-    }
-
-    public Command testHood() {
-        return runEnd(
-                () -> hood.updateDesiredHoodPosition(hoodTesting += 0.001),
-                () -> hood.updateDesiredHoodPosition(0)
-        )
-                .finallyDo(() -> hoodTesting = 0);
     }
 }

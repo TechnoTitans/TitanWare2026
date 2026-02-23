@@ -90,12 +90,12 @@ public class Robot extends LoggedRobot {
     );
 
     public final IntakeRoller intakeRoller = new IntakeRoller(
-            Constants.RobotMode.DISABLED,
+            Constants.CURRENT_MODE,
             HardwareConstants.INTAKE_ROLLER
     );
 
     public final IntakeSlide intakeSlide = new IntakeSlide(
-            Constants.RobotMode.DISABLED,
+            Constants.CURRENT_MODE,
             HardwareConstants.INTAKE_SLIDE
     );
 
@@ -126,7 +126,7 @@ public class Robot extends LoggedRobot {
     );
 
     public final Climb climb = new Climb(
-            Constants.RobotMode.DISABLED,
+            Constants.CURRENT_MODE,
             HardwareConstants.CLIMB
     );
 
@@ -389,19 +389,19 @@ public class Robot extends LoggedRobot {
 
             teleopEnabled.onTrue(
                     Commands.parallel(
-//                            hood.home()
-//                                    .onlyIf(() -> !hood.isHomed())
-//                            intakeSlide.home()
-//                                    .onlyIf(() -> !intakeSlide.isHomed()),
-//                            Commands.sequence(
-//                                    Commands.sequence(
-//                                            climb.setGoal(Climb.Goal.EXTEND),
-//                                            Commands.waitUntil(() -> !swerve.getPose().equals(FieldConstants.getClimbTarget())),
-//                                            climb.setGoal(Climb.Goal.STOW)
-//                                    ).onlyIf(climb::isExtended),
-//                                    Commands.waitUntil(climb.atSetpoint.and(intakeSlide::isHomed)),
-//                                    robotCommands.manualIntake()
-//                            )
+                            hood.home()
+                                    .onlyIf(() -> !hood.isHomed()),
+                            intakeSlide.home()
+                                    .onlyIf(() -> !intakeSlide.isHomed()),
+                            Commands.sequence(
+                                    Commands.sequence(
+                                            climb.setGoal(Climb.Goal.EXTEND),
+                                            Commands.waitUntil(() -> !swerve.getPose().equals(FieldConstants.getClimbTarget())),
+                                            climb.setGoal(Climb.Goal.STOW)
+                                    ).onlyIf(climb::isExtended),
+                                    Commands.waitUntil(climb.atSetpoint.and(intakeSlide::isHomed)),
+                                    robotCommands.manualIntake()
+                            )
                     )
             );
         }
@@ -421,7 +421,6 @@ public class Robot extends LoggedRobot {
                                 driverController.getHID(), GenericHID.RumbleType.kBothRumble, 0.5, 1
                         )
                 )
-
         );
 
         disabled.onTrue(swerve.stopCommand());

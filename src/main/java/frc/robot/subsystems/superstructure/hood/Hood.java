@@ -36,7 +36,6 @@ public class Hood extends SubsystemBase {
             inputs.hoodTorqueCurrentAmps) >= HardstopCurrentThresholdAmps
     ));
 
-
     private boolean isHomed;
 
     public enum Goal {
