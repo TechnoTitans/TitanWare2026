@@ -1,5 +1,7 @@
 package frc.robot.constants;
 
+import edu.wpi.first.math.util.Units;
+
 import java.util.HashMap;
 import java.util.Objects;
 
@@ -39,43 +41,37 @@ public class HardwareConstants {
     public static IntakeRollerConstants INTAKE_ROLLER = new IntakeRollerConstants(
             CANBus.RIO,
             14,
-            10
+            5.0 / 3
     );
 
     public record IntakeSlideConstants(
             CANBus CANBus,
             int masterMotorID,
             int followerMotorID,
-            int encoderID,
-            double encoderOffset,
             double slideGearing,
-            double gearPitchCircumferenceMeters,
             double upperLimitRots,
             double lowerLimitRots
     ) {}
 
     public static IntakeSlideConstants INTAKE_SLIDE = new IntakeSlideConstants(
-            CANBus.RIO,
+            CANBus.CANIVORE,
             15,
             16,
-            17,
-            0,
-            20,
-            0.1,
             10,
+            4,
             0
     );
 
     public record SpindexerConstants(
             CANBus CANBus,
             int motorID,
-            double rollerGearing
+            double wheelGearing
     ) {}
 
     public static SpindexerConstants SPINDEXER = new SpindexerConstants(
-            CANBus.RIO,
-            18,
-            10
+            CANBus.CANIVORE,
+            17,
+            2
     );
 
     public record FeederConstants(
@@ -86,16 +82,16 @@ public class HardwareConstants {
 
 
     public static FeederConstants FEEDER = new FeederConstants(
-            CANBus.RIO,
-            19,
-            30
+            CANBus.CANIVORE,
+            18,
+            3
     );
 
     public record TurretConstants (
             CANBus CANBus,
             int turretMotorID,
-            int leftEncoderID,
-            int rightEncoderID,
+            int smallEncoderID,
+            int largeEncoderID,
             double turretToMechanismGearing,
             int turretTooth,
             double leftEncoderGearing,
@@ -108,33 +104,31 @@ public class HardwareConstants {
 
     public static TurretConstants TURRET = new TurretConstants(
             CANBus.CANIVORE,
+            19,
             20,
             21,
-            22,
             24,
             80,
             13.0,
             17.0,
-            0,
-            0,
+            0.19,
+            0.15,
             0.5,
             -0.5
     );
-
     public record HoodConstants(
             CANBus CANBus,
             int motorID,
             double hoodGearing,
             double hoodUpperLimitRots,
             double hoodLowerLimitRots
-    ) {}
+    ){}
 
-    //TODO: Change numbers
     public static HoodConstants HOOD = new HoodConstants(
             CANBus.RIO,
-            23,
-            50,
-            0.25,
+            22,
+            102,
+            0.1103,
             0
     );
 
@@ -145,11 +139,28 @@ public class HardwareConstants {
             double gearing
     ) {}
 
-    //TODO: Change numbers
     public static ShooterConstants SHOOTER = new ShooterConstants(
             CANBus.RIO,
+            23,
             24,
-            25,
             2
+    );
+
+    public record ClimbConstants(
+            CANBus CANBus,
+            int motorID,
+            double climbGearing,
+            double upperLimitRots,
+            double lowerLimitRots,
+            double spoolDiameterMeters
+    ){}
+
+    public static final ClimbConstants CLIMB = new ClimbConstants(
+            CANBus.CANIVORE,
+            25,
+            48,
+            50.0,
+            0.0,
+            Units.inchesToMeters(1)
     );
 }

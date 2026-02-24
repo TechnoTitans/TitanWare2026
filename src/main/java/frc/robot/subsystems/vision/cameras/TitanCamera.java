@@ -4,16 +4,173 @@ import edu.wpi.first.math.MatBuilder;
 import edu.wpi.first.math.Nat;
 import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.geometry.Transform3d;
+import frc.robot.constants.Constants;
 import org.photonvision.PhotonCamera;
 import org.photonvision.PhotonPoseEstimator;
 import org.photonvision.simulation.SimCameraProperties;
 
 public enum TitanCamera {
-    PHOTON_CAMERA_APRILTAG(
-            "CAMERA_Apriltag",
-            Transform3d.kZero,
+    PHOTON_BL_APRILTAG(
+            "BL_AprilTag",
+            Constants.Vision.BACK_LEFT_CAMERA,
             new PhotonPoseEstimator.ConstrainedSolvepnpParams(false, 1),
             CameraProperties.SEE3CAM_24CUG,
+            1,
+            true,
+            new TitanCameraCalibration()
+                    .withCalibration(
+                            CameraProperties.Resolution.R1280x720,
+                            MatBuilder.fill(
+                                    Nat.N3(),
+                                    Nat.N3(),
+                                    // intrinsic
+                                    691.1847272,
+                                    0.0,
+                                    669.781416,
+                                    0.0,
+                                    691.0630782,
+                                    373.655306,
+                                    0.0,
+                                    0.0,
+                                    1.0
+                            ),
+                            VecBuilder.fill(
+                                    // distort
+                                    0.170009144,
+                                    -0.09435815026,
+                                    8.282499574E-6,
+                                    1.31427394E-4,
+                                    -0.002606170512,
+                                    0.5344905386,
+                                    -0.1168168982,
+                                    -0.0197253292
+                            )
+                    )
+                    .withCalibrationError(
+                            CameraProperties.Resolution.R1280x720,
+                            0.15223032073535464,
+                            0.06
+                    )
+                    .withFPS(
+                            CameraProperties.Resolution.R1280x720,
+                            60
+                    )
+                    .withLatency(
+                            CameraProperties.Resolution.R1280x720,
+                            7,
+                            20
+                    ),
+            false
+    ),
+    PHOTON_BR_APRILTAG(
+            "BR_AprilTag",
+            Constants.Vision.BACK_RIGHT_CAMERA,
+            new PhotonPoseEstimator.ConstrainedSolvepnpParams(false, 1),
+            CameraProperties.SEE3CAM_24CUG,
+            1,
+            true,
+            new TitanCameraCalibration()
+                    .withCalibration(
+                            CameraProperties.Resolution.R1280x720,
+                            MatBuilder.fill(
+                                    Nat.N3(),
+                                    Nat.N3(),
+                                    // intrinsic
+                                    691.1847272,
+                                    0.0,
+                                    669.781416,
+                                    0.0,
+                                    691.0630782,
+                                    373.655306,
+                                    0.0,
+                                    0.0,
+                                    1.0
+                            ),
+                            VecBuilder.fill(
+                                    // distort
+                                    0.170009144,
+                                    -0.09435815026,
+                                    8.282499574E-6,
+                                    1.31427394E-4,
+                                    -0.002606170512,
+                                    0.5344905386,
+                                    -0.1168168982,
+                                    -0.0197253292
+                            )
+                    )
+                    .withCalibrationError(
+                            CameraProperties.Resolution.R1280x720,
+                            0.15223032073535464,
+                            0.06
+                    )
+                    .withFPS(
+                            CameraProperties.Resolution.R1280x720,
+                            60
+                    )
+                    .withLatency(
+                            CameraProperties.Resolution.R1280x720,
+                            7,
+                            20
+                    ),
+            false
+    ),
+    PHOTON_BC_APRILTAG(
+            "BC_AprilTag",
+            Constants.Vision.BACK_CENTER_CAMERA,
+            new PhotonPoseEstimator.ConstrainedSolvepnpParams(false, 1),
+            CameraProperties.ARDUCAM_OV9281,
+            1,
+            true,
+            new TitanCameraCalibration()
+                    .withCalibration(
+                            CameraProperties.Resolution.R1280x720,
+                            MatBuilder.fill(
+                                    Nat.N3(),
+                                    Nat.N3(),
+                                    // intrinsic
+                                    691.1847272,
+                                    0.0,
+                                    669.781416,
+                                    0.0,
+                                    691.0630782,
+                                    373.655306,
+                                    0.0,
+                                    0.0,
+                                    1.0
+                            ),
+                            VecBuilder.fill(
+                                    // distort
+                                    0.170009144,
+                                    -0.09435815026,
+                                    8.282499574E-6,
+                                    1.31427394E-4,
+                                    -0.002606170512,
+                                    0.5344905386,
+                                    -0.1168168982,
+                                    -0.0197253292
+                            )
+                    )
+                    .withCalibrationError(
+                            CameraProperties.Resolution.R1280x720,
+                            0.15223032073535464,
+                            0.06
+                    )
+                    .withFPS(
+                            CameraProperties.Resolution.R1280x720,
+                            60
+                    )
+                    .withLatency(
+                            CameraProperties.Resolution.R1280x720,
+                            7,
+                            20
+                    ),
+            false
+    ),
+    PHOTON_FH_APRILTAG(
+            "FH_AprilTag",
+            Constants.Vision.FRONT_HOPPER_CAMERA,
+            new PhotonPoseEstimator.ConstrainedSolvepnpParams(false, 1),
+            CameraProperties.ARDUCAM_OV9281,
             1,
             true,
             new TitanCameraCalibration()

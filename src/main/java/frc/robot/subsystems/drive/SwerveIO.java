@@ -155,6 +155,7 @@ public interface SwerveIO {
         @SuppressWarnings("unused")
         public static final SwerveDriveStateStruct struct = new SwerveDriveStateStruct();
         public static final SwerveDriveState EmptyState = new SwerveDriveState();
+
         static {
             EmptyState.ModuleStates = new SwerveModuleState[ModuleCount];
             EmptyState.ModuleTargets = new SwerveModuleState[ModuleCount];
@@ -165,12 +166,6 @@ public interface SwerveIO {
                 EmptyState.ModulePositions[i] = new SwerveModulePosition();
             }
         }
-
-        /**
-         * Call {@link Swerve#getPose()} instead.
-         * Directly accessing this {@link Pose2d} is nondeterministic in replay.
-         */
-        protected Pose2d Pose;
 
         private SwerveDriveState() {}
 
@@ -185,6 +180,14 @@ public interface SwerveIO {
             this.OdometryPeriod = state.OdometryPeriod;
             this.SuccessfulDaqs = state.SuccessfulDaqs;
             this.FailedDaqs = state.FailedDaqs;
+        }
+
+        /**
+         * Call {@link Swerve#getPose()} instead.
+         * Directly accessing this {@link Pose2d} is nondeterministic in replay.
+         */
+        protected Pose2d getPose() {
+            return Pose;
         }
     }
 
@@ -216,14 +219,14 @@ public interface SwerveIO {
         @Override
         public String getSchema() {
             return "Pose2d Pose; ChassisSpeeds Speeds; SwerveModuleState ModuleStates[4];"
-                + "SwerveModuleState ModuleTargets[4]; SwerveModulePosition ModulePositions[4];"
-                + "Rotation2d RawHeading; double Timestamp; double OdometryPeriod; int32 SuccessfulDaqs;"
-                + "int32 FailedDaqs";
+                    + "SwerveModuleState ModuleTargets[4]; SwerveModulePosition ModulePositions[4];"
+                    + "Rotation2d RawHeading; double Timestamp; double OdometryPeriod; int32 SuccessfulDaqs;"
+                    + "int32 FailedDaqs";
         }
 
         @Override
         public Struct<?>[] getNested() {
-            return new Struct<?>[] {
+            return new Struct<?>[]{
                     Pose2d.struct,
                     ChassisSpeeds.struct,
                     SwerveModuleState.struct,
@@ -264,7 +267,7 @@ public interface SwerveIO {
 
         @Override
         public void pack(final ByteBuffer bb, final SwerveDriveState state) {
-            Pose2d.struct.pack(bb, state.Pose);
+            Pose2d.struct.pack(bb, state.getPose());
             ChassisSpeeds.struct.pack(bb, state.Speeds);
 
             for (int i = 0; i < ModuleCount; i++) {

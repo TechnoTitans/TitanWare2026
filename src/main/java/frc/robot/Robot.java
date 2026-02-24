@@ -16,18 +16,21 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
-import frc.robot.constants.Constants;
-import frc.robot.constants.FieldConstants;
-import frc.robot.constants.HardwareConstants;
-import frc.robot.constants.RobotMap;
+import frc.robot.auto.AutoChooser;
+import frc.robot.auto.AutoOption;
+import frc.robot.auto.Autos;
+import frc.robot.constants.*;
+import frc.robot.sim.fuel.FuelSimManager;
+import frc.robot.subsystems.climb.Climb;
 import frc.robot.subsystems.drive.Swerve;
 import frc.robot.subsystems.drive.constants.SwerveConstants;
+import frc.robot.subsystems.feeder.Feeder;
 import frc.robot.subsystems.intake.roller.IntakeRoller;
 import frc.robot.subsystems.intake.slide.IntakeSlide;
 import frc.robot.subsystems.spindexer.Spindexer;
-import frc.robot.subsystems.superstructure.ShotCalculator;
 import frc.robot.subsystems.superstructure.Superstructure;
-import frc.robot.subsystems.superstructure.feeder.Feeder;
+import frc.robot.subsystems.superstructure.calculator.ShotCalculationStructs;
+import frc.robot.subsystems.superstructure.calculator.ShotCalculator;
 import frc.robot.subsystems.superstructure.hood.Hood;
 import frc.robot.subsystems.superstructure.shooter.Shooter;
 import frc.robot.subsystems.superstructure.turret.Turret;
@@ -35,9 +38,9 @@ import frc.robot.subsystems.vision.PhotonVision;
 import frc.robot.utils.closeables.ToClose;
 import frc.robot.utils.ctre.RefreshAll;
 import frc.robot.utils.logging.LoggedCommandScheduler;
-import frc.robot.utils.solver.ComponentsSolver;
 import frc.robot.utils.subsystems.VirtualSubsystem;
 import frc.robot.utils.teleop.ControllerUtils;
+import frc.robot.utils.teleop.SwerveSpeed;
 import org.littletonrobotics.junction.LogFileUtil;
 import org.littletonrobotics.junction.LoggedRobot;
 import org.littletonrobotics.junction.Logger;
@@ -48,6 +51,7 @@ import org.littletonrobotics.junction.wpilog.WPILOGWriter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.Arrays;
 import java.util.Optional;
 import java.util.function.BooleanSupplier;
 import java.util.function.Supplier;
@@ -100,14 +104,15 @@ public class Robot extends LoggedRobot {
             HardwareConstants.FEEDER
     );
 
-    public final Turret turret = new Turret(
-            Constants.CURRENT_MODE,
-            HardwareConstants.TURRET
-    );
-
     public final Hood hood = new Hood(
             Constants.CURRENT_MODE,
             HardwareConstants.HOOD
+    );
+
+    public final Turret turret = new Turret(
+            Constants.CURRENT_MODE,
+            HardwareConstants.TURRET,
+            () -> swerve.getFieldRelativeSpeeds().omegaRadiansPerSecond
     );
 
     public final Shooter shooter = new Shooter(
@@ -120,19 +125,23 @@ public class Robot extends LoggedRobot {
             HardwareConstants.SPINDEXER
     );
 
-    private final Supplier<ShotCalculator.ShotCalculation> shotCalculationSupplier =
+    public final Climb climb = new Climb(
+            Constants.RobotMode.DISABLED,
+            HardwareConstants.CLIMB
+    );
+
+    //TODO: Change to Moving when SOTM is implemented
+    private RobotCommands.ScoringMode scoringMode =
+            RobotCommands.ScoringMode.Stationary;
+
+    private final Supplier<ShotCalculationStructs.ShotCalculation> shotCalculationSupplier =
             () -> ShotCalculator.getShotCalculation(
                     swerve::getPose,
-                    swerve::getRobotRelativeSpeeds,
+                    () -> scoringMode,
                     swerve::getFieldRelativeSpeeds
             );
 
-    //TODO: Change to Moving when SOTM is implemented
-    private ShotCalculator.ScoringType scoringType =
-            ShotCalculator.ScoringType.Stationary;
-
     public final Superstructure superstructure = new Superstructure(
-            feeder,
             turret,
             hood,
             shooter,
@@ -142,7 +151,17 @@ public class Robot extends LoggedRobot {
     private final ComponentsSolver componentsSolver = new ComponentsSolver(
             turret::getTurretPosition,
             hood::getHoodPosition,
-            intakeSlide::getIntakeSlidePositionRots
+            intakeSlide::getIntakeSlidePositionRots,
+            climb::getExtensionMeters
+    );
+
+    private final FuelSimManager fuelSimManager = new FuelSimManager(
+            hood::getHoodPosition,
+            turret::getTurretPosition,
+            swerve::getPose,
+            swerve::getFieldRelativeSpeeds,
+            intakeRoller::isIntaking,
+            shooter::isShooting
     );
 
     private final RobotCommands robotCommands = new RobotCommands(
@@ -150,7 +169,24 @@ public class Robot extends LoggedRobot {
             intakeRoller,
             intakeSlide,
             superstructure,
-            spindexer
+            spindexer,
+            feeder,
+            climb
+    );
+
+    public final Autos autos = new Autos(
+            swerve,
+            superstructure,
+            photonVision,
+            robotCommands
+    );
+
+    private final AutoChooser autoChooser = new AutoChooser(
+            new AutoOption(
+                    "DoNothing",
+                    autos::doNothing,
+                    Constants.CompetitionType.COMPETITION
+            )
     );
 
     public final CommandXboxController driverController = new CommandXboxController(RobotMap.MainController);
@@ -170,9 +206,14 @@ public class Robot extends LoggedRobot {
     private final Trigger disabled = RobotModeTriggers.disabled();
     public final Trigger autonomousEnabled = RobotModeTriggers.autonomous();
     public final Trigger teleopEnabled = RobotModeTriggers.teleop();
-    private final Trigger endgameTrigger = new Trigger(() -> DriverStation.getMatchTime() <= 20)
+    private final Trigger endgameTrigger = new Trigger(() -> DriverStation.getMatchTime() <= 30)
             .and(DriverStation::isFMSAttached)
             .and(RobotModeTriggers.teleop());
+
+    private final Timer shiftTimer = new Timer();
+    private final Trigger firstShiftStartTrigger = new Trigger(() -> DriverStation.getMatchTime() == 130);
+    private final Trigger shiftRumbleTrigger = new Trigger(() -> shiftTimer.hasElapsed(23));
+    private final Trigger shiftChangeTrigger = new Trigger(() -> shiftTimer.hasElapsed(25));
 
 
     @Override
@@ -225,14 +266,14 @@ public class Robot extends LoggedRobot {
                 // log to working directory when running sim
                 // setPath doesn't seem to work in sim (path is ignored and hoot files are always sent to /logs)
 //                SignalLogger.setPath("/logs");
-                Logger.addDataReceiver(new WPILOGWriter(""));
+                Logger.addDataReceiver(new WPILOGWriter("logs"));
                 Logger.addDataReceiver(new NT4Publisher());
 
                 DriverStationSim.setAllianceStationId(AllianceStationID.Blue1);
                 DriverStationSim.notifyNewData();
 
                 autonomousEnabled.whileTrue(
-                        Commands.waitSeconds(15)
+                        Commands.waitSeconds(20)
                                 .andThen(() -> {
                                     DriverStationSim.setEnabled(false);
                                     DriverStationSim.notifyNewData();
@@ -268,11 +309,16 @@ public class Robot extends LoggedRobot {
         Logger.start();
 
         Logger.recordOutput("EmptyPose", Pose3d.kZero);
+        shiftTimer.start();
+
+        final Pose3d[] emptyPoseArray = new Pose3d[6];
+        Arrays.fill(emptyPoseArray, Pose3d.kZero);
+        Logger.recordOutput("EmptyPoses", emptyPoseArray);
     }
 
     @Override
     public void robotPeriodic() {
-        Threads.setCurrentThreadPriority(true, 99);
+//        Threads.setCurrentThreadPriority(true, 99);
         RefreshAll.refreshAll();
 
         CommandScheduler.getInstance().run();
@@ -283,11 +329,12 @@ public class Robot extends LoggedRobot {
 
         LoggedCommandScheduler.periodic();
         Logger.recordOutput("ShotCalculation", shotCalculationSupplier.get());
-        Logger.recordOutput("ScoringType", scoringType);
+        Logger.recordOutput("ScoringMode", scoringMode);
+
         componentsSolver.periodic();
         robotCommands.periodic();
 
-        Threads.setCurrentThreadPriority(false, 10);
+//        Threads.setCurrentThreadPriority(false, 10);
     }
 
     @Override
@@ -318,46 +365,101 @@ public class Robot extends LoggedRobot {
     }
 
     @Override
-    public void simulationPeriodic() {}
+    public void simulationPeriodic() {
+        if (SimConstants.FuelSimEnabled) {
+            fuelSimManager.periodic();
+        }
+    }
 
     public void configureStateTriggers() {
-        autonomousEnabled.onTrue(hood.home());
+        if (Constants.CURRENT_MODE == Constants.RobotMode.REAL) {
+            autonomousEnabled.onTrue(
+                    Commands.parallel(
+                            Commands.sequence(
+                                    intakeSlide.home(),
+                                    robotCommands.deployIntake()
+                            ),
+                            Commands.sequence(
+                                    hood.home(),
+                                    superstructure.setGoal(Superstructure.Goal.TRACKING)
+                            )
+                    )
+            );
 
-        teleopEnabled.and(() -> Constants.CURRENT_MODE != Constants.RobotMode.SIM).and(hood::isHomed).negate().onTrue(hood.home());
+            teleopEnabled.onTrue(
+                    Commands.parallel(
+                            hood.home()
+                                    .onlyIf(() -> !hood.isHomed()),
+                            intakeSlide.home()
+                                    .onlyIf(() -> !intakeSlide.isHomed()),
+                            Commands.sequence(
+                                    Commands.sequence(
+                                            climb.setGoal(Climb.Goal.EXTEND),
+                                            Commands.waitUntil(() -> !swerve.getPose().equals(FieldConstants.getClimbTarget())),
+                                            climb.setGoal(Climb.Goal.STOW)
+                                    ).onlyIf(climb::isExtended),
+                                    Commands.waitUntil(climb.atSetpoint.and(intakeSlide::isHomed)),
+                                    robotCommands.deployIntake()
+                            )
+                    )
+            );
+        }
 
+        firstShiftStartTrigger.onTrue(Commands.runOnce(shiftTimer::start));
 
-        endgameTrigger.onTrue(ControllerUtils.rumbleForDurationCommand(
+        shiftRumbleTrigger.onTrue(ControllerUtils.rumbleForDurationCommand(
                 driverController.getHID(), GenericHID.RumbleType.kBothRumble, 0.5, 1)
+        );
+
+        shiftChangeTrigger.onTrue(Commands.runOnce(shiftTimer::reset));
+
+        endgameTrigger.onTrue(
+                Commands.parallel(
+                        Commands.runOnce(shiftTimer::stop),
+                        ControllerUtils.rumbleForDurationCommand(
+                                driverController.getHID(), GenericHID.RumbleType.kBothRumble, 0.5, 1
+                        )
+                )
         );
 
         disabled.onTrue(swerve.stopCommand());
     }
 
     public void configureAutos() {
-
+        autonomousEnabled.whileTrue(Commands.deferredProxy(() -> autoChooser.getSelected().cmd()));
     }
 
     public void configureButtonBindings(final EventLoop teleopEventLoop) {
-        driverController.leftTrigger(0.5, teleopEventLoop).whileTrue(
-                robotCommands.intake()
-        );
+        driverController.rightBumper(teleopEventLoop)
+                .whileTrue(Commands.startEnd(
+                        () -> SwerveSpeed.setSwerveSpeed(SwerveSpeed.Speeds.FAST),
+                        () -> SwerveSpeed.setSwerveSpeed(SwerveSpeed.Speeds.NORMAL)
+                ).withName("SwerveSpeedFast"));
 
-        driverController.rightTrigger(0.5, teleopEventLoop).whileTrue(
-                robotCommands.shootWhileMoving()
-        );
+        driverController.leftBumper(teleopEventLoop)
+                .whileTrue(Commands.startEnd(
+                        () -> SwerveSpeed.setSwerveSpeed(SwerveSpeed.Speeds.SLOW),
+                        () -> SwerveSpeed.setSwerveSpeed(SwerveSpeed.Speeds.NORMAL)
+                ).withName("SwerveSpeedSlow"));
 
+        driverController.rightTrigger(0.5, teleopEventLoop).whileTrue(robotCommands.shootWhileMoving());
+
+        driverController.y().whileTrue(robotCommands.climb());
+
+        driverController.a().onTrue(robotCommands.unclimb());
+
+        driverController.b().whileTrue(superstructure.testingHood());
+
+        coController.y(teleopEventLoop).onTrue(robotCommands.deployIntake());
+
+        coController.a(teleopEventLoop).onTrue(robotCommands.stowIntake());
+
+        //TODO: Change scoring mode so that stationary is used
         coController.rightTrigger(0.5, teleopEventLoop).whileTrue(
-                robotCommands.shootStationary(
-                        FieldConstants.Hub.hubCenterPoint::getAngle
-                )
-        );
-
-        coController.povDown().onTrue(
-                Commands.runOnce(() -> this.scoringType = ShotCalculator.ScoringType.Stationary)
-        );
-
-        coController.povDown().onTrue(
-                Commands.run(() -> this.scoringType = ShotCalculator.ScoringType.Moving)
+                Commands.parallel(
+                        Commands.runOnce(() -> scoringMode = RobotCommands.ScoringMode.Stationary),
+                        robotCommands.shootStationary()
+                ).finallyDo(() -> scoringMode = RobotCommands.ScoringMode.Moving)
         );
     }
 }

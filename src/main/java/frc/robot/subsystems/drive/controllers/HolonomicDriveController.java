@@ -202,7 +202,7 @@ public class HolonomicDriveController {
      * Calculates the next output of the holonomic drive controller
      *
      * @param currentPose The current {@link Pose2d}
-     * @param targetPose The target {@link Pose2d}
+     * @param targetPose  The target {@link Pose2d}
      * @return The next output of the holonomic drive controller
      */
     public ChassisSpeeds calculate(final Pose2d currentPose, final Pose2d targetPose) {

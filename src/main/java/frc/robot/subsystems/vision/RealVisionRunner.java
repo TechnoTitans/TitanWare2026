@@ -180,10 +180,12 @@ public class RealVisionRunner implements PhotonVisionRunner {
 
     /**
      * Reset the simulated robot {@link Pose3d}.
+     *
      * @param robotPose the new robot {@link Pose3d}
      */
     @Override
-    public void resetRobotPose(final Pose3d robotPose) {}
+    public void resetRobotPose(final Pose3d robotPose) {
+    }
 
     @Override
     public Map<VisionIOApriltagReal, VisionIO.VisionIOInputs> getApriltagVisionIOInputsMap() {

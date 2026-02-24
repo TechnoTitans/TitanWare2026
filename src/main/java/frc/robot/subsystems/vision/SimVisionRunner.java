@@ -119,7 +119,7 @@ public class SimVisionRunner implements PhotonVisionRunner {
             inputs.stdDevFactor = stdDevFactor;
             inputs.robotToCamera = robotToCamera;
 
-            inputs.resolutionWidthPx  = resolutionWidthPx;
+            inputs.resolutionWidthPx = resolutionWidthPx;
             inputs.resolutionHeightPx = resolutionHeightPx;
 
             inputs.cameraMatrix = photonCamera.getCameraMatrix().orElse(EmptyCameraMatrix);
@@ -235,6 +235,7 @@ public class SimVisionRunner implements PhotonVisionRunner {
 
     /**
      * Reset the simulated robot {@link Pose3d}.
+     *
      * @param robotPose the new robot {@link Pose3d}
      */
     @Override

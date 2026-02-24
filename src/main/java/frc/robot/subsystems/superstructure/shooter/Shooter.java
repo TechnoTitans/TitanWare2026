@@ -3,7 +3,6 @@ package frc.robot.subsystems.superstructure.shooter;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.Timer;
-import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.constants.Constants;
@@ -20,7 +19,7 @@ public class Shooter extends SubsystemBase {
     private Goal desiredGoal = Goal.STOP;
     private Goal currentGoal = desiredGoal;
 
-    public final Trigger atVelocitySetpoint = new Trigger(this::atVelocitySetpoint);
+    public final Trigger atSetpoint = new Trigger(this::atVelocitySetpoint);
 
     public enum Goal {
         STOP(0, false),
@@ -44,12 +43,12 @@ public class Shooter extends SubsystemBase {
             }
         }
     }
+
     public Shooter(final Constants.RobotMode mode, final HardwareConstants.ShooterConstants constants) {
         this.shooterIO = switch (mode) {
             case REAL -> new ShooterIOReal(constants);
             case SIM -> new ShooterIOSim(constants);
-            case REPLAY, DISABLED -> new ShooterIO() {
-            };
+            case REPLAY, DISABLED -> new ShooterIO() {};
         };
 
         this.inputs = new ShooterIOInputsAutoLogged();
@@ -60,6 +59,7 @@ public class Shooter extends SubsystemBase {
 
     @Override
     public void periodic() {
+        //TODO: Uncapitalize all subsystems
         final double ShooterPeriodicUpdateStart = Timer.getFPGATimestamp();
 
         shooterIO.updateInputs(inputs);
@@ -85,6 +85,10 @@ public class Shooter extends SubsystemBase {
         );
     }
 
+    public boolean isShooting() {
+        return atSetpoint.getAsBoolean() && currentGoal == Goal.TRACKING;
+    }
+
     public void setGoal(final Goal desiredGoal) {
         this.desiredGoal = desiredGoal;
         Logger.recordOutput(LogKey + "/CurrentGoal", currentGoal.toString());
@@ -92,7 +96,7 @@ public class Shooter extends SubsystemBase {
     }
 
     public void updateVelocitySetpoint(final double desiredShooterVelocity) {
-        this.desiredGoal.changeShooterVelocityGoal(desiredShooterVelocity);
+        desiredGoal.changeShooterVelocityGoal(desiredShooterVelocity);
     }
 
     private boolean atVelocitySetpoint() {

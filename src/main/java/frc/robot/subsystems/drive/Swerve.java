@@ -1,5 +1,6 @@
 package frc.robot.subsystems.drive;
 
+import choreo.trajectory.SwerveSample;
 import com.ctre.phoenix6.SignalLogger;
 import com.ctre.phoenix6.StatusCode;
 import com.ctre.phoenix6.configs.CANcoderConfiguration;
@@ -35,6 +36,7 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.Robot;
+import frc.robot.auto.Autos;
 import frc.robot.constants.Constants;
 import frc.robot.subsystems.drive.SwerveIO.SwerveDriveState;
 import frc.robot.subsystems.drive.constants.SwerveConstants;
@@ -173,7 +175,7 @@ public class Swerve extends SubsystemBase {
         this.replayPoseEstimator = new SwerveDrivePoseEstimator(
                 kinematics,
                 Rotation2d.kZero,
-                new SwerveModulePosition[] {
+                new SwerveModulePosition[]{
                         new SwerveModulePosition(),
                         new SwerveModulePosition(),
                         new SwerveModulePosition(),
@@ -280,7 +282,7 @@ public class Swerve extends SubsystemBase {
             final SwerveDriveState[] states = inputs.states;
             if (!replayPoseEstimatorReset && states.length != 0) {
                 final SwerveDriveState oldestState = states[0];
-                replayPoseEstimator.resetPosition(oldestState.RawHeading, oldestState.ModulePositions, oldestState.Pose);
+                replayPoseEstimator.resetPosition(oldestState.RawHeading, oldestState.ModulePositions, oldestState.getPose());
                 replayPoseEstimatorReset = true;
             }
 
@@ -302,7 +304,7 @@ public class Swerve extends SubsystemBase {
             double updatePeriodSeconds = 0;
             for (final SwerveDriveState state : inputs.states) {
                 updatePeriodSeconds = odometryPeriodFilter.calculate(state.OdometryPeriod);
-                poseBuffer.addSample(currentTimeToFPGATime(state.Timestamp), state.Pose);
+                poseBuffer.addSample(currentTimeToFPGATime(state.Timestamp), state.getPose());
             }
 
             odometryUpdatePeriodSeconds = updatePeriodSeconds;
@@ -338,8 +340,8 @@ public class Swerve extends SubsystemBase {
         final Pose2d robotPose = getPose();
         final ChassisSpeeds robotRelativeSpeeds = getRobotRelativeSpeeds();
 
-        final Transform2d diff = robotPose.minus(state().Pose);
-        Logger.recordOutput(LogKey + "/Diff", diff);
+        final Transform2d diff = robotPose.minus(state().getPose());
+        Logger.recordOutput("Diff", diff);
 
         Logger.recordOutput(
                 LogKey + "/LinearSpeedMetersPerSecond",
@@ -402,13 +404,14 @@ public class Swerve extends SubsystemBase {
 
     /**
      * Get the estimated {@link Pose2d} of the robot from the {@link SwerveDrivePoseEstimator}.
+     *
      * @return the estimated position of the robot, as a {@link Pose2d}
      */
     public Pose2d getPose() {
         if (isReplay()) {
             return replayPoseEstimator.getEstimatedPosition();
         }
-        return state().Pose;
+        return state().getPose();
     }
 
     public Optional<Pose2d> getPose(final double atTimestamp) {
@@ -451,6 +454,9 @@ public class Swerve extends SubsystemBase {
         return state().ModulePositions;
     }
 
+    /**
+     * Use {@link frc.robot.subsystems.vision.PhotonVision#resetPose(Pose2d)} instead.
+     */
     public void resetPose(final Pose2d pose) {
         if (isReplay()) {
             replayPoseEstimator.resetPose(pose);
@@ -655,33 +661,33 @@ public class Swerve extends SubsystemBase {
 
     public Command driveToPose(final Supplier<Pose2d> poseSupplier) {
         return Commands.sequence(
-                runOnce(() -> {
-                    holonomicControllerActive = true;
-                    holonomicPoseTarget = poseSupplier.get();
-                    holonomicDriveController.reset(getPose(), holonomicPoseTarget);
-                }),
-                run(() -> {
-                    holonomicPoseTarget = poseSupplier.get();
-                    drive(holonomicDriveController.calculate(getPose(), holonomicPoseTarget));
-                }).until(atHolonomicDrivePose),
-                runOnce(this::stop)
-        )
+                        runOnce(() -> {
+                            holonomicControllerActive = true;
+                            holonomicPoseTarget = poseSupplier.get();
+                            holonomicDriveController.reset(getPose(), holonomicPoseTarget);
+                        }),
+                        run(() -> {
+                            holonomicPoseTarget = poseSupplier.get();
+                            drive(holonomicDriveController.calculate(getPose(), holonomicPoseTarget));
+                        }).until(atHolonomicDrivePose),
+                        runOnce(this::stop)
+                )
                 .finallyDo(() -> holonomicControllerActive = false)
                 .withName("DriveToPose");
     }
 
     public Command runToPose(final Supplier<Pose2d> poseSupplier) {
         return Commands.sequence(
-                runOnce(() -> {
-                    holonomicControllerActive = true;
-                    holonomicPoseTarget = poseSupplier.get();
-                    holonomicDriveController.reset(getPose(), holonomicPoseTarget);
-                }),
-                run(() -> {
-                    holonomicPoseTarget = poseSupplier.get();
-                    drive(holonomicDriveController.calculate(getPose(), holonomicPoseTarget));
-                })
-        )
+                        runOnce(() -> {
+                            holonomicControllerActive = true;
+                            holonomicPoseTarget = poseSupplier.get();
+                            holonomicDriveController.reset(getPose(), holonomicPoseTarget);
+                        }),
+                        run(() -> {
+                            holonomicPoseTarget = poseSupplier.get();
+                            drive(holonomicDriveController.calculate(getPose(), holonomicPoseTarget));
+                        })
+                )
                 .finallyDo(() -> holonomicControllerActive = false)
                 .withName("RunToPose");
     }
@@ -881,28 +887,28 @@ public class Swerve extends SubsystemBase {
         );
     }
 
-//    public void followChoreoSample(final SwerveSample swerveSample) {
-//        final Pose2d currentPose = getPose();
-//        final ChassisSpeeds speeds = choreoController.calculate(currentPose, swerveSample);
-//
-//        Logger.recordOutput(Autos.LogKey + "/Timestamp", swerveSample.getTimestamp());
-//        Logger.recordOutput(Autos.LogKey + "/CurrentPose", currentPose);
-//        Logger.recordOutput(Autos.LogKey + "/TargetSpeeds", swerveSample.getChassisSpeeds());
-//        Logger.recordOutput(Autos.LogKey + "/TargetPose", swerveSample.getPose());
-//
-//        Logger.recordOutput(
-//                Autos.LogKey + "/TargetRotation",
-//                MathUtil.angleModulus(swerveSample.heading)
-//        );
-//
-//        Logger.recordOutput(
-//                Autos.LogKey + "/CurrentRotation",
-//                MathUtil.angleModulus(currentPose.getRotation().getRadians())
-//        );
-//
-////        drive(speeds, swerveSample.moduleForcesX(), swerveSample.moduleForcesY());
-//        drive(speeds);
-//    }
+    public void followChoreoSample(final SwerveSample swerveSample) {
+        final Pose2d currentPose = getPose();
+        final ChassisSpeeds speeds = choreoController.calculate(currentPose, swerveSample);
+
+        Logger.recordOutput(Autos.LogKey + "/Timestamp", swerveSample.getTimestamp());
+        Logger.recordOutput(Autos.LogKey + "/CurrentPose", currentPose);
+        Logger.recordOutput(Autos.LogKey + "/TargetSpeeds", swerveSample.getChassisSpeeds());
+        Logger.recordOutput(Autos.LogKey + "/TargetPose", swerveSample.getPose());
+
+        Logger.recordOutput(
+                Autos.LogKey + "/TargetRotation",
+                MathUtil.angleModulus(swerveSample.heading)
+        );
+
+        Logger.recordOutput(
+                Autos.LogKey + "/CurrentRotation",
+                MathUtil.angleModulus(currentPose.getRotation().getRadians())
+        );
+
+//        drive(speeds, swerveSample.moduleForcesX(), swerveSample.moduleForcesY());
+        drive(speeds);
+    }
 
     @SuppressWarnings("unused")
     public Command wheelRadiusCharacterization() {
@@ -974,8 +980,7 @@ public class Swerve extends SubsystemBase {
 
         public StatusCode apply(
                 final SwerveDrivetrain.SwerveControlParameters parameters,
-                final SwerveModule<?, ?, ?>... modulesToApply)
-        {
+                final SwerveModule<?, ?, ?>... modulesToApply) {
             for (final SwerveModule<?, ?, ?> swerveModule : modulesToApply) {
                 switch (swerveModule.getSteerClosedLoopOutputType()) {
                     case Voltage:
@@ -1015,8 +1020,7 @@ public class Swerve extends SubsystemBase {
 
         public StatusCode apply(
                 final SwerveDrivetrain.SwerveControlParameters parameters,
-                final SwerveModule<?, ?, ?>... modulesToApply)
-        {
+                final SwerveModule<?, ?, ?>... modulesToApply) {
             for (int i = 0; i < modulesToApply.length; ++i) {
                 final var angle = parameters.moduleLocations[i].getAngle().plus(Rotation2d.kCCW_90deg);
                 final var swerveModule = modulesToApply[i];

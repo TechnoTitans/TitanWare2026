@@ -189,6 +189,7 @@ public class ShooterIOSim implements ShooterIO {
         inputs.followerTorqueCurrentAmps = followerTorqueCurrent.getValueAsDouble();
         inputs.followerTempCelsius = followerDeviceTemp.getValueAsDouble();
     }
+
     @Override
     public void toVelocity(final double velocityRotsPerSec) {
         masterMotor.setControl(velocityTorqueCurrentFOC.withVelocity(velocityRotsPerSec));

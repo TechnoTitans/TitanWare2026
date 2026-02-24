@@ -1,4 +1,4 @@
-package frc.robot.subsystems.superstructure.feeder;
+package frc.robot.subsystems.feeder;
 
 import org.littletonrobotics.junction.AutoLog;
 
@@ -9,8 +9,9 @@ public interface FeederIO {
         public double rollerVelocityRotsPerSec = 0.0;
         public double rollerVoltage = 0.0;
         public double rollerTorqueCurrentAmps = 0.0;
-        public double rollerTemperatureCelsius = 0.0;
+        public double rollerTempCelsius = 0.0;
     }
+
     default void updateInputs(final FeederIOInputs inputs) {}
 
     default void config() {}

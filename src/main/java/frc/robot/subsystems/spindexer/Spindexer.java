@@ -4,6 +4,7 @@ import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.constants.Constants;
 import frc.robot.constants.HardwareConstants;
@@ -21,17 +22,16 @@ public class Spindexer extends SubsystemBase {
 
     public enum Goal {
         STOP(0),
-        INTAKE(4),
-        FEED(5);
+        FEED(50);
 
-        private final double rollerVelocitySetpoint;
+        private final double wheelVelocitySetpoint;
 
-        Goal(final double rollerVelocitySetpoint) {
-            this.rollerVelocitySetpoint = rollerVelocitySetpoint;
+        Goal(final double wheelVelocitySetpoint) {
+            this.wheelVelocitySetpoint = wheelVelocitySetpoint;
         }
 
-        public double getRollerVelocitySetpoint() {
-            return rollerVelocitySetpoint;
+        public double getWheelVelocitySetpoint() {
+            return wheelVelocitySetpoint;
         }
     }
 
@@ -46,46 +46,52 @@ public class Spindexer extends SubsystemBase {
 
         spindexerIO.config();
 
-        spindexerIO.toWheelVelocity(desiredGoal.getRollerVelocitySetpoint());
+        spindexerIO.toWheelVelocity(desiredGoal.getWheelVelocitySetpoint());
     }
 
     @Override
     public void periodic() {
-        final double HopperPeriodicFPGATime = Timer.getFPGATimestamp();
+        final double SpindexerPeriodicFPGATime = Timer.getFPGATimestamp();
 
         spindexerIO.updateInputs(inputs);
         Logger.processInputs(LogKey, inputs);
 
         if (desiredGoal != currentGoal) {
-            spindexerIO.toWheelVelocity(desiredGoal.getRollerVelocitySetpoint());
-            this.currentGoal = desiredGoal;
+            spindexerIO.toWheelVelocity(desiredGoal.getWheelVelocitySetpoint());
+            currentGoal = desiredGoal;
         }
 
         Logger.recordOutput(LogKey + "/CurrentGoal", currentGoal.toString());
         Logger.recordOutput(LogKey + "/DesiredGoal", desiredGoal.toString());
-        Logger.recordOutput(LogKey + "/DesiredGoal/HopperVelocityRotsPerSec", desiredGoal.getRollerVelocitySetpoint());
+        Logger.recordOutput(LogKey + "/DesiredGoal/WheelVelocityRotsPerSec", desiredGoal.getWheelVelocitySetpoint());
         Logger.recordOutput(LogKey + "/Triggers/AtVelocitySetpoint", atVelocitySetpoint());
 
         Logger.recordOutput(
                 LogKey + "/PeriodicIOPeriodMs",
-                Units.secondsToMilliseconds(Timer.getFPGATimestamp() - HopperPeriodicFPGATime)
+                Units.secondsToMilliseconds(Timer.getFPGATimestamp() - SpindexerPeriodicFPGATime)
         );
     }
 
-    public Command toGoal(final Goal desiredGoal) {
+    public Command toGoal(final Goal goal) {
         return runEnd(
-                () -> setGoal(desiredGoal),
-                () -> setGoal(Goal.STOP)
-        ).withName("ToGoal");
+                () -> setDesiredGoal(goal),
+                () -> setDesiredGoal(Goal.STOP)
+        ).withName("ToGoal: " + goal);
     }
 
-    public void setGoal(final Goal desiredGoal) {
+    public Command setGoal(final Goal goal) {
+        return Commands.runOnce(
+                () -> setDesiredGoal(goal)
+        ).withName("SetGoal:" + goal);
+    }
+
+    private void setDesiredGoal(final Goal desiredGoal) {
         this.desiredGoal = desiredGoal;
         Logger.recordOutput(LogKey + "/CurrentGoal", currentGoal.toString());
         Logger.recordOutput(LogKey + "/DesiredGoal", desiredGoal.toString());
     }
 
     private boolean atVelocitySetpoint() {
-        return MathUtil.isNear(desiredGoal.rollerVelocitySetpoint, inputs.wheelVelocityRotsPerSec, VelocityToleranceRotsPerSec);
+        return MathUtil.isNear(desiredGoal.wheelVelocitySetpoint, inputs.wheelVelocityRotsPerSec, VelocityToleranceRotsPerSec);
     }
 }

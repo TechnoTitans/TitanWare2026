@@ -39,6 +39,7 @@ public class PhotonVision extends VirtualSubsystem {
     private final double maxAngularVelocity = SwerveConstants.Config.maxAngularVelocityRadsPerSec();
 
     public static final AprilTagFieldLayout apriltagFieldLayout;
+
     static {
         try {
             apriltagFieldLayout = new AprilTagFieldLayout(
@@ -80,7 +81,10 @@ public class PhotonVision extends VirtualSubsystem {
             case REAL -> new RealVisionRunner(
                     PhotonVision.apriltagFieldLayout,
                     PhotonVision.makeVisionIOInputsMap(
-                            new RealVisionRunner.VisionIOApriltagReal(TitanCamera.PHOTON_CAMERA_APRILTAG)
+                            new RealVisionRunner.VisionIOApriltagReal(TitanCamera.PHOTON_FH_APRILTAG),
+                            new RealVisionRunner.VisionIOApriltagReal(TitanCamera.PHOTON_BC_APRILTAG),
+                            new RealVisionRunner.VisionIOApriltagReal(TitanCamera.PHOTON_BL_APRILTAG),
+                            new RealVisionRunner.VisionIOApriltagReal(TitanCamera.PHOTON_BR_APRILTAG)
                     )
             );
             case SIM -> {
@@ -90,7 +94,7 @@ public class PhotonVision extends VirtualSubsystem {
                         new SwerveDriveOdometry(
                                 swerve.getKinematics(),
                                 Rotation2d.kZero,
-                                new SwerveModulePosition[] {
+                                new SwerveModulePosition[]{
                                         new SwerveModulePosition(),
                                         new SwerveModulePosition(),
                                         new SwerveModulePosition(),
@@ -102,7 +106,16 @@ public class PhotonVision extends VirtualSubsystem {
                         visionSystemSim,
                         PhotonVision.makeVisionIOInputsMap(
                                 new SimVisionRunner.VisionIOApriltagsSim(
-                                        TitanCamera.PHOTON_CAMERA_APRILTAG, visionSystemSim
+                                        TitanCamera.PHOTON_FH_APRILTAG, visionSystemSim
+                                ),
+                                new SimVisionRunner.VisionIOApriltagsSim(
+                                        TitanCamera.PHOTON_BC_APRILTAG, visionSystemSim
+                                ),
+                                new SimVisionRunner.VisionIOApriltagsSim(
+                                        TitanCamera.PHOTON_BL_APRILTAG, visionSystemSim
+                                ),
+                                new SimVisionRunner.VisionIOApriltagsSim(
+                                        TitanCamera.PHOTON_BR_APRILTAG, visionSystemSim
                                 )
                         )
                 );
@@ -110,7 +123,10 @@ public class PhotonVision extends VirtualSubsystem {
             case REPLAY -> new ReplayVisionRunner(
                     PhotonVision.apriltagFieldLayout,
                     PhotonVision.makeVisionIOInputsMap(
-                            new ReplayVisionRunner.VisionIOReplay(TitanCamera.PHOTON_CAMERA_APRILTAG)
+                            new ReplayVisionRunner.VisionIOReplay(TitanCamera.PHOTON_FH_APRILTAG),
+                            new ReplayVisionRunner.VisionIOReplay(TitanCamera.PHOTON_BC_APRILTAG),
+                            new ReplayVisionRunner.VisionIOReplay(TitanCamera.PHOTON_BL_APRILTAG),
+                            new ReplayVisionRunner.VisionIOReplay(TitanCamera.PHOTON_BR_APRILTAG)
                     )
             );
             case DISABLED -> new PhotonVisionRunner() {};

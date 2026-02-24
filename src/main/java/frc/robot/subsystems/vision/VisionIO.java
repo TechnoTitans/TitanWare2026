@@ -80,6 +80,7 @@ public interface VisionIO {
 
     /**
      * Updates the set of loggable inputs.
+     *
      * @param inputs Logged class of IOInputs
      * @see VisionIOInputs
      */

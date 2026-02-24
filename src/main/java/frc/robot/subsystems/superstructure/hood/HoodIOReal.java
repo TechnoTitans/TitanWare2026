@@ -3,14 +3,17 @@ package frc.robot.subsystems.superstructure.hood;
 import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.Slot0Configs;
-import com.ctre.phoenix6.configs.TalonFXSConfiguration;
+import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.MotionMagicExpoVoltage;
 import com.ctre.phoenix6.controls.PositionVoltage;
 import com.ctre.phoenix6.controls.TorqueCurrentFOC;
 import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.ParentDevice;
-import com.ctre.phoenix6.hardware.TalonFXS;
-import com.ctre.phoenix6.signals.*;
+import com.ctre.phoenix6.hardware.TalonFX;
+import com.ctre.phoenix6.signals.FeedbackSensorSourceValue;
+import com.ctre.phoenix6.signals.GravityTypeValue;
+import com.ctre.phoenix6.signals.InvertedValue;
+import com.ctre.phoenix6.signals.NeutralModeValue;
 import edu.wpi.first.units.measure.*;
 import frc.robot.constants.HardwareConstants;
 import frc.robot.utils.ctre.RefreshAll;
@@ -18,8 +21,8 @@ import frc.robot.utils.ctre.RefreshAll;
 public class HoodIOReal implements HoodIO {
     private final HardwareConstants.HoodConstants constants;
 
-    private final TalonFXS hoodMotor;
-    final TalonFXSConfiguration motorConfig;
+    private final TalonFX hoodMotor;
+    private final TalonFXConfiguration motorConfig;
 
     private final StatusSignal<Angle> hoodPosition;
     private final StatusSignal<AngularVelocity> hoodVelocity;
@@ -35,8 +38,8 @@ public class HoodIOReal implements HoodIO {
     public HoodIOReal(final HardwareConstants.HoodConstants constants) {
         this.constants = constants;
 
-        this.hoodMotor = new TalonFXS(constants.motorID(), constants.CANBus().toPhoenix6CANBus());
-        this.motorConfig = new TalonFXSConfiguration();
+        this.hoodMotor = new TalonFX(constants.motorID(), constants.CANBus().toPhoenix6CANBus());
+        this.motorConfig = new TalonFXConfiguration();
 
         this.hoodPosition = hoodMotor.getPosition(false);
         this.hoodVelocity = hoodMotor.getVelocity(false);
@@ -61,29 +64,22 @@ public class HoodIOReal implements HoodIO {
 
     @Override
     public void config() {
-
-        final TalonFXSConfiguration motorConfiguration = new TalonFXSConfiguration();
-        motorConfiguration.Commutation.MotorArrangement = MotorArrangementValue.Minion_JST;
-        motorConfiguration.Commutation.AdvancedHallSupport = AdvancedHallSupportValue.Enabled;
         motorConfig.Slot0 = new Slot0Configs()
-                .withKS(0.016887)
-                .withKG(0.25249)
+                .withKS(0.39)
+                .withKG(0.03)
                 .withGravityType(GravityTypeValue.Arm_Cosine)
-                .withKV(10.263)
-                .withKA(2.2613)
-                .withKP(76.008)
-                .withKD(40);
-        motorConfig.MotionMagic.MotionMagicCruiseVelocity = 0;
-        motorConfig.MotionMagic.MotionMagicExpo_kV = 9.263;
-        motorConfig.MotionMagic.MotionMagicExpo_kA = 2.1;
-        motorConfig.CurrentLimits.StatorCurrentLimit = 50;
+                .withKP(375)
+                .withKD(0);
+        motorConfig.CurrentLimits.StatorCurrentLimit = 60;
         motorConfig.CurrentLimits.StatorCurrentLimitEnable = true;
-        motorConfig.CurrentLimits.SupplyCurrentLimit = 40;
-        motorConfig.CurrentLimits.SupplyCurrentLowerLimit = 30;
+        motorConfig.CurrentLimits.SupplyCurrentLimit = 50;
+        motorConfig.CurrentLimits.SupplyCurrentLowerLimit = 40;
         motorConfig.CurrentLimits.SupplyCurrentLowerTime = 1;
         motorConfig.CurrentLimits.SupplyCurrentLimitEnable = true;
-        motorConfig.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
+        motorConfig.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
         motorConfig.MotorOutput.NeutralMode = NeutralModeValue.Brake;
+        motorConfig.Feedback.FeedbackSensorSource = FeedbackSensorSourceValue.RotorSensor;
+        motorConfig.Feedback.SensorToMechanismRatio = constants.hoodGearing();
         motorConfig.SoftwareLimitSwitch.ForwardSoftLimitThreshold = constants.hoodUpperLimitRots();
         motorConfig.SoftwareLimitSwitch.ForwardSoftLimitEnable = true;
         motorConfig.SoftwareLimitSwitch.ReverseSoftLimitThreshold = constants.hoodLowerLimitRots();
@@ -136,15 +132,16 @@ public class HoodIOReal implements HoodIO {
         hoodMotor.setControl(torqueCurrentFOC.withOutput(torqueCurrent));
     }
 
-    //TODO: Find alternative for changing torque current value
     @Override
     public void home() {
+        motorConfig.CurrentLimits.StatorCurrentLimit = 1;
         hoodMotor.setControl(voltageOut.withOutput(-0.1));
     }
 
     @Override
     public void zeroMotor() {
         hoodMotor.setPosition(0);
+        motorConfig.CurrentLimits.StatorCurrentLimit = 60;
         motorConfig.SoftwareLimitSwitch.ForwardSoftLimitThreshold = constants.hoodUpperLimitRots();
         motorConfig.SoftwareLimitSwitch.ReverseSoftLimitThreshold = 0;
         toHoodPosition(0);

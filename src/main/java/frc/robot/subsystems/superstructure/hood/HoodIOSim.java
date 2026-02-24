@@ -109,13 +109,12 @@ public class HoodIOSim implements HoodIO {
 
     @Override
     public void config() {
-
         motorConfig.Slot0 = new Slot0Configs()
                 .withKP(50);
         motorConfig.CurrentLimits.StatorCurrentLimit = 60;
         motorConfig.CurrentLimits.StatorCurrentLimitEnable = true;
         motorConfig.CurrentLimits.SupplyCurrentLimit = 40;
-        motorConfig.CurrentLimits.SupplyCurrentLowerLimit = 30;
+        motorConfig.CurrentLimits.SupplyCurrentLowerLimit = 40;
         motorConfig.CurrentLimits.SupplyCurrentLowerTime = 1;
         motorConfig.CurrentLimits.SupplyCurrentLimitEnable = true;
         motorConfig.Feedback.FeedbackSensorSource = FeedbackSensorSourceValue.RotorSensor;
@@ -146,7 +145,7 @@ public class HoodIOSim implements HoodIO {
     }
 
     @Override
-    public void updateInputs(HoodIOInputs inputs) {
+    public void updateInputs(final HoodIOInputs inputs) {
         inputs.hoodPositionRots = hoodPosition.getValueAsDouble();
         inputs.hoodVelocityRotsPerSec = hoodVelocity.getValueAsDouble();
         inputs.hoodVoltage = hoodVoltage.getValueAsDouble();
@@ -176,13 +175,13 @@ public class HoodIOSim implements HoodIO {
 
     @Override
     public void home() {
-        motorConfig.TorqueCurrent.PeakForwardTorqueCurrent = 1;
         hoodMotor.setControl(voltageOut.withOutput(-0.1));
     }
 
     @Override
     public void zeroMotor() {
         hoodMotor.setPosition(0);
+        motorConfig.CurrentLimits.StatorCurrentLimit = 60;
         motorConfig.SoftwareLimitSwitch.ForwardSoftLimitThreshold = constants.hoodUpperLimitRots();
         motorConfig.SoftwareLimitSwitch.ReverseSoftLimitThreshold = 0;
         toHoodPosition(0);

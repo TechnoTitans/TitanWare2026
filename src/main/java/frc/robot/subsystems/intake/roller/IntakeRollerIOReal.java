@@ -16,7 +16,7 @@ import edu.wpi.first.units.measure.*;
 import frc.robot.constants.HardwareConstants;
 import frc.robot.utils.ctre.RefreshAll;
 
-public class IntakeRollerIOReal implements IntakeRollerIO{
+public class IntakeRollerIOReal implements IntakeRollerIO {
     private final HardwareConstants.IntakeRollerConstants constants;
 
     private final TalonFX rollerMotor;
@@ -60,16 +60,20 @@ public class IntakeRollerIOReal implements IntakeRollerIO{
     public void config() {
         final TalonFXConfiguration motorConfiguration = new TalonFXConfiguration();
         motorConfiguration.Slot0 = new Slot0Configs()
-                .withKS(0.01)
-                .withKP(2);
-        motorConfiguration.CurrentLimits.StatorCurrentLimit = 40;
+                .withKS(6.3)
+                .withKV(0.265)
+                .withKP(0.55);
+
+        motorConfiguration.TorqueCurrent.PeakForwardTorqueCurrent = 80;
+        motorConfiguration.TorqueCurrent.PeakForwardTorqueCurrent = -80;
+        motorConfiguration.CurrentLimits.StatorCurrentLimit = 60;
         motorConfiguration.CurrentLimits.StatorCurrentLimitEnable = true;
-        motorConfiguration.CurrentLimits.SupplyCurrentLimit = 40;
+        motorConfiguration.CurrentLimits.SupplyCurrentLimit = 50;
         motorConfiguration.CurrentLimits.SupplyCurrentLowerLimit = 40;
         motorConfiguration.CurrentLimits.SupplyCurrentLowerTime = 1;
         motorConfiguration.CurrentLimits.SupplyCurrentLimitEnable = true;
         motorConfiguration.MotorOutput.NeutralMode = NeutralModeValue.Brake;
-        motorConfiguration.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
+        motorConfiguration.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
         motorConfiguration.Feedback.FeedbackSensorSource = FeedbackSensorSourceValue.RotorSensor;
         motorConfiguration.Feedback.SensorToMechanismRatio = constants.rollerGearing();
         rollerMotor.getConfigurator().apply(motorConfiguration);
@@ -108,7 +112,9 @@ public class IntakeRollerIOReal implements IntakeRollerIO{
     }
 
     @Override
-    public void toRollerVoltage(final double volts) { rollerMotor.setControl(voltageOut.withOutput(volts)); }
+    public void toRollerVoltage(final double volts) {
+        rollerMotor.setControl(voltageOut.withOutput(volts));
+    }
 
     @Override
     public void toRollerTorqueCurrent(final double torqueCurrentAmps) {
