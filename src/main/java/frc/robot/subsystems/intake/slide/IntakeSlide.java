@@ -89,16 +89,15 @@ public class IntakeSlide extends SubsystemBase {
         if (desiredGoal != currentGoal) {
             switch (controlMode) {
                 case SOFT -> intakeSlideIO.holdSlidePosition(desiredGoal.getSlideGoalRotations());
-                case HARD -> intakeSlideIO.toSlidePosition(desiredGoal.getSlideGoalRotations());
+                case HARD -> {
+                    if (desiredGoal == Goal.SHOOTING) {
+                        intakeSlideIO.toSlidePositionUnprofiled(desiredGoal.getSlideGoalRotations(), 0.01);
+                    } else {
+                        intakeSlideIO.toSlidePosition(desiredGoal.getSlideGoalRotations());
+                    }
+                }
             }
             currentGoal = desiredGoal;
-            if (desiredGoal == Goal.SHOOTING) {
-                intakeSlideIO.toSlidePositionUnprofiled(desiredGoal.getSlideGoalRots(constants.gearPitchCircumferenceMeters()), 0.00001);
-            }
-            else {
-                intakeSlideIO.toSlidePosition(desiredGoal.getSlideGoalRots(constants.gearPitchCircumferenceMeters()));
-            }
-            this.currentGoal = desiredGoal;
         }
 
         Logger.recordOutput(LogKey + "/CurrentGoal", currentGoal.toString());

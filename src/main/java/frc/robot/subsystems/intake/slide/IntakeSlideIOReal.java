@@ -162,11 +162,10 @@ public class IntakeSlideIOReal implements IntakeSlideIO {
 
     @Override
     public void toSlidePositionUnprofiled(double positionRots, double velocityRotsPerSec) {
-        masterMotor.setControl(positionVoltage
-                .withPosition(positionRots)
-                .withVelocity(velocityRotsPerSec)
+        diffMechanism.setControl(averagePositionVoltage.withPosition(0).withVelocity(velocityRotsPerSec)
+                .withVelocity(0),
+                differentialPositionVoltage
         );
-        followerMotor.setControl(follower);
     }
 
     @Override
