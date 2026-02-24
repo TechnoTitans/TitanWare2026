@@ -93,8 +93,6 @@ public class TurretIOReal implements TurretIO {
         motorConfig.CurrentLimits.SupplyCurrentLowerLimit = 40;
         motorConfig.CurrentLimits.SupplyCurrentLowerTime = 1;
         motorConfig.CurrentLimits.SupplyCurrentLimitEnable = true;
-        motorConfig.CurrentLimits.SupplyCurrentLowerLimit = 40;
-        motorConfig.CurrentLimits.SupplyCurrentLowerTime = 1;
         motorConfig.Feedback.FeedbackSensorSource = FeedbackSensorSourceValue.RotorSensor;
         motorConfig.Feedback.SensorToMechanismRatio = constants.turretToMechanismGearing();
         motorConfig.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;

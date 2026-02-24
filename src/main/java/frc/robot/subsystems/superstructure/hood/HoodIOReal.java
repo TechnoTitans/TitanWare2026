@@ -65,10 +65,10 @@ public class HoodIOReal implements HoodIO {
     @Override
     public void config() {
         motorConfig.Slot0 = new Slot0Configs()
-                .withKS(0.41)
+                .withKS(0.39)
                 .withKG(0.03)
                 .withGravityType(GravityTypeValue.Arm_Cosine)
-                .withKP(200)
+                .withKP(375)
                 .withKD(0);
         motorConfig.CurrentLimits.StatorCurrentLimit = 60;
         motorConfig.CurrentLimits.StatorCurrentLimitEnable = true;

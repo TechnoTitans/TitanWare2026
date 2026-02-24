@@ -128,7 +128,7 @@ public class HardwareConstants {
             CANBus.RIO,
             22,
             102,
-            0.25,
+            0.1103,
             0
     );
 
