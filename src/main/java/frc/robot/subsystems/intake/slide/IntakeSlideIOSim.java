@@ -35,7 +35,6 @@ public class IntakeSlideIOSim implements IntakeSlideIO {
     private final TalonFXSim masterSim;
     private final TalonFXSim followerSim;
 
-
     private final StatusSignal<Angle> masterPosition;
     private final StatusSignal<AngularVelocity> masterVelocity;
     private final StatusSignal<Voltage> masterVoltage;
@@ -63,14 +62,14 @@ public class IntakeSlideIOSim implements IntakeSlideIO {
         this.voltageOut = new VoltageOut(0);
 
         final TalonFXConfiguration masterMotorConfig = new TalonFXConfiguration();
-        //Average Slot
+        // Average Slot
         masterMotorConfig.Slot0 = new Slot0Configs()
                 .withKP(9)
                 .withKD(3);
-        //Diff Slot
+        // Diff Slot
         masterMotorConfig.Slot1 = new Slot1Configs()
                 .withKP(2);
-        //Hold Slot
+        // Hold Slot
         masterMotorConfig.Slot2 = new Slot2Configs()
                 .withKP(0.1);
         masterMotorConfig.TorqueCurrent.PeakForwardTorqueCurrent = 60;
@@ -100,7 +99,7 @@ public class IntakeSlideIOSim implements IntakeSlideIO {
                         .withFollowerId(constants.followerMotorID())
                         .withAlignment(MotorAlignmentValue.Opposed)
                         //TODO: Ratio might be wrong
-                        .withSensorToDifferentialRatio(constants.slideGearing())
+                        .withSensorToDifferentialRatio(1)
                         .withClosedLoopRate(100)
                         .withLeaderInitialConfigs(masterMotorConfig)
                         .withFollowerInitialConfigs(followerConfig)
@@ -182,8 +181,8 @@ public class IntakeSlideIOSim implements IntakeSlideIO {
 
         final Notifier simUpdateNotifier = new Notifier(() -> {
             final double dt = deltaTime.get();
-            this.masterSim.update(dt);
-            this.followerSim.update(dt);
+            masterSim.update(dt);
+            followerSim.update(dt);
         });
         ToClose.add(simUpdateNotifier);
         simUpdateNotifier.setName(String.format(
@@ -214,12 +213,18 @@ public class IntakeSlideIOSim implements IntakeSlideIO {
 
     @Override
     public void toSlidePosition(double positionRots) {
-        diffMechanism.setControl(averagePositionVoltage.withPosition(positionRots).withSlot(0), differentialPositionVoltage);
+        diffMechanism.setControl(
+                averagePositionVoltage.withPosition(positionRots).withSlot(0),
+                differentialPositionVoltage.withSlot(1)
+        );
     }
 
     @Override
     public void holdSlidePosition(final double positionRots) {
-        diffMechanism.setControl(averagePositionVoltage.withPosition(positionRots).withSlot(2), differentialPositionVoltage);
+        diffMechanism.setControl(
+                averagePositionVoltage.withPosition(positionRots).withSlot(2),
+                differentialPositionVoltage.withSlot(1)
+        );
     }
 
     @Override

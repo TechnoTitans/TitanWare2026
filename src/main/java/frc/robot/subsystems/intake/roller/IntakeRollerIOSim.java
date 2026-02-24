@@ -31,7 +31,6 @@ public class IntakeRollerIOSim implements IntakeRollerIO {
     private final HardwareConstants.IntakeRollerConstants constants;
 
     private final TalonFX rollerMotor;
-
     private final TalonFXSim rollerMotorSim;
 
     private final VelocityTorqueCurrentFOC velocityTorqueCurrentFOC;
@@ -87,7 +86,7 @@ public class IntakeRollerIOSim implements IntakeRollerIO {
 
         final Notifier simUpdateNotifier = new Notifier(() -> {
             final double dt = deltaTime.get();
-            this.rollerMotorSim.update(dt);
+            rollerMotorSim.update(dt);
         });
         ToClose.add(simUpdateNotifier);
         simUpdateNotifier.setName(String.format(
@@ -99,20 +98,24 @@ public class IntakeRollerIOSim implements IntakeRollerIO {
 
     @Override
     public void config() {
-        final TalonFXConfiguration motorConfig = new TalonFXConfiguration();
-        motorConfig.Slot0 = new Slot0Configs()
+        final TalonFXConfiguration motorConfiguration = new TalonFXConfiguration();
+        motorConfiguration.Slot0 = new Slot0Configs()
                 .withKS(6.3)
                 .withKV(0.265)
                 .withKP(0.55);
-        motorConfig.TorqueCurrent.PeakForwardTorqueCurrent = 80;
-        motorConfig.TorqueCurrent.PeakReverseTorqueCurrent = -80;
-        motorConfig.CurrentLimits.StatorCurrentLimit = 60;
-        motorConfig.CurrentLimits.StatorCurrentLimitEnable = true;
-        motorConfig.MotorOutput.NeutralMode = NeutralModeValue.Brake;
-        motorConfig.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
-        motorConfig.Feedback.FeedbackSensorSource = FeedbackSensorSourceValue.RotorSensor;
-        motorConfig.Feedback.SensorToMechanismRatio = constants.rollerGearing();
-        rollerMotor.getConfigurator().apply(motorConfig);
+        motorConfiguration.TorqueCurrent.PeakForwardTorqueCurrent = 80;
+        motorConfiguration.TorqueCurrent.PeakForwardTorqueCurrent = -80;
+        motorConfiguration.CurrentLimits.StatorCurrentLimit = 60;
+        motorConfiguration.CurrentLimits.StatorCurrentLimitEnable = true;
+        motorConfiguration.CurrentLimits.SupplyCurrentLimit = 50;
+        motorConfiguration.CurrentLimits.SupplyCurrentLowerLimit = 40;
+        motorConfiguration.CurrentLimits.SupplyCurrentLowerTime = 1;
+        motorConfiguration.CurrentLimits.SupplyCurrentLimitEnable = true;
+        motorConfiguration.MotorOutput.NeutralMode = NeutralModeValue.Brake;
+        motorConfiguration.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
+        motorConfiguration.Feedback.FeedbackSensorSource = FeedbackSensorSourceValue.RotorSensor;
+        motorConfiguration.Feedback.SensorToMechanismRatio = constants.rollerGearing();
+        rollerMotor.getConfigurator().apply(motorConfiguration);
 
         BaseStatusSignal.setUpdateFrequencyForAll(
                 100,
@@ -133,6 +136,7 @@ public class IntakeRollerIOSim implements IntakeRollerIO {
         );
 
         rollerMotor.getSimState().Orientation = ChassisReference.CounterClockwise_Positive;
+        //TODO: Set motor type
     }
 
     @Override

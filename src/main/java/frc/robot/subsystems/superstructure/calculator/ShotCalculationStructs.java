@@ -8,6 +8,7 @@ import edu.wpi.first.math.interpolation.Interpolator;
 import edu.wpi.first.math.interpolation.InverseInterpolator;
 import edu.wpi.first.math.util.Units;
 
+//TODO: Move to ShotCalculator
 public class ShotCalculationStructs {
     public record HoodShooterCalculation(
             Rotation2d hoodRotation,

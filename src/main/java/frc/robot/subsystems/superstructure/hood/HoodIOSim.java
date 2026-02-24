@@ -114,7 +114,7 @@ public class HoodIOSim implements HoodIO {
         motorConfig.CurrentLimits.StatorCurrentLimit = 60;
         motorConfig.CurrentLimits.StatorCurrentLimitEnable = true;
         motorConfig.CurrentLimits.SupplyCurrentLimit = 40;
-        motorConfig.CurrentLimits.SupplyCurrentLowerLimit = 30;
+        motorConfig.CurrentLimits.SupplyCurrentLowerLimit = 40;
         motorConfig.CurrentLimits.SupplyCurrentLowerTime = 1;
         motorConfig.CurrentLimits.SupplyCurrentLimitEnable = true;
         motorConfig.Feedback.FeedbackSensorSource = FeedbackSensorSourceValue.RotorSensor;
@@ -175,7 +175,6 @@ public class HoodIOSim implements HoodIO {
 
     @Override
     public void home() {
-        motorConfig.CurrentLimits.StatorCurrentLimit = 1;
         hoodMotor.setControl(voltageOut.withOutput(-0.1));
     }
 

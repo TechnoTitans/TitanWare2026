@@ -46,7 +46,7 @@ public class ClimbIOReal implements ClimbIO {
         this.motorDeviceTemp = climbMotor.getDeviceTemp(false);
 
         RefreshAll.add(
-                HardwareConstants.CANBus.CANIVORE,
+                constants.CANBus(),
                 motorPosition,
                 motorVelocity,
                 motorVoltage,
@@ -67,12 +67,12 @@ public class ClimbIOReal implements ClimbIO {
                 .withKP(15)
                 .withKD(1);
         motorConfiguration.MotionMagic.MotionMagicCruiseVelocity = 0;
-        motorConfiguration.MotionMagic.MotionMagicExpo_kV = 0.54587;
-        motorConfiguration.MotionMagic.MotionMagicExpo_kA = 0.1;
-        motorConfiguration.TorqueCurrent.PeakForwardTorqueCurrent = 70;
-        motorConfiguration.TorqueCurrent.PeakReverseTorqueCurrent = -70;
-        motorConfiguration.CurrentLimits.StatorCurrentLimit = 70;
+        motorConfiguration.MotionMagic.MotionMagicExpo_kV = 0;
+        motorConfiguration.MotionMagic.MotionMagicExpo_kA = 0;
+        motorConfiguration.CurrentLimits.StatorCurrentLimit = 80;
         motorConfiguration.CurrentLimits.StatorCurrentLimitEnable = true;
+        motorConfiguration.CurrentLimits.SupplyCurrentLimit = 70;
+        motorConfiguration.CurrentLimits.SupplyCurrentLimitEnable = true;
         motorConfiguration.Feedback.SensorToMechanismRatio = constants.climbGearing();
         motorConfiguration.Feedback.FeedbackSensorSource = FeedbackSensorSourceValue.RotorSensor;
         motorConfiguration.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
@@ -82,8 +82,6 @@ public class ClimbIOReal implements ClimbIO {
         motorConfiguration.SoftwareLimitSwitch.ReverseSoftLimitThreshold = constants.lowerLimitRots();
         motorConfiguration.SoftwareLimitSwitch.ReverseSoftLimitEnable = true;
         climbMotor.getConfigurator().apply(motorConfiguration);
-
-        motorConfiguration.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
 
         BaseStatusSignal.setUpdateFrequencyForAll(
                 100,
@@ -111,11 +109,6 @@ public class ClimbIOReal implements ClimbIO {
     }
 
     @Override
-    public void setPosition(final double positionRots) {
-        Phoenix6Utils.reportIfNotOk(climbMotor, climbMotor.setPosition(positionRots));
-    }
-
-    @Override
     public void toPosition(final double positionRots) {
         climbMotor.setControl(motionMagicExpoVoltage.withPosition(positionRots));
     }
@@ -123,6 +116,12 @@ public class ClimbIOReal implements ClimbIO {
     @Override
     public void toTorqueCurrent(final double torqueCurrentAmps) {
         climbMotor.setControl(torqueCurrentFOC.withOutput(torqueCurrentAmps));
+    }
+
+    //TODO: Do the .reportIfNotOk for all subsystems
+    @Override
+    public void setPosition(final double positionRots) {
+        Phoenix6Utils.reportIfNotOk(climbMotor, climbMotor.setPosition(positionRots));
     }
 }
 

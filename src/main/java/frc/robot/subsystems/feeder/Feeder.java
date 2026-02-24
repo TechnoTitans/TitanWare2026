@@ -44,7 +44,6 @@ public class Feeder extends SubsystemBase {
         this.inputs = new FeederIOInputsAutoLogged();
 
         feederIO.config();
-
         feederIO.toRollerVelocity(desiredGoal.getRollerVelocitySetpoint());
     }
 

@@ -266,14 +266,14 @@ public class Robot extends LoggedRobot {
                 // log to working directory when running sim
                 // setPath doesn't seem to work in sim (path is ignored and hoot files are always sent to /logs)
 //                SignalLogger.setPath("/logs");
-                Logger.addDataReceiver(new WPILOGWriter(""));
+                Logger.addDataReceiver(new WPILOGWriter("logs"));
                 Logger.addDataReceiver(new NT4Publisher());
 
                 DriverStationSim.setAllianceStationId(AllianceStationID.Blue1);
                 DriverStationSim.notifyNewData();
 
                 autonomousEnabled.whileTrue(
-                        Commands.waitSeconds(15)
+                        Commands.waitSeconds(20)
                                 .andThen(() -> {
                                     DriverStationSim.setEnabled(false);
                                     DriverStationSim.notifyNewData();
@@ -309,17 +309,16 @@ public class Robot extends LoggedRobot {
         Logger.start();
 
         Logger.recordOutput("EmptyPose", Pose3d.kZero);
-        shiftTimer.stop();
-        Pose3d[] emptyPoseArray = new Pose3d[6];
+        shiftTimer.start();
 
+        final Pose3d[] emptyPoseArray = new Pose3d[6];
         Arrays.fill(emptyPoseArray, Pose3d.kZero);
-
         Logger.recordOutput("EmptyPoses", emptyPoseArray);
     }
 
     @Override
     public void robotPeriodic() {
-        Threads.setCurrentThreadPriority(true, 99);
+//        Threads.setCurrentThreadPriority(true, 99);
         RefreshAll.refreshAll();
 
         CommandScheduler.getInstance().run();
@@ -335,7 +334,7 @@ public class Robot extends LoggedRobot {
         componentsSolver.periodic();
         robotCommands.periodic();
 
-        Threads.setCurrentThreadPriority(false, 10);
+//        Threads.setCurrentThreadPriority(false, 10);
     }
 
     @Override
@@ -378,7 +377,7 @@ public class Robot extends LoggedRobot {
                     Commands.parallel(
                             Commands.sequence(
                                     intakeSlide.home(),
-                                    robotCommands.manualIntake()
+                                    robotCommands.deployIntake()
                             ),
                             Commands.sequence(
                                     hood.home(),
@@ -400,7 +399,7 @@ public class Robot extends LoggedRobot {
                                             climb.setGoal(Climb.Goal.STOW)
                                     ).onlyIf(climb::isExtended),
                                     Commands.waitUntil(climb.atSetpoint.and(intakeSlide::isHomed)),
-                                    robotCommands.manualIntake()
+                                    robotCommands.deployIntake()
                             )
                     )
             );
@@ -415,7 +414,7 @@ public class Robot extends LoggedRobot {
         shiftChangeTrigger.onTrue(Commands.runOnce(shiftTimer::reset));
 
         endgameTrigger.onTrue(
-                Commands.sequence(
+                Commands.parallel(
                         Commands.runOnce(shiftTimer::stop),
                         ControllerUtils.rumbleForDurationCommand(
                                 driverController.getHID(), GenericHID.RumbleType.kBothRumble, 0.5, 1
@@ -447,21 +446,20 @@ public class Robot extends LoggedRobot {
 
         driverController.y().whileTrue(robotCommands.climb());
 
-        driverController.a().onTrue(robotCommands.manualUnclimb());
+        driverController.a().onTrue(robotCommands.unclimb());
 
         driverController.b().whileTrue(superstructure.testingHood());
 
-        coController.y(teleopEventLoop).onTrue(robotCommands.manualIntake());
+        coController.y(teleopEventLoop).onTrue(robotCommands.deployIntake());
 
         coController.a(teleopEventLoop).onTrue(robotCommands.stowIntake());
 
         //TODO: Change scoring mode so that stationary is used
         coController.rightTrigger(0.5, teleopEventLoop).whileTrue(
                 Commands.parallel(
-                                Commands.runOnce(() -> scoringMode = RobotCommands.ScoringMode.Stationary),
-                                robotCommands.shootStationary()
-                        )
-                        .finallyDo(() -> scoringMode = RobotCommands.ScoringMode.Moving)
+                        Commands.runOnce(() -> scoringMode = RobotCommands.ScoringMode.Stationary),
+                        robotCommands.shootStationary()
+                ).finallyDo(() -> scoringMode = RobotCommands.ScoringMode.Moving)
         );
     }
 }

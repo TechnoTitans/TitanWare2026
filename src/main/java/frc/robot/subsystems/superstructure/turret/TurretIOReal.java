@@ -22,7 +22,6 @@ import frc.robot.constants.HardwareConstants;
 import frc.robot.utils.ctre.RefreshAll;
 
 public class TurretIOReal implements TurretIO {
-
     private final HardwareConstants.TurretConstants constants;
 
     private final TalonFX turretMotor;
@@ -42,7 +41,6 @@ public class TurretIOReal implements TurretIO {
     private final PositionVoltage positionVoltage;
     private final VoltageOut voltageOut;
     private final TorqueCurrentFOC torqueCurrentFOC;
-
 
     public TurretIOReal(HardwareConstants.TurretConstants constants) {
         this.constants = constants;
@@ -89,14 +87,14 @@ public class TurretIOReal implements TurretIO {
                 .withKS(0.366)
                 .withKP(70)
                 .withKD(0.5);
-        motorConfig.TorqueCurrent.PeakForwardTorqueCurrent = 80;
-        motorConfig.TorqueCurrent.PeakReverseTorqueCurrent = -80;
         motorConfig.CurrentLimits.StatorCurrentLimit = 70;
         motorConfig.CurrentLimits.StatorCurrentLimitEnable = true;
         motorConfig.CurrentLimits.SupplyCurrentLimit = 60;
         motorConfig.CurrentLimits.SupplyCurrentLowerLimit = 40;
         motorConfig.CurrentLimits.SupplyCurrentLowerTime = 1;
         motorConfig.CurrentLimits.SupplyCurrentLimitEnable = true;
+        motorConfig.CurrentLimits.SupplyCurrentLowerLimit = 40;
+        motorConfig.CurrentLimits.SupplyCurrentLowerTime = 1;
         motorConfig.Feedback.FeedbackSensorSource = FeedbackSensorSourceValue.RotorSensor;
         motorConfig.Feedback.SensorToMechanismRatio = constants.turretToMechanismGearing();
         motorConfig.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
@@ -112,6 +110,8 @@ public class TurretIOReal implements TurretIO {
         encoderConfig.MagnetSensor.SensorDirection = SensorDirectionValue.Clockwise_Positive;
         leftEncoder.getConfigurator().apply(encoderConfig);
 
+
+        //TODO: New Config
         encoderConfig.MagnetSensor.MagnetOffset = constants.rightEncoderOffset();
         encoderConfig.MagnetSensor.SensorDirection = SensorDirectionValue.CounterClockwise_Positive;
         rightEncoder.getConfigurator().apply(encoderConfig);
@@ -150,27 +150,27 @@ public class TurretIOReal implements TurretIO {
     }
 
     @Override
-    public void toTurretPosition(final double positionRots) {
-        turretMotor.setControl(motionMagicExpoVoltage.withPosition(positionRots));
-    }
-
-    @Override
     public void toTurretContinuousPosition(final double positionRots, final double velocityRotsPerSec) {
-        turretMotor.setControl(positionVoltage.withPosition(positionRots).withVelocity(-velocityRotsPerSec));
+        turretMotor.setControl(positionVoltage.withPosition(positionRots).withVelocity(velocityRotsPerSec).withSlot(0));
     }
 
     @Override
-    public void toTurretVoltage(double volts) {
+    public void toTurretPosition(final double positionRots) {
+        turretMotor.setControl(motionMagicExpoVoltage.withPosition(positionRots).withSlot(1));
+    }
+
+    @Override
+    public void toTurretVoltage(final double volts) {
         turretMotor.setControl(voltageOut.withOutput(volts));
     }
 
     @Override
-    public void toTurretTorqueCurrent(double torqueCurrent) {
+    public void toTurretTorqueCurrent(final double torqueCurrent) {
         turretMotor.setControl(torqueCurrentFOC.withOutput(torqueCurrent));
     }
 
     @Override
-    public void setTurretPosition(final double turretAbsolutePosition) {
-        this.turretMotor.setPosition(turretAbsolutePosition);
+    public void setTurretPosition(final double turretPositionRots) {
+        this.turretMotor.setPosition(turretPositionRots);
     }
 }

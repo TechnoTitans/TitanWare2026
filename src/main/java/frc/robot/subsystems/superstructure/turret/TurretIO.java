@@ -12,6 +12,7 @@ public interface TurretIO {
         public double turretTorqueCurrentAmps = 0.0;
         public double turretTempCelsius = 0.0;
 
+        //TODO: Rename
         public double leftPositionRots = 0.0;
         public double rightPositionRots = 0.0;
     }
@@ -28,5 +29,5 @@ public interface TurretIO {
 
     default void toTurretTorqueCurrent(final double torqueCurrent) {}
 
-    default void setTurretPosition(final double turretAbsolutePosition) {}
+    default void setTurretPosition(final double turretPositionRots) {}
 }

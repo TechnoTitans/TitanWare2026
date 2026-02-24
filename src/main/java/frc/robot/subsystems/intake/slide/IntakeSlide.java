@@ -14,12 +14,10 @@ import frc.robot.constants.HardwareConstants;
 import org.littletonrobotics.junction.Logger;
 
 public class IntakeSlide extends SubsystemBase {
-    protected static final String LogKey = "/Intake/Slide";
+    protected static final String LogKey = "Intake/Slide";
     private static final double PositionToleranceRots = 0.01;
     private static final double VelocityToleranceRotsPerSec = 0.02;
-    private static final double HardstopCurrentThresholdAmps = 30;
-
-    private final Debouncer currentDebouncer = new Debouncer(0.3, Debouncer.DebounceType.kBoth);
+    private static final double ZeroingCurrentThresholdAmps = 30;
 
     private final HardwareConstants.IntakeSlideConstants constants;
 
@@ -32,21 +30,22 @@ public class IntakeSlide extends SubsystemBase {
     //TODO: Need to implement
     private ControlMode controlMode = ControlMode.HARD;
 
+    private boolean isHomed = false;
+
     public final Trigger atSlideSetpoint = new Trigger(this::atSlidePositionSetpoint);
     public final Trigger atSlideLowerLimit = new Trigger(this::atSlideLowerLimit);
     public final Trigger atSlideUpperLimit = new Trigger(this::atSlideUpperLimit);
-    private final Trigger isAboveHomingCurrent = new Trigger(() -> currentDebouncer.calculate(Math.abs(
-            inputs.masterTorqueCurrentAmps) >= HardstopCurrentThresholdAmps
-            && Math.abs(inputs.followerTorqueCurrentAmps) >= HardstopCurrentThresholdAmps
-    ));
+    private final Trigger isAboveHomingCurrent = new Trigger(
+            () -> Math.abs(inputs.masterTorqueCurrentAmps) >= ZeroingCurrentThresholdAmps
+            && Math.abs(inputs.followerTorqueCurrentAmps) >= ZeroingCurrentThresholdAmps
+    ).debounce(0.15, Debouncer.DebounceType.kRising);
+
     private final Trigger shouldUseSoftMode = new Trigger(() -> currentGoal == Goal.INTAKE && atSlideSetpoint.getAsBoolean())
             .onTrue(
                     Commands.runOnce(() -> this.controlMode = ControlMode.SOFT)
             ).onFalse(
                     Commands.runOnce(() -> this.controlMode = ControlMode.HARD)
             );
-
-    private boolean isHomed = false;
 
     public enum Goal {
         HOMING(0),
@@ -91,7 +90,7 @@ public class IntakeSlide extends SubsystemBase {
                 case SOFT -> intakeSlideIO.holdSlidePosition(desiredGoal.getSlideGoalRotations());
                 case HARD -> intakeSlideIO.toSlidePosition(desiredGoal.getSlideGoalRotations());
             }
-            this.currentGoal = desiredGoal;
+            currentGoal = desiredGoal;
         }
 
         Logger.recordOutput(LogKey + "/CurrentGoal", currentGoal.toString());
@@ -118,10 +117,9 @@ public class IntakeSlide extends SubsystemBase {
                 Commands.runOnce(intakeSlideIO::home),
                 Commands.waitUntil(isAboveHomingCurrent),
                 Commands.runOnce(() -> {
-                            intakeSlideIO.zeroMotors();
-                            this.isHomed = true;
-                        }
-                )
+                    intakeSlideIO.zeroMotors();
+                    isHomed = true;
+                })
         );
     }
 
@@ -139,7 +137,7 @@ public class IntakeSlide extends SubsystemBase {
     public Command setGoal(final Goal goal) {
         return runOnce(
                 () -> setDesiredGoal(goal)
-        ).withName("ToGoalL: " + goal);
+        ).withName("ToGoal: " + goal);
     }
 
     private void setDesiredGoal(final Goal goal) {

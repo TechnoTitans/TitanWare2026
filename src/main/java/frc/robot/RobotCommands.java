@@ -16,11 +16,6 @@ import frc.robot.utils.teleop.SwerveSpeed;
 import org.littletonrobotics.junction.Logger;
 
 public class RobotCommands {
-    public enum ScoringMode {
-        Stationary,
-        Moving
-    }
-
     protected static final String LogKey = "RobotCommands";
     protected static final double AllowableSpeedToShootMetersPerSec = 0.1;
 
@@ -33,6 +28,11 @@ public class RobotCommands {
     private final Climb climb;
 
     private final Trigger ableToShoot;
+
+    public enum ScoringMode {
+        Stationary,
+        Moving
+    }
 
     public RobotCommands(
             final Swerve swerve,
@@ -61,15 +61,16 @@ public class RobotCommands {
         });
     }
 
+    //TODO: Make logged trigger
     public void periodic() {
         Logger.recordOutput(LogKey + "/AbleToShoot", ableToShoot);
     }
 
-    public Command manualIntake() {
+    public Command deployIntake() {
         return Commands.parallel(
                 intakeRoller.setGoal(IntakeRoller.Goal.INTAKE),
                 intakeSlide.setGoal(IntakeSlide.Goal.INTAKE)
-        ).withName("ManualIntake");
+        ).withName("DeployIntake");
     }
 
     public Command stowIntake() {
@@ -82,13 +83,17 @@ public class RobotCommands {
     //TODO: Might need to change the feeding
     public Command shootWhileMoving() {
         return Commands.parallel(
-                        superstructure.toGoal(Superstructure.Goal.SHOOTING),
-                        feeder.toGoal(Feeder.Goal.FEED),
-                        spindexer.toGoal(Spindexer.Goal.FEED),
-                        Commands.runOnce(() -> SwerveSpeed.setSwerveSpeed(SwerveSpeed.Speeds.SHOOTING))
-                )
-                .finallyDo(() -> SwerveSpeed.setSwerveSpeed(SwerveSpeed.Speeds.NORMAL))
-                .withName("ShootWhileMoving");
+                superstructure.toGoal(Superstructure.Goal.SHOOTING),
+                Commands.repeatingSequence(
+                        Commands.waitUntil(superstructure.atSetpoint),
+                        feeder.toGoal(Feeder.Goal.FEED)
+                                .onlyWhile(superstructure.atSetpoint)
+                ),
+                spindexer.toGoal(Spindexer.Goal.FEED),
+                Commands.runOnce(() -> SwerveSpeed.setSwerveSpeed(SwerveSpeed.Speeds.SHOOTING))
+        )
+            .finallyDo(() -> SwerveSpeed.setSwerveSpeed(SwerveSpeed.Speeds.NORMAL))
+            .withName("ShootWhileMoving");
     }
 
     public Command shootStationary() {
@@ -97,29 +102,34 @@ public class RobotCommands {
                         Commands.waitUntil(ableToShoot),
                         Commands.parallel(
                                 superstructure.toGoal(Superstructure.Goal.SHOOTING),
-                                feeder.toGoal(Feeder.Goal.FEED)
+                                Commands.repeatingSequence(
+                                        Commands.waitUntil(superstructure.atSetpoint),
+                                        feeder.toGoal(Feeder.Goal.FEED)
+                                                .until(superstructure.atSetpoint.negate())
+                                )
                         )
                 ),
-                spindexer.toGoal(Spindexer.Goal.FEED)
-                        .onlyIf(ableToShoot),
+                spindexer.toGoal(Spindexer.Goal.FEED),
                 swerve.runWheelXCommand()
         ).withName("ShootStationary");
     }
 
+
+    //TODO:
     public Command climb() {
         return Commands.parallel(
-                        swerve.runToPose(FieldConstants::getClimbTarget),
-                        superstructure.setGoal(Superstructure.Goal.CLIMB),
-                        climb.toGoal(Climb.Goal.EXTEND)
-                )
+                swerve.runToPose(FieldConstants::getClimbTarget),
+                superstructure.setGoal(Superstructure.Goal.CLIMB),
+                climb.toGoal(Climb.Goal.EXTEND)
+        )
                 .finallyDo(swerve::wheelXCommand)
                 .withName("Climb");
     }
 
-    public Command manualUnclimb() {
+    public Command unclimb() {
         return Commands.parallel(
                 superstructure.setGoal(Superstructure.Goal.TRACKING),
                 climb.setGoal(Climb.Goal.STOW)
-        ).withName("Manual Unclimb");
+        ).withName("Unclimb");
     }
 }

@@ -10,7 +10,7 @@ import frc.robot.constants.HardwareConstants;
 import org.littletonrobotics.junction.Logger;
 
 public class IntakeRoller extends SubsystemBase {
-    protected static final String LogKey = "/Intake/Roller";
+    protected static final String LogKey = "Intake/Roller";
     private static final double VelocityToleranceRotsPerSec = 0.02;
 
     private final IntakeRollerIO intakeRollerIO;
@@ -23,14 +23,14 @@ public class IntakeRoller extends SubsystemBase {
         STOP(0),
         INTAKE(30);
 
-        private final double rollerVelocityGoalRotsPerSec;
+        private final double rollerVelocityRotsPerSec;
 
-        Goal(final double rollerVelocityGoalRotsPerSec) {
-            this.rollerVelocityGoalRotsPerSec = rollerVelocityGoalRotsPerSec;
+        Goal(final double rollerVelocityRotsPerSec) {
+            this.rollerVelocityRotsPerSec = rollerVelocityRotsPerSec;
         }
 
-        public double getRollerVelocityGoalRotsPerSec() {
-            return rollerVelocityGoalRotsPerSec;
+        public double getRollerVelocityRotsPerSec() {
+            return rollerVelocityRotsPerSec;
         }
     }
 
@@ -53,15 +53,14 @@ public class IntakeRoller extends SubsystemBase {
         Logger.processInputs(LogKey, inputs);
 
         if (desiredGoal != currentGoal) {
-            intakeRollerIO.toRollerVelocity(desiredGoal.getRollerVelocityGoalRotsPerSec());
+            intakeRollerIO.toRollerVelocity(desiredGoal.getRollerVelocityRotsPerSec());
 
-            this.currentGoal = desiredGoal;
+            currentGoal = desiredGoal;
         }
 
         Logger.recordOutput(LogKey + "/CurrentGoal", currentGoal.toString());
         Logger.recordOutput(LogKey + "/DesiredGoal", desiredGoal.toString());
-
-        Logger.recordOutput(LogKey + "/DesiredGoal/RollerVelocity", desiredGoal.getRollerVelocityGoalRotsPerSec());
+        Logger.recordOutput(LogKey + "/DesiredGoal/RollerVelocity", desiredGoal.getRollerVelocityRotsPerSec());
 
         Logger.recordOutput(LogKey + "/Roller/AtRollerVelocitySetpoint", atRollerVelocitySetpoint());
 
@@ -73,7 +72,11 @@ public class IntakeRoller extends SubsystemBase {
 
     public boolean atRollerVelocitySetpoint() {
         return currentGoal == desiredGoal
-                && MathUtil.isNear(desiredGoal.rollerVelocityGoalRotsPerSec, inputs.rollerVelocityRotsPerSec, VelocityToleranceRotsPerSec);
+                && MathUtil.isNear(
+                        desiredGoal.rollerVelocityRotsPerSec,
+                        inputs.rollerVelocityRotsPerSec,
+                        VelocityToleranceRotsPerSec
+                );
     }
 
     public boolean isIntaking() {

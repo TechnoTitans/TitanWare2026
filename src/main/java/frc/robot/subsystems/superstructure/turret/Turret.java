@@ -140,7 +140,7 @@ public class Turret extends SubsystemBase {
     private boolean atTurretPositionSetpoint() {
         return currentGoal == desiredGoal
                 && MathUtil.isNear(desiredGoal.getTurretPositionGoalRots(), inputs.turretPositionRots, PositionToleranceRots)
-                && MathUtil.isNear(0, inputs.turretVelocityRotsPerSec, VelocityToleranceRotsPerSec);
+                && MathUtil.isNear(robotAngularVelocitySupplier.getAsDouble(), inputs.turretVelocityRotsPerSec, VelocityToleranceRotsPerSec);
     }
 
     private boolean atTurretLowerLimit() {

@@ -23,7 +23,7 @@ public class FeederIOReal implements FeederIO {
     private final StatusSignal<AngularVelocity> rollerVelocity;
     private final StatusSignal<Voltage> rollerVoltage;
     private final StatusSignal<Current> rollerTorqueCurrent;
-    private final StatusSignal<Temperature> rollerTemperature;
+    private final StatusSignal<Temperature> rollerDeviceTemp;
 
     private final VelocityTorqueCurrentFOC velocityTorqueCurrentFOC;
 
@@ -36,7 +36,7 @@ public class FeederIOReal implements FeederIO {
         this.rollerVelocity = rollerMotor.getVelocity(false);
         this.rollerVoltage = rollerMotor.getMotorVoltage(false);
         this.rollerTorqueCurrent = rollerMotor.getTorqueCurrent(false);
-        this.rollerTemperature = rollerMotor.getDeviceTemp(false);
+        this.rollerDeviceTemp = rollerMotor.getDeviceTemp(false);
 
         this.velocityTorqueCurrentFOC = new VelocityTorqueCurrentFOC(0);
 
@@ -46,7 +46,7 @@ public class FeederIOReal implements FeederIO {
                 rollerVelocity,
                 rollerVoltage,
                 rollerTorqueCurrent,
-                rollerTemperature
+                rollerDeviceTemp
         );
     }
 
@@ -82,7 +82,7 @@ public class FeederIOReal implements FeederIO {
 
         BaseStatusSignal.setUpdateFrequencyForAll(
                 4,
-                rollerTemperature
+                rollerDeviceTemp
         );
 
         ParentDevice.optimizeBusUtilizationForAll(
@@ -97,7 +97,7 @@ public class FeederIOReal implements FeederIO {
         inputs.rollerVelocityRotsPerSec = rollerVelocity.getValueAsDouble();
         inputs.rollerVoltage = rollerVoltage.getValueAsDouble();
         inputs.rollerTorqueCurrentAmps = rollerTorqueCurrent.getValueAsDouble();
-        inputs.rollerTemperatureCelsius = rollerTemperature.getValueAsDouble();
+        inputs.rollerTempCelsius = rollerDeviceTemp.getValueAsDouble();
     }
 
     @Override

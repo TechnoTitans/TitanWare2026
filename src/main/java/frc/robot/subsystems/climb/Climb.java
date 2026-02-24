@@ -27,8 +27,10 @@ public class Climb extends SubsystemBase {
     public final Trigger atLowerLimit = new Trigger(this::atLowerLimit);
     public final Trigger atUpperLimit = new Trigger(this::atUpperLimit);
 
+    //TODO: Move to rotations
     public enum Goal {
         STOW(0),
+        CLIMBED(0),
         EXTEND(0.4);
 
         private final double positionGoalMeters;
@@ -100,7 +102,7 @@ public class Climb extends SubsystemBase {
     }
 
     private boolean atPositionSetpoint() {
-        double goalRots = desiredGoal.getPositionGoalRots(constants);
+        final double goalRots = desiredGoal.getPositionGoalRots(constants);
         return MathUtil.isNear(goalRots, inputs.motorPositionRots, PositionToleranceRots)
                 && MathUtil.isNear(0, inputs.motorVelocityRotsPerSec, VelocityToleranceRotsPerSec)
                 && currentGoal == desiredGoal;

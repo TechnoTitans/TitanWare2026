@@ -51,14 +51,14 @@ public class Spindexer extends SubsystemBase {
 
     @Override
     public void periodic() {
-        final double HopperPeriodicFPGATime = Timer.getFPGATimestamp();
+        final double SpindexerPeriodicFPGATime = Timer.getFPGATimestamp();
 
         spindexerIO.updateInputs(inputs);
         Logger.processInputs(LogKey, inputs);
 
         if (desiredGoal != currentGoal) {
             spindexerIO.toWheelVelocity(desiredGoal.getWheelVelocitySetpoint());
-            this.currentGoal = desiredGoal;
+            currentGoal = desiredGoal;
         }
 
         Logger.recordOutput(LogKey + "/CurrentGoal", currentGoal.toString());
@@ -68,7 +68,7 @@ public class Spindexer extends SubsystemBase {
 
         Logger.recordOutput(
                 LogKey + "/PeriodicIOPeriodMs",
-                Units.secondsToMilliseconds(Timer.getFPGATimestamp() - HopperPeriodicFPGATime)
+                Units.secondsToMilliseconds(Timer.getFPGATimestamp() - SpindexerPeriodicFPGATime)
         );
     }
 

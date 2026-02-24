@@ -45,14 +45,14 @@ public class IntakeSlideIOReal implements IntakeSlideIO {
         this.voltageOut = new VoltageOut(0);
 
         final TalonFXConfiguration masterMotorConfig = new TalonFXConfiguration();
-        //Average Slot
+        // Average Slot
         masterMotorConfig.Slot0 = new Slot0Configs()
                 .withKP(9)
                 .withKD(3);
-        //Diff Slot
+        // Diff Slot
         masterMotorConfig.Slot1 = new Slot1Configs()
                 .withKP(0.01);
-        //Hold Slot
+        // Hold Slot
         masterMotorConfig.Slot2 = new Slot2Configs()
                 .withKP(0.1);
         masterMotorConfig.TorqueCurrent.PeakForwardTorqueCurrent = 60;
@@ -82,14 +82,15 @@ public class IntakeSlideIOReal implements IntakeSlideIO {
                         .withFollowerId(constants.followerMotorID())
                         .withAlignment(MotorAlignmentValue.Opposed)
                         //TODO: Ratio might be wrong
-                        .withSensorToDifferentialRatio(constants.slideGearing())
-                        .withClosedLoopRate(100)
+                        .withSensorToDifferentialRatio(1)
+                        .withClosedLoopRate(200)
                         .withLeaderInitialConfigs(masterMotorConfig)
                         .withFollowerInitialConfigs(followerConfig)
                         .withFollowerUsesCommonLeaderConfigs(true);
 
         this.diffMechanism = new DifferentialMechanism<>(TalonFX::new, diffConstants);
 
+        //TODO: Remove calls for .getLeader()
         this.masterPosition = diffMechanism.getLeader().getPosition(false);
         this.masterVelocity = diffMechanism.getLeader().getVelocity(false);
         this.masterVoltage = diffMechanism.getLeader().getMotorVoltage(false);

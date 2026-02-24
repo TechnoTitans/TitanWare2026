@@ -35,9 +35,6 @@ import frc.robot.utils.sim.motors.TalonFXSim;
 public class TurretIOSim implements TurretIO {
     private static final double SIM_UPDATE_PERIOD_SEC = 0.005;
 
-    private static final int CAPACITY = 40;
-    private int fuelStored = 0;
-
     private final DeltaTime deltaTime;
     private final HardwareConstants.TurretConstants constants;
 
@@ -147,15 +144,14 @@ public class TurretIOSim implements TurretIO {
                 .withKS(0.1)
                 .withKP(36)
                 .withKD(9.5);
+        //TODO: Put some values
         motorConfig.MotionMagic.MotionMagicCruiseVelocity = 0;
         motorConfig.MotionMagic.MotionMagicExpo_kV = 0;
         motorConfig.MotionMagic.MotionMagicExpo_kA = 0;
-        motorConfig.TorqueCurrent.PeakForwardTorqueCurrent = 80;
-        motorConfig.TorqueCurrent.PeakReverseTorqueCurrent = -80;
-        motorConfig.CurrentLimits.StatorCurrentLimit = 60;
+        motorConfig.CurrentLimits.StatorCurrentLimit = 70;
         motorConfig.CurrentLimits.StatorCurrentLimitEnable = true;
-        motorConfig.CurrentLimits.SupplyCurrentLimit = 50;
-        motorConfig.CurrentLimits.SupplyCurrentLowerLimit = 30;
+        motorConfig.CurrentLimits.SupplyCurrentLimit = 60;
+        motorConfig.CurrentLimits.SupplyCurrentLowerLimit = 40;
         motorConfig.CurrentLimits.SupplyCurrentLowerTime = 1;
         motorConfig.CurrentLimits.SupplyCurrentLimitEnable = true;
         motorConfig.Feedback.FeedbackSensorSource = FeedbackSensorSourceValue.RotorSensor;
@@ -237,7 +233,7 @@ public class TurretIOSim implements TurretIO {
     }
 
     @Override
-    public void setTurretPosition(final double turretAbsolutePosition) {
-        this.turretMotor.setPosition(turretAbsolutePosition);
+    public void setTurretPosition(final double turretPositionRots) {
+        this.turretMotor.setPosition(turretPositionRots);
     }
 }

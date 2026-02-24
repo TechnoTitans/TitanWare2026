@@ -49,6 +49,7 @@ public class ShotCalculator {
                         swerveSpeeds.omegaRadiansPerSecond * DelayTimeSec
                 ));
 
+        //TODO: FixIsPresentCheck
         final Pose2d calculationPose = DriverStation.getAlliance().get() == DriverStation.Alliance.Blue
                 ? turretPose : turretPose.relativeTo(FieldConstants.RED_ORIGIN);
 
@@ -82,6 +83,7 @@ public class ShotCalculator {
             final Pose2d swervePose,
             final ChassisSpeeds swerveSpeeds
     ) {
+        //TODO: Don't use SimConstants
         final Pose2d turretPose = swervePose.transformBy(SimConstants.Turret.ROBOT_TO_TURRET_TRANSFORM_2D)
                 .exp(new Twist2d(
                         swerveSpeeds.vxMetersPerSecond * DelayTimeSec,
@@ -117,7 +119,7 @@ public class ShotCalculator {
         );
     }
 
-    public static Rotation2d wrapTurret(final Rotation2d desiredTurretRotation) {
+    private static Rotation2d wrapTurret(final Rotation2d desiredTurretRotation) {
         if (desiredTurretRotation.getRotations() > 0.25) {
             return desiredTurretRotation.minus(Rotation2d.fromRotations(0.75));
         }

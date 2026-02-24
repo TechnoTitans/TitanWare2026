@@ -17,9 +17,7 @@ public class Hood extends SubsystemBase {
     protected static final String LogKey = "Superstructure/Hood";
     private static final double PositionToleranceRots = 0.001;
     private static final double VelocityToleranceRotsPerSec = 0.001;
-    private static final double HardstopCurrentThresholdAmps = 15;
-
-    private final Debouncer currentDebouncer = new Debouncer(0.15, Debouncer.DebounceType.kRising);
+    private static final double ZeroingCurrentThresholdAmps = 15;
 
     private final HardwareConstants.HoodConstants constants;
 
@@ -32,11 +30,11 @@ public class Hood extends SubsystemBase {
     public final Trigger atSetpoint = new Trigger(this::atHoodPositionSetpoint);
     public final Trigger atHoodLowerLimit = new Trigger(this::atHoodLowerLimit);
     public final Trigger atHoodUpperLimit = new Trigger(this::atHoodUpperLimit);
-    private final Trigger isAboveHomingCurrent = new Trigger(() -> currentDebouncer.calculate(Math.abs(
-            inputs.hoodTorqueCurrentAmps) >= HardstopCurrentThresholdAmps
-    ));
+    private final Trigger isAboveHomingCurrent = new Trigger(
+            () -> Math.abs(inputs.hoodTorqueCurrentAmps) >= ZeroingCurrentThresholdAmps
+    ).debounce(0.15, Debouncer.DebounceType.kRising);
 
-    private boolean isHomed;
+    private boolean isHomed = false;
 
     public enum Goal {
         HOMING(0, false),
@@ -71,11 +69,7 @@ public class Hood extends SubsystemBase {
             };
         };
 
-        isHomed = Constants.CURRENT_MODE == Constants.RobotMode.SIM;
-
-        this.hoodIO.config();
-
-        hoodIO.zeroMotor();
+        hoodIO.config();
     }
 
     @Override
@@ -151,9 +145,5 @@ public class Hood extends SubsystemBase {
 
     private boolean atHoodUpperLimit() {
         return inputs.hoodPositionRots >= constants.hoodUpperLimitRots();
-    }
-
-    private double getCurrent() {
-        return inputs.hoodTorqueCurrentAmps;
     }
 }

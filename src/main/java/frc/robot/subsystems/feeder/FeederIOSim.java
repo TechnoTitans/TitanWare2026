@@ -4,9 +4,7 @@ import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.Slot0Configs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
-import com.ctre.phoenix6.controls.TorqueCurrentFOC;
 import com.ctre.phoenix6.controls.VelocityTorqueCurrentFOC;
-import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.ParentDevice;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.FeedbackSensorSourceValue;
@@ -37,7 +35,7 @@ public class FeederIOSim implements FeederIO {
     private final StatusSignal<AngularVelocity> rollerVelocity;
     private final StatusSignal<Voltage> rollerVoltage;
     private final StatusSignal<Current> rollerTorqueCurrent;
-    private final StatusSignal<Temperature> rollerTemperature;
+    private final StatusSignal<Temperature> rollerDeviceTemp;
 
     private final VelocityTorqueCurrentFOC velocityTorqueCurrentFOC;
 
@@ -68,7 +66,7 @@ public class FeederIOSim implements FeederIO {
         this.rollerVelocity = rollerMotor.getVelocity(false);
         this.rollerVoltage = rollerMotor.getMotorVoltage(false);
         this.rollerTorqueCurrent = rollerMotor.getTorqueCurrent(false);
-        this.rollerTemperature = rollerMotor.getDeviceTemp(false);
+        this.rollerDeviceTemp = rollerMotor.getDeviceTemp(false);
 
         this.velocityTorqueCurrentFOC = new VelocityTorqueCurrentFOC(0);
 
@@ -78,7 +76,7 @@ public class FeederIOSim implements FeederIO {
                 rollerVelocity,
                 rollerVoltage,
                 rollerTorqueCurrent,
-                rollerTemperature
+                rollerDeviceTemp
         );
 
         final Notifier simUpdateNotifier = new Notifier(() -> {
@@ -121,7 +119,7 @@ public class FeederIOSim implements FeederIO {
 
         BaseStatusSignal.setUpdateFrequencyForAll(
                 4,
-                rollerTemperature
+                rollerDeviceTemp
         );
 
         ParentDevice.optimizeBusUtilizationForAll(
@@ -138,7 +136,7 @@ public class FeederIOSim implements FeederIO {
         inputs.rollerVelocityRotsPerSec = rollerVelocity.getValueAsDouble();
         inputs.rollerVoltage = rollerVoltage.getValueAsDouble();
         inputs.rollerTorqueCurrentAmps = rollerTorqueCurrent.getValueAsDouble();
-        inputs.rollerTemperatureCelsius = rollerTemperature.getValueAsDouble();
+        inputs.rollerTempCelsius = rollerDeviceTemp.getValueAsDouble();
     }
 
     @Override

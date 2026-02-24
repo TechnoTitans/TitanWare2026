@@ -19,7 +19,7 @@ import frc.robot.constants.HardwareConstants;
 import frc.robot.utils.ctre.RefreshAll;
 
 public class ShooterIOReal implements ShooterIO {
-    final HardwareConstants.ShooterConstants constants;
+    private final HardwareConstants.ShooterConstants constants;
 
     private final TalonFX masterMotor;
     private final TalonFX followerMotor;
@@ -40,7 +40,6 @@ public class ShooterIOReal implements ShooterIO {
     private final VoltageOut voltageOut;
     private final TorqueCurrentFOC torqueCurrentFOC;
     private final Follower follower;
-
 
     public ShooterIOReal(final HardwareConstants.ShooterConstants constants) {
         this.constants = constants;
@@ -92,16 +91,13 @@ public class ShooterIOReal implements ShooterIO {
         motorConfiguration.CurrentLimits.StatorCurrentLimitEnable = true;
         motorConfiguration.CurrentLimits.SupplyCurrentLimit = 70;
         motorConfiguration.CurrentLimits.SupplyCurrentLowerLimit = 40;
-        motorConfiguration.CurrentLimits.SupplyCurrentLowerTime = 1;
+        motorConfiguration.CurrentLimits.SupplyCurrentLowerTime = 4;
         motorConfiguration.CurrentLimits.SupplyCurrentLimitEnable = true;
         motorConfiguration.MotorOutput.NeutralMode = NeutralModeValue.Brake;
         motorConfiguration.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
         motorConfiguration.Feedback.FeedbackSensorSource = FeedbackSensorSourceValue.RotorSensor;
         motorConfiguration.Feedback.SensorToMechanismRatio = constants.gearing();
-
         masterMotor.getConfigurator().apply(motorConfiguration);
-        motorConfiguration.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
-        followerMotor.getConfigurator().apply(motorConfiguration);
 
         BaseStatusSignal.setUpdateFrequencyForAll(
                 100,

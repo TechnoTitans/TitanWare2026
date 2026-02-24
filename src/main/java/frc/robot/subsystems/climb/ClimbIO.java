@@ -16,11 +16,11 @@ public interface ClimbIO {
 
     default void config() {}
 
-    default void setPosition(final double positionRots) {}
-
     default void toPosition(final double positionRots) {}
 
     default void toVoltage(final double volts) {}
 
     default void toTorqueCurrent(final double torqueCurrentAmps) {}
+
+    default void setPosition(final double positionRots) {}
 }

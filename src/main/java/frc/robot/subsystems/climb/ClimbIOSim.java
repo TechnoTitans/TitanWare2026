@@ -76,7 +76,6 @@ public class ClimbIOSim implements ClimbIO {
                 () -> Units.rotationsToRadians(climbSim.getVelocityMetersPerSecond() / drumCircumferenceMeters)
         );
 
-
         this.motorPosition = climbMotor.getPosition(false);
         this.motorVelocity = climbMotor.getVelocity(false);
         this.motorVoltage = climbMotor.getMotorVoltage(false);

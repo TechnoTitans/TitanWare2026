@@ -1,12 +1,10 @@
 package frc.robot.subsystems.superstructure;
 
-import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj.event.EventLoop;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.subsystems.superstructure.calculator.ShotCalculationStructs;
-import frc.robot.subsystems.superstructure.calculator.ShotCalculator;
 import frc.robot.subsystems.superstructure.hood.Hood;
 import frc.robot.subsystems.superstructure.shooter.Shooter;
 import frc.robot.subsystems.superstructure.turret.Turret;
@@ -30,7 +28,7 @@ public class Superstructure extends VirtualSubsystem {
     private final Trigger desiredGoalIsRunningGoal;
     private final Trigger desiredGoalChanged;
 
-    public final Trigger atSuperstructureSetpoint;
+    public final Trigger atSetpoint;
 
     private double hoodValue = 0.0;
 
@@ -47,7 +45,12 @@ public class Superstructure extends VirtualSubsystem {
 
         private final boolean isDynamic;
 
-        Goal(final Turret.Goal turretGoal, final Hood.Goal hoodGoal, final Shooter.Goal shooterGoal, final boolean isDynamic) {
+        Goal(
+                final Turret.Goal turretGoal,
+                final Hood.Goal hoodGoal,
+                final Shooter.Goal shooterGoal,
+                final boolean isDynamic
+        ) {
             this.turretGoal = turretGoal;
             this.hoodGoal = hoodGoal;
             this.shooterGoal = shooterGoal;
@@ -67,11 +70,11 @@ public class Superstructure extends VirtualSubsystem {
 
         this.eventLoop = new EventLoop();
 
-        this.desiredGoalIsRunningGoal = new Trigger(eventLoop, () -> this.desiredGoal == runningGoal);
-        this.desiredGoalChanged = new Trigger(eventLoop, () -> this.desiredGoal != runningGoal);
-        this.atSuperstructureSetpoint = turret.atSetpoint
+        this.desiredGoalIsRunningGoal = new Trigger(eventLoop, () -> desiredGoal == runningGoal);
+        this.desiredGoalChanged = new Trigger(eventLoop, () -> desiredGoal != runningGoal);
+        this.atSetpoint = turret.atSetpoint
                 .and(hood.atSetpoint)
-                .and(shooter.atVelocitySetpoint);
+                .and(shooter.atSetpoint);
 
         this.shotCalculationSupplier = shotCalculationSupplier;
 
@@ -92,11 +95,6 @@ public class Superstructure extends VirtualSubsystem {
         return Commands.run(run, turret, hood);
     }
 
-    private void setDesiredGoal(final Goal desiredGoal) {
-        this.desiredGoal = desiredGoal;
-        eventLoop.poll();
-    }
-
     @Override
     public void periodic() {
         eventLoop.poll();
@@ -109,25 +107,22 @@ public class Superstructure extends VirtualSubsystem {
             shooter.updateVelocitySetpoint(shotCalculation.hoodShooterCalculation().flywheelVelocity());
         }
 
+        //TODO: Change how goal system works -> current goal should only be current when at setpoint
         if (desiredGoal != runningGoal) {
             turret.setGoal(desiredGoal.turretGoal);
             hood.setGoal(desiredGoal.hoodGoal);
             shooter.setGoal(desiredGoal.shooterGoal);
 
-            this.runningGoal = desiredGoal;
+            runningGoal = desiredGoal;
         }
 
         Logger.recordOutput(LogKey + "/RunningGoal", runningGoal);
         Logger.recordOutput(LogKey + "/DesiredGoal", desiredGoal);
 
-        Logger.recordOutput(LogKey + "/AtSetpoint", atSuperstructureSetpoint);
+        Logger.recordOutput(LogKey + "/AtSetpoint", atSetpoint);
 
         Logger.recordOutput(LogKey + "/Triggers/DesiredGoalIsRunningGoal", desiredGoalIsRunningGoal);
         Logger.recordOutput(LogKey + "/Triggers/DesiredGoalChanged", desiredGoalChanged);
-    }
-
-    public Trigger atSetpoint(final Supplier<Goal> goalSupplier) {
-        return atSuperstructureSetpoint.and(() -> runningGoal == goalSupplier.get());
     }
 
     public Trigger atSetpoint(final Goal goal) {
@@ -144,7 +139,7 @@ public class Superstructure extends VirtualSubsystem {
         return runEnd(
                 () -> setDesiredGoal(goal.get()),
                 () -> setDesiredGoal(Goal.TRACKING)
-        ).withName("ToGoal: " + goal);
+        ).withName("ToGoalSupplier");
     }
 
     public Command toGoal(final Goal goal) {
@@ -156,7 +151,16 @@ public class Superstructure extends VirtualSubsystem {
 
     public Command runGoal(final Supplier<Goal> goalSupplier) {
         return run(() -> setDesiredGoal(goalSupplier.get()))
-                .withName("RunGoal :" + goalSupplier.get());
+                .withName("RunGoalSupplier");
+    }
+
+    public Trigger atSetpoint(final Supplier<Goal> goalSupplier) {
+        return atSetpoint.and(() -> runningGoal == goalSupplier.get());
+    }
+
+    private void setDesiredGoal(final Goal desiredGoal) {
+        this.desiredGoal = desiredGoal;
+        eventLoop.poll();
     }
 
     public Command testingHood() {

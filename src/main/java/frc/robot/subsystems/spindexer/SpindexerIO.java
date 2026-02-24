@@ -12,12 +12,9 @@ public interface SpindexerIO {
         public double wheelTemperatureCelsius = 0.0;
     }
 
-    default void updateInputs(final SpindexerIOInputs inputs) {
-    }
+    default void updateInputs(final SpindexerIOInputs inputs) {}
 
-    default void config() {
-    }
+    default void config() {}
 
-    default void toWheelVelocity(final double wheelVelocityRotsPerSec) {
-    }
+    default void toWheelVelocity(final double wheelVelocityRotsPerSec) {}
 }

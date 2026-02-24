@@ -12,7 +12,6 @@ public interface HoodIO {
         public double hoodTempCelsius = 0.0;
     }
 
-
     default void updateInputs(final HoodIOInputs inputs) {}
 
     default void config() {}
@@ -25,6 +24,7 @@ public interface HoodIO {
 
     default void toHoodTorqueCurrent(final double torqueCurrentAmps) {}
 
+    //TODO: Remove home
     default void home() {}
 
     default void zeroMotor() {}

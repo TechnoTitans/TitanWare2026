@@ -48,7 +48,7 @@ public class SpindexerIOSim implements SpindexerIO {
                         1 / (2 * Math.PI),
                         0.1 / (2 * Math.PI)
                 ),
-                DCMotor.getKrakenX60Foc(1)
+                DCMotor.getKrakenX44Foc(1)
         );
 
         this.wheelMotor = new TalonFX(constants.motorID(), constants.CANBus().toPhoenix6CANBus());
@@ -97,9 +97,9 @@ public class SpindexerIOSim implements SpindexerIO {
         wheelConfiguration.Slot0 = new Slot0Configs()
                 .withKS(0.01)
                 .withKP(5);
-        wheelConfiguration.CurrentLimits.StatorCurrentLimit = 40;
+        wheelConfiguration.CurrentLimits.StatorCurrentLimit = 60;
         wheelConfiguration.CurrentLimits.StatorCurrentLimitEnable = true;
-        wheelConfiguration.CurrentLimits.SupplyCurrentLimit = 40;
+        wheelConfiguration.CurrentLimits.SupplyCurrentLimit = 50;
         wheelConfiguration.CurrentLimits.SupplyCurrentLowerLimit = 40;
         wheelConfiguration.CurrentLimits.SupplyCurrentLowerTime = 1;
         wheelConfiguration.CurrentLimits.SupplyCurrentLimitEnable = true;

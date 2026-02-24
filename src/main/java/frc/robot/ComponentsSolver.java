@@ -11,11 +11,12 @@ import org.littletonrobotics.junction.Logger;
 import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
 
+@SuppressWarnings("ClassCanBeRecord")
 public class ComponentsSolver {
-    final Supplier<Rotation2d> turretRotationSupplier;
-    final Supplier<Rotation2d> hoodRotationSupplier;
-    final Supplier<Rotation2d> intakeSlideRotationSupplier;
-    final DoubleSupplier climbExtensionMetersSupplier;
+    private final Supplier<Rotation2d> turretRotationSupplier;
+    private final Supplier<Rotation2d> hoodRotationSupplier;
+    private final Supplier<Rotation2d> intakeSlideRotationSupplier;
+    private final DoubleSupplier climbExtensionMetersSupplier;
 
     public ComponentsSolver(
             final Supplier<Rotation2d> turretRotationSupplier,
@@ -55,7 +56,9 @@ public class ComponentsSolver {
                 new Transform3d(
                         SimConstants.Hood.TURRET_TO_HOOD_TRANSLATION,
                         new Rotation3d(
-                                hoodRotationSupplier.get().unaryMinus().plus(SimConstants.Hood.ZEROED_POSITION_TO_HORIZONTAL).getRadians(),
+                                hoodRotationSupplier.get()
+                                        .unaryMinus()
+                                        .plus(SimConstants.Hood.ZEROED_POSITION_TO_HORIZONTAL).getRadians(),
                                 0,
                                 0
                         )
@@ -66,14 +69,14 @@ public class ComponentsSolver {
     }
 
     private Pose3d[] getIntakeHopperPoses() {
-        final double dt = intakeSlideRotationSupplier.get().getRotations()
+        final double extensionRatio = intakeSlideRotationSupplier.get().getRotations()
                 / (HardwareConstants.INTAKE_SLIDE.upperLimitRots() - HardwareConstants.INTAKE_SLIDE.lowerLimitRots());
 
         final Pose3d intakePose = SimConstants.IntakeSlide.RETRACTED_POSE
-                .interpolate(SimConstants.IntakeSlide.EXTENDED_POSE, dt);
+                .interpolate(SimConstants.IntakeSlide.EXTENDED_POSE, extensionRatio);
 
         final Pose3d hopperPose = SimConstants.Hopper.RETRACTED_POSE
-                .interpolate(SimConstants.Hopper.EXTENDED_POSE, dt);
+                .interpolate(SimConstants.Hopper.EXTENDED_POSE, extensionRatio);
 
         return new Pose3d[]{intakePose, hopperPose};
     }
@@ -89,13 +92,13 @@ public class ComponentsSolver {
                 new Transform3d(
                         0,
                         0,
-                        stage1ExtensionMeters
-                        ,
+                        stage1ExtensionMeters,
                         Rotation3d.kZero
                 )
         );
 
-        final double stage2ExtensionMeters = Math.min(extensionMeters - stage1ExtensionMeters, SimConstants.Climb.STAGE_2_MAX_EXTENSION);
+        final double stage2ExtensionMeters =
+                Math.min(extensionMeters - stage1ExtensionMeters, SimConstants.Climb.STAGE_2_MAX_EXTENSION);
         final Pose3d stage2Pose = stage1Pose.transformBy(
                 new Transform3d(
                         0,
@@ -104,7 +107,6 @@ public class ComponentsSolver {
                         Rotation3d.kZero
                 )
         );
-
 
         return new Pose3d[]{stage1Pose, stage2Pose};
     }

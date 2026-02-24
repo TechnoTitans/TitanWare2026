@@ -19,7 +19,7 @@ public class Shooter extends SubsystemBase {
     private Goal desiredGoal = Goal.STOP;
     private Goal currentGoal = desiredGoal;
 
-    public final Trigger atVelocitySetpoint = new Trigger(this::atVelocitySetpoint);
+    public final Trigger atSetpoint = new Trigger(this::atVelocitySetpoint);
 
     public enum Goal {
         STOP(0, false),
@@ -48,8 +48,7 @@ public class Shooter extends SubsystemBase {
         this.shooterIO = switch (mode) {
             case REAL -> new ShooterIOReal(constants);
             case SIM -> new ShooterIOSim(constants);
-            case REPLAY, DISABLED -> new ShooterIO() {
-            };
+            case REPLAY, DISABLED -> new ShooterIO() {};
         };
 
         this.inputs = new ShooterIOInputsAutoLogged();
@@ -60,6 +59,7 @@ public class Shooter extends SubsystemBase {
 
     @Override
     public void periodic() {
+        //TODO: Uncapitalize all subsystems
         final double ShooterPeriodicUpdateStart = Timer.getFPGATimestamp();
 
         shooterIO.updateInputs(inputs);
@@ -86,7 +86,7 @@ public class Shooter extends SubsystemBase {
     }
 
     public boolean isShooting() {
-        return atVelocitySetpoint.getAsBoolean() && currentGoal == Goal.TRACKING;
+        return atSetpoint.getAsBoolean() && currentGoal == Goal.TRACKING;
     }
 
     public void setGoal(final Goal desiredGoal) {
@@ -96,7 +96,7 @@ public class Shooter extends SubsystemBase {
     }
 
     public void updateVelocitySetpoint(final double desiredShooterVelocity) {
-        this.desiredGoal.changeShooterVelocityGoal(desiredShooterVelocity);
+        desiredGoal.changeShooterVelocityGoal(desiredShooterVelocity);
     }
 
     private boolean atVelocitySetpoint() {
