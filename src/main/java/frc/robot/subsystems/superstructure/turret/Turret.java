@@ -16,8 +16,8 @@ import java.util.function.DoubleSupplier;
 public class Turret extends SubsystemBase {
     protected static final String LogKey = "Superstructure/Turret";
 
-    private static final double PositionToleranceRots = 0.02;
-    private static final double VelocityToleranceRotsPerSec = 0.02;
+    private static final double PositionToleranceRots = 0.01;
+    private static final double VelocityToleranceRotsPerSec = 0.01;
 
     private final HardwareConstants.TurretConstants constants;
     private final DoubleSupplier robotAngularVelocitySupplier;

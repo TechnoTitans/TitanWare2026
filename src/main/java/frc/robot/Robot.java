@@ -126,7 +126,7 @@ public class Robot extends LoggedRobot {
     );
 
     public final Climb climb = new Climb(
-            Constants.CURRENT_MODE,
+            Constants.RobotMode.DISABLED,
             HardwareConstants.CLIMB
     );
 
@@ -448,6 +448,8 @@ public class Robot extends LoggedRobot {
         driverController.y().whileTrue(robotCommands.climb());
 
         driverController.a().onTrue(robotCommands.manualUnclimb());
+
+        driverController.b().whileTrue(superstructure.testingHood());
 
         coController.y(teleopEventLoop).onTrue(robotCommands.manualIntake());
 

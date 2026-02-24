@@ -127,7 +127,7 @@ public class HardwareConstants {
     public static HoodConstants HOOD = new HoodConstants(
             CANBus.RIO,
             22,
-            80,
+            102,
             0.25,
             0
     );

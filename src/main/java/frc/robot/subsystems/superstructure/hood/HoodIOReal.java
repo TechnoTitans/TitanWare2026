@@ -64,15 +64,15 @@ public class HoodIOReal implements HoodIO {
     @Override
     public void config() {
         motorConfig.Slot0 = new Slot0Configs()
-                .withKS(0.39)
-                .withKG(0.1)
+                .withKS(0.41)
+                .withKG(0.03)
                 .withGravityType(GravityTypeValue.Arm_Cosine)
-                .withKP(50)
+                .withKP(200)
                 .withKD(0);
         motorConfig.CurrentLimits.StatorCurrentLimit = 60;
         motorConfig.CurrentLimits.StatorCurrentLimitEnable = true;
         motorConfig.CurrentLimits.SupplyCurrentLimit = 50;
-        motorConfig.CurrentLimits.SupplyCurrentLowerLimit = 30;
+        motorConfig.CurrentLimits.SupplyCurrentLowerLimit = 40;
         motorConfig.CurrentLimits.SupplyCurrentLowerTime = 1;
         motorConfig.CurrentLimits.SupplyCurrentLimitEnable = true;
         motorConfig.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;

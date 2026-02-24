@@ -82,19 +82,19 @@ public class TurretIOReal implements TurretIO {
         final TalonFXConfiguration motorConfig = new TalonFXConfiguration();
         motorConfig.Slot0 = new Slot0Configs()
                 .withKS(0.366)
-                .withKV(3)
+                .withKV(5)
                 .withKP(30)
                 .withKD(0);
         motorConfig.Slot1 = new Slot1Configs()
                 .withKS(0.366)
-                .withKP(30)
-                .withKD(1);
+                .withKP(70)
+                .withKD(0.5);
         motorConfig.TorqueCurrent.PeakForwardTorqueCurrent = 80;
         motorConfig.TorqueCurrent.PeakReverseTorqueCurrent = -80;
         motorConfig.CurrentLimits.StatorCurrentLimit = 70;
         motorConfig.CurrentLimits.StatorCurrentLimitEnable = true;
-        motorConfig.CurrentLimits.SupplyCurrentLimit = 50;
-        motorConfig.CurrentLimits.SupplyCurrentLowerLimit = 30;
+        motorConfig.CurrentLimits.SupplyCurrentLimit = 60;
+        motorConfig.CurrentLimits.SupplyCurrentLowerLimit = 40;
         motorConfig.CurrentLimits.SupplyCurrentLowerTime = 1;
         motorConfig.CurrentLimits.SupplyCurrentLimitEnable = true;
         motorConfig.Feedback.FeedbackSensorSource = FeedbackSensorSourceValue.RotorSensor;
@@ -156,7 +156,7 @@ public class TurretIOReal implements TurretIO {
 
     @Override
     public void toTurretContinuousPosition(final double positionRots, final double velocityRotsPerSec) {
-        turretMotor.setControl(positionVoltage.withPosition(positionRots).withVelocity(velocityRotsPerSec));
+        turretMotor.setControl(positionVoltage.withPosition(positionRots).withVelocity(-velocityRotsPerSec));
     }
 
     @Override

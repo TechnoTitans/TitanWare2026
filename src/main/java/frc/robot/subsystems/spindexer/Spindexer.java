@@ -22,7 +22,7 @@ public class Spindexer extends SubsystemBase {
 
     public enum Goal {
         STOP(0),
-        FEED(15);
+        FEED(50);
 
         private final double wheelVelocitySetpoint;
 

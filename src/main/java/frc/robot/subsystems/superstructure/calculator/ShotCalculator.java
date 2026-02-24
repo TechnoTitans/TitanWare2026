@@ -69,7 +69,7 @@ public class ShotCalculator {
         );
 
         return new ShotCalculationStructs.ShotCalculation(
-                desiredTurretAngle,
+                wrapTurret(desiredTurretAngle),
                 shotDataMap.get(
                         turretToTargetDistance
                 ),
@@ -109,7 +109,7 @@ public class ShotCalculator {
         );
 
         return new ShotCalculationStructs.ShotCalculation(
-                desiredTurretAngle,
+                wrapTurret(desiredTurretAngle),
                 shotDataMap.get(
                         turretToTargetDistance
                 ),

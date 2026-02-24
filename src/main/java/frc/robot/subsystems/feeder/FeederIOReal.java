@@ -63,7 +63,7 @@ public class FeederIOReal implements FeederIO {
         rollerConfiguration.CurrentLimits.StatorCurrentLimit = 80;
         rollerConfiguration.CurrentLimits.StatorCurrentLimitEnable = true;
         rollerConfiguration.CurrentLimits.SupplyCurrentLimit = 70;
-        rollerConfiguration.CurrentLimits.SupplyCurrentLowerLimit = 50;
+        rollerConfiguration.CurrentLimits.SupplyCurrentLowerLimit = 40;
         rollerConfiguration.CurrentLimits.SupplyCurrentLowerTime = 1;
         rollerConfiguration.CurrentLimits.SupplyCurrentLimitEnable = true;
         rollerConfiguration.MotorOutput.NeutralMode = NeutralModeValue.Brake;
