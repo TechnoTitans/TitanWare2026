@@ -138,7 +138,7 @@ public class IntakeSlideIOReal implements IntakeSlideIO {
     }
 
     @Override
-    public void updateInputs(IntakeSlideIOInputs inputs) {
+    public void updateInputs(final IntakeSlideIOInputs inputs) {
         inputs.masterPositionRots = masterPosition.getValueAsDouble();
         inputs.masterVelocityRotsPerSec = masterVelocity.getValueAsDouble();
         inputs.masterVoltage = masterVoltage.getValueAsDouble();
@@ -158,6 +158,14 @@ public class IntakeSlideIOReal implements IntakeSlideIO {
     @Override
     public void toSlidePosition(double positionRots) {
         diffMechanism.setControl(averagePositionVoltage.withPosition(positionRots).withSlot(0), differentialPositionVoltage);
+    }
+
+    @Override
+    public void toSlidePositionUnprofiled(double positionRots, double velocityRotsPerSec) {
+        diffMechanism.setControl(averagePositionVoltage.withPosition(0).withVelocity(velocityRotsPerSec)
+                .withVelocity(0),
+                differentialPositionVoltage
+        );
     }
 
     @Override

@@ -228,6 +228,14 @@ public class IntakeSlideIOSim implements IntakeSlideIO {
     }
 
     @Override
+    public void toSlidePositionUnprofiled(double positionRots, double velocityRotsPerSec) {
+        diffMechanism.setControl(averagePositionVoltage.withPosition(0).withVelocity(velocityRotsPerSec)
+                        .withVelocity(0),
+                differentialPositionVoltage
+        );
+    }
+
+    @Override
     public void home() {
         diffMechanism.setControl(voltageOut.withOutput(-0.1), voltageOut.withOutput(0));
     }

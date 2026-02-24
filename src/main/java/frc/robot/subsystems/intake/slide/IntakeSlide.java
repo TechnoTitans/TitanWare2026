@@ -50,7 +50,8 @@ public class IntakeSlide extends SubsystemBase {
     public enum Goal {
         HOMING(0),
         STOW(0),
-        INTAKE(3.8);
+        INTAKE(3.8),
+        SHOOTING(0);
 
         private final double slideGoalRotations;
 
@@ -88,7 +89,13 @@ public class IntakeSlide extends SubsystemBase {
         if (desiredGoal != currentGoal) {
             switch (controlMode) {
                 case SOFT -> intakeSlideIO.holdSlidePosition(desiredGoal.getSlideGoalRotations());
-                case HARD -> intakeSlideIO.toSlidePosition(desiredGoal.getSlideGoalRotations());
+                case HARD -> {
+                    if (desiredGoal == Goal.SHOOTING) {
+                        intakeSlideIO.toSlidePositionUnprofiled(desiredGoal.getSlideGoalRotations(), 0.01);
+                    } else {
+                        intakeSlideIO.toSlidePosition(desiredGoal.getSlideGoalRotations());
+                    }
+                }
             }
             currentGoal = desiredGoal;
         }
