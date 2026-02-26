@@ -30,9 +30,7 @@ public class HoodIOReal implements HoodIO {
     private final StatusSignal<Current> hoodTorqueCurrent;
     private final StatusSignal<Temperature> hoodDeviceTemp;
 
-    private final MotionMagicExpoVoltage motionMagicExpoVoltage;
     private final PositionVoltage positionVoltage;
-    private final VoltageOut voltageOut;
     private final TorqueCurrentFOC torqueCurrentFOC;
 
     public HoodIOReal(final HardwareConstants.HoodConstants constants) {
@@ -47,9 +45,7 @@ public class HoodIOReal implements HoodIO {
         this.hoodTorqueCurrent = hoodMotor.getTorqueCurrent(false);
         this.hoodDeviceTemp = hoodMotor.getDeviceTemp(false);
 
-        this.motionMagicExpoVoltage = new MotionMagicExpoVoltage(0);
         this.positionVoltage = new PositionVoltage(0);
-        this.voltageOut = new VoltageOut(0);
         this.torqueCurrentFOC = new TorqueCurrentFOC(0);
 
         RefreshAll.add(
@@ -113,18 +109,14 @@ public class HoodIOReal implements HoodIO {
     }
 
     @Override
-    public void toHoodPosition(final double positionRots) {
-        hoodMotor.setControl(motionMagicExpoVoltage.withPosition(positionRots));
-    }
-
-    @Override
     public void toHoodContinuousPosition(final double positionRots) {
         hoodMotor.setControl(positionVoltage.withPosition(positionRots));
     }
 
+    //TODO: Maybe use a different gain
     @Override
-    public void toHoodVoltage(final double volts) {
-        hoodMotor.setControl(voltageOut.withOutput(volts));
+    public void toHoodPosition(final double positionRots) {
+        hoodMotor.setControl(positionVoltage.withPosition(positionRots));
     }
 
     @Override
@@ -133,17 +125,7 @@ public class HoodIOReal implements HoodIO {
     }
 
     @Override
-    public void home() {
-        motorConfig.CurrentLimits.StatorCurrentLimit = 1;
-        hoodMotor.setControl(voltageOut.withOutput(-0.1));
-    }
-
-    @Override
     public void zeroMotor() {
         hoodMotor.setPosition(0);
-        motorConfig.CurrentLimits.StatorCurrentLimit = 60;
-        motorConfig.SoftwareLimitSwitch.ForwardSoftLimitThreshold = constants.hoodUpperLimitRots();
-        motorConfig.SoftwareLimitSwitch.ReverseSoftLimitThreshold = 0;
-        toHoodPosition(0);
     }
 }

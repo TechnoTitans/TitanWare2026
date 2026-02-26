@@ -4,6 +4,7 @@ import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.Timer;
+import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.constants.Constants;
@@ -14,7 +15,7 @@ import org.littletonrobotics.junction.Logger;
 import java.util.function.DoubleSupplier;
 
 public class Turret extends SubsystemBase {
-    protected static final String LogKey = "Superstructure/Turret";
+    protected static final String LogKey = "Turret";
 
     private static final double PositionToleranceRots = 0.01;
     private static final double VelocityToleranceRotsPerSec = 0.01;
@@ -74,31 +75,28 @@ public class Turret extends SubsystemBase {
 
         turretIO.updateInputs(inputs);
 
-        try {
-            final double absolutePosition = ChineseRemainder.getAbsolutePosition(
-                    constants.leftEncoderGearing() / constants.turretTooth(),
-                    Units.rotationsToDegrees(inputs.leftPositionRots),
-                    constants.rightEncoderGearing() / constants.turretTooth(),
-                    Units.rotationsToDegrees(inputs.rightPositionRots),
-                    constants.turretTooth()
-            ) % 1.0;
+        final double absolutePosition = ChineseRemainder.getAbsolutePosition(
+                constants.smallEncoderTooth() / constants.turretTooth(),
+                Units.rotationsToDegrees(inputs.smallEncoderPositionRots),
+                constants.largeEncoderTooth() / constants.turretTooth(),
+                Units.rotationsToDegrees(inputs.largeEncoderPositionRots),
+                constants.turretTooth()
+        ) % 1.0;
 
-            turretIO.setTurretPosition(absolutePosition);
-        } catch (RuntimeException e) {
-            turretIO.setTurretPosition(0.0);
-        }
+        turretIO.setTurretPosition(absolutePosition);
+
+        Logger.recordOutput(LogKey + "/CRTResult", absolutePosition);
 
 //        turretIO.setTurretPosition(0);
     }
 
     @Override
     public void periodic() {
-        final double TurretPeriodicUpdateStart = Timer.getFPGATimestamp();
+        final double turretPeriodicUpdateStart = Timer.getFPGATimestamp();
 
         turretIO.updateInputs(inputs);
         Logger.processInputs(LogKey, inputs);
 
-        //TODO: Simplify logic
         if (desiredGoal != currentGoal) {
             turretIO.toTurretPosition(desiredGoal.getTurretPositionGoalRots());
             this.currentGoal = desiredGoal;
@@ -106,7 +104,9 @@ public class Turret extends SubsystemBase {
             if (Math.abs(inputs.turretPositionRots - desiredGoal.getTurretPositionGoalRots()) > 0.3) {
                 turretIO.toTurretPosition(desiredGoal.getTurretPositionGoalRots());
             } else {
-                turretIO.toTurretContinuousPosition(desiredGoal.getTurretPositionGoalRots(), Units.radiansToRotations(robotAngularVelocitySupplier.getAsDouble()));
+                turretIO.toTurretContinuousPosition(desiredGoal.getTurretPositionGoalRots(),
+                        Units.radiansToRotations(-robotAngularVelocitySupplier.getAsDouble())
+                );
             }
         }
 
@@ -119,8 +119,13 @@ public class Turret extends SubsystemBase {
         Logger.recordOutput(LogKey + "/Triggers/AtUpperLimit", atTurretUpperLimit());
         Logger.recordOutput(
                 LogKey + "/PeriodicIOPeriodMs",
-                Units.secondsToMilliseconds(Timer.getFPGATimestamp() - TurretPeriodicUpdateStart)
+                Units.secondsToMilliseconds(Timer.getFPGATimestamp() - turretPeriodicUpdateStart)
         );
+    }
+
+    public Command toTurretZero() {
+        return runOnce(() -> setGoal(Goal.CLIMB))
+                .withName("ToTurretZero");
     }
 
     public void setGoal(final Goal desiredGoal) {
@@ -144,10 +149,10 @@ public class Turret extends SubsystemBase {
     }
 
     private boolean atTurretLowerLimit() {
-        return inputs.turretPositionRots <= constants.lowerLimitRots();
+        return inputs.turretPositionRots <= constants.reverseLimitRots();
     }
 
     private boolean atTurretUpperLimit() {
-        return inputs.turretPositionRots >= constants.upperLimitRots();
+        return inputs.turretPositionRots >= constants.forwardLimitRots();
     }
 }

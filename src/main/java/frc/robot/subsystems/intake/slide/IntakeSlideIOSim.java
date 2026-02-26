@@ -13,6 +13,7 @@ import com.ctre.phoenix6.mechanisms.DifferentialMotorConstants;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.MotorAlignmentValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
+import com.ctre.phoenix6.sim.TalonFXSimState;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.system.plant.LinearSystemId;
 import edu.wpi.first.units.measure.*;
@@ -109,6 +110,9 @@ public class IntakeSlideIOSim implements IntakeSlideIO {
 
         final TalonFX masterMotor = diffMechanism.getLeader();
         final TalonFX followerMotor = diffMechanism.getFollower();
+
+        masterMotor.getSimState().setMotorType(TalonFXSimState.MotorType.KrakenX44);
+        followerMotor.getSimState().setMotorType(TalonFXSimState.MotorType.KrakenX44);
 
         final DCMotor motor = DCMotor.getKrakenX44(1);
 
@@ -236,8 +240,8 @@ public class IntakeSlideIOSim implements IntakeSlideIO {
     }
 
     @Override
-    public void home() {
-        diffMechanism.setControl(voltageOut.withOutput(-0.1), voltageOut.withOutput(0));
+    public void toSlideTorqueCurrent(final double torqueCurrentAmps) {
+        diffMechanism.setControl(voltageOut.withOutput(torqueCurrentAmps), voltageOut.withOutput(0));
     }
 
     @Override

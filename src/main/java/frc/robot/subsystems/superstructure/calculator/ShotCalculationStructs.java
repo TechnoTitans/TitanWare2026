@@ -28,7 +28,7 @@ public class ShotCalculationStructs {
         }
     }
 
-    public static final double FerryXBoundary = Units.inchesToMeters(205);
+    public static final double FerryXBoundary = Units.inchesToMeters(305);
 
     public static final InterpolatingTreeMap<Double, HoodShooterCalculation> shotDataMap = new InterpolatingTreeMap<>(
             InverseInterpolator.forDouble(),
@@ -40,55 +40,55 @@ public class ShotCalculationStructs {
     static {
         shotDataMap.put(1d, new HoodShooterCalculation(
                 Rotation2d.fromDegrees(5),
-                20,
+                30,
                 1
         ));
 
         shotDataMap.put(1.5d, new HoodShooterCalculation(
-                Rotation2d.fromDegrees(20),
-                20,
+                Rotation2d.fromDegrees(30),
+                30,
                 1.05
         ));
 
         shotDataMap.put(2d, new HoodShooterCalculation(
                 Rotation2d.fromDegrees(15),
-                20,
+                30,
                 1.1
         ));
 
         shotDataMap.put(2.5d, new HoodShooterCalculation(
                 Rotation2d.fromDegrees(18),
-                20,
+                30,
                 1.15
         ));
 
         shotDataMap.put(3d, new HoodShooterCalculation(
                 Rotation2d.fromDegrees(19),
-                20,
+                30,
                 1.2
         ));
 
         shotDataMap.put(3.5d, new HoodShooterCalculation(
-                Rotation2d.fromDegrees(20),
-                20,
+                Rotation2d.fromDegrees(30),
+                30,
                 1.25
         ));
 
         shotDataMap.put(4d, new HoodShooterCalculation(
                 Rotation2d.fromDegrees(22),
-                20,
+                30,
                 1.3
         ));
 
         shotDataMap.put(4.5d, new HoodShooterCalculation(
                 Rotation2d.fromDegrees(25),
-                20,
-                1.35
+                30,
+                1.30
         ));
 
         shotDataMap.put(5d, new HoodShooterCalculation(
                 Rotation2d.fromDegrees(26),
-                20,
+                30,
                 1.4
         ));
     }

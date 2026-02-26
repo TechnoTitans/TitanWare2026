@@ -51,7 +51,7 @@ public class Spindexer extends SubsystemBase {
 
     @Override
     public void periodic() {
-        final double SpindexerPeriodicFPGATime = Timer.getFPGATimestamp();
+        final double spindexerPeriodicFPGATime = Timer.getFPGATimestamp();
 
         spindexerIO.updateInputs(inputs);
         Logger.processInputs(LogKey, inputs);
@@ -68,7 +68,7 @@ public class Spindexer extends SubsystemBase {
 
         Logger.recordOutput(
                 LogKey + "/PeriodicIOPeriodMs",
-                Units.secondsToMilliseconds(Timer.getFPGATimestamp() - SpindexerPeriodicFPGATime)
+                Units.secondsToMilliseconds(Timer.getFPGATimestamp() - spindexerPeriodicFPGATime)
         );
     }
 

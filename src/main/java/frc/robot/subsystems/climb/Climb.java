@@ -27,24 +27,15 @@ public class Climb extends SubsystemBase {
     public final Trigger atLowerLimit = new Trigger(this::atLowerLimit);
     public final Trigger atUpperLimit = new Trigger(this::atUpperLimit);
 
-    //TODO: Move to rotations
     public enum Goal {
         STOW(0),
-        CLIMBED(0),
+        CLIMB_DOWN(0),
         EXTEND(0.4);
 
-        private final double positionGoalMeters;
+        private final double positionRots;
 
-        Goal(final double positionGoalMeters) {
-            this.positionGoalMeters = positionGoalMeters;
-        }
-
-        public double getPositionGoalRots(final HardwareConstants.ClimbConstants constants) {
-            return positionGoalMeters / constants.spoolDiameterMeters();
-        }
-
-        public double getPositionGoalMeters() {
-            return positionGoalMeters;
+        Goal(final double positionRots) {
+            this.positionRots = positionRots;
         }
     }
 
@@ -74,7 +65,10 @@ public class Climb extends SubsystemBase {
         Logger.processInputs(LogKey, inputs);
 
         if (desiredGoal != currentGoal) {
-            climbIO.toPosition(desiredGoal.getPositionGoalRots(constants));
+            if (desiredGoal == Goal.CLIMB_DOWN) {
+                climbIO.toPositionClimb(desiredGoal.positionRots);
+            }
+            climbIO.toPosition(desiredGoal.positionRots);
             this.currentGoal = desiredGoal;
         }
 
@@ -84,7 +78,7 @@ public class Climb extends SubsystemBase {
 
         Logger.recordOutput(LogKey + "/CurrentGoal", currentGoal.toString());
         Logger.recordOutput(LogKey + "/DesiredGoal", desiredGoal);
-        Logger.recordOutput(LogKey + "/DesiredGoal/ClimbPositionRots", desiredGoal.getPositionGoalRots(constants));
+        Logger.recordOutput(LogKey + "/DesiredGoal/ClimbPositionRots", desiredGoal.positionRots);
         Logger.recordOutput(LogKey + "/ExtensionMeters", getExtensionMeters());
         Logger.recordOutput(LogKey + "/Triggers/AtLowerLimit", atLowerLimit());
         Logger.recordOutput(LogKey + "/Triggers/AtUpperLimit", atUpperLimit());
@@ -97,13 +91,12 @@ public class Climb extends SubsystemBase {
     }
 
     public boolean atGoal(final Goal goal) {
-        return MathUtil.isNear(goal.getPositionGoalRots(constants), inputs.motorPositionRots, PositionToleranceRots)
+        return MathUtil.isNear(goal.positionRots, inputs.motorPositionRots, PositionToleranceRots)
                 && MathUtil.isNear(0, inputs.motorVelocityRotsPerSec, VelocityToleranceRotsPerSec);
     }
 
     private boolean atPositionSetpoint() {
-        final double goalRots = desiredGoal.getPositionGoalRots(constants);
-        return MathUtil.isNear(goalRots, inputs.motorPositionRots, PositionToleranceRots)
+        return MathUtil.isNear(desiredGoal.positionRots, inputs.motorPositionRots, PositionToleranceRots)
                 && MathUtil.isNear(0, inputs.motorVelocityRotsPerSec, VelocityToleranceRotsPerSec)
                 && currentGoal == desiredGoal;
     }

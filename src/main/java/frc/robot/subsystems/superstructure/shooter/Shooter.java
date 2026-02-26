@@ -10,8 +10,8 @@ import frc.robot.constants.HardwareConstants;
 import org.littletonrobotics.junction.Logger;
 
 public class Shooter extends SubsystemBase {
-    protected static final String LogKey = "Superstructure/Shooter";
-    private static final double VelocityToleranceRotsPerSec = 0.2;
+    protected static final String LogKey = "Shooter";
+    private static final double VelocityToleranceRotsPerSec = 0.5;
 
     private final ShooterIO shooterIO;
     private final ShooterIOInputsAutoLogged inputs;
@@ -59,8 +59,7 @@ public class Shooter extends SubsystemBase {
 
     @Override
     public void periodic() {
-        //TODO: Uncapitalize all subsystems
-        final double ShooterPeriodicUpdateStart = Timer.getFPGATimestamp();
+        final double shooterPeriodicUpdateStart = Timer.getFPGATimestamp();
 
         shooterIO.updateInputs(inputs);
         Logger.processInputs(LogKey, inputs);
@@ -81,7 +80,7 @@ public class Shooter extends SubsystemBase {
         Logger.recordOutput(LogKey + "/Triggers/AtVelocitySetpoint", atVelocitySetpoint());
         Logger.recordOutput(
                 LogKey + "/PeriodicIOPeriodMs",
-                Units.secondsToMilliseconds(Timer.getFPGATimestamp() - ShooterPeriodicUpdateStart)
+                Units.secondsToMilliseconds(Timer.getFPGATimestamp() - shooterPeriodicUpdateStart)
         );
     }
 

@@ -6,6 +6,7 @@ import com.ctre.phoenix6.configs.Slot1Configs;
 import com.ctre.phoenix6.configs.Slot2Configs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.PositionVoltage;
+import com.ctre.phoenix6.controls.TorqueCurrentFOC;
 import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.mechanisms.DifferentialMechanism;
@@ -37,12 +38,12 @@ public class IntakeSlideIOReal implements IntakeSlideIO {
 
     private final PositionVoltage averagePositionVoltage;
     private final PositionVoltage differentialPositionVoltage;
-    private final VoltageOut voltageOut;
+    private final TorqueCurrentFOC torqueCurrentFOC;
 
     public IntakeSlideIOReal(final HardwareConstants.IntakeSlideConstants constants) {
         this.averagePositionVoltage = new PositionVoltage(0).withSlot(0);
         this.differentialPositionVoltage = new PositionVoltage(0).withSlot(1);
-        this.voltageOut = new VoltageOut(0);
+        this.torqueCurrentFOC = new TorqueCurrentFOC(0);
 
         final TalonFXConfiguration masterMotorConfig = new TalonFXConfiguration();
         // Average Slot
@@ -174,8 +175,8 @@ public class IntakeSlideIOReal implements IntakeSlideIO {
     }
 
     @Override
-    public void home() {
-        diffMechanism.setControl(voltageOut.withOutput(-0.1), voltageOut.withOutput(0));
+    public void toSlideTorqueCurrent(final double torqueCurrentAmps) {
+        diffMechanism.setControl(torqueCurrentFOC.withOutput(torqueCurrentAmps), torqueCurrentFOC.withOutput(0));
     }
 
     @Override

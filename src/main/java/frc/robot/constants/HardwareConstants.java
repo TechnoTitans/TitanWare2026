@@ -94,12 +94,12 @@ public class HardwareConstants {
             int largeEncoderID,
             double turretToMechanismGearing,
             int turretTooth,
-            double leftEncoderGearing,
-            double rightEncoderGearing,
-            double leftEncoderOffset,
-            double rightEncoderOffset,
-            double upperLimitRots,
-            double lowerLimitRots
+            double smallEncoderTooth,
+            double largeEncoderTooth,
+            double smallEncoderOffset,
+            double largeEncoderOffset,
+            double forwardLimitRots,
+            double reverseLimitRots
     ) {}
 
     public static TurretConstants TURRET = new TurretConstants(
@@ -111,8 +111,8 @@ public class HardwareConstants {
             80,
             13.0,
             17.0,
-            0.19,
-            0.15,
+            0.544,
+            -0.0625,
             0.5,
             -0.5
     );

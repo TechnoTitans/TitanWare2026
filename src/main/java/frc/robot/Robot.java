@@ -70,7 +70,7 @@ public class Robot extends LoggedRobot {
     );
 
     public final Swerve swerve = new Swerve(
-            Constants.CURRENT_MODE,
+            Constants.RobotMode.DISABLED,
             SwerveConstants.CTRESwerve.DrivetrainConstants,
             new SwerveConstants.SwerveModuleConfig[]{
                     SwerveConstants.FrontLeftModule,
@@ -90,7 +90,7 @@ public class Robot extends LoggedRobot {
     );
 
     public final IntakeRoller intakeRoller = new IntakeRoller(
-            Constants.CURRENT_MODE,
+            Constants.RobotMode.DISABLED,
             HardwareConstants.INTAKE_ROLLER
     );
 
@@ -100,28 +100,28 @@ public class Robot extends LoggedRobot {
     );
 
     public final Feeder feeder = new Feeder(
-            Constants.CURRENT_MODE,
+            Constants.RobotMode.DISABLED,
             HardwareConstants.FEEDER
     );
 
     public final Hood hood = new Hood(
-            Constants.CURRENT_MODE,
+            Constants.RobotMode.DISABLED,
             HardwareConstants.HOOD
     );
 
     public final Turret turret = new Turret(
-            Constants.CURRENT_MODE,
+            Constants.RobotMode.DISABLED,
             HardwareConstants.TURRET,
             () -> swerve.getFieldRelativeSpeeds().omegaRadiansPerSecond
     );
 
     public final Shooter shooter = new Shooter(
-            Constants.CURRENT_MODE,
+            Constants.RobotMode.DISABLED,
             HardwareConstants.SHOOTER
     );
 
     public final Spindexer spindexer = new Spindexer(
-            Constants.CURRENT_MODE,
+            Constants.RobotMode.DISABLED,
             HardwareConstants.SPINDEXER
     );
 
@@ -155,14 +155,14 @@ public class Robot extends LoggedRobot {
             climb::getExtensionMeters
     );
 
-    private final FuelSimManager fuelSimManager = new FuelSimManager(
-            hood::getHoodPosition,
-            turret::getTurretPosition,
-            swerve::getPose,
-            swerve::getFieldRelativeSpeeds,
-            intakeRoller::isIntaking,
-            shooter::isShooting
-    );
+//    private final FuelSimManager fuelSimManager = new FuelSimManager(
+//            hood::getHoodPosition,
+//            turret::getTurretPosition,
+//            swerve::getPose,
+//            swerve::getFieldRelativeSpeeds,
+//            intakeRoller::isIntaking,
+//            shooter::isShooting
+//    );
 
     private final RobotCommands robotCommands = new RobotCommands(
             swerve,
@@ -366,9 +366,7 @@ public class Robot extends LoggedRobot {
 
     @Override
     public void simulationPeriodic() {
-        if (SimConstants.FuelSimEnabled) {
-            fuelSimManager.periodic();
-        }
+//        fuelSimManager.periodic();
     }
 
     public void configureStateTriggers() {
@@ -444,11 +442,10 @@ public class Robot extends LoggedRobot {
 
         driverController.rightTrigger(0.5, teleopEventLoop).whileTrue(robotCommands.shootWhileMoving());
 
-        driverController.y().whileTrue(robotCommands.climb());
+        driverController.y().whileTrue(robotCommands.readyClimb())
+                .onFalse(robotCommands.climb());
 
         driverController.a().onTrue(robotCommands.unclimb());
-
-        driverController.b().whileTrue(superstructure.testingHood());
 
         coController.y(teleopEventLoop).onTrue(robotCommands.deployIntake());
 

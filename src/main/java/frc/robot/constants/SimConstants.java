@@ -5,8 +5,6 @@ import edu.wpi.first.math.util.Units;
 import frc.robot.subsystems.drive.constants.SwerveConstants;
 
 public interface SimConstants {
-    boolean FuelSimEnabled = true;
-
     double SIM_UPDATE_PERIOD_SEC = 0.005;
 
     // Assume 2mOhm resistance for voltage drop calculation

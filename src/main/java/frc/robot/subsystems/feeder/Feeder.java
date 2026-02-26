@@ -49,7 +49,7 @@ public class Feeder extends SubsystemBase {
 
     @Override
     public void periodic() {
-        final double FeederPeriodicFPGATime = Timer.getFPGATimestamp();
+        final double feederPeriodicFPGATime = Timer.getFPGATimestamp();
 
         feederIO.updateInputs(inputs);
         Logger.processInputs(LogKey, inputs);
@@ -66,7 +66,7 @@ public class Feeder extends SubsystemBase {
 
         Logger.recordOutput(
                 LogKey + "/PeriodicIOPeriodMs",
-                Units.secondsToMilliseconds(Timer.getFPGATimestamp() - FeederPeriodicFPGATime)
+                Units.secondsToMilliseconds(Timer.getFPGATimestamp() - feederPeriodicFPGATime)
         );
     }
 

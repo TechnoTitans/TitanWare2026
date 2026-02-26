@@ -12,9 +12,8 @@ public interface TurretIO {
         public double turretTorqueCurrentAmps = 0.0;
         public double turretTempCelsius = 0.0;
 
-        //TODO: Rename
-        public double leftPositionRots = 0.0;
-        public double rightPositionRots = 0.0;
+        public double largeEncoderPositionRots = 0.0;
+        public double smallEncoderPositionRots = 0.0;
     }
 
     default void updateInputs(final TurretIOInputs inputs) {}

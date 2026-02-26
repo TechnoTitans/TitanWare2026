@@ -20,12 +20,7 @@ public interface HoodIO {
 
     default void toHoodContinuousPosition(final double positionRots) {}
 
-    default void toHoodVoltage(final double volts) {}
-
     default void toHoodTorqueCurrent(final double torqueCurrentAmps) {}
-
-    //TODO: Remove home
-    default void home() {}
 
     default void zeroMotor() {}
 }

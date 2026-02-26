@@ -12,6 +12,7 @@ import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.FeedbackSensorSourceValue;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
+import com.ctre.phoenix6.sim.TalonFXSimState;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.system.plant.LinearSystemId;
 import edu.wpi.first.math.util.Units;
@@ -42,7 +43,6 @@ public class HoodIOSim implements HoodIO {
     private final StatusSignal<Temperature> hoodDeviceTemp;
 
     private final PositionVoltage positionVoltage;
-    private final VoltageOut voltageOut;
     private final TorqueCurrentFOC torqueCurrentFOC;
 
     public HoodIOSim(final HardwareConstants.HoodConstants constants) {
@@ -83,7 +83,6 @@ public class HoodIOSim implements HoodIO {
         this.hoodDeviceTemp = hoodMotor.getDeviceTemp(false);
 
         this.positionVoltage = new PositionVoltage(0);
-        this.voltageOut = new VoltageOut(0);
         this.torqueCurrentFOC = new TorqueCurrentFOC(0);
 
         RefreshAll.add(
@@ -113,7 +112,7 @@ public class HoodIOSim implements HoodIO {
                 .withKP(50);
         motorConfig.CurrentLimits.StatorCurrentLimit = 60;
         motorConfig.CurrentLimits.StatorCurrentLimitEnable = true;
-        motorConfig.CurrentLimits.SupplyCurrentLimit = 40;
+        motorConfig.CurrentLimits.SupplyCurrentLimit = 50;
         motorConfig.CurrentLimits.SupplyCurrentLowerLimit = 40;
         motorConfig.CurrentLimits.SupplyCurrentLowerTime = 1;
         motorConfig.CurrentLimits.SupplyCurrentLimitEnable = true;
@@ -142,6 +141,8 @@ public class HoodIOSim implements HoodIO {
                 4,
                 hoodMotor
         );
+
+        hoodMotor.getSimState().setMotorType(TalonFXSimState.MotorType.KrakenX44);
     }
 
     @Override
@@ -164,26 +165,12 @@ public class HoodIOSim implements HoodIO {
     }
 
     @Override
-    public void toHoodVoltage(final double volts) {
-        hoodMotor.setControl(voltageOut.withOutput(volts));
-    }
-
-    @Override
     public void toHoodTorqueCurrent(final double torqueCurrent) {
         hoodMotor.setControl(torqueCurrentFOC.withOutput(torqueCurrent));
     }
 
     @Override
-    public void home() {
-        hoodMotor.setControl(voltageOut.withOutput(-0.1));
-    }
-
-    @Override
     public void zeroMotor() {
         hoodMotor.setPosition(0);
-        motorConfig.CurrentLimits.StatorCurrentLimit = 60;
-        motorConfig.SoftwareLimitSwitch.ForwardSoftLimitThreshold = constants.hoodUpperLimitRots();
-        motorConfig.SoftwareLimitSwitch.ReverseSoftLimitThreshold = 0;
-        toHoodPosition(0);
     }
 }

@@ -27,10 +27,9 @@ public interface IntakeSlideIO {
 
     default void toSlidePositionUnprofiled(final double positionRots, final double velocityRotsPerSec) {}
 
-    default void toSlideVoltage(final double volts) {}
     default void holdSlidePosition(final double positionRots) {}
 
-    default void home() {}
+    default void toSlideTorqueCurrent(final double torqueCurrentAmps) {}
 
     default void zeroMotors() {}
 }

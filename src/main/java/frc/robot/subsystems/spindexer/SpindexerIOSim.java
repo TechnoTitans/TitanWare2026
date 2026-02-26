@@ -11,6 +11,7 @@ import com.ctre.phoenix6.signals.FeedbackSensorSourceValue;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 import com.ctre.phoenix6.sim.ChassisReference;
+import com.ctre.phoenix6.sim.TalonFXSimState;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.system.plant.LinearSystemId;
 import edu.wpi.first.units.measure.*;
@@ -128,6 +129,7 @@ public class SpindexerIOSim implements SpindexerIO {
         );
 
         wheelMotor.getSimState().Orientation = ChassisReference.Clockwise_Positive;
+        wheelMotor.getSimState().setMotorType(TalonFXSimState.MotorType.KrakenX44);
     }
 
     @Override

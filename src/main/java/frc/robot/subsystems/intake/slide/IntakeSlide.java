@@ -81,7 +81,7 @@ public class IntakeSlide extends SubsystemBase {
 
     @Override
     public void periodic() {
-        final double IntakeSlidePeriodicUpdateStart = Timer.getFPGATimestamp();
+        final double intakeSlidePeriodicUpdateStart = Timer.getFPGATimestamp();
 
         intakeSlideIO.updateInputs(inputs);
         Logger.processInputs(LogKey, inputs);
@@ -115,13 +115,13 @@ public class IntakeSlide extends SubsystemBase {
 
         Logger.recordOutput(
                 LogKey + "/PeriodicIOPeriodMs",
-                Units.secondsToMilliseconds(Timer.getFPGATimestamp() - IntakeSlidePeriodicUpdateStart)
+                Units.secondsToMilliseconds(Timer.getFPGATimestamp() - intakeSlidePeriodicUpdateStart)
         );
     }
 
     public Command home() {
         return Commands.sequence(
-                Commands.runOnce(intakeSlideIO::home),
+                Commands.runOnce(() -> intakeSlideIO.toSlideTorqueCurrent(-10)),
                 Commands.waitUntil(isAboveHomingCurrent),
                 Commands.runOnce(() -> {
                     intakeSlideIO.zeroMotors();

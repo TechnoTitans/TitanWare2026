@@ -3,6 +3,7 @@ package frc.robot.subsystems.climb;
 import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.Slot0Configs;
+import com.ctre.phoenix6.configs.Slot1Configs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.MotionMagicExpoVoltage;
 import com.ctre.phoenix6.controls.TorqueCurrentFOC;
@@ -66,6 +67,14 @@ public class ClimbIOReal implements ClimbIO {
                 .withKA(0.012141)
                 .withKP(15)
                 .withKD(1);
+        motorConfiguration.Slot1 = new Slot1Configs()
+                .withKS(0.037707)
+                .withKG(0.52705)
+                .withGravityType(GravityTypeValue.Elevator_Static)
+                .withKV(0.54587)
+                .withKA(0.012141)
+                .withKP(15)
+                .withKD(1);
         motorConfiguration.MotionMagic.MotionMagicCruiseVelocity = 0;
         motorConfiguration.MotionMagic.MotionMagicExpo_kV = 0;
         motorConfiguration.MotionMagic.MotionMagicExpo_kA = 0;
@@ -111,6 +120,11 @@ public class ClimbIOReal implements ClimbIO {
     @Override
     public void toPosition(final double positionRots) {
         climbMotor.setControl(motionMagicExpoVoltage.withPosition(positionRots));
+    }
+
+    @Override
+    public void toPositionClimb(final double positionRots) {
+        climbMotor.setControl(motionMagicExpoVoltage.withPosition(positionRots).withSlot(1));
     }
 
     @Override

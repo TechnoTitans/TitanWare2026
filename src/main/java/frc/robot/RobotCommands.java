@@ -12,10 +12,11 @@ import frc.robot.subsystems.intake.roller.IntakeRoller;
 import frc.robot.subsystems.intake.slide.IntakeSlide;
 import frc.robot.subsystems.spindexer.Spindexer;
 import frc.robot.subsystems.superstructure.Superstructure;
+import frc.robot.utils.subsystems.VirtualSubsystem;
 import frc.robot.utils.teleop.SwerveSpeed;
 import org.littletonrobotics.junction.Logger;
 
-public class RobotCommands {
+public class RobotCommands extends VirtualSubsystem {
     protected static final String LogKey = "RobotCommands";
     protected static final double AllowableSpeedToShootMetersPerSec = 0.1;
 
@@ -62,8 +63,9 @@ public class RobotCommands {
     }
 
     //TODO: Make logged trigger
+    @Override
     public void periodic() {
-        Logger.recordOutput(LogKey + "/AbleToShoot", ableToShoot);
+        Logger.recordOutput(LogKey + "/AbletoShoot", ableToShoot);
     }
 
     public Command deployIntake() {
@@ -80,7 +82,6 @@ public class RobotCommands {
         ).withName("StowIntake");
     }
 
-    //TODO: Might need to change the feeding
     public Command shootWhileMoving() {
         return Commands.parallel(
                 superstructure.toGoal(Superstructure.Goal.SHOOTING),
@@ -89,6 +90,7 @@ public class RobotCommands {
                         feeder.toGoal(Feeder.Goal.FEED)
                                 .onlyWhile(superstructure.atSetpoint)
                 ),
+                intakeSlide.toGoal(IntakeSlide.Goal.SHOOTING),
                 spindexer.toGoal(Spindexer.Goal.FEED),
                 Commands.runOnce(() -> SwerveSpeed.setSwerveSpeed(SwerveSpeed.Speeds.SHOOTING))
         )
@@ -109,21 +111,29 @@ public class RobotCommands {
                                 )
                         )
                 ),
+                intakeSlide.toGoal(IntakeSlide.Goal.SHOOTING),
                 spindexer.toGoal(Spindexer.Goal.FEED),
                 swerve.runWheelXCommand()
         ).withName("ShootStationary");
     }
 
-
-    //TODO:
-    public Command climb() {
+    public Command readyClimb() {
         return Commands.parallel(
                 swerve.runToPose(FieldConstants::getClimbTarget),
                 superstructure.setGoal(Superstructure.Goal.CLIMB),
-                climb.toGoal(Climb.Goal.EXTEND)
-        )
-                .finallyDo(swerve::wheelXCommand)
-                .withName("Climb");
+                Commands.sequence(
+                        stowIntake(),
+                        Commands.waitUntil(intakeSlide.atSlideSetpoint),
+                        climb.setGoal(Climb.Goal.EXTEND)
+                )
+        ).withName("ReadyClimb");
+    }
+
+    public Command climb() {
+        return Commands.parallel(
+                swerve.wheelXCommand(),
+                climb.setGoal(Climb.Goal.CLIMB_DOWN)
+        ).withName("Climb");
     }
 
     public Command unclimb() {

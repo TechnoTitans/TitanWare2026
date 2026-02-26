@@ -14,17 +14,17 @@ import frc.robot.constants.HardwareConstants;
 import org.littletonrobotics.junction.Logger;
 
 public class Hood extends SubsystemBase {
-    protected static final String LogKey = "Superstructure/Hood";
-    private static final double PositionToleranceRots = 0.001;
-    private static final double VelocityToleranceRotsPerSec = 0.001;
-    private static final double ZeroingCurrentThresholdAmps = 15;
+    protected static final String LogKey = "Hood";
+    private static final double PositionToleranceRots = 0.05;
+    private static final double VelocityToleranceRotsPerSec = 0.01;
+    private static final double ZeroingCurrentThresholdAmps = 2;
 
     private final HardwareConstants.HoodConstants constants;
 
     private final HoodIO hoodIO;
     private final HoodIOInputsAutoLogged inputs = new HoodIOInputsAutoLogged();
 
-    private Goal desiredGoal = Goal.TRACKING;
+    private Goal desiredGoal = Goal.HOMING;
     private Goal currentGoal = desiredGoal;
 
     public final Trigger atSetpoint = new Trigger(this::atHoodPositionSetpoint);
@@ -74,7 +74,7 @@ public class Hood extends SubsystemBase {
 
     @Override
     public void periodic() {
-        final double HoodPeriodicUpdateStart = Timer.getFPGATimestamp();
+        final double hoodPeriodicUpdateStart = Timer.getFPGATimestamp();
         hoodIO.updateInputs(inputs);
         Logger.processInputs(LogKey, inputs);
 
@@ -96,16 +96,17 @@ public class Hood extends SubsystemBase {
         Logger.recordOutput(LogKey + "/Triggers/AtPositionSetpoint", atHoodPositionSetpoint());
         Logger.recordOutput(LogKey + "/Triggers/AtHoodLowerLimit", atHoodLowerLimit());
         Logger.recordOutput(LogKey + "/Triggers/AtHoodUpperLimit", atHoodUpperLimit());
+        Logger.recordOutput(LogKey + "/Triggers/IsAboveHomingCurrent", isAboveHomingCurrent);
 
         Logger.recordOutput(
                 LogKey + "/PeriodicIOPeriodMs",
-                Units.secondsToMilliseconds(Timer.getFPGATimestamp() - HoodPeriodicUpdateStart)
+                Units.secondsToMilliseconds(Timer.getFPGATimestamp() - hoodPeriodicUpdateStart)
         );
     }
 
     public Command home() {
         return Commands.sequence(
-                Commands.runOnce(hoodIO::home),
+                Commands.runOnce(() -> hoodIO.toHoodTorqueCurrent(-10)),
                 Commands.waitUntil(isAboveHomingCurrent),
                 Commands.runOnce(() -> {
                         hoodIO.zeroMotor();

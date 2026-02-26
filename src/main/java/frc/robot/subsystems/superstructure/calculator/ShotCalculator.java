@@ -49,8 +49,7 @@ public class ShotCalculator {
                         swerveSpeeds.omegaRadiansPerSecond * DelayTimeSec
                 ));
 
-        //TODO: FixIsPresentCheck
-        final Pose2d calculationPose = DriverStation.getAlliance().get() == DriverStation.Alliance.Blue
+        final Pose2d calculationPose = DriverStation.getAlliance().orElse(DriverStation.Alliance.Blue) == DriverStation.Alliance.Blue
                 ? turretPose : turretPose.relativeTo(FieldConstants.RED_ORIGIN);
 
         final Target target =
@@ -91,7 +90,7 @@ public class ShotCalculator {
                         swerveSpeeds.omegaRadiansPerSecond * DelayTimeSec
                 ));
 
-        final Pose2d calculationPose = DriverStation.getAlliance().get() == DriverStation.Alliance.Blue
+        final Pose2d calculationPose = DriverStation.getAlliance().orElse(DriverStation.Alliance.Blue) == DriverStation.Alliance.Blue
                 ? turretPose : turretPose.relativeTo(FieldConstants.RED_ORIGIN);
 
         final Target target =

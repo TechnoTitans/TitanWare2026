@@ -25,8 +25,8 @@ public class TurretIOReal implements TurretIO {
     private final HardwareConstants.TurretConstants constants;
 
     private final TalonFX turretMotor;
-    private final CANcoder leftEncoder;
-    private final CANcoder rightEncoder;
+    private final CANcoder largeEncoder;
+    private final CANcoder smallEncoder;
 
     private final StatusSignal<Angle> turretPosition;
     private final StatusSignal<AngularVelocity> turretVelocity;
@@ -34,8 +34,8 @@ public class TurretIOReal implements TurretIO {
     private final StatusSignal<Current> turretTorqueCurrent;
     private final StatusSignal<Temperature> turretDeviceTemp;
 
-    private final StatusSignal<Angle> leftEncoderPosition;
-    private final StatusSignal<Angle> rightEncoderPosition;
+    private final StatusSignal<Angle> largeEncoderPosition;
+    private final StatusSignal<Angle> smallEncoderPosition;
 
     private final MotionMagicExpoVoltage motionMagicExpoVoltage;
     private final PositionVoltage positionVoltage;
@@ -46,8 +46,8 @@ public class TurretIOReal implements TurretIO {
         this.constants = constants;
 
         this.turretMotor = new TalonFX(constants.turretMotorID(), constants.CANBus().toPhoenix6CANBus());
-        this.leftEncoder = new CANcoder(constants.smallEncoderID(), constants.CANBus().toPhoenix6CANBus());
-        this.rightEncoder = new CANcoder(constants.largeEncoderID(), constants.CANBus().toPhoenix6CANBus());
+        this.largeEncoder = new CANcoder(constants.largeEncoderID(), constants.CANBus().toPhoenix6CANBus());
+        this.smallEncoder = new CANcoder(constants.smallEncoderID(), constants.CANBus().toPhoenix6CANBus());
 
         this.turretPosition = turretMotor.getPosition(false);
         this.turretVelocity = turretMotor.getVelocity(false);
@@ -55,8 +55,8 @@ public class TurretIOReal implements TurretIO {
         this.turretTorqueCurrent = turretMotor.getTorqueCurrent(false);
         this.turretDeviceTemp = turretMotor.getDeviceTemp(false);
 
-        this.leftEncoderPosition = leftEncoder.getPosition(false);
-        this.rightEncoderPosition = rightEncoder.getPosition(false);
+        this.largeEncoderPosition = largeEncoder.getPosition(true);
+        this.smallEncoderPosition = smallEncoder.getPosition(true);
 
         this.motionMagicExpoVoltage = new MotionMagicExpoVoltage(0);
         this.positionVoltage = new PositionVoltage(0);
@@ -70,8 +70,8 @@ public class TurretIOReal implements TurretIO {
                 turretVoltage,
                 turretTorqueCurrent,
                 turretDeviceTemp,
-                leftEncoderPosition,
-                rightEncoderPosition
+                largeEncoderPosition,
+                smallEncoderPosition
         );
     }
 
@@ -97,22 +97,21 @@ public class TurretIOReal implements TurretIO {
         motorConfig.Feedback.SensorToMechanismRatio = constants.turretToMechanismGearing();
         motorConfig.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
         motorConfig.MotorOutput.NeutralMode = NeutralModeValue.Brake;
-        motorConfig.SoftwareLimitSwitch.ForwardSoftLimitThreshold = constants.upperLimitRots();
+        motorConfig.SoftwareLimitSwitch.ForwardSoftLimitThreshold = constants.forwardLimitRots();
         motorConfig.SoftwareLimitSwitch.ForwardSoftLimitEnable = true;
-        motorConfig.SoftwareLimitSwitch.ReverseSoftLimitThreshold = constants.lowerLimitRots();
+        motorConfig.SoftwareLimitSwitch.ReverseSoftLimitThreshold = constants.reverseLimitRots();
         motorConfig.SoftwareLimitSwitch.ReverseSoftLimitEnable = true;
         turretMotor.getConfigurator().apply(motorConfig);
 
-        final CANcoderConfiguration encoderConfig = new CANcoderConfiguration();
-        encoderConfig.MagnetSensor.MagnetOffset = constants.leftEncoderOffset();
-        encoderConfig.MagnetSensor.SensorDirection = SensorDirectionValue.Clockwise_Positive;
-        leftEncoder.getConfigurator().apply(encoderConfig);
+        final CANcoderConfiguration largeEncoderConfig = new CANcoderConfiguration();
+        largeEncoderConfig.MagnetSensor.MagnetOffset = constants.largeEncoderOffset();
+        largeEncoderConfig.MagnetSensor.SensorDirection = SensorDirectionValue.CounterClockwise_Positive;
+        largeEncoder.getConfigurator().apply(largeEncoderConfig);
 
-
-        //TODO: New Config
-        encoderConfig.MagnetSensor.MagnetOffset = constants.rightEncoderOffset();
-        encoderConfig.MagnetSensor.SensorDirection = SensorDirectionValue.CounterClockwise_Positive;
-        rightEncoder.getConfigurator().apply(encoderConfig);
+        final CANcoderConfiguration smallEncoderConfig = new CANcoderConfiguration();
+        smallEncoderConfig.MagnetSensor.MagnetOffset = constants.smallEncoderOffset();
+        smallEncoderConfig.MagnetSensor.SensorDirection = SensorDirectionValue.Clockwise_Positive;
+        smallEncoder.getConfigurator().apply(smallEncoderConfig);
 
         BaseStatusSignal.setUpdateFrequencyForAll(
                 100,
@@ -120,8 +119,8 @@ public class TurretIOReal implements TurretIO {
                 turretVelocity,
                 turretVoltage,
                 turretTorqueCurrent,
-                leftEncoderPosition,
-                rightEncoderPosition
+                largeEncoderPosition,
+                smallEncoderPosition
         );
         BaseStatusSignal.setUpdateFrequencyForAll(
                 4,
@@ -130,8 +129,8 @@ public class TurretIOReal implements TurretIO {
         ParentDevice.optimizeBusUtilizationForAll(
                 4,
                 turretMotor,
-                leftEncoder,
-                rightEncoder
+                largeEncoder,
+                smallEncoder
         );
     }
 
@@ -143,8 +142,8 @@ public class TurretIOReal implements TurretIO {
         inputs.turretTorqueCurrentAmps = turretTorqueCurrent.getValueAsDouble();
         inputs.turretTempCelsius = turretDeviceTemp.getValueAsDouble();
 
-        inputs.leftPositionRots = leftEncoderPosition.getValueAsDouble();
-        inputs.rightPositionRots = rightEncoderPosition.getValueAsDouble();
+        inputs.largeEncoderPositionRots = largeEncoderPosition.getValueAsDouble();
+        inputs.smallEncoderPositionRots = smallEncoderPosition.getValueAsDouble();
     }
 
     @Override
