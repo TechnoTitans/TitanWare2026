@@ -38,6 +38,7 @@ public class Hood extends SubsystemBase {
 
     public enum Goal {
         HOMING(0, false),
+        STOW(0, false),
         CLIMB(0, false),
         TRACKING(0, true);
 
@@ -116,7 +117,7 @@ public class Hood extends SubsystemBase {
         );
     }
 
-    public void setGoal(final Goal goal) {
+    public void setDesiredGoal(final Goal goal) {
         this.desiredGoal = goal;
         Logger.recordOutput(LogKey + "/CurrentGoal", currentGoal.toString());
         Logger.recordOutput(LogKey + "/DesiredGoal", desiredGoal.toString());

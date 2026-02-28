@@ -31,6 +31,7 @@ public interface Constants {
         String AUTO_SELECTED_SUBSCRIBER = "SelectedAuto";
     }
 
+    //TODO: Update
     interface Vision {
         Vector<N3> VISION_STD_DEV_COEFFS = VecBuilder.fill(0.02, 0.02, 0.02);
         double VISION_CAMERA_DEFAULT_STD_DEV_FACTOR = 1.0;
@@ -38,22 +39,22 @@ public interface Constants {
         double MAX_ACCEPT_BEST_POSE_AMBIGUITY = 0.15;
 
         Transform3d FRONT_HOPPER_CAMERA = new Transform3d(
-                new Translation3d(Units.inchesToMeters(-2.5), Units.inchesToMeters(-11), Units.inchesToMeters(20)),
+                new Translation3d(Units.inchesToMeters(-2.5), Units.inchesToMeters(-11), Units.inchesToMeters(21.625)),
                 new Rotation3d(0, Units.degreesToRadians(-22), Units.degreesToRadians(22))
         );
 
         Transform3d BACK_CENTER_CAMERA = new Transform3d(
-                new Translation3d(Units.inchesToMeters(-9.0), Units.inchesToMeters(10.825), Units.inchesToMeters(18.125)),
+                new Translation3d(Units.inchesToMeters(-8.500), Units.inchesToMeters(10.325), Units.inchesToMeters(19.75)),
                 new Rotation3d(0, Units.degreesToRadians(-25), Units.degreesToRadians(180))
         );
 
         Transform3d BACK_LEFT_CAMERA = new Transform3d(
-                new Translation3d(Units.inchesToMeters(-6.3), Units.inchesToMeters(13.0), Units.inchesToMeters(18)),
+                new Translation3d(Units.inchesToMeters(-6.670), Units.inchesToMeters(13.354), Units.inchesToMeters(19.811)),
                 new Rotation3d(0, Units.degreesToRadians(-20), Units.degreesToRadians(90))
         );
 
         Transform3d BACK_RIGHT_CAMERA = new Transform3d(
-                new Translation3d(Units.inchesToMeters(-6.3), Units.inchesToMeters(-13.0), Units.inchesToMeters(18)),
+                new Translation3d(Units.inchesToMeters(-6.670), Units.inchesToMeters(-13.356), Units.inchesToMeters(19.811)),
                 new Rotation3d(0, Units.degreesToRadians(-20), Units.degreesToRadians(-90))
         );
     }

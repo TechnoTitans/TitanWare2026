@@ -16,6 +16,7 @@ import com.ctre.phoenix6.signals.MotorAlignmentValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 import edu.wpi.first.units.measure.*;
 import frc.robot.constants.HardwareConstants;
+import frc.robot.utils.ctre.Phoenix6Utils;
 import frc.robot.utils.ctre.RefreshAll;
 
 public class IntakeSlideIOReal implements IntakeSlideIO {
@@ -91,18 +92,20 @@ public class IntakeSlideIOReal implements IntakeSlideIO {
 
         this.diffMechanism = new DifferentialMechanism<>(TalonFX::new, diffConstants);
 
-        //TODO: Remove calls for .getLeader()
-        this.masterPosition = diffMechanism.getLeader().getPosition(false);
-        this.masterVelocity = diffMechanism.getLeader().getVelocity(false);
-        this.masterVoltage = diffMechanism.getLeader().getMotorVoltage(false);
-        this.masterTorqueCurrent = diffMechanism.getLeader().getTorqueCurrent(false);
-        this.masterDeviceTemp = diffMechanism.getLeader().getDeviceTemp(false);
+        final TalonFX masterMotor = diffMechanism.getLeader();
+        final TalonFX followerMotor = diffMechanism.getFollower();
 
-        this.followerPosition = diffMechanism.getFollower().getPosition(false);
-        this.followerVelocity = diffMechanism.getFollower().getVelocity(false);
-        this.followerVoltage = diffMechanism.getFollower().getMotorVoltage(false);
-        this.followerTorqueCurrent = diffMechanism.getFollower().getTorqueCurrent(false);
-        this.followerDeviceTemp = diffMechanism.getFollower().getDeviceTemp(false);
+        this.masterPosition = masterMotor.getPosition(false);
+        this.masterVelocity = masterMotor.getVelocity(false);
+        this.masterVoltage = masterMotor.getMotorVoltage(false);
+        this.masterTorqueCurrent = masterMotor.getTorqueCurrent(false);
+        this.masterDeviceTemp = masterMotor.getDeviceTemp(false);
+
+        this.followerPosition = followerMotor.getPosition(false);
+        this.followerVelocity = followerMotor.getVelocity(false);
+        this.followerVoltage = followerMotor.getMotorVoltage(false);
+        this.followerTorqueCurrent = followerMotor.getTorqueCurrent(false);
+        this.followerDeviceTemp = followerMotor.getDeviceTemp(false);
 
         this.averagePosition = diffMechanism.getAveragePosition(false);
         this.differentialPosition = diffMechanism.getDifferentialPosition(false);

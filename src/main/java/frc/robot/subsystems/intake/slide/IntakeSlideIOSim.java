@@ -152,17 +152,17 @@ public class IntakeSlideIOSim implements IntakeSlideIO {
                 followerMotorSim::getAngularVelocityRadPerSec
         );
 
-        this.masterPosition = diffMechanism.getLeader().getPosition(false);
-        this.masterVelocity = diffMechanism.getLeader().getVelocity(false);
-        this.masterVoltage = diffMechanism.getLeader().getMotorVoltage(false);
-        this.masterTorqueCurrent = diffMechanism.getLeader().getTorqueCurrent(false);
-        this.masterDeviceTemp = diffMechanism.getLeader().getDeviceTemp(false);
+        this.masterPosition = masterMotor.getPosition(false);
+        this.masterVelocity = masterMotor.getVelocity(false);
+        this.masterVoltage = masterMotor.getMotorVoltage(false);
+        this.masterTorqueCurrent = masterMotor.getTorqueCurrent(false);
+        this.masterDeviceTemp = masterMotor.getDeviceTemp(false);
 
-        this.followerPosition = diffMechanism.getFollower().getPosition(false);
-        this.followerVelocity = diffMechanism.getFollower().getVelocity(false);
-        this.followerVoltage = diffMechanism.getFollower().getMotorVoltage(false);
-        this.followerTorqueCurrent = diffMechanism.getFollower().getTorqueCurrent(false);
-        this.followerDeviceTemp = diffMechanism.getFollower().getDeviceTemp(false);
+        this.followerPosition = followerMotor.getPosition(false);
+        this.followerVelocity = followerMotor.getVelocity(false);
+        this.followerVoltage = followerMotor.getMotorVoltage(false);
+        this.followerTorqueCurrent = followerMotor.getTorqueCurrent(false);
+        this.followerDeviceTemp = followerMotor.getDeviceTemp(false);
 
         this.averagePosition = diffMechanism.getAveragePosition(false);
         this.differentialPosition = diffMechanism.getDifferentialPosition(false);
@@ -191,8 +191,8 @@ public class IntakeSlideIOSim implements IntakeSlideIO {
         ToClose.add(simUpdateNotifier);
         simUpdateNotifier.setName(String.format(
                 "SimUpdate(%d,%d)",
-                diffMechanism.getLeader().getDeviceID(),
-                diffMechanism.getFollower().getDeviceID()
+                masterMotor.getDeviceID(),
+                followerMotor.getDeviceID()
         ));
         simUpdateNotifier.startPeriodic(SIM_UPDATE_PERIOD_SEC);
     }

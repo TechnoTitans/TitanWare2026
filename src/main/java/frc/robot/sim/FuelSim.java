@@ -1,5 +1,5 @@
 // https://github.com/hammerheads5000/FuelSim
-package frc.robot.sim.fuel;
+package frc.robot.sim;
 
 import edu.wpi.first.math.geometry.*;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;

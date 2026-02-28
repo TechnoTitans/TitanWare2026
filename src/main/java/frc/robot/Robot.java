@@ -20,7 +20,6 @@ import frc.robot.auto.AutoChooser;
 import frc.robot.auto.AutoOption;
 import frc.robot.auto.Autos;
 import frc.robot.constants.*;
-import frc.robot.sim.fuel.FuelSimManager;
 import frc.robot.subsystems.climb.Climb;
 import frc.robot.subsystems.drive.Swerve;
 import frc.robot.subsystems.drive.constants.SwerveConstants;
@@ -29,8 +28,7 @@ import frc.robot.subsystems.intake.roller.IntakeRoller;
 import frc.robot.subsystems.intake.slide.IntakeSlide;
 import frc.robot.subsystems.spindexer.Spindexer;
 import frc.robot.subsystems.superstructure.Superstructure;
-import frc.robot.subsystems.superstructure.calculator.ShotCalculationStructs;
-import frc.robot.subsystems.superstructure.calculator.ShotCalculator;
+import frc.robot.subsystems.superstructure.ShotCalculator;
 import frc.robot.subsystems.superstructure.hood.Hood;
 import frc.robot.subsystems.superstructure.shooter.Shooter;
 import frc.robot.subsystems.superstructure.turret.Turret;
@@ -70,7 +68,7 @@ public class Robot extends LoggedRobot {
     );
 
     public final Swerve swerve = new Swerve(
-            Constants.RobotMode.DISABLED,
+            Constants.CURRENT_MODE,
             SwerveConstants.CTRESwerve.DrivetrainConstants,
             new SwerveConstants.SwerveModuleConfig[]{
                     SwerveConstants.FrontLeftModule,
@@ -85,12 +83,12 @@ public class Robot extends LoggedRobot {
     );
 
     public final PhotonVision photonVision = new PhotonVision(
-            Constants.RobotMode.DISABLED,
+            Constants.CURRENT_MODE,
             swerve
     );
 
     public final IntakeRoller intakeRoller = new IntakeRoller(
-            Constants.RobotMode.DISABLED,
+            Constants.CURRENT_MODE,
             HardwareConstants.INTAKE_ROLLER
     );
 
@@ -100,33 +98,33 @@ public class Robot extends LoggedRobot {
     );
 
     public final Feeder feeder = new Feeder(
-            Constants.RobotMode.DISABLED,
+            Constants.CURRENT_MODE,
             HardwareConstants.FEEDER
     );
 
     public final Hood hood = new Hood(
-            Constants.RobotMode.DISABLED,
+            Constants.CURRENT_MODE,
             HardwareConstants.HOOD
     );
 
     public final Turret turret = new Turret(
-            Constants.RobotMode.DISABLED,
+            Constants.CURRENT_MODE,
             HardwareConstants.TURRET,
             () -> swerve.getFieldRelativeSpeeds().omegaRadiansPerSecond
     );
 
     public final Shooter shooter = new Shooter(
-            Constants.RobotMode.DISABLED,
+            Constants.CURRENT_MODE,
             HardwareConstants.SHOOTER
     );
 
     public final Spindexer spindexer = new Spindexer(
-            Constants.RobotMode.DISABLED,
+            Constants.CURRENT_MODE,
             HardwareConstants.SPINDEXER
     );
 
     public final Climb climb = new Climb(
-            Constants.RobotMode.DISABLED,
+            Constants.CURRENT_MODE,
             HardwareConstants.CLIMB
     );
 
@@ -134,7 +132,7 @@ public class Robot extends LoggedRobot {
     private RobotCommands.ScoringMode scoringMode =
             RobotCommands.ScoringMode.Stationary;
 
-    private final Supplier<ShotCalculationStructs.ShotCalculation> shotCalculationSupplier =
+    private final Supplier<ShotCalculator.ShotCalculation> shotCalculationSupplier =
             () -> ShotCalculator.getShotCalculation(
                     swerve::getPose,
                     () -> scoringMode,
@@ -154,15 +152,6 @@ public class Robot extends LoggedRobot {
             intakeSlide::getIntakeSlidePositionRots,
             climb::getExtensionMeters
     );
-
-//    private final FuelSimManager fuelSimManager = new FuelSimManager(
-//            hood::getHoodPosition,
-//            turret::getTurretPosition,
-//            swerve::getPose,
-//            swerve::getFieldRelativeSpeeds,
-//            intakeRoller::isIntaking,
-//            shooter::isShooting
-//    );
 
     private final RobotCommands robotCommands = new RobotCommands(
             swerve,
@@ -334,6 +323,10 @@ public class Robot extends LoggedRobot {
         componentsSolver.periodic();
         robotCommands.periodic();
 
+        //TODO: Just to find hood angle
+        Logger.recordOutput("DistanceFromHub", swerve.getPose()
+                .transformBy(PoseConstants.Turret.ROBOT_TO_TURRET_TRANSFORM_2D).getTranslation().getDistance(FieldConstants.getHubTarget()));
+
 //        Threads.setCurrentThreadPriority(false, 10);
     }
 
@@ -366,7 +359,6 @@ public class Robot extends LoggedRobot {
 
     @Override
     public void simulationPeriodic() {
-//        fuelSimManager.periodic();
     }
 
     public void configureStateTriggers() {
@@ -446,6 +438,11 @@ public class Robot extends LoggedRobot {
                 .onFalse(robotCommands.climb());
 
         driverController.a().onTrue(robotCommands.unclimb());
+
+        //TODO: Temporary change so that we don't hit hood under trench
+        driverController.b().onTrue(superstructure.setGoal(Superstructure.Goal.HOOD_DOWN));
+
+        driverController.x().onTrue(superstructure.setGoal(Superstructure.Goal.TRACKING));
 
         coController.y(teleopEventLoop).onTrue(robotCommands.deployIntake());
 

@@ -16,6 +16,7 @@ import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 import edu.wpi.first.units.measure.*;
 import frc.robot.constants.HardwareConstants;
+import frc.robot.utils.ctre.Phoenix6Utils;
 import frc.robot.utils.ctre.RefreshAll;
 
 public class HoodIOReal implements HoodIO {
@@ -126,6 +127,6 @@ public class HoodIOReal implements HoodIO {
 
     @Override
     public void zeroMotor() {
-        hoodMotor.setPosition(0);
+        Phoenix6Utils.reportIfNotOk(hoodMotor, hoodMotor.setPosition(0));
     }
 }

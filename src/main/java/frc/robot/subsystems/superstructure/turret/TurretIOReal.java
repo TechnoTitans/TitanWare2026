@@ -19,6 +19,7 @@ import com.ctre.phoenix6.signals.NeutralModeValue;
 import com.ctre.phoenix6.signals.SensorDirectionValue;
 import edu.wpi.first.units.measure.*;
 import frc.robot.constants.HardwareConstants;
+import frc.robot.utils.ctre.Phoenix6Utils;
 import frc.robot.utils.ctre.RefreshAll;
 
 public class TurretIOReal implements TurretIO {
@@ -168,6 +169,6 @@ public class TurretIOReal implements TurretIO {
 
     @Override
     public void setTurretPosition(final double turretPositionRots) {
-        this.turretMotor.setPosition(turretPositionRots);
+        Phoenix6Utils.reportIfNotOk(turretMotor, turretMotor.setPosition(turretPositionRots));
     }
 }

@@ -31,15 +31,8 @@ public interface SimConstants {
         double STEER_KS_VOLTS = 0.25;
     }
 
-    //TODO: Change ALL Number
-
     interface Hood {
-        Translation3d TURRET_TO_HOOD_TRANSLATION = new Translation3d(0, 0.121, 0.0715);
-
         double LENGTH_METERS = Units.inchesToMeters(9.4);
-
-        Rotation2d ZEROED_POSITION_TO_HORIZONTAL = Rotation2d.fromDegrees(25.9);
-        Rotation2d STARTING_ANGLE = Rotation2d.fromDegrees(0).plus(ZEROED_POSITION_TO_HORIZONTAL);
     }
 
     interface Shooter {
@@ -47,38 +40,14 @@ public interface SimConstants {
     }
 
     interface Turret {
-        Translation3d ORIGIN = new Translation3d(-0.127, 0, 0.384);
-
-        Transform2d ROBOT_TO_TURRET_TRANSFORM_2D = new Transform2d(ORIGIN.toTranslation2d(), Rotation2d.kZero);
-
-        Transform3d ROBOT_TO_TURRET_TRANSFORM_3D = new Transform3d(ORIGIN, Rotation3d.kZero);
-
         double MOMENT_OF_INERTIA = 0.1068;
     }
 
     interface IntakeSlide {
-        Pose3d RETRACTED_POSE = new Pose3d(new Translation3d(-0.142, 0, 0.443), Rotation3d.kZero);
-
-        Pose3d EXTENDED_POSE = new Pose3d(new Translation3d(0.120, 0, 0.345), Rotation3d.kZero);
-
         double MOMENT_OF_INERTIA = 0.3;
-    }
-
-    interface Hopper {
-        Pose3d RETRACTED_POSE = new Pose3d(new Translation3d(-0.087, 0, 0.501), Rotation3d.kZero);
-
-        Pose3d EXTENDED_POSE = new Pose3d(new Translation3d(0.212, 0, 0.501), Rotation3d.kZero);
     }
 
     interface Climb {
         double MASS_KG = 6;
-
-        Translation3d ORIGIN = new Translation3d(-0.162, -0.176, 0.068);
-
-        Rotation3d ANGLE_FROM_HORIZONTAL = new Rotation3d(0, Units.degreesToRadians(-24.496), 0);
-
-        double STAGE_1_MAX_EXTENSION = Units.inchesToMeters(9.160);
-
-        double STAGE_2_MAX_EXTENSION = Units.inchesToMeters(7.963);
     }
 }

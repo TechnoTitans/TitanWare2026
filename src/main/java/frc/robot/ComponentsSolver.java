@@ -5,12 +5,13 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Transform3d;
 import frc.robot.constants.HardwareConstants;
-import frc.robot.constants.SimConstants;
+import frc.robot.constants.PoseConstants;
 import org.littletonrobotics.junction.Logger;
 
 import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
 
+//TODO: Fix with new cad models and positions
 @SuppressWarnings("ClassCanBeRecord")
 public class ComponentsSolver {
     private final Supplier<Rotation2d> turretRotationSupplier;
@@ -47,18 +48,20 @@ public class ComponentsSolver {
     }
 
     private Pose3d[] getSuperstructurePoses() {
+        //TODO: Turret zero is different now
         final Pose3d turretPose = new Pose3d(
-                SimConstants.Turret.ORIGIN,
-                new Rotation3d(turretRotationSupplier.get().plus(Rotation2d.kCW_90deg))
+                PoseConstants.Turret.ORIGIN,
+                new Rotation3d(turretRotationSupplier.get())
+                        .rotateBy(PoseConstants.Turret.TURRET_ZERO_OFFSET)
         );
 
         final Pose3d hoodPose = turretPose.transformBy(
                 new Transform3d(
-                        SimConstants.Hood.TURRET_TO_HOOD_TRANSLATION,
+                        PoseConstants.Hood.TURRET_TO_HOOD_TRANSLATION,
                         new Rotation3d(
                                 hoodRotationSupplier.get()
                                         .unaryMinus()
-                                        .plus(SimConstants.Hood.ZEROED_POSITION_TO_HORIZONTAL).getRadians(),
+                                        .plus(PoseConstants.Hood.ZEROED_POSITION_TO_HORIZONTAL).getRadians(),
                                 0,
                                 0
                         )
@@ -72,11 +75,11 @@ public class ComponentsSolver {
         final double extensionRatio = intakeSlideRotationSupplier.get().getRotations()
                 / (HardwareConstants.INTAKE_SLIDE.upperLimitRots() - HardwareConstants.INTAKE_SLIDE.lowerLimitRots());
 
-        final Pose3d intakePose = SimConstants.IntakeSlide.RETRACTED_POSE
-                .interpolate(SimConstants.IntakeSlide.EXTENDED_POSE, extensionRatio);
+        final Pose3d intakePose = PoseConstants.IntakeSlide.RETRACTED_POSE
+                .interpolate(PoseConstants.IntakeSlide.EXTENDED_POSE, extensionRatio);
 
-        final Pose3d hopperPose = SimConstants.Hopper.RETRACTED_POSE
-                .interpolate(SimConstants.Hopper.EXTENDED_POSE, extensionRatio);
+        final Pose3d hopperPose = PoseConstants.Hopper.RETRACTED_POSE
+                .interpolate(PoseConstants.Hopper.EXTENDED_POSE, extensionRatio);
 
         return new Pose3d[]{intakePose, hopperPose};
     }
@@ -84,10 +87,10 @@ public class ComponentsSolver {
     private Pose3d[] getClimbPoses() {
         final double extensionMeters = climbExtensionMetersSupplier.getAsDouble();
 
-        final double stage1ExtensionMeters = Math.min(extensionMeters, SimConstants.Climb.STAGE_1_MAX_EXTENSION);
+        final double stage1ExtensionMeters = Math.min(extensionMeters, PoseConstants.Climb.STAGE_1_MAX_EXTENSION);
 
-        final Pose3d stage1Pose = new Pose3d(SimConstants.Climb.ORIGIN,
-                SimConstants.Climb.ANGLE_FROM_HORIZONTAL
+        final Pose3d stage1Pose = new Pose3d(PoseConstants.Climb.ORIGIN,
+                PoseConstants.Climb.ANGLE_FROM_HORIZONTAL
         ).transformBy(
                 new Transform3d(
                         0,
@@ -98,7 +101,7 @@ public class ComponentsSolver {
         );
 
         final double stage2ExtensionMeters =
-                Math.min(extensionMeters - stage1ExtensionMeters, SimConstants.Climb.STAGE_2_MAX_EXTENSION);
+                Math.min(extensionMeters - stage1ExtensionMeters, PoseConstants.Climb.STAGE_2_MAX_EXTENSION);
         final Pose3d stage2Pose = stage1Pose.transformBy(
                 new Transform3d(
                         0,

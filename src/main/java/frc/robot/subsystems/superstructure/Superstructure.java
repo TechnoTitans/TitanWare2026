@@ -4,7 +4,6 @@ import edu.wpi.first.wpilibj.event.EventLoop;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
-import frc.robot.subsystems.superstructure.calculator.ShotCalculationStructs;
 import frc.robot.subsystems.superstructure.hood.Hood;
 import frc.robot.subsystems.superstructure.shooter.Shooter;
 import frc.robot.subsystems.superstructure.turret.Turret;
@@ -30,11 +29,12 @@ public class Superstructure extends VirtualSubsystem {
 
     public final Trigger atSetpoint;
 
-    private final Supplier<ShotCalculationStructs.ShotCalculation> shotCalculationSupplier;
+    private final Supplier<ShotCalculator.ShotCalculation> shotCalculationSupplier;
 
     public enum Goal {
         CLIMB(Turret.Goal.CLIMB, Hood.Goal.CLIMB, Shooter.Goal.STOP, false),
         TRACKING(Turret.Goal.TRACKING, Hood.Goal.TRACKING, Shooter.Goal.STOP, true),
+        HOOD_DOWN(Turret.Goal.TRACKING, Hood.Goal.STOW, Shooter.Goal.STOP, true),
         SHOOTING(Turret.Goal.TRACKING, Hood.Goal.TRACKING, Shooter.Goal.TRACKING, true);
 
         private final Turret.Goal turretGoal;
@@ -60,7 +60,7 @@ public class Superstructure extends VirtualSubsystem {
             final Turret turret,
             final Hood hood,
             final Shooter shooter,
-            final Supplier<ShotCalculationStructs.ShotCalculation> shotCalculationSupplier
+            final Supplier<ShotCalculator.ShotCalculation> shotCalculationSupplier
     ) {
         this.turret = turret;
         this.hood = hood;
@@ -77,7 +77,7 @@ public class Superstructure extends VirtualSubsystem {
         this.shotCalculationSupplier = shotCalculationSupplier;
 
         turret.setGoal(desiredGoal.turretGoal);
-        hood.setGoal(desiredGoal.hoodGoal);
+        hood.setDesiredGoal(desiredGoal.hoodGoal);
         shooter.setGoal(desiredGoal.shooterGoal);
     }
 
@@ -98,17 +98,19 @@ public class Superstructure extends VirtualSubsystem {
         eventLoop.poll();
 
         if (desiredGoal.isDynamic) {
-            final ShotCalculationStructs.ShotCalculation shotCalculation = shotCalculationSupplier.get();
+            final ShotCalculator.ShotCalculation shotCalculation = shotCalculationSupplier.get();
 
             turret.updatePositionSetpoint(shotCalculation.desiredTurretRotation().getRotations());
-            hood.updateDesiredHoodPosition(shotCalculation.hoodShooterCalculation().hoodRotation().getRotations());
+            if (desiredGoal != Goal.HOOD_DOWN) {
+                hood.updateDesiredHoodPosition(shotCalculation.hoodShooterCalculation().hoodRotation().getRotations());
+            }
             shooter.updateVelocitySetpoint(shotCalculation.hoodShooterCalculation().flywheelVelocity());
         }
 
         //TODO: Change how goal system works -> current goal should only be current when at setpoint
         if (desiredGoal != runningGoal) {
             turret.setGoal(desiredGoal.turretGoal);
-            hood.setGoal(desiredGoal.hoodGoal);
+            hood.setDesiredGoal(desiredGoal.hoodGoal);
             shooter.setGoal(desiredGoal.shooterGoal);
 
             runningGoal = desiredGoal;

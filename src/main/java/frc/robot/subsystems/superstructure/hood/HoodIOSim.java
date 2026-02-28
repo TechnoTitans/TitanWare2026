@@ -6,7 +6,6 @@ import com.ctre.phoenix6.configs.Slot0Configs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.PositionVoltage;
 import com.ctre.phoenix6.controls.TorqueCurrentFOC;
-import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.ParentDevice;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.FeedbackSensorSourceValue;
@@ -20,9 +19,11 @@ import edu.wpi.first.units.measure.*;
 import edu.wpi.first.wpilibj.Notifier;
 import edu.wpi.first.wpilibj.simulation.SingleJointedArmSim;
 import frc.robot.constants.HardwareConstants;
+import frc.robot.constants.PoseConstants;
 import frc.robot.constants.SimConstants;
 import frc.robot.utils.closeables.ToClose;
 import frc.robot.utils.control.DeltaTime;
+import frc.robot.utils.ctre.Phoenix6Utils;
 import frc.robot.utils.ctre.RefreshAll;
 import frc.robot.utils.sim.motors.TalonFXSim;
 
@@ -49,7 +50,7 @@ public class HoodIOSim implements HoodIO {
         this.deltaTime = new DeltaTime(true);
         this.constants = constants;
 
-        final double zeroedPositionToHorizontalRads = SimConstants.Hood.ZEROED_POSITION_TO_HORIZONTAL.getRadians();
+        final double zeroedPositionToHorizontalRads = PoseConstants.Hood.ZEROED_POSITION_TO_HORIZONTAL.getRadians();
         final SingleJointedArmSim hoodSim = new SingleJointedArmSim(
                 LinearSystemId.identifyPositionSystem(
                         5 / (2d * Math.PI),
@@ -61,7 +62,7 @@ public class HoodIOSim implements HoodIO {
                 Units.rotationsToRadians(constants.hoodLowerLimitRots()) + zeroedPositionToHorizontalRads,
                 Units.rotationsToRadians(constants.hoodUpperLimitRots()) + zeroedPositionToHorizontalRads,
                 true,
-                SimConstants.Hood.STARTING_ANGLE.getRadians()
+                PoseConstants.Hood.STARTING_ANGLE.getRadians()
         );
 
         this.hoodMotor = new TalonFX(constants.motorID(), constants.CANBus().toPhoenix6CANBus());
@@ -124,6 +125,7 @@ public class HoodIOSim implements HoodIO {
         motorConfig.SoftwareLimitSwitch.ForwardSoftLimitEnable = true;
         motorConfig.SoftwareLimitSwitch.ReverseSoftLimitThreshold = constants.hoodLowerLimitRots();
         motorConfig.SoftwareLimitSwitch.ReverseSoftLimitEnable = true;
+        //TODO: Add the new try until ok
         hoodMotor.getConfigurator().apply(motorConfig);
 
         BaseStatusSignal.setUpdateFrequencyForAll(
@@ -171,6 +173,6 @@ public class HoodIOSim implements HoodIO {
 
     @Override
     public void zeroMotor() {
-        hoodMotor.setPosition(0);
+        Phoenix6Utils.reportIfNotOk(hoodMotor, hoodMotor.setPosition(0));
     }
 }

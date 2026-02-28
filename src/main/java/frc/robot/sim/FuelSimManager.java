@@ -1,4 +1,4 @@
-package frc.robot.sim.fuel;
+package frc.robot.sim;
 
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -7,7 +7,7 @@ import edu.wpi.first.units.measure.LinearVelocity;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
-import frc.robot.constants.SimConstants;
+import frc.robot.constants.PoseConstants;
 import org.littletonrobotics.junction.Logger;
 
 import java.util.function.BooleanSupplier;
@@ -70,7 +70,7 @@ public class FuelSimManager {
                         BALL_SPEED,
                         (Rotation2d.kCCW_90deg.minus(hoodAngleSupplier.get())).getMeasure(),
                         turretYawSupplier.get().getMeasure(),
-                        SimConstants.Turret.ROBOT_TO_TURRET_TRANSFORM_3D
+                        PoseConstants.Turret.ROBOT_TO_TURRET_TRANSFORM_3D
                 );
 
                 ballCount--;

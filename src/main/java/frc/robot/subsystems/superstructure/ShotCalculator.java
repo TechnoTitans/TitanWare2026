@@ -1,19 +1,23 @@
-package frc.robot.subsystems.superstructure.calculator;
+package frc.robot.subsystems.superstructure;
 
+import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.geometry.Twist2d;
+import edu.wpi.first.math.interpolation.Interpolatable;
+import edu.wpi.first.math.interpolation.InterpolatingTreeMap;
+import edu.wpi.first.math.interpolation.Interpolator;
+import edu.wpi.first.math.interpolation.InverseInterpolator;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
+import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.DriverStation;
 import frc.robot.RobotCommands;
 import frc.robot.constants.FieldConstants;
-import frc.robot.constants.SimConstants;
+import frc.robot.constants.PoseConstants;
+import org.littletonrobotics.junction.Logger;
 
 import java.util.function.Supplier;
-
-import static frc.robot.subsystems.superstructure.calculator.ShotCalculationStructs.FerryXBoundary;
-import static frc.robot.subsystems.superstructure.calculator.ShotCalculationStructs.shotDataMap;
 
 public class ShotCalculator {
     public enum Target {
@@ -21,11 +25,98 @@ public class ShotCalculator {
         FERRYING
     }
 
+    public record HoodShooterCalculation(
+            Rotation2d hoodRotation,
+            double flywheelVelocity,
+            double shotTime
+    ) implements Interpolatable<HoodShooterCalculation> {
+
+        public static final Interpolator<HoodShooterCalculation> interpolator = HoodShooterCalculation::interpolate;
+
+        @Override
+        public HoodShooterCalculation interpolate(final HoodShooterCalculation endShotCalculation, final double t) {
+            return new HoodShooterCalculation(
+                    this.hoodRotation.interpolate(endShotCalculation.hoodRotation, t),
+                    MathUtil.interpolate(this.flywheelVelocity, endShotCalculation.flywheelVelocity, t),
+                    MathUtil.interpolate(this.shotTime, endShotCalculation.shotTime, t)
+            );
+        }
+    }
+
+    public static final double FerryXBoundary = Units.inchesToMeters(305);
+
+    public static final InterpolatingTreeMap<Double, HoodShooterCalculation> shotDataMap = new InterpolatingTreeMap<>(
+            InverseInterpolator.forDouble(),
+            HoodShooterCalculation.interpolator
+    );
+
+    static {
+        shotDataMap.put(1d, new HoodShooterCalculation(
+                Rotation2d.fromDegrees(5),
+                30,
+                1
+        ));
+
+        shotDataMap.put(1.5d, new HoodShooterCalculation(
+                Rotation2d.fromDegrees(30),
+                30,
+                1.05
+        ));
+
+        shotDataMap.put(2d, new HoodShooterCalculation(
+                Rotation2d.fromDegrees(15),
+                30,
+                1.1
+        ));
+
+        shotDataMap.put(2.5d, new HoodShooterCalculation(
+                Rotation2d.fromDegrees(18),
+                30,
+                1.15
+        ));
+
+        shotDataMap.put(3d, new HoodShooterCalculation(
+                Rotation2d.fromDegrees(19),
+                30,
+                1.2
+        ));
+
+        shotDataMap.put(3.5d, new HoodShooterCalculation(
+                Rotation2d.fromDegrees(30),
+                30,
+                1.25
+        ));
+
+        shotDataMap.put(4d, new HoodShooterCalculation(
+                Rotation2d.fromDegrees(22),
+                30,
+                1.3
+        ));
+
+        shotDataMap.put(4.5d, new HoodShooterCalculation(
+                Rotation2d.fromDegrees(25),
+                30,
+                1.30
+        ));
+
+        shotDataMap.put(5d, new HoodShooterCalculation(
+                Rotation2d.fromDegrees(26),
+                30,
+                1.4
+        ));
+    }
+
+    public record ShotCalculation(
+            Rotation2d desiredTurretRotation,
+            HoodShooterCalculation hoodShooterCalculation,
+            ShotCalculator.Target target
+    ) {}
+
     private static final double DelayTimeSec = 0.005;
     //TODO: Try to see if this is worth it
 //    private static final LinearFilter turretFilter = LinearFilter.movingAverage(5);
 
-    public static ShotCalculationStructs.ShotCalculation getShotCalculation(
+    public static ShotCalculation getShotCalculation(
             final Supplier<Pose2d> swervePoseSupplier,
             final Supplier<RobotCommands.ScoringMode> scoringModeSupplier,
             final Supplier<ChassisSpeeds> fieldRelativeSwerveSpeedsSupplier
@@ -38,11 +129,12 @@ public class ShotCalculator {
         };
     }
 
-    private static ShotCalculationStructs.ShotCalculation getShotCalculation(
+    //TODO: Add so that hood can't go up if we are going under trench
+    private static ShotCalculation getShotCalculation(
             final Pose2d swervePose,
             final ChassisSpeeds swerveSpeeds
     ) {
-        final Pose2d turretPose = swervePose.transformBy(SimConstants.Turret.ROBOT_TO_TURRET_TRANSFORM_2D)
+        final Pose2d turretPose = swervePose.transformBy(PoseConstants.Turret.ROBOT_TO_TURRET_TRANSFORM_2D)
                 .exp(new Twist2d(
                         swerveSpeeds.vxMetersPerSecond * DelayTimeSec,
                         swerveSpeeds.vyMetersPerSecond * DelayTimeSec,
@@ -68,7 +160,7 @@ public class ShotCalculator {
                 turretPose.getRotation()
         );
 
-        return new ShotCalculationStructs.ShotCalculation(
+        return new ShotCalculation(
                 wrapTurret(desiredTurretAngle),
                 shotDataMap.get(
                         turretToTargetDistance
@@ -78,12 +170,11 @@ public class ShotCalculator {
     }
 
     //TODO: Needs to be implemented
-    private static ShotCalculationStructs.ShotCalculation getMovingShotCalculation(
+    private static ShotCalculation getMovingShotCalculation(
             final Pose2d swervePose,
             final ChassisSpeeds swerveSpeeds
     ) {
-        //TODO: Don't use SimConstants
-        final Pose2d turretPose = swervePose.transformBy(SimConstants.Turret.ROBOT_TO_TURRET_TRANSFORM_2D)
+        final Pose2d turretPose = swervePose.transformBy(PoseConstants.Turret.ROBOT_TO_TURRET_TRANSFORM_2D)
                 .exp(new Twist2d(
                         swerveSpeeds.vxMetersPerSecond * DelayTimeSec,
                         swerveSpeeds.vyMetersPerSecond * DelayTimeSec,
@@ -109,7 +200,7 @@ public class ShotCalculator {
                 turretPose.getRotation()
         );
 
-        return new ShotCalculationStructs.ShotCalculation(
+        return new ShotCalculation(
                 wrapTurret(desiredTurretAngle),
                 shotDataMap.get(
                         turretToTargetDistance

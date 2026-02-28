@@ -28,6 +28,7 @@ import frc.robot.constants.HardwareConstants;
 import frc.robot.constants.SimConstants;
 import frc.robot.utils.closeables.ToClose;
 import frc.robot.utils.control.DeltaTime;
+import frc.robot.utils.ctre.Phoenix6Utils;
 import frc.robot.utils.ctre.RefreshAll;
 import frc.robot.utils.sim.feedback.CRTSim;
 import frc.robot.utils.sim.feedback.SimCANCoder;
@@ -238,6 +239,6 @@ public class TurretIOSim implements TurretIO {
 
     @Override
     public void setTurretPosition(final double turretPositionRots) {
-        this.turretMotor.setPosition(turretPositionRots);
+        Phoenix6Utils.reportIfNotOk(turretMotor, turretMotor.setPosition(turretPositionRots));
     }
 }
