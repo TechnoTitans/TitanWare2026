@@ -49,6 +49,7 @@ public class IntakeSlideIOSim implements IntakeSlideIO {
     private final StatusSignal<Temperature> followerDeviceTemp;
 
     private final StatusSignal<Angle> averagePosition;
+    private final StatusSignal<AngularVelocity> averageVelocity;
     private final StatusSignal<Angle> differentialPosition;
 
     private final PositionVoltage averagePositionVoltage;
@@ -65,6 +66,7 @@ public class IntakeSlideIOSim implements IntakeSlideIO {
         final TalonFXConfiguration masterMotorConfig = new TalonFXConfiguration();
         // Average Slot
         masterMotorConfig.Slot0 = new Slot0Configs()
+                .withKV(2)
                 .withKP(9)
                 .withKD(3);
         // Diff Slot
@@ -165,6 +167,7 @@ public class IntakeSlideIOSim implements IntakeSlideIO {
         this.followerDeviceTemp = followerMotor.getDeviceTemp(false);
 
         this.averagePosition = diffMechanism.getAveragePosition(false);
+        this.averageVelocity = diffMechanism.getAverageVelocity(false);
         this.differentialPosition = diffMechanism.getDifferentialPosition(false);
 
         RefreshAll.add(
@@ -180,6 +183,7 @@ public class IntakeSlideIOSim implements IntakeSlideIO {
                 followerTorqueCurrent,
                 followerDeviceTemp,
                 averagePosition,
+                averageVelocity,
                 differentialPosition
         );
 
@@ -212,6 +216,7 @@ public class IntakeSlideIOSim implements IntakeSlideIO {
         inputs.followerTempCelsius = followerDeviceTemp.getValueAsDouble();
 
         inputs.averagePositionRots = averagePosition.getValueAsDouble();
+        inputs.averageVelocityRotsPerSec = averageVelocity.getValueAsDouble();
         inputs.differentialPositionRots = differentialPosition.getValueAsDouble();
 
         inputs.mechanism = diffMechanism.getMechanismState();
@@ -235,9 +240,8 @@ public class IntakeSlideIOSim implements IntakeSlideIO {
 
     @Override
     public void toSlidePositionUnprofiled(double positionRots, double velocityRotsPerSec) {
-        diffMechanism.setControl(averagePositionVoltage.withPosition(0).withVelocity(velocityRotsPerSec)
-                        .withVelocity(0),
-                differentialPositionVoltage
+        diffMechanism.setControl(averagePositionVoltage.withPosition(positionRots).withVelocity(velocityRotsPerSec),
+                differentialPositionVoltage.withPosition(0).withSlot(1)
         );
     }
 

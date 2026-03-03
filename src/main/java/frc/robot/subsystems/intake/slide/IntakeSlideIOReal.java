@@ -34,6 +34,7 @@ public class IntakeSlideIOReal implements IntakeSlideIO {
     private final StatusSignal<Temperature> followerDeviceTemp;
 
     private final StatusSignal<Angle> averagePosition;
+    private final StatusSignal<AngularVelocity> averageVelocity;
     private final StatusSignal<Angle> differentialPosition;
 
     private final MotionMagicExpoVoltage averageMotionMagicExpoVoltage;
@@ -78,7 +79,7 @@ public class IntakeSlideIOReal implements IntakeSlideIO {
         masterMotorConfig.SoftwareLimitSwitch.ReverseSoftLimitEnable = true;
 
         final TalonFXConfiguration followerConfig = new TalonFXConfiguration();
-        followerConfig.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
+        followerConfig.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
 
         final DifferentialMotorConstants<TalonFXConfiguration> diffConstants =
                 new DifferentialMotorConstants<TalonFXConfiguration>()
@@ -110,6 +111,7 @@ public class IntakeSlideIOReal implements IntakeSlideIO {
         this.followerDeviceTemp = followerMotor.getDeviceTemp(false);
 
         this.averagePosition = diffMechanism.getAveragePosition(false);
+        this.averageVelocity = diffMechanism.getAverageVelocity(false);
         this.differentialPosition = diffMechanism.getDifferentialPosition(false);
 
         RefreshAll.add(
@@ -125,21 +127,8 @@ public class IntakeSlideIOReal implements IntakeSlideIO {
                 followerTorqueCurrent,
                 followerDeviceTemp,
                 averagePosition,
+                averageVelocity,
                 differentialPosition
-        );
-
-        RefreshAll.add(
-                constants.CANBus(),
-                masterPosition,
-                masterVelocity,
-                masterVoltage,
-                masterTorqueCurrent,
-                masterDeviceTemp,
-                followerPosition,
-                followerVelocity,
-                followerVoltage,
-                followerTorqueCurrent,
-                followerDeviceTemp
         );
     }
 
@@ -158,6 +147,7 @@ public class IntakeSlideIOReal implements IntakeSlideIO {
         inputs.followerTempCelsius = followerDeviceTemp.getValueAsDouble();
 
         inputs.averagePositionRots = averagePosition.getValueAsDouble();
+        inputs.averageVelocityRotsPerSec = averageVelocity.getValueAsDouble();
         inputs.differentialPositionRots = differentialPosition.getValueAsDouble();
 
         inputs.mechanism = diffMechanism.getMechanismState();
@@ -171,14 +161,14 @@ public class IntakeSlideIOReal implements IntakeSlideIO {
 
     @Override
     public void toSlidePositionUnprofiled(double positionRots, double velocityRotsPerSec) {
-        diffMechanism.setControl(averagePositionVoltage.withPosition(0),
-                differentialPositionVoltage
+        diffMechanism.setControl(averagePositionVoltage.withPosition(positionRots).withVelocity(velocityRotsPerSec),
+                differentialPositionVoltage.withPosition(0).withSlot(1)
         );
     }
 
     @Override
     public void holdSlidePosition(final double positionRots) {
-        diffMechanism.setControl(averageMotionMagicExpoVoltage.withPosition(positionRots).withSlot(2), differentialPositionVoltage);
+        diffMechanism.setControl(averagePositionVoltage.withPosition(positionRots).withSlot(2), differentialPositionVoltage);
     }
 
     @Override

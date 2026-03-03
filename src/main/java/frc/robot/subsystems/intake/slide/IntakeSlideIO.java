@@ -21,6 +21,7 @@ public interface IntakeSlideIO {
         public double followerTempCelsius = 0.0;
 
         public double averagePositionRots = 0.0;
+        public double averageVelocityRotsPerSec = 0.0;
         public double differentialPositionRots = 0.0;
 
         public MechanismState mechanism;
