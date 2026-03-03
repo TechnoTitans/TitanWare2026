@@ -18,11 +18,7 @@ public interface ClimbIO {
 
     default void toPosition(final double positionRots) {}
 
-    default void toPositionClimb(final double positionRots) {}
-
-    default void toVoltage(final double volts) {}
-
-    default void toTorqueCurrent(final double torqueCurrentAmps) {}
+    default void toPositionUnprofiled(final double positionRots) {}
 
     default void setPosition(final double positionRots) {}
 }

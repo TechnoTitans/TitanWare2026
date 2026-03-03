@@ -21,7 +21,7 @@ public class IntakeRoller extends SubsystemBase {
 
     public enum Goal {
         STOP(0),
-        INTAKE(30);
+        INTAKE(8);
 
         private final double rollerVelocityRotsPerSec;
 
@@ -53,7 +53,7 @@ public class IntakeRoller extends SubsystemBase {
         Logger.processInputs(LogKey, inputs);
 
         if (desiredGoal != currentGoal) {
-            intakeRollerIO.toRollerVelocity(desiredGoal.getRollerVelocityRotsPerSec());
+            intakeRollerIO.toRollerVoltage(desiredGoal.getRollerVelocityRotsPerSec());
 
             currentGoal = desiredGoal;
         }

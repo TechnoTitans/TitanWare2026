@@ -1,7 +1,6 @@
 package frc.robot.utils.position;
 
 import edu.wpi.first.wpilibj.DriverStation;
-import org.littletonrobotics.junction.Logger;
 
 public class ChineseRemainder {
     public static double getAbsolutePosition(
@@ -16,7 +15,7 @@ public class ChineseRemainder {
 
         for (int i = 0; i < encoder1Solutions.length; i++) {
             if (Math.abs(encoder1Solutions[i] - encoder2Solutions[i]) < 0.01) {
-                DriverStation.reportError("Found CRT Solution", false);
+                DriverStation.reportWarning("Found CRT Solution", false);
                 return encoder1Solutions[i];
             }
         }

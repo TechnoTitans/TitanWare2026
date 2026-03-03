@@ -93,7 +93,7 @@ public class Robot extends LoggedRobot {
     );
 
     public final IntakeSlide intakeSlide = new IntakeSlide(
-            Constants.CURRENT_MODE,
+            Constants.RobotMode.DISABLED,
             HardwareConstants.INTAKE_SLIDE
     );
 
@@ -432,6 +432,7 @@ public class Robot extends LoggedRobot {
                         () -> SwerveSpeed.setSwerveSpeed(SwerveSpeed.Speeds.NORMAL)
                 ).withName("SwerveSpeedSlow"));
 
+        driverController.leftTrigger(0.5, teleopEventLoop).whileTrue(robotCommands.deployIntake());
         driverController.rightTrigger(0.5, teleopEventLoop).whileTrue(robotCommands.shootWhileMoving());
 
         driverController.y().whileTrue(robotCommands.readyClimb())

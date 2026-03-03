@@ -62,7 +62,7 @@ public class HoodIOReal implements HoodIO {
     @Override
     public void config() {
         motorConfig.Slot0 = new Slot0Configs()
-                .withKS(0.39)
+                .withKS(0.35)
                 .withKG(0.03)
                 .withGravityType(GravityTypeValue.Arm_Cosine)
                 .withKP(375)
@@ -128,5 +128,10 @@ public class HoodIOReal implements HoodIO {
     @Override
     public void zeroMotor() {
         Phoenix6Utils.reportIfNotOk(hoodMotor, hoodMotor.setPosition(0));
+    }
+
+    @Override
+    public void setPosition() {
+        hoodMotor.setPosition(0.35);
     }
 }

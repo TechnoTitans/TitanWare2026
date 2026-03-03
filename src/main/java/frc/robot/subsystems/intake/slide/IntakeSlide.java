@@ -32,7 +32,13 @@ public class IntakeSlide extends SubsystemBase {
 
     private boolean isHomed = false;
 
-    public final Trigger atSlideSetpoint = new Trigger(this::atSlidePositionSetpoint);
+    public final Trigger atSlideSetpoint = new Trigger(this::atSlidePositionSetpoint)
+            .onTrue(Commands.runOnce(() -> controlMode = ControlMode.SOFT))
+            .onFalse(Commands.runOnce(() -> {
+                if (desiredGoal != currentGoal) {
+                    controlMode = ControlMode.HARD;
+                }
+            }));
     public final Trigger atSlideLowerLimit = new Trigger(this::atSlideLowerLimit);
     public final Trigger atSlideUpperLimit = new Trigger(this::atSlideUpperLimit);
     private final Trigger isAboveHomingCurrent = new Trigger(
@@ -40,18 +46,11 @@ public class IntakeSlide extends SubsystemBase {
             && Math.abs(inputs.followerTorqueCurrentAmps) >= ZeroingCurrentThresholdAmps
     ).debounce(0.15, Debouncer.DebounceType.kRising);
 
-    private final Trigger shouldUseSoftMode = new Trigger(() -> currentGoal == Goal.INTAKE && atSlideSetpoint.getAsBoolean())
-            .onTrue(
-                    Commands.runOnce(() -> this.controlMode = ControlMode.SOFT)
-            ).onFalse(
-                    Commands.runOnce(() -> this.controlMode = ControlMode.HARD)
-            );
-
     public enum Goal {
         HOMING(0),
         STOW(0),
-        INTAKE(3.8),
-        SHOOTING(0);
+        INTAKE(5),
+        SHOOTING(3.8);
 
         private final double slideGoalRotations;
 
@@ -77,6 +76,8 @@ public class IntakeSlide extends SubsystemBase {
             case SIM -> new IntakeSlideIOSim(constants);
             case REPLAY, DISABLED -> new IntakeSlideIO() {};
         };
+
+        intakeSlideIO.zeroMotors();
     }
 
     @Override
@@ -91,7 +92,7 @@ public class IntakeSlide extends SubsystemBase {
                 case SOFT -> intakeSlideIO.holdSlidePosition(desiredGoal.getSlideGoalRotations());
                 case HARD -> {
                     if (desiredGoal == Goal.SHOOTING) {
-                        intakeSlideIO.toSlidePositionUnprofiled(desiredGoal.getSlideGoalRotations(), 0.01);
+                        intakeSlideIO.toSlidePositionUnprofiled(desiredGoal.getSlideGoalRotations(), -0.01);
                     } else {
                         intakeSlideIO.toSlidePosition(desiredGoal.getSlideGoalRotations());
                     }
@@ -111,7 +112,6 @@ public class IntakeSlide extends SubsystemBase {
         Logger.recordOutput(LogKey + "/Triggers/AtSlideLowerLimit", atSlideLowerLimit());
         Logger.recordOutput(LogKey + "/Triggers/AtSlideUpperLimit", atSlideUpperLimit());
         Logger.recordOutput(LogKey + "/Triggers/IsAboveHomingCurrent", isAboveHomingCurrent);
-        Logger.recordOutput(LogKey + "/Triggers/ShouldUseSoftMode", shouldUseSoftMode);
 
         Logger.recordOutput(
                 LogKey + "/PeriodicIOPeriodMs",

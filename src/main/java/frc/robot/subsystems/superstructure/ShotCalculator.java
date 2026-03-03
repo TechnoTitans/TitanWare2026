@@ -51,58 +51,34 @@ public class ShotCalculator {
     );
 
     static {
-        shotDataMap.put(1d, new HoodShooterCalculation(
-                Rotation2d.fromDegrees(5),
+        shotDataMap.put(1.7696d, new HoodShooterCalculation(
+                Rotation2d.fromDegrees(0),
                 30,
                 1
         ));
 
-        shotDataMap.put(1.5d, new HoodShooterCalculation(
-                Rotation2d.fromDegrees(30),
-                30,
-                1.05
+        shotDataMap.put(2.4459, new HoodShooterCalculation(
+                Rotation2d.fromDegrees(2.016),
+                30.55,
+                1
         ));
 
-        shotDataMap.put(2d, new HoodShooterCalculation(
-                Rotation2d.fromDegrees(15),
-                30,
-                1.1
+        shotDataMap.put(2.9222d, new HoodShooterCalculation(
+                Rotation2d.fromDegrees(2.016),
+                35,
+                1
         ));
 
-        shotDataMap.put(2.5d, new HoodShooterCalculation(
-                Rotation2d.fromDegrees(18),
-                30,
-                1.15
+        shotDataMap.put(3.7005d, new HoodShooterCalculation(
+                Rotation2d.fromDegrees(19.332),
+                35,
+                1
         ));
 
-        shotDataMap.put(3d, new HoodShooterCalculation(
-                Rotation2d.fromDegrees(19),
-                30,
-                1.2
-        ));
-
-        shotDataMap.put(3.5d, new HoodShooterCalculation(
-                Rotation2d.fromDegrees(30),
-                30,
-                1.25
-        ));
-
-        shotDataMap.put(4d, new HoodShooterCalculation(
-                Rotation2d.fromDegrees(22),
-                30,
-                1.3
-        ));
-
-        shotDataMap.put(4.5d, new HoodShooterCalculation(
-                Rotation2d.fromDegrees(25),
-                30,
-                1.30
-        ));
-
-        shotDataMap.put(5d, new HoodShooterCalculation(
-                Rotation2d.fromDegrees(26),
-                30,
-                1.4
+        shotDataMap.put(4.9717d, new HoodShooterCalculation(
+                Rotation2d.fromDegrees(21),
+                40,
+                1
         ));
     }
 

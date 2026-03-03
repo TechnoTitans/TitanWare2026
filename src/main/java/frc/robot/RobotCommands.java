@@ -94,7 +94,10 @@ public class RobotCommands extends VirtualSubsystem {
                 spindexer.toGoal(Spindexer.Goal.FEED),
                 Commands.runOnce(() -> SwerveSpeed.setSwerveSpeed(SwerveSpeed.Speeds.SHOOTING))
         )
-            .finallyDo(() -> SwerveSpeed.setSwerveSpeed(SwerveSpeed.Speeds.NORMAL))
+            .finallyDo(() -> {
+                SwerveSpeed.setSwerveSpeed(SwerveSpeed.Speeds.NORMAL);
+                intakeSlide.setGoal(IntakeSlide.Goal.INTAKE);
+            })
             .withName("ShootWhileMoving");
     }
 
@@ -111,21 +114,23 @@ public class RobotCommands extends VirtualSubsystem {
                                 )
                         )
                 ),
-                intakeSlide.toGoal(IntakeSlide.Goal.SHOOTING),
+                intakeSlide.setGoal(IntakeSlide.Goal.SHOOTING),
                 spindexer.toGoal(Spindexer.Goal.FEED),
                 swerve.runWheelXCommand()
-        ).withName("ShootStationary");
+        )
+                .finallyDo(() -> intakeSlide.setGoal(IntakeSlide.Goal.INTAKE))
+                .withName("ShootStationary");
     }
 
     public Command readyClimb() {
         return Commands.parallel(
-                swerve.runToPose(FieldConstants::getClimbTarget),
+//                swerve.runToPose(FieldConstants::getClimbTarget),
                 superstructure.setGoal(Superstructure.Goal.CLIMB),
-                Commands.sequence(
-                        stowIntake(),
-                        Commands.waitUntil(intakeSlide.atSlideSetpoint),
+//                Commands.sequence(
+////                        stowIntake(),
+//                        Commands.waitUntil(intakeSlide.atSlideSetpoint),
                         climb.setGoal(Climb.Goal.EXTEND)
-                )
+//                )
         ).withName("ReadyClimb");
     }
 

@@ -165,27 +165,17 @@ public class ClimbIOSim implements ClimbIO {
     }
 
     @Override
-    public void setPosition(final double positionRots) {
-        climbMotor.setPosition(0);
-    }
-
-    @Override
     public void toPosition(final double positionRots) {
         climbMotor.setControl(positionVoltage.withPosition(positionRots));
     }
 
     @Override
-    public void toPositionClimb(final double positionRots) {
+    public void toPositionUnprofiled(final double positionRots) {
         climbMotor.setControl(positionVoltage.withPosition(positionRots).withSlot(1));
     }
 
     @Override
-    public void toVoltage(final double volts) {
-        climbMotor.setControl(voltageOut.withOutput(volts));
-    }
-
-    @Override
-    public void toTorqueCurrent(final double torqueCurrentAmps) {
-        climbMotor.setControl(torqueCurrentFOC.withOutput(torqueCurrentAmps));
+    public void setPosition(final double positionRots) {
+        climbMotor.setPosition(0);
     }
 }

@@ -71,6 +71,7 @@ public class Hood extends SubsystemBase {
         };
 
         hoodIO.config();
+        hoodIO.setPosition();
     }
 
     @Override

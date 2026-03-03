@@ -58,7 +58,7 @@ public class HardwareConstants {
             15,
             16,
             10,
-            4,
+            34.4,
             0
     );
 
@@ -111,8 +111,8 @@ public class HardwareConstants {
             80,
             13.0,
             17.0,
-            0.544,
-            -0.0625,
+            -0.451,
+            -0.061,
             0.5,
             -0.5
     );
@@ -159,7 +159,7 @@ public class HardwareConstants {
             CANBus.CANIVORE,
             25,
             48,
-            50.0,
+            4.7,
             0.0,
             Units.inchesToMeters(1)
     );

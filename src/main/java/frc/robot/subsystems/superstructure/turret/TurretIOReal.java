@@ -86,8 +86,8 @@ public class TurretIOReal implements TurretIO {
                 .withKD(0);
         motorConfig.Slot1 = new Slot1Configs()
                 .withKS(0.366)
-                .withKP(70)
-                .withKD(0.5);
+                .withKP(80)
+                .withKD(0.45);
         motorConfig.CurrentLimits.StatorCurrentLimit = 70;
         motorConfig.CurrentLimits.StatorCurrentLimitEnable = true;
         motorConfig.CurrentLimits.SupplyCurrentLimit = 60;

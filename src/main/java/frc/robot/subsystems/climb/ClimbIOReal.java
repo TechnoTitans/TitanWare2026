@@ -60,20 +60,12 @@ public class ClimbIOReal implements ClimbIO {
     public void config() {
         final TalonFXConfiguration motorConfiguration = new TalonFXConfiguration();
         motorConfiguration.Slot0 = new Slot0Configs()
-                .withKS(0.037707)
-                .withKG(0.52705)
-                .withGravityType(GravityTypeValue.Elevator_Static)
-                .withKV(0.54587)
-                .withKA(0.012141)
+                .withKS(0.2)
                 .withKP(15)
-                .withKD(1);
+                .withKD(0);
         motorConfiguration.Slot1 = new Slot1Configs()
-                .withKS(0.037707)
-                .withKG(0.52705)
-                .withGravityType(GravityTypeValue.Elevator_Static)
-                .withKV(0.54587)
-                .withKA(0.012141)
-                .withKP(15)
+                .withKS(0.2)
+                .withKP(50)
                 .withKD(1);
         motorConfiguration.MotionMagic.MotionMagicCruiseVelocity = 0;
         motorConfiguration.MotionMagic.MotionMagicExpo_kV = 0;
@@ -84,7 +76,7 @@ public class ClimbIOReal implements ClimbIO {
         motorConfiguration.CurrentLimits.SupplyCurrentLimitEnable = true;
         motorConfiguration.Feedback.SensorToMechanismRatio = constants.climbGearing();
         motorConfiguration.Feedback.FeedbackSensorSource = FeedbackSensorSourceValue.RotorSensor;
-        motorConfiguration.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
+        motorConfiguration.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
         motorConfiguration.MotorOutput.NeutralMode = NeutralModeValue.Brake;
         motorConfiguration.SoftwareLimitSwitch.ForwardSoftLimitThreshold = constants.upperLimitRots();
         motorConfiguration.SoftwareLimitSwitch.ForwardSoftLimitEnable = true;
@@ -120,16 +112,6 @@ public class ClimbIOReal implements ClimbIO {
     @Override
     public void toPosition(final double positionRots) {
         climbMotor.setControl(motionMagicExpoVoltage.withPosition(positionRots));
-    }
-
-    @Override
-    public void toPositionClimb(final double positionRots) {
-        climbMotor.setControl(motionMagicExpoVoltage.withPosition(positionRots).withSlot(1));
-    }
-
-    @Override
-    public void toTorqueCurrent(final double torqueCurrentAmps) {
-        climbMotor.setControl(torqueCurrentFOC.withOutput(torqueCurrentAmps));
     }
 
     //TODO: Do the .reportIfNotOk for all subsystems

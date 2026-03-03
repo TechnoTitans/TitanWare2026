@@ -30,7 +30,7 @@ public class Climb extends SubsystemBase {
     public enum Goal {
         STOW(0),
         CLIMB_DOWN(0),
-        EXTEND(0.4);
+        EXTEND(3.7);
 
         private final double positionRots;
 
@@ -66,7 +66,7 @@ public class Climb extends SubsystemBase {
 
         if (desiredGoal != currentGoal) {
             if (desiredGoal == Goal.CLIMB_DOWN) {
-                climbIO.toPositionClimb(desiredGoal.positionRots);
+                climbIO.toPositionUnprofiled(desiredGoal.positionRots);
             }
             climbIO.toPosition(desiredGoal.positionRots);
             this.currentGoal = desiredGoal;

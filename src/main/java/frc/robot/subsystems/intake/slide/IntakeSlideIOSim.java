@@ -213,6 +213,8 @@ public class IntakeSlideIOSim implements IntakeSlideIO {
 
         inputs.averagePositionRots = averagePosition.getValueAsDouble();
         inputs.differentialPositionRots = differentialPosition.getValueAsDouble();
+
+        inputs.mechanism = diffMechanism.getMechanismState();
     }
 
     @Override

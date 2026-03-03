@@ -86,8 +86,6 @@ public class Turret extends SubsystemBase {
         turretIO.setTurretPosition(absolutePosition);
 
         Logger.recordOutput(LogKey + "/CRTResult", absolutePosition);
-
-//        turretIO.setTurretPosition(0);
     }
 
     @Override
