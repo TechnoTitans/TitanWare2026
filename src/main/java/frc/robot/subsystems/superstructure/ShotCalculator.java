@@ -15,7 +15,6 @@ import edu.wpi.first.wpilibj.DriverStation;
 import frc.robot.RobotCommands;
 import frc.robot.constants.FieldConstants;
 import frc.robot.constants.PoseConstants;
-import org.littletonrobotics.junction.Logger;
 
 import java.util.function.Supplier;
 
@@ -43,9 +42,7 @@ public class ShotCalculator {
         }
     }
 
-    public static final double FerryXBoundary = Units.inchesToMeters(305);
-
-    public static final InterpolatingTreeMap<Double, HoodShooterCalculation> shotDataMap = new InterpolatingTreeMap<>(
+    private static final InterpolatingTreeMap<Double, HoodShooterCalculation> shotDataMap = new InterpolatingTreeMap<>(
             InverseInterpolator.forDouble(),
             HoodShooterCalculation.interpolator
     );
@@ -84,11 +81,15 @@ public class ShotCalculator {
 
     public record ShotCalculation(
             Rotation2d desiredTurretRotation,
-            HoodShooterCalculation hoodShooterCalculation,
+            Rotation2d desiredHoodRotation,
+            double desiredShooterVelocity,
             ShotCalculator.Target target
     ) {}
 
+    private static final double hoodDownLowerXBoundary = Units.inchesToMeters(154);
+    private static final double FerryXBoundary = Units.inchesToMeters(200);
     private static final double DelayTimeSec = 0.005;
+    private static final Rotation2d wrapOffset = Rotation2d.fromRotations(0.75);
     //TODO: Try to see if this is worth it
 //    private static final LinearFilter turretFilter = LinearFilter.movingAverage(5);
 
@@ -136,11 +137,15 @@ public class ShotCalculator {
                 turretPose.getRotation()
         );
 
+        final HoodShooterCalculation hoodShooterCalculation = shotDataMap.get(turretToTargetDistance);
+
+        final Rotation2d hoodRotation = calculationPose.getX() > hoodDownLowerXBoundary && calculationPose.getX() < FerryXBoundary
+                ? Rotation2d.kZero : hoodShooterCalculation.hoodRotation;
+
         return new ShotCalculation(
                 wrapTurret(desiredTurretAngle),
-                shotDataMap.get(
-                        turretToTargetDistance
-                ),
+                hoodRotation,
+                hoodShooterCalculation.flywheelVelocity(),
                 target
         );
     }
@@ -176,18 +181,22 @@ public class ShotCalculator {
                 turretPose.getRotation()
         );
 
+        final HoodShooterCalculation hoodShooterCalculation = shotDataMap.get(turretToTargetDistance);
+
+        final Rotation2d hoodRotation = calculationPose.getX() > hoodDownLowerXBoundary && calculationPose.getX() < FerryXBoundary
+                ? Rotation2d.kZero : hoodShooterCalculation.hoodRotation;
+
         return new ShotCalculation(
                 wrapTurret(desiredTurretAngle),
-                shotDataMap.get(
-                        turretToTargetDistance
-                ),
+                hoodRotation,
+                hoodShooterCalculation.flywheelVelocity(),
                 target
         );
     }
 
     private static Rotation2d wrapTurret(final Rotation2d desiredTurretRotation) {
         if (desiredTurretRotation.getRotations() > 0.25) {
-            return desiredTurretRotation.minus(Rotation2d.fromRotations(0.75));
+            return desiredTurretRotation.minus(wrapOffset);
         }
 
         return desiredTurretRotation.rotateBy(Rotation2d.kCCW_90deg);

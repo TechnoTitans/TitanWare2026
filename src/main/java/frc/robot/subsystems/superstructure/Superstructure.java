@@ -102,9 +102,9 @@ public class Superstructure extends VirtualSubsystem {
 
             turret.updatePositionSetpoint(shotCalculation.desiredTurretRotation().getRotations());
             if (desiredGoal != Goal.HOOD_DOWN) {
-                hood.updateDesiredHoodPosition(shotCalculation.hoodShooterCalculation().hoodRotation().getRotations());
+                hood.updateDesiredHoodPosition(shotCalculation.desiredHoodRotation().getRotations());
             }
-            shooter.updateVelocitySetpoint(shotCalculation.hoodShooterCalculation().flywheelVelocity());
+            shooter.updateVelocitySetpoint(shotCalculation.desiredShooterVelocity());
         }
 
         //TODO: Change how goal system works -> current goal should only be current when at setpoint
