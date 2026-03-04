@@ -19,6 +19,7 @@ public class Turret extends SubsystemBase {
 
     private static final double PositionToleranceRots = 0.01;
     private static final double VelocityToleranceRotsPerSec = 0.01;
+    public static final double WRAP_THRESHOLD = 0.3;
 
     private final HardwareConstants.TurretConstants constants;
     private final DoubleSupplier robotAngularVelocitySupplier;
@@ -99,7 +100,7 @@ public class Turret extends SubsystemBase {
             turretIO.toTurretPosition(desiredGoal.getTurretPositionGoalRots());
             this.currentGoal = desiredGoal;
         } else if (desiredGoal.isDynamic) {
-            if (Math.abs(inputs.turretPositionRots - desiredGoal.getTurretPositionGoalRots()) > 0.3) {
+            if (Math.abs(inputs.turretPositionRots - desiredGoal.getTurretPositionGoalRots()) > WRAP_THRESHOLD) {
                 turretIO.toTurretPosition(desiredGoal.getTurretPositionGoalRots());
             } else {
                 turretIO.toTurretContinuousPosition(desiredGoal.getTurretPositionGoalRots(),
@@ -126,14 +127,14 @@ public class Turret extends SubsystemBase {
                 .withName("ToTurretZero");
     }
 
-    public void setGoal(final Goal desiredGoal) {
-        this.desiredGoal = desiredGoal;
+    public void setGoal(final Goal goal) {
+        desiredGoal = goal;
         Logger.recordOutput(LogKey + "/CurrentGoal", currentGoal);
-        Logger.recordOutput(LogKey + "/DesiredGoal", desiredGoal);
+        Logger.recordOutput(LogKey + "/DesiredGoal", goal);
     }
 
     public void updatePositionSetpoint(final double desiredTurretPosition) {
-        this.desiredGoal.changeTurretPositionRots(desiredTurretPosition);
+        desiredGoal.changeTurretPositionRots(desiredTurretPosition);
     }
 
     public Rotation2d getTurretPosition() {

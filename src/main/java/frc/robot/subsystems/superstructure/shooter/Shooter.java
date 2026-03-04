@@ -70,7 +70,7 @@ public class Shooter extends SubsystemBase {
 
         if (desiredGoal != currentGoal) {
             shooterIO.toVelocity(desiredGoal.velocitySetpoint);
-            this.currentGoal = desiredGoal;
+            currentGoal = desiredGoal;
         }
 
         Logger.recordOutput(LogKey + "/DesiredGoal", desiredGoal.toString());
@@ -84,14 +84,10 @@ public class Shooter extends SubsystemBase {
         );
     }
 
-    public boolean isShooting() {
-        return atSetpoint.getAsBoolean() && currentGoal == Goal.TRACKING;
-    }
-
-    public void setGoal(final Goal desiredGoal) {
-        this.desiredGoal = desiredGoal;
+    public void setGoal(final Goal goal) {
+        desiredGoal = goal;
         Logger.recordOutput(LogKey + "/CurrentGoal", currentGoal.toString());
-        Logger.recordOutput(LogKey + "/DesiredGoal", desiredGoal.toString());
+        Logger.recordOutput(LogKey + "/DesiredGoal", goal.toString());
     }
 
     public void updateVelocitySetpoint(final double desiredShooterVelocity) {
