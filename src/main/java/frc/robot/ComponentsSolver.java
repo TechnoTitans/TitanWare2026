@@ -51,8 +51,7 @@ public class ComponentsSolver {
         //TODO: Turret zero is different now
         final Pose3d turretPose = new Pose3d(
                 PoseConstants.Turret.ORIGIN,
-                new Rotation3d(turretRotationSupplier.get())
-                        .rotateBy(PoseConstants.Turret.TURRET_ZERO_OFFSET)
+                new Rotation3d(turretRotationSupplier.get()).plus(PoseConstants.Turret.TURRET_ZERO_OFFSET)
         );
 
         final Pose3d hoodPose = turretPose.transformBy(

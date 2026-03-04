@@ -432,18 +432,12 @@ public class Robot extends LoggedRobot {
                         () -> SwerveSpeed.setSwerveSpeed(SwerveSpeed.Speeds.NORMAL)
                 ).withName("SwerveSpeedSlow"));
 
-        driverController.leftTrigger(0.5, teleopEventLoop).whileTrue(robotCommands.deployIntake());
         driverController.rightTrigger(0.5, teleopEventLoop).whileTrue(robotCommands.shootWhileMoving());
 
         driverController.y().whileTrue(robotCommands.readyClimb())
                 .onFalse(robotCommands.climb());
 
         driverController.a().onTrue(robotCommands.unclimb());
-
-        //TODO: Temporary change so that we don't hit hood under trench
-        driverController.b().onTrue(superstructure.setGoal(Superstructure.Goal.HOOD_DOWN));
-
-        driverController.x().onTrue(superstructure.setGoal(Superstructure.Goal.TRACKING));
 
         coController.y(teleopEventLoop).onTrue(robotCommands.deployIntake());
 

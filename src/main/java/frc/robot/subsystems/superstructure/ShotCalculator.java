@@ -87,6 +87,7 @@ public class ShotCalculator {
     ) {}
 
     private static final double hoodDownLowerXBoundary = Units.inchesToMeters(154);
+    //TODO: Might split this into different things
     private static final double FerryXBoundary = Units.inchesToMeters(200);
     private static final double DelayTimeSec = 0.005;
     private static final Rotation2d wrapOffset = Rotation2d.fromRotations(0.75);
@@ -106,7 +107,6 @@ public class ShotCalculator {
         };
     }
 
-    //TODO: Add so that hood can't go up if we are going under trench
     private static ShotCalculation getShotCalculation(
             final Pose2d swervePose,
             final ChassisSpeeds swerveSpeeds

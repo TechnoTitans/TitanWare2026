@@ -14,7 +14,7 @@ public interface PoseConstants {
         Translation3d ORIGIN = new Translation3d(-0.127, 0, 0.384);
         Transform2d ROBOT_TO_TURRET_TRANSFORM_2D = new Transform2d(ORIGIN.toTranslation2d(), Rotation2d.kZero);
         Transform3d ROBOT_TO_TURRET_TRANSFORM_3D = new Transform3d(ORIGIN, new Rotation3d(Rotation2d.kCCW_90deg));
-        Rotation3d TURRET_ZERO_OFFSET = new Rotation3d(Rotation2d.kCW_90deg);
+        Rotation3d TURRET_ZERO_OFFSET = new Rotation3d(Rotation2d.k180deg);
     }
 
     interface IntakeSlide {
