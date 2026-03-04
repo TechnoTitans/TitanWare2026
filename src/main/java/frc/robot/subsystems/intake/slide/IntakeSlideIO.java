@@ -1,7 +1,5 @@
 package frc.robot.subsystems.intake.slide;
 
-import com.ctre.phoenix6.hardware.TalonFX;
-import com.ctre.phoenix6.mechanisms.DifferentialMechanism;
 import com.ctre.phoenix6.mechanisms.MechanismState;
 import org.littletonrobotics.junction.AutoLog;
 
