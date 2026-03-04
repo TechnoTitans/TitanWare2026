@@ -1,7 +1,5 @@
 package frc.robot.subsystems.intake.slide;
 
-import com.ctre.phoenix6.hardware.TalonFX;
-import com.ctre.phoenix6.mechanisms.DifferentialMechanism;
 import com.ctre.phoenix6.mechanisms.MechanismState;
 import org.littletonrobotics.junction.AutoLog;
 
@@ -21,6 +19,7 @@ public interface IntakeSlideIO {
         public double followerTempCelsius = 0.0;
 
         public double averagePositionRots = 0.0;
+        public double averageVelocityRotsPerSec = 0.0;
         public double differentialPositionRots = 0.0;
 
         public MechanismState mechanism;

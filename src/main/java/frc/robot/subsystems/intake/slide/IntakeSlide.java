@@ -32,13 +32,13 @@ public class IntakeSlide extends SubsystemBase {
 
     private boolean isHomed = false;
 
-    public final Trigger atSlideSetpoint = new Trigger(this::atSlidePositionSetpoint)
-            .onTrue(Commands.runOnce(() -> controlMode = ControlMode.SOFT))
-            .onFalse(Commands.runOnce(() -> {
-                if (desiredGoal != currentGoal) {
-                    controlMode = ControlMode.HARD;
-                }
-            }));
+    public final Trigger atSlideSetpoint = new Trigger(this::atSlidePositionSetpoint);
+//            .onTrue(Commands.runOnce(() -> controlMode = ControlMode.SOFT))
+//            .onFalse(Commands.runOnce(() -> {
+//                if (desiredGoal != currentGoal) {
+//                    controlMode = ControlMode.HARD;
+//                }
+//            }));
     public final Trigger atSlideLowerLimit = new Trigger(this::atSlideLowerLimit);
     public final Trigger atSlideUpperLimit = new Trigger(this::atSlideUpperLimit);
     private final Trigger isAboveHomingCurrent = new Trigger(
@@ -71,8 +71,9 @@ public class IntakeSlide extends SubsystemBase {
     public IntakeSlide(final Constants.RobotMode mode, final HardwareConstants.IntakeSlideConstants constants) {
         this.constants = constants;
 
+        //TODO: Change back to diff version
         this.intakeSlideIO = switch (mode) {
-            case REAL -> new IntakeSlideIOReal(constants);
+            case REAL -> new IntakeSlideIORealNoDiff(constants);
             case SIM -> new IntakeSlideIOSim(constants);
             case REPLAY, DISABLED -> new IntakeSlideIO() {};
         };

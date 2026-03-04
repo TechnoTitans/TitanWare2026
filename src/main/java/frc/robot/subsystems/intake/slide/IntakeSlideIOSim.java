@@ -6,6 +6,7 @@ import com.ctre.phoenix6.configs.Slot1Configs;
 import com.ctre.phoenix6.configs.Slot2Configs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.PositionVoltage;
+import com.ctre.phoenix6.controls.TorqueCurrentFOC;
 import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.mechanisms.DifferentialMechanism;
@@ -49,22 +50,24 @@ public class IntakeSlideIOSim implements IntakeSlideIO {
     private final StatusSignal<Temperature> followerDeviceTemp;
 
     private final StatusSignal<Angle> averagePosition;
+    private final StatusSignal<AngularVelocity> averageVelocity;
     private final StatusSignal<Angle> differentialPosition;
 
     private final PositionVoltage averagePositionVoltage;
     private final PositionVoltage differentialPositionVoltage;
-    private final VoltageOut voltageOut;
+    private final TorqueCurrentFOC torqueCurrentFOC;
 
     public IntakeSlideIOSim(final HardwareConstants.IntakeSlideConstants constants) {
         this.deltaTime = new DeltaTime(true);
 
         this.averagePositionVoltage = new PositionVoltage(0).withSlot(0);
         this.differentialPositionVoltage = new PositionVoltage(0).withSlot(1);
-        this.voltageOut = new VoltageOut(0);
+        this.torqueCurrentFOC = new TorqueCurrentFOC(0);
 
         final TalonFXConfiguration masterMotorConfig = new TalonFXConfiguration();
         // Average Slot
         masterMotorConfig.Slot0 = new Slot0Configs()
+                .withKV(2)
                 .withKP(9)
                 .withKD(3);
         // Diff Slot
@@ -165,6 +168,7 @@ public class IntakeSlideIOSim implements IntakeSlideIO {
         this.followerDeviceTemp = followerMotor.getDeviceTemp(false);
 
         this.averagePosition = diffMechanism.getAveragePosition(false);
+        this.averageVelocity = diffMechanism.getAverageVelocity(false);
         this.differentialPosition = diffMechanism.getDifferentialPosition(false);
 
         RefreshAll.add(
@@ -180,6 +184,7 @@ public class IntakeSlideIOSim implements IntakeSlideIO {
                 followerTorqueCurrent,
                 followerDeviceTemp,
                 averagePosition,
+                averageVelocity,
                 differentialPosition
         );
 
@@ -212,6 +217,7 @@ public class IntakeSlideIOSim implements IntakeSlideIO {
         inputs.followerTempCelsius = followerDeviceTemp.getValueAsDouble();
 
         inputs.averagePositionRots = averagePosition.getValueAsDouble();
+        inputs.averageVelocityRotsPerSec = averageVelocity.getValueAsDouble();
         inputs.differentialPositionRots = differentialPosition.getValueAsDouble();
 
         inputs.mechanism = diffMechanism.getMechanismState();
@@ -235,15 +241,14 @@ public class IntakeSlideIOSim implements IntakeSlideIO {
 
     @Override
     public void toSlidePositionUnprofiled(double positionRots, double velocityRotsPerSec) {
-        diffMechanism.setControl(averagePositionVoltage.withPosition(0).withVelocity(velocityRotsPerSec)
-                        .withVelocity(0),
-                differentialPositionVoltage
+        diffMechanism.setControl(averagePositionVoltage.withPosition(positionRots).withVelocity(velocityRotsPerSec),
+                differentialPositionVoltage.withPosition(0).withSlot(1)
         );
     }
 
     @Override
     public void toSlideTorqueCurrent(final double torqueCurrentAmps) {
-        diffMechanism.setControl(voltageOut.withOutput(torqueCurrentAmps), voltageOut.withOutput(0));
+        diffMechanism.setControl(torqueCurrentFOC.withOutput(torqueCurrentAmps), torqueCurrentFOC.withOutput(0));
     }
 
     @Override
