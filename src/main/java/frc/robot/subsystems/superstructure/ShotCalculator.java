@@ -177,6 +177,37 @@ public class ShotCalculator {
 
         final double turretToTargetDistance = targetTranslation.getDistance(turretPose.getTranslation());
 
+        final double robotAngle = swervePose.getRotation().getRadians();
+        final double turretVelocityX =
+                swerveSpeeds.vxMetersPerSecond
+                + swerveSpeeds.omegaRadiansPerSecond *
+                        (PoseConstants.Turret.ROBOT_TO_TURRET_TRANSFORM_2D.getY() * Math.cos(robotAngle))
+                            - PoseConstants.Turret.ROBOT_TO_TURRET_TRANSFORM_2D.getX() * Math.sin(robotAngle);
+
+        final double turretVelocityY =
+                swerveSpeeds.vyMetersPerSecond
+                    + swerveSpeeds.omegaRadiansPerSecond
+                        * (PoseConstants.Turret.ROBOT_TO_TURRET_TRANSFORM_2D.getX() * Math.cos(robotAngle))
+                            - PoseConstants.Turret.ROBOT_TO_TURRET_TRANSFORM_2D.getY() * Math.sin(robotAngle);
+
+        double tOF;
+        Pose2d lookaheadPose = turretPose;
+        double lookAheadTurretToTargetDistance = turretToTargetDistance;
+
+        for (int i = 0; i < 20; i++) {
+            tOF = shotDataMap.get(lookAheadTurretToTargetDistance).shotTime;
+            double offsetX = turretVelocityX * tOF;
+            double offsetY = turretVelocityY * tOF;
+            lookaheadPose =
+                    new Pose2d(
+                            turretPose.getTranslation().plus(new Translation2d(offsetX, offsetY)),
+                            turretPose.getRotation()
+                    );
+
+            lookAheadTurretToTargetDistance = targetTranslation.getDistance(lookaheadPose.getTranslation());
+        }
+
+
         final Rotation2d desiredTurretAngle = targetTranslation.minus(turretPose.getTranslation()).getAngle().minus(
                 turretPose.getRotation()
         );
