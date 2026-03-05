@@ -24,14 +24,10 @@ public class Spindexer extends SubsystemBase {
         STOP(0),
         FEED(50);
 
-        private final double wheelVelocitySetpoint;
+        private final double velocitySetpointRotsPerSec;
 
-        Goal(final double wheelVelocitySetpoint) {
-            this.wheelVelocitySetpoint = wheelVelocitySetpoint;
-        }
-
-        public double getWheelVelocitySetpoint() {
-            return wheelVelocitySetpoint;
+        Goal(final double velocitySetpointRotsPerSec) {
+            this.velocitySetpointRotsPerSec = velocitySetpointRotsPerSec;
         }
     }
 
@@ -46,7 +42,7 @@ public class Spindexer extends SubsystemBase {
 
         spindexerIO.config();
 
-        spindexerIO.toWheelVelocity(desiredGoal.getWheelVelocitySetpoint());
+        spindexerIO.toWheelVelocity(desiredGoal.velocitySetpointRotsPerSec);
     }
 
     @Override
@@ -57,14 +53,14 @@ public class Spindexer extends SubsystemBase {
         Logger.processInputs(LogKey, inputs);
 
         if (desiredGoal != currentGoal) {
-            spindexerIO.toWheelVelocity(desiredGoal.getWheelVelocitySetpoint());
+            spindexerIO.toWheelVelocity(desiredGoal.velocitySetpointRotsPerSec);
             currentGoal = desiredGoal;
         }
 
         Logger.recordOutput(LogKey + "/CurrentGoal", currentGoal.toString());
         Logger.recordOutput(LogKey + "/DesiredGoal", desiredGoal.toString());
-        Logger.recordOutput(LogKey + "/DesiredGoal/WheelVelocityRotsPerSec", desiredGoal.getWheelVelocitySetpoint());
-        Logger.recordOutput(LogKey + "/Triggers/AtVelocitySetpoint", atVelocitySetpoint());
+        Logger.recordOutput(LogKey + "/DesiredGoal/VelocitySetpointRotsPerSec", desiredGoal.velocitySetpointRotsPerSec);
+        Logger.recordOutput(LogKey + "/AtSetpoint", atVelocitySetpoint());
 
         Logger.recordOutput(
                 LogKey + "/PeriodicIOPeriodMs",
@@ -76,22 +72,23 @@ public class Spindexer extends SubsystemBase {
         return runEnd(
                 () -> setDesiredGoal(goal),
                 () -> setDesiredGoal(Goal.STOP)
-        ).withName("ToGoal: " + goal);
+        ).withName("ToGoal: " + goal.toString());
     }
 
     public Command setGoal(final Goal goal) {
         return Commands.runOnce(
                 () -> setDesiredGoal(goal)
-        ).withName("SetGoal:" + goal);
+        ).withName("SetGoal:" + goal.toString());
     }
 
-    private void setDesiredGoal(final Goal desiredGoal) {
-        this.desiredGoal = desiredGoal;
+    private void setDesiredGoal(final Goal goal) {
+        desiredGoal = goal;
         Logger.recordOutput(LogKey + "/CurrentGoal", currentGoal.toString());
-        Logger.recordOutput(LogKey + "/DesiredGoal", desiredGoal.toString());
+        Logger.recordOutput(LogKey + "/DesiredGoal", goal.toString());
     }
 
     private boolean atVelocitySetpoint() {
-        return MathUtil.isNear(desiredGoal.wheelVelocitySetpoint, inputs.wheelVelocityRotsPerSec, VelocityToleranceRotsPerSec);
+        return currentGoal == desiredGoal
+                && MathUtil.isNear(desiredGoal.velocitySetpointRotsPerSec, inputs.wheelVelocityRotsPerSec, VelocityToleranceRotsPerSec);
     }
 }

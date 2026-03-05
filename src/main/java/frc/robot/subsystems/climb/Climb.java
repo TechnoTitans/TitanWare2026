@@ -23,19 +23,17 @@ public class Climb extends SubsystemBase {
     private Goal desiredGoal = Goal.STOW;
     private Goal currentGoal = desiredGoal;
 
-    public final Trigger atSetpoint = new Trigger(this::atPositionSetpoint);
-    public final Trigger atLowerLimit = new Trigger(this::atLowerLimit);
-    public final Trigger atUpperLimit = new Trigger(this::atUpperLimit);
+    public final Trigger atSetpoint = new Trigger(this::atSetpoint);
 
     public enum Goal {
         STOW(0),
         CLIMB_DOWN(0),
         EXTEND(3.7);
 
-        private final double positionRots;
+        private final double positionSetpointRots;
 
-        Goal(final double positionRots) {
-            this.positionRots = positionRots;
+        Goal(final double positionSetpointRots) {
+            this.positionSetpointRots = positionSetpointRots;
         }
     }
 
@@ -53,8 +51,8 @@ public class Climb extends SubsystemBase {
 
         this.inputs = new ClimbIOInputsAutoLogged();
 
-        this.climbIO.config();
-        this.zero();
+        climbIO.config();
+        zero();
     }
 
     @Override
@@ -66,15 +64,15 @@ public class Climb extends SubsystemBase {
 
         if (desiredGoal != currentGoal) {
             if (desiredGoal == Goal.CLIMB_DOWN) {
-                climbIO.toPositionUnprofiled(desiredGoal.positionRots);
+                climbIO.toPositionUnprofiled(desiredGoal.positionSetpointRots);
             }
-            climbIO.toPosition(desiredGoal.positionRots);
+            climbIO.toPosition(desiredGoal.positionSetpointRots);
             this.currentGoal = desiredGoal;
         }
 
         Logger.recordOutput(LogKey + "/CurrentGoal", currentGoal.toString());
-        Logger.recordOutput(LogKey + "/DesiredGoal", desiredGoal);
-        Logger.recordOutput(LogKey + "/DesiredGoal/ClimbPositionRots", desiredGoal.positionRots);
+        Logger.recordOutput(LogKey + "/DesiredGoal", desiredGoal.toString());
+        Logger.recordOutput(LogKey + "/DesiredGoal/PositionSetpointRots", desiredGoal.positionSetpointRots);
         Logger.recordOutput(LogKey + "/ExtensionMeters", getExtensionMeters());
         Logger.recordOutput(LogKey + "/Triggers/AtLowerLimit", atLowerLimit());
         Logger.recordOutput(LogKey + "/Triggers/AtUpperLimit", atUpperLimit());
@@ -87,12 +85,12 @@ public class Climb extends SubsystemBase {
     }
 
     public boolean atGoal(final Goal goal) {
-        return MathUtil.isNear(goal.positionRots, inputs.motorPositionRots, PositionToleranceRots)
+        return MathUtil.isNear(goal.positionSetpointRots, inputs.motorPositionRots, PositionToleranceRots)
                 && MathUtil.isNear(0, inputs.motorVelocityRotsPerSec, VelocityToleranceRotsPerSec);
     }
 
-    private boolean atPositionSetpoint() {
-        return MathUtil.isNear(desiredGoal.positionRots, inputs.motorPositionRots, PositionToleranceRots)
+    private boolean atSetpoint() {
+        return MathUtil.isNear(desiredGoal.positionSetpointRots, inputs.motorPositionRots, PositionToleranceRots)
                 && MathUtil.isNear(0, inputs.motorVelocityRotsPerSec, VelocityToleranceRotsPerSec)
                 && currentGoal == desiredGoal;
     }
@@ -113,17 +111,17 @@ public class Climb extends SubsystemBase {
         return runEnd(
                 () -> setDesiredGoal(goal),
                 () -> setDesiredGoal(Goal.STOW)
-        ).withName("ToGoal: " + goal);
+        ).withName("ToGoal: " + goal.toString());
     }
 
     public Command setGoal(final Goal goal) {
         return runOnce(
                 () -> setDesiredGoal(goal)
-        ).withName("SetGoal: " + goal);
+        ).withName("SetGoal: " + goal.toString());
     }
 
     private void setDesiredGoal(final Goal goal) {
-        this.desiredGoal = goal;
+        desiredGoal = goal;
         Logger.recordOutput(LogKey + "/CurrentGoal", currentGoal.toString());
         Logger.recordOutput(LogKey + "/DesiredGoal", desiredGoal.toString());
     }

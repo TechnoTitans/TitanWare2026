@@ -27,9 +27,7 @@ public class Hood extends SubsystemBase {
     private Goal desiredGoal = Goal.HOMING;
     private Goal currentGoal = desiredGoal;
 
-    public final Trigger atSetpoint = new Trigger(this::atHoodPositionSetpoint);
-    public final Trigger atHoodLowerLimit = new Trigger(this::atHoodLowerLimit);
-    public final Trigger atHoodUpperLimit = new Trigger(this::atHoodUpperLimit);
+    public final Trigger atSetpoint = new Trigger(this::atSetpoint);
     private final Trigger isAboveHomingCurrent = new Trigger(
             () -> Math.abs(inputs.hoodTorqueCurrentAmps) >= ZeroingCurrentThresholdAmps
     ).debounce(0.15, Debouncer.DebounceType.kRising);
@@ -42,22 +40,18 @@ public class Hood extends SubsystemBase {
         CLIMB(0, false),
         TRACKING(0, true);
 
-        private double hoodPositionGoalRots;
+        private double positionSetpointRots;
         private final boolean isDynamic;
 
-        Goal(final double initialHoodPositionGoalRots, final boolean isDynamic) {
-            this.hoodPositionGoalRots = initialHoodPositionGoalRots;
+        Goal(final double positionSetpointRots, final boolean isDynamic) {
+            this.positionSetpointRots = positionSetpointRots;
             this.isDynamic = isDynamic;
         }
 
         public void changeHoodPositionRots(final double desiredPositionRots) {
             if (isDynamic) {
-                this.hoodPositionGoalRots = desiredPositionRots;
+                this.positionSetpointRots = desiredPositionRots;
             }
-        }
-
-        public double getHoodPositionGoalRots() {
-            return hoodPositionGoalRots;
         }
     }
 
@@ -71,7 +65,6 @@ public class Hood extends SubsystemBase {
         };
 
         hoodIO.config();
-        hoodIO.setPosition();
     }
 
     @Override
@@ -81,23 +74,23 @@ public class Hood extends SubsystemBase {
         Logger.processInputs(LogKey, inputs);
 
         if (desiredGoal.isDynamic) {
-            hoodIO.toHoodContinuousPosition(desiredGoal.getHoodPositionGoalRots());
+            hoodIO.toHoodContinuousPosition(desiredGoal.positionSetpointRots);
         }
 
         if (desiredGoal != currentGoal) {
-            hoodIO.toHoodPosition(desiredGoal.getHoodPositionGoalRots());
+            hoodIO.toHoodPosition(desiredGoal.positionSetpointRots);
             this.currentGoal = desiredGoal;
         }
 
         Logger.recordOutput(LogKey + "/CurrentGoal", currentGoal.toString());
         Logger.recordOutput(LogKey + "/DesiredGoal", desiredGoal.toString());
-        Logger.recordOutput(LogKey + "/DesiredGoal/HoodPositionRots", desiredGoal.getHoodPositionGoalRots());
+        Logger.recordOutput(LogKey + "/DesiredGoal/PositionSetpointRots", desiredGoal.positionSetpointRots);
 
         Logger.recordOutput(LogKey + "/IsHomed", isHomed);
 
-        Logger.recordOutput(LogKey + "/Triggers/AtPositionSetpoint", atHoodPositionSetpoint());
-        Logger.recordOutput(LogKey + "/Triggers/AtHoodLowerLimit", atHoodLowerLimit());
-        Logger.recordOutput(LogKey + "/Triggers/AtHoodUpperLimit", atHoodUpperLimit());
+        Logger.recordOutput(LogKey + "/Triggers/AtSetpoint", atSetpoint());
+        Logger.recordOutput(LogKey + "/Triggers/AtHoodLowerLimit", atLowerLimit());
+        Logger.recordOutput(LogKey + "/Triggers/AtHoodUpperLimit", atUpperLimit());
         Logger.recordOutput(LogKey + "/Triggers/IsAboveHomingCurrent", isAboveHomingCurrent);
 
         Logger.recordOutput(
@@ -119,13 +112,13 @@ public class Hood extends SubsystemBase {
     }
 
     public void setDesiredGoal(final Goal goal) {
-        this.desiredGoal = goal;
+        desiredGoal = goal;
         Logger.recordOutput(LogKey + "/CurrentGoal", currentGoal.toString());
         Logger.recordOutput(LogKey + "/DesiredGoal", desiredGoal.toString());
     }
 
     public void updateDesiredHoodPosition(final double desiredHoodPosition) {
-        this.desiredGoal.changeHoodPositionRots(desiredHoodPosition);
+        desiredGoal.changeHoodPositionRots(desiredHoodPosition);
     }
 
     public Rotation2d getHoodPosition() {
@@ -136,17 +129,17 @@ public class Hood extends SubsystemBase {
         return isHomed;
     }
 
-    private boolean atHoodPositionSetpoint() {
+    private boolean atSetpoint() {
         return currentGoal == desiredGoal
-                && MathUtil.isNear(desiredGoal.hoodPositionGoalRots, inputs.hoodPositionRots, PositionToleranceRots)
+                && MathUtil.isNear(desiredGoal.positionSetpointRots, inputs.hoodPositionRots, PositionToleranceRots)
                 && MathUtil.isNear(0, inputs.hoodVelocityRotsPerSec, VelocityToleranceRotsPerSec);
     }
 
-    private boolean atHoodLowerLimit() {
+    private boolean atLowerLimit() {
         return inputs.hoodPositionRots <= constants.hoodLowerLimitRots();
     }
 
-    private boolean atHoodUpperLimit() {
+    private boolean atUpperLimit() {
         return inputs.hoodPositionRots >= constants.hoodUpperLimitRots();
     }
 }

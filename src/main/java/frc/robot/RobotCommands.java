@@ -4,7 +4,6 @@ import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
-import frc.robot.constants.FieldConstants;
 import frc.robot.subsystems.climb.Climb;
 import frc.robot.subsystems.drive.Swerve;
 import frc.robot.subsystems.feeder.Feeder;
@@ -65,7 +64,7 @@ public class RobotCommands extends VirtualSubsystem {
     //TODO: Make logged trigger
     @Override
     public void periodic() {
-        Logger.recordOutput(LogKey + "/AbletoShoot", ableToShoot);
+        Logger.recordOutput(LogKey + "/AbleToShoot", ableToShoot);
     }
 
     public Command deployIntake() {

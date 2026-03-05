@@ -23,8 +23,4 @@ public interface ShooterIO {
     default void config() {}
 
     default void toVelocity(final double velocityRotsPerSec) {}
-
-    default void toVoltage(final double volts) {}
-
-    default void toTorqueCurrent(final double torqueCurrentAmps) {}
 }

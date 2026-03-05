@@ -23,6 +23,4 @@ public interface HoodIO {
     default void toHoodTorqueCurrent(final double torqueCurrentAmps) {}
 
     default void zeroMotor() {}
-
-    default void setPosition() {}
 }

@@ -6,8 +6,6 @@ import com.ctre.phoenix6.configs.Slot0Configs;
 import com.ctre.phoenix6.configs.Slot1Configs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.PositionVoltage;
-import com.ctre.phoenix6.controls.TorqueCurrentFOC;
-import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.ParentDevice;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.FeedbackSensorSourceValue;
@@ -36,8 +34,6 @@ public class ClimbIOSim implements ClimbIO {
     private final TalonFXSim motorsSim;
 
     private final PositionVoltage positionVoltage;
-    private final TorqueCurrentFOC torqueCurrentFOC;
-    private final VoltageOut voltageOut;
 
     private final StatusSignal<Angle> motorPosition;
     private final StatusSignal<AngularVelocity> motorVelocity;
@@ -84,8 +80,6 @@ public class ClimbIOSim implements ClimbIO {
         this.motorDeviceTemp = climbMotor.getDeviceTemp(false);
 
         this.positionVoltage = new PositionVoltage(0);
-        this.torqueCurrentFOC = new TorqueCurrentFOC(0);
-        this.voltageOut = new VoltageOut(0);
 
         RefreshAll.add(
                 constants.CANBus(),

@@ -23,14 +23,10 @@ public class IntakeRoller extends SubsystemBase {
         STOP(0),
         INTAKE(8);
 
-        private final double rollerVelocityRotsPerSec;
+        private final double velocitySetpointRotsPerSec;
 
-        Goal(final double rollerVelocityRotsPerSec) {
-            this.rollerVelocityRotsPerSec = rollerVelocityRotsPerSec;
-        }
-
-        public double getRollerVelocityRotsPerSec() {
-            return rollerVelocityRotsPerSec;
+        Goal(final double velocitySetpointRotsPerSec) {
+            this.velocitySetpointRotsPerSec = velocitySetpointRotsPerSec;
         }
     }
 
@@ -53,16 +49,16 @@ public class IntakeRoller extends SubsystemBase {
         Logger.processInputs(LogKey, inputs);
 
         if (desiredGoal != currentGoal) {
-            intakeRollerIO.toRollerVoltage(desiredGoal.getRollerVelocityRotsPerSec());
+            intakeRollerIO.toRollerVoltage(desiredGoal.velocitySetpointRotsPerSec);
 
             currentGoal = desiredGoal;
         }
 
         Logger.recordOutput(LogKey + "/CurrentGoal", currentGoal.toString());
         Logger.recordOutput(LogKey + "/DesiredGoal", desiredGoal.toString());
-        Logger.recordOutput(LogKey + "/DesiredGoal/RollerVelocity", desiredGoal.getRollerVelocityRotsPerSec());
+        Logger.recordOutput(LogKey + "/DesiredGoal/VelocitySetpointRotsPerSec", desiredGoal.velocitySetpointRotsPerSec);
 
-        Logger.recordOutput(LogKey + "/Roller/AtRollerVelocitySetpoint", atRollerVelocitySetpoint());
+        Logger.recordOutput(LogKey + "/AtSetpoint", atSetpoint());
 
         Logger.recordOutput(
                 LogKey + "/PeriodicIOPeriodMs",
@@ -70,34 +66,30 @@ public class IntakeRoller extends SubsystemBase {
         );
     }
 
-    public boolean atRollerVelocitySetpoint() {
-        return currentGoal == desiredGoal
-                && MathUtil.isNear(
-                        desiredGoal.rollerVelocityRotsPerSec,
-                        inputs.rollerVelocityRotsPerSec,
-                        VelocityToleranceRotsPerSec
-                );
-    }
-
-    public boolean isIntaking() {
-        return currentGoal == Goal.INTAKE;
-    }
-
     public Command toGoal(final Goal goal) {
         return runEnd(
                 () -> setGoal(goal),
                 () -> setGoal(Goal.STOP)
-        ).withName("ToGoal: " + goal);
+        ).withName("ToGoal: " + goal.toString());
     }
 
     public Command setGoal(final Goal goal) {
         return runOnce(() -> setDesiredGoal(goal))
-                .withName("SetGoal: " + goal);
+                .withName("SetGoal: " + goal.toString());
     }
 
     private void setDesiredGoal(final Goal goal) {
-        this.desiredGoal = goal;
+        desiredGoal = goal;
         Logger.recordOutput(LogKey + "/CurrentGoal", currentGoal.toString());
         Logger.recordOutput(LogKey + "/DesiredGoal", desiredGoal.toString());
+    }
+
+    private boolean atSetpoint() {
+        return currentGoal == desiredGoal
+                && MathUtil.isNear(
+                desiredGoal.velocitySetpointRotsPerSec,
+                inputs.rollerVelocityRotsPerSec,
+                VelocityToleranceRotsPerSec
+        );
     }
 }

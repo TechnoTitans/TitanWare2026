@@ -81,10 +81,6 @@ public class Superstructure extends VirtualSubsystem {
         shooter.setGoal(desiredGoal.shooterGoal);
     }
 
-    private Command runOnce(final Runnable action) {
-        return Commands.runOnce(action, turret, hood);
-    }
-
     private Command runEnd(final Runnable run, final Runnable end) {
         return Commands.runEnd(run, end, turret, hood);
     }
@@ -107,7 +103,6 @@ public class Superstructure extends VirtualSubsystem {
             shooter.updateVelocitySetpoint(shotCalculation.desiredShooterVelocity());
         }
 
-        //TODO: Change how goal system works -> current goal should only be current when at setpoint
         if (desiredGoal != runningGoal) {
             turret.setGoal(desiredGoal.turretGoal);
             hood.setDesiredGoal(desiredGoal.hoodGoal);

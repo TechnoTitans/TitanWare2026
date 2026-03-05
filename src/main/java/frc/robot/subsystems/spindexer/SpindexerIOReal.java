@@ -23,7 +23,7 @@ public class SpindexerIOReal implements SpindexerIO {
     private final StatusSignal<AngularVelocity> wheelVelocity;
     private final StatusSignal<Voltage> wheelVoltage;
     private final StatusSignal<Current> wheelTorqueCurrent;
-    private final StatusSignal<Temperature> wheelTemperature;
+    private final StatusSignal<Temperature> wheelTemp;
 
     private final VelocityTorqueCurrentFOC velocityTorqueCurrentFOC;
 
@@ -36,7 +36,7 @@ public class SpindexerIOReal implements SpindexerIO {
         this.wheelVelocity = wheelMotor.getVelocity(false);
         this.wheelVoltage = wheelMotor.getMotorVoltage(false);
         this.wheelTorqueCurrent = wheelMotor.getTorqueCurrent(false);
-        this.wheelTemperature = wheelMotor.getDeviceTemp(false);
+        this.wheelTemp = wheelMotor.getDeviceTemp(false);
 
         this.velocityTorqueCurrentFOC = new VelocityTorqueCurrentFOC(0);
 
@@ -46,7 +46,7 @@ public class SpindexerIOReal implements SpindexerIO {
                 wheelVelocity,
                 wheelVoltage,
                 wheelTorqueCurrent,
-                wheelTemperature
+                wheelTemp
         );
     }
 
@@ -58,6 +58,8 @@ public class SpindexerIOReal implements SpindexerIO {
                 .withKV(0.14)
                 .withKP(8.5)
                 .withKD(0.05);
+        wheelConfiguration.TorqueCurrent.PeakForwardTorqueCurrent = 80;
+        wheelConfiguration.TorqueCurrent.PeakReverseTorqueCurrent = -80;
         wheelConfiguration.CurrentLimits.StatorCurrentLimit = 80;
         wheelConfiguration.CurrentLimits.StatorCurrentLimitEnable = true;
         wheelConfiguration.CurrentLimits.SupplyCurrentLimit = 70;
@@ -80,7 +82,7 @@ public class SpindexerIOReal implements SpindexerIO {
 
         BaseStatusSignal.setUpdateFrequencyForAll(
                 4,
-                wheelTemperature
+                wheelTemp
         );
 
         ParentDevice.optimizeBusUtilizationForAll(
@@ -95,7 +97,7 @@ public class SpindexerIOReal implements SpindexerIO {
         inputs.wheelVelocityRotsPerSec = wheelVelocity.getValueAsDouble();
         inputs.wheelVoltage = wheelVoltage.getValueAsDouble();
         inputs.wheelTorqueCurrentAmps = wheelTorqueCurrent.getValueAsDouble();
-        inputs.wheelTemperatureCelsius = wheelTemperature.getValueAsDouble();
+        inputs.wheelTempCelsius = wheelTemp.getValueAsDouble();
     }
 
     @Override

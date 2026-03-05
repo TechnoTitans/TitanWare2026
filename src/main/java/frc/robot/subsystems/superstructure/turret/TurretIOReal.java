@@ -8,8 +8,6 @@ import com.ctre.phoenix6.configs.Slot1Configs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.MotionMagicExpoVoltage;
 import com.ctre.phoenix6.controls.PositionVoltage;
-import com.ctre.phoenix6.controls.TorqueCurrentFOC;
-import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.CANcoder;
 import com.ctre.phoenix6.hardware.ParentDevice;
 import com.ctre.phoenix6.hardware.TalonFX;
@@ -40,8 +38,6 @@ public class TurretIOReal implements TurretIO {
 
     private final MotionMagicExpoVoltage motionMagicExpoVoltage;
     private final PositionVoltage positionVoltage;
-    private final VoltageOut voltageOut;
-    private final TorqueCurrentFOC torqueCurrentFOC;
 
     public TurretIOReal(HardwareConstants.TurretConstants constants) {
         this.constants = constants;
@@ -61,8 +57,6 @@ public class TurretIOReal implements TurretIO {
 
         this.motionMagicExpoVoltage = new MotionMagicExpoVoltage(0);
         this.positionVoltage = new PositionVoltage(0);
-        this.torqueCurrentFOC = new TorqueCurrentFOC(0);
-        this.voltageOut = new VoltageOut(0);
 
         RefreshAll.add(
                 constants.CANBus(),
@@ -155,16 +149,6 @@ public class TurretIOReal implements TurretIO {
     @Override
     public void toTurretPosition(final double positionRots) {
         turretMotor.setControl(motionMagicExpoVoltage.withPosition(positionRots).withSlot(1));
-    }
-
-    @Override
-    public void toTurretVoltage(final double volts) {
-        turretMotor.setControl(voltageOut.withOutput(volts));
-    }
-
-    @Override
-    public void toTurretTorqueCurrent(final double torqueCurrent) {
-        turretMotor.setControl(torqueCurrentFOC.withOutput(torqueCurrent));
     }
 
     @Override

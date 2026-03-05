@@ -5,9 +5,7 @@ import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.Slot0Configs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.Follower;
-import com.ctre.phoenix6.controls.TorqueCurrentFOC;
 import com.ctre.phoenix6.controls.VelocityTorqueCurrentFOC;
-import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.ParentDevice;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.FeedbackSensorSourceValue;
@@ -54,8 +52,6 @@ public class ShooterIOSim implements ShooterIO {
     private final StatusSignal<Temperature> followerDeviceTemp;
 
     private final VelocityTorqueCurrentFOC velocityTorqueCurrentFOC;
-    private final VoltageOut voltageOut;
-    private final TorqueCurrentFOC torqueCurrentFOC;
     private final Follower follower;
 
     public ShooterIOSim(final HardwareConstants.ShooterConstants constants) {
@@ -96,8 +92,6 @@ public class ShooterIOSim implements ShooterIO {
         this.followerDeviceTemp = followerMotor.getDeviceTemp(false);
 
         this.velocityTorqueCurrentFOC = new VelocityTorqueCurrentFOC(0);
-        this.voltageOut = new VoltageOut(0);
-        this.torqueCurrentFOC = new TorqueCurrentFOC(0);
         this.follower = new Follower(masterMotor.getDeviceID(), MotorAlignmentValue.Aligned);
 
         RefreshAll.add(
@@ -197,18 +191,6 @@ public class ShooterIOSim implements ShooterIO {
     @Override
     public void toVelocity(final double velocityRotsPerSec) {
         masterMotor.setControl(velocityTorqueCurrentFOC.withVelocity(velocityRotsPerSec));
-        followerMotor.setControl(follower);
-    }
-
-    @Override
-    public void toVoltage(final double volts) {
-        masterMotor.setControl(voltageOut.withOutput(volts));
-        followerMotor.setControl(follower);
-    }
-
-    @Override
-    public void toTorqueCurrent(final double torqueCurrentAmps) {
-        masterMotor.setControl(torqueCurrentFOC.withOutput(torqueCurrentAmps));
         followerMotor.setControl(follower);
     }
 }

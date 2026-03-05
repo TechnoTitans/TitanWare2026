@@ -38,7 +38,7 @@ public class HardwareConstants {
             double rollerGearing
     ) {}
 
-    public static IntakeRollerConstants INTAKE_ROLLER = new IntakeRollerConstants(
+    public static final IntakeRollerConstants INTAKE_ROLLER = new IntakeRollerConstants(
             CANBus.RIO,
             14,
             5.0 / 3
@@ -53,7 +53,7 @@ public class HardwareConstants {
             double lowerLimitRots
     ) {}
 
-    public static IntakeSlideConstants INTAKE_SLIDE = new IntakeSlideConstants(
+    public static final IntakeSlideConstants INTAKE_SLIDE = new IntakeSlideConstants(
             CANBus.CANIVORE,
             15,
             16,
@@ -68,7 +68,7 @@ public class HardwareConstants {
             double wheelGearing
     ) {}
 
-    public static SpindexerConstants SPINDEXER = new SpindexerConstants(
+    public static final SpindexerConstants SPINDEXER = new SpindexerConstants(
             CANBus.CANIVORE,
             17,
             2
@@ -81,7 +81,7 @@ public class HardwareConstants {
     ) {}
 
 
-    public static FeederConstants FEEDER = new FeederConstants(
+    public static final FeederConstants FEEDER = new FeederConstants(
             CANBus.CANIVORE,
             18,
             3
@@ -102,7 +102,7 @@ public class HardwareConstants {
             double reverseLimitRots
     ) {}
 
-    public static TurretConstants TURRET = new TurretConstants(
+    public static final TurretConstants TURRET = new TurretConstants(
             CANBus.CANIVORE,
             19,
             20,
@@ -124,7 +124,7 @@ public class HardwareConstants {
             double hoodLowerLimitRots
     ){}
 
-    public static HoodConstants HOOD = new HoodConstants(
+    public static final HoodConstants HOOD = new HoodConstants(
             CANBus.RIO,
             22,
             102,
@@ -139,7 +139,7 @@ public class HardwareConstants {
             double gearing
     ) {}
 
-    public static ShooterConstants SHOOTER = new ShooterConstants(
+    public static final ShooterConstants SHOOTER = new ShooterConstants(
             CANBus.RIO,
             23,
             24,

@@ -27,8 +27,8 @@ import frc.robot.subsystems.feeder.Feeder;
 import frc.robot.subsystems.intake.roller.IntakeRoller;
 import frc.robot.subsystems.intake.slide.IntakeSlide;
 import frc.robot.subsystems.spindexer.Spindexer;
-import frc.robot.subsystems.superstructure.Superstructure;
 import frc.robot.subsystems.superstructure.ShotCalculator;
+import frc.robot.subsystems.superstructure.Superstructure;
 import frc.robot.subsystems.superstructure.hood.Hood;
 import frc.robot.subsystems.superstructure.shooter.Shooter;
 import frc.robot.subsystems.superstructure.turret.Turret;
@@ -93,7 +93,7 @@ public class Robot extends LoggedRobot {
     );
 
     public final IntakeSlide intakeSlide = new IntakeSlide(
-            Constants.RobotMode.DISABLED,
+            Constants.CURRENT_MODE,
             HardwareConstants.INTAKE_SLIDE
     );
 

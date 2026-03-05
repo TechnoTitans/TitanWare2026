@@ -110,22 +110,21 @@ public class HoodIOSim implements HoodIO {
     @Override
     public void config() {
         motorConfig.Slot0 = new Slot0Configs()
-                .withKP(50);
+                .withKP(30);
         motorConfig.CurrentLimits.StatorCurrentLimit = 60;
         motorConfig.CurrentLimits.StatorCurrentLimitEnable = true;
         motorConfig.CurrentLimits.SupplyCurrentLimit = 50;
         motorConfig.CurrentLimits.SupplyCurrentLowerLimit = 40;
         motorConfig.CurrentLimits.SupplyCurrentLowerTime = 1;
         motorConfig.CurrentLimits.SupplyCurrentLimitEnable = true;
+        motorConfig.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
+        motorConfig.MotorOutput.NeutralMode = NeutralModeValue.Brake;
         motorConfig.Feedback.FeedbackSensorSource = FeedbackSensorSourceValue.RotorSensor;
         motorConfig.Feedback.SensorToMechanismRatio = constants.hoodGearing();
-        motorConfig.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
-        motorConfig.MotorOutput.NeutralMode = NeutralModeValue.Brake;
         motorConfig.SoftwareLimitSwitch.ForwardSoftLimitThreshold = constants.hoodUpperLimitRots();
         motorConfig.SoftwareLimitSwitch.ForwardSoftLimitEnable = true;
         motorConfig.SoftwareLimitSwitch.ReverseSoftLimitThreshold = constants.hoodLowerLimitRots();
         motorConfig.SoftwareLimitSwitch.ReverseSoftLimitEnable = true;
-        //TODO: Add the new try until ok
         hoodMotor.getConfigurator().apply(motorConfig);
 
         BaseStatusSignal.setUpdateFrequencyForAll(

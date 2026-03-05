@@ -8,8 +8,6 @@ import com.ctre.phoenix6.configs.Slot1Configs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.MotionMagicExpoVoltage;
 import com.ctre.phoenix6.controls.PositionVoltage;
-import com.ctre.phoenix6.controls.TorqueCurrentFOC;
-import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.CANcoder;
 import com.ctre.phoenix6.hardware.ParentDevice;
 import com.ctre.phoenix6.hardware.TalonFX;
@@ -57,8 +55,6 @@ public class TurretIOSim implements TurretIO {
 
     private final MotionMagicExpoVoltage motionMagicExpoVoltage;
     private final PositionVoltage positionVoltage;
-    private final VoltageOut voltageOut;
-    private final TorqueCurrentFOC torqueCurrentFOC;
 
     public TurretIOSim(final HardwareConstants.TurretConstants constants) {
         this.deltaTime = new DeltaTime(true);
@@ -97,8 +93,6 @@ public class TurretIOSim implements TurretIO {
 
         this.motionMagicExpoVoltage = new MotionMagicExpoVoltage(0);
         this.positionVoltage = new PositionVoltage(0);
-        this.torqueCurrentFOC = new TorqueCurrentFOC(0);
-        this.voltageOut = new VoltageOut(0);
 
         RefreshAll.add(
                 constants.CANBus(),
@@ -146,10 +140,7 @@ public class TurretIOSim implements TurretIO {
                 .withKS(0.1)
                 .withKP(36)
                 .withKD(9.5);
-        //TODO: Put some values
         motorConfig.MotionMagic.MotionMagicCruiseVelocity = 0;
-        motorConfig.MotionMagic.MotionMagicExpo_kV = 0;
-        motorConfig.MotionMagic.MotionMagicExpo_kA = 0;
         motorConfig.CurrentLimits.StatorCurrentLimit = 70;
         motorConfig.CurrentLimits.StatorCurrentLimitEnable = true;
         motorConfig.CurrentLimits.SupplyCurrentLimit = 60;
@@ -225,16 +216,6 @@ public class TurretIOSim implements TurretIO {
     @Override
     public void toTurretPosition(final double positionRots) {
         turretMotor.setControl(motionMagicExpoVoltage.withPosition(positionRots).withSlot(1));
-    }
-
-    @Override
-    public void toTurretVoltage(final double volts) {
-        turretMotor.setControl(voltageOut.withOutput(volts));
-    }
-
-    @Override
-    public void toTurretTorqueCurrent(final double torqueCurrent) {
-        turretMotor.setControl(torqueCurrentFOC.withOutput(torqueCurrent));
     }
 
     @Override

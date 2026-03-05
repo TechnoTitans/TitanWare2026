@@ -11,7 +11,6 @@ import org.littletonrobotics.junction.Logger;
 import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
 
-//TODO: Fix with new cad models and positions
 @SuppressWarnings("ClassCanBeRecord")
 public class ComponentsSolver {
     private final Supplier<Rotation2d> turretRotationSupplier;
@@ -48,7 +47,6 @@ public class ComponentsSolver {
     }
 
     private Pose3d[] getSuperstructurePoses() {
-        //TODO: Turret zero is different now
         final Pose3d turretPose = new Pose3d(
                 PoseConstants.Turret.ORIGIN,
                 new Rotation3d(turretRotationSupplier.get()).plus(PoseConstants.Turret.TURRET_ZERO_OFFSET)
@@ -83,6 +81,7 @@ public class ComponentsSolver {
         return new Pose3d[]{intakePose, hopperPose};
     }
 
+    //TODO: Fix
     private Pose3d[] getClimbPoses() {
         final double extensionMeters = climbExtensionMetersSupplier.getAsDouble();
 

@@ -98,9 +98,9 @@ public class FeederIOSim implements FeederIO {
         rollerConfiguration.Slot0 = new Slot0Configs()
                 .withKS(0.01)
                 .withKP(3.5);
-        rollerConfiguration.CurrentLimits.StatorCurrentLimit = 50;
+        rollerConfiguration.CurrentLimits.StatorCurrentLimit = 80;
         rollerConfiguration.CurrentLimits.StatorCurrentLimitEnable = true;
-        rollerConfiguration.CurrentLimits.SupplyCurrentLimit = 40;
+        rollerConfiguration.CurrentLimits.SupplyCurrentLimit = 70;
         rollerConfiguration.CurrentLimits.SupplyCurrentLowerLimit = 40;
         rollerConfiguration.CurrentLimits.SupplyCurrentLowerTime = 1;
         rollerConfiguration.CurrentLimits.SupplyCurrentLimitEnable = true;

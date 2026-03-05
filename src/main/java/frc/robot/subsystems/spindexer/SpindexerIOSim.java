@@ -98,9 +98,11 @@ public class SpindexerIOSim implements SpindexerIO {
         wheelConfiguration.Slot0 = new Slot0Configs()
                 .withKS(0.01)
                 .withKP(5);
-        wheelConfiguration.CurrentLimits.StatorCurrentLimit = 60;
+        wheelConfiguration.TorqueCurrent.PeakForwardTorqueCurrent = 80;
+        wheelConfiguration.TorqueCurrent.PeakReverseTorqueCurrent = -80;
+        wheelConfiguration.CurrentLimits.StatorCurrentLimit = 80;
         wheelConfiguration.CurrentLimits.StatorCurrentLimitEnable = true;
-        wheelConfiguration.CurrentLimits.SupplyCurrentLimit = 50;
+        wheelConfiguration.CurrentLimits.SupplyCurrentLimit = 70;
         wheelConfiguration.CurrentLimits.SupplyCurrentLowerLimit = 40;
         wheelConfiguration.CurrentLimits.SupplyCurrentLowerTime = 1;
         wheelConfiguration.CurrentLimits.SupplyCurrentLimitEnable = true;
@@ -138,7 +140,7 @@ public class SpindexerIOSim implements SpindexerIO {
         inputs.wheelVelocityRotsPerSec = wheelVelocity.getValueAsDouble();
         inputs.wheelVoltage = wheelVoltage.getValueAsDouble();
         inputs.wheelTorqueCurrentAmps = wheelTorqueCurrent.getValueAsDouble();
-        inputs.wheelTemperatureCelsius = wheelTemperature.getValueAsDouble();
+        inputs.wheelTempCelsius = wheelTemperature.getValueAsDouble();
     }
 
     @Override

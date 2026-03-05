@@ -32,15 +32,13 @@ public class IntakeSlide extends SubsystemBase {
 
     private boolean isHomed = false;
 
-    public final Trigger atSlideSetpoint = new Trigger(this::atSlidePositionSetpoint);
+    public final Trigger atSlideSetpoint = new Trigger(this::atSetpoint);
 //            .onTrue(Commands.runOnce(() -> controlMode = ControlMode.SOFT))
 //            .onFalse(Commands.runOnce(() -> {
 //                if (desiredGoal != currentGoal) {
 //                    controlMode = ControlMode.HARD;
 //                }
 //            }));
-    public final Trigger atSlideLowerLimit = new Trigger(this::atSlideLowerLimit);
-    public final Trigger atSlideUpperLimit = new Trigger(this::atSlideUpperLimit);
     private final Trigger isAboveHomingCurrent = new Trigger(
             () -> Math.abs(inputs.masterTorqueCurrentAmps) >= ZeroingCurrentThresholdAmps
             && Math.abs(inputs.followerTorqueCurrentAmps) >= ZeroingCurrentThresholdAmps
@@ -52,14 +50,10 @@ public class IntakeSlide extends SubsystemBase {
         INTAKE(5),
         SHOOTING(3.8);
 
-        private final double slideGoalRotations;
+        private final double positionSetpointRots;
 
-        Goal(final double slideGoalRotations) {
-            this.slideGoalRotations = slideGoalRotations;
-        }
-
-        public double getSlideGoalRotations() {
-            return slideGoalRotations;
+        Goal(final double positionSetpointRots) {
+            this.positionSetpointRots = positionSetpointRots;
         }
     }
 
@@ -71,9 +65,8 @@ public class IntakeSlide extends SubsystemBase {
     public IntakeSlide(final Constants.RobotMode mode, final HardwareConstants.IntakeSlideConstants constants) {
         this.constants = constants;
 
-        //TODO: Change back to diff version
         this.intakeSlideIO = switch (mode) {
-            case REAL -> new IntakeSlideIORealNoDiff(constants);
+            case REAL -> new IntakeSlideIOReal(constants);
             case SIM -> new IntakeSlideIOSim(constants);
             case REPLAY, DISABLED -> new IntakeSlideIO() {};
         };
@@ -90,12 +83,12 @@ public class IntakeSlide extends SubsystemBase {
 
         if (desiredGoal != currentGoal) {
             switch (controlMode) {
-                case SOFT -> intakeSlideIO.holdSlidePosition(desiredGoal.getSlideGoalRotations());
+                case SOFT -> intakeSlideIO.holdSlidePosition(desiredGoal.positionSetpointRots);
                 case HARD -> {
                     if (desiredGoal == Goal.SHOOTING) {
-                        intakeSlideIO.toSlidePositionUnprofiled(desiredGoal.getSlideGoalRotations(), -0.01);
+                        intakeSlideIO.toSlidePositionUnprofiled(desiredGoal.positionSetpointRots, -0.01);
                     } else {
-                        intakeSlideIO.toSlidePosition(desiredGoal.getSlideGoalRotations());
+                        intakeSlideIO.toSlidePosition(desiredGoal.positionSetpointRots);
                     }
                 }
             }
@@ -104,14 +97,14 @@ public class IntakeSlide extends SubsystemBase {
 
         Logger.recordOutput(LogKey + "/CurrentGoal", currentGoal.toString());
         Logger.recordOutput(LogKey + "/DesiredGoal", desiredGoal.toString());
-        Logger.recordOutput(LogKey + "/DesiredGoal/SlidePositionRots", desiredGoal.getSlideGoalRotations());
+        Logger.recordOutput(LogKey + "/DesiredGoal/PositionSetpointRots", desiredGoal.positionSetpointRots);
 
         Logger.recordOutput(LogKey + "/ControlMode", controlMode);
         Logger.recordOutput(LogKey + "/IsHomed", isHomed);
 
-        Logger.recordOutput(LogKey + "/Triggers/AtPositionSetpoint", atSlidePositionSetpoint());
-        Logger.recordOutput(LogKey + "/Triggers/AtSlideLowerLimit", atSlideLowerLimit());
-        Logger.recordOutput(LogKey + "/Triggers/AtSlideUpperLimit", atSlideUpperLimit());
+        Logger.recordOutput(LogKey + "/Triggers/AtPositionSetpoint", atSetpoint());
+        Logger.recordOutput(LogKey + "/Triggers/AtSlideLowerLimit", atLowerLimit());
+        Logger.recordOutput(LogKey + "/Triggers/AtSlideUpperLimit", atUpperLimit());
         Logger.recordOutput(LogKey + "/Triggers/IsAboveHomingCurrent", isAboveHomingCurrent);
 
         Logger.recordOutput(
@@ -131,10 +124,6 @@ public class IntakeSlide extends SubsystemBase {
         );
     }
 
-    public boolean isHomed() {
-        return isHomed;
-    }
-
     public Command toGoal(final Goal goal) {
         return runEnd(
                 () -> setDesiredGoal(goal),
@@ -148,27 +137,31 @@ public class IntakeSlide extends SubsystemBase {
         ).withName("ToGoal: " + goal);
     }
 
-    private void setDesiredGoal(final Goal goal) {
-        this.desiredGoal = goal;
-        Logger.recordOutput(LogKey + "/CurrentGoal", currentGoal.toString());
-        Logger.recordOutput(LogKey + "/DesiredGoal", desiredGoal.toString());
+    public boolean isHomed() {
+        return isHomed;
     }
 
     public Rotation2d getIntakeSlidePositionRots() {
         return Rotation2d.fromRotations(inputs.averagePositionRots);
     }
 
-    private boolean atSlidePositionSetpoint() {
+    private void setDesiredGoal(final Goal goal) {
+        desiredGoal = goal;
+        Logger.recordOutput(LogKey + "/CurrentGoal", currentGoal.toString());
+        Logger.recordOutput(LogKey + "/DesiredGoal", desiredGoal.toString());
+    }
+
+    private boolean atSetpoint() {
         return currentGoal == desiredGoal
-                && MathUtil.isNear(desiredGoal.getSlideGoalRotations(), inputs.masterPositionRots, PositionToleranceRots)
+                && MathUtil.isNear(desiredGoal.positionSetpointRots, inputs.masterPositionRots, PositionToleranceRots)
                 && MathUtil.isNear(0, inputs.masterVelocityRotsPerSec, VelocityToleranceRotsPerSec);
     }
 
-    private boolean atSlideLowerLimit() {
+    private boolean atLowerLimit() {
         return inputs.masterPositionRots <= constants.lowerLimitRots();
     }
 
-    private boolean atSlideUpperLimit() {
+    private boolean atUpperLimit() {
         return inputs.masterPositionRots >= constants.upperLimitRots();
     }
 }

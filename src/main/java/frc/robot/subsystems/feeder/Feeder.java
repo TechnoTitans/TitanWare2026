@@ -23,14 +23,10 @@ public class Feeder extends SubsystemBase {
         STOP(0),
         FEED(32);
 
-        private final double rollerVelocitySetpoint;
+        private final double velocitySetpointRotsPerSec;
 
-        Goal(final double rollerVelocitySetpoint) {
-            this.rollerVelocitySetpoint = rollerVelocitySetpoint;
-        }
-
-        public double getRollerVelocitySetpoint() {
-            return rollerVelocitySetpoint;
+        Goal(final double velocitySetpointRotsPerSec) {
+            this.velocitySetpointRotsPerSec = velocitySetpointRotsPerSec;
         }
     }
 
@@ -44,7 +40,7 @@ public class Feeder extends SubsystemBase {
         this.inputs = new FeederIOInputsAutoLogged();
 
         feederIO.config();
-        feederIO.toRollerVelocity(desiredGoal.getRollerVelocitySetpoint());
+        feederIO.toRollerVelocity(desiredGoal.velocitySetpointRotsPerSec);
     }
 
     @Override
@@ -55,14 +51,14 @@ public class Feeder extends SubsystemBase {
         Logger.processInputs(LogKey, inputs);
 
         if (desiredGoal != currentGoal) {
-            feederIO.toRollerVelocity(desiredGoal.getRollerVelocitySetpoint());
+            feederIO.toRollerVelocity(desiredGoal.velocitySetpointRotsPerSec);
             this.currentGoal = desiredGoal;
         }
 
         Logger.recordOutput(LogKey + "/CurrentGoal", currentGoal.toString());
         Logger.recordOutput(LogKey + "/DesiredGoal", desiredGoal.toString());
-        Logger.recordOutput(LogKey + "/DesiredGoal/FeederVelocityRotsPerSec", desiredGoal.getRollerVelocitySetpoint());
-        Logger.recordOutput(LogKey + "/Triggers/AtVelocitySetpoint", atVelocitySetpoint());
+        Logger.recordOutput(LogKey + "/DesiredGoal/VelocitySetpointRotsPerSec", desiredGoal.velocitySetpointRotsPerSec);
+        Logger.recordOutput(LogKey + "/AtSetpoint", atSetpoint());
 
         Logger.recordOutput(
                 LogKey + "/PeriodicIOPeriodMs",
@@ -83,7 +79,8 @@ public class Feeder extends SubsystemBase {
         Logger.recordOutput(LogKey + "/DesiredGoal", goal.toString());
     }
 
-    private boolean atVelocitySetpoint() {
-        return MathUtil.isNear(desiredGoal.rollerVelocitySetpoint, inputs.rollerVelocityRotsPerSec, VelocityToleranceRotsPerSec);
+    private boolean atSetpoint() {
+        return currentGoal == desiredGoal
+                && MathUtil.isNear(desiredGoal.velocitySetpointRotsPerSec, inputs.rollerVelocityRotsPerSec, VelocityToleranceRotsPerSec);
     }
 }

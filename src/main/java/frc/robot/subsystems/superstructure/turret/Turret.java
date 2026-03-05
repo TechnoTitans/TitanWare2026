@@ -4,7 +4,6 @@ import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.Timer;
-import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.constants.Constants;
@@ -30,30 +29,24 @@ public class Turret extends SubsystemBase {
     private Goal desiredGoal = Goal.TRACKING;
     private Goal currentGoal = desiredGoal;
 
-    public final Trigger atSetpoint = new Trigger(this::atTurretPositionSetpoint);
-    public final Trigger atTurretLowerLimit = new Trigger(this::atTurretLowerLimit);
-    public final Trigger atTurretUpperLimit = new Trigger(this::atTurretUpperLimit);
+    public final Trigger atSetpoint = new Trigger(this::atSetpoint);
 
     public enum Goal {
         CLIMB(0, false),
         TRACKING(0, true);
 
-        private double turretPositionGoalRots;
+        private double positionSetpointRots;
         private final boolean isDynamic;
 
-        Goal(final double turretPositionGoalRots, final boolean isDynamic) {
-            this.turretPositionGoalRots = turretPositionGoalRots;
+        Goal(final double positionSetpointRots, final boolean isDynamic) {
+            this.positionSetpointRots = positionSetpointRots;
             this.isDynamic = isDynamic;
         }
 
         public void changeTurretPositionRots(final double desiredTurretPositionRots) {
             if (isDynamic) {
-                this.turretPositionGoalRots = desiredTurretPositionRots;
+                this.positionSetpointRots = desiredTurretPositionRots;
             }
-        }
-
-        public double getTurretPositionGoalRots() {
-            return turretPositionGoalRots;
         }
     }
 
@@ -96,35 +89,32 @@ public class Turret extends SubsystemBase {
         turretIO.updateInputs(inputs);
         Logger.processInputs(LogKey, inputs);
 
-        if (desiredGoal != currentGoal) {
-            turretIO.toTurretPosition(desiredGoal.getTurretPositionGoalRots());
-            this.currentGoal = desiredGoal;
-        } else if (desiredGoal.isDynamic) {
-            if (Math.abs(inputs.turretPositionRots - desiredGoal.getTurretPositionGoalRots()) > WRAP_THRESHOLD) {
-                turretIO.toTurretPosition(desiredGoal.getTurretPositionGoalRots());
+        if (desiredGoal.isDynamic) {
+            if (Math.abs(inputs.turretPositionRots - desiredGoal.positionSetpointRots) > WRAP_THRESHOLD) {
+                turretIO.toTurretPosition(desiredGoal.positionSetpointRots);
             } else {
-                turretIO.toTurretContinuousPosition(desiredGoal.getTurretPositionGoalRots(),
+                turretIO.toTurretContinuousPosition(desiredGoal.positionSetpointRots,
                         Units.radiansToRotations(-robotAngularVelocitySupplier.getAsDouble())
                 );
             }
         }
 
+        if (desiredGoal != currentGoal) {
+            turretIO.toTurretPosition(desiredGoal.positionSetpointRots);
+            currentGoal = desiredGoal;
+        }
+
         Logger.recordOutput(LogKey + "/CurrentGoal", currentGoal.toString());
         Logger.recordOutput(LogKey + "/DesiredGoal", desiredGoal.toString());
-        Logger.recordOutput(LogKey + "/DesiredGoal/TurretPositionRots", desiredGoal.getTurretPositionGoalRots());
+        Logger.recordOutput(LogKey + "/DesiredGoal/PositionSetpointRots", desiredGoal.positionSetpointRots);
 
-        Logger.recordOutput(LogKey + "/Triggers/AtPositionSetpoint", atTurretPositionSetpoint());
-        Logger.recordOutput(LogKey + "/Triggers/AtLowerLimit", atTurretLowerLimit());
-        Logger.recordOutput(LogKey + "/Triggers/AtUpperLimit", atTurretUpperLimit());
+        Logger.recordOutput(LogKey + "/Triggers/AtSetpoint", atSetpoint());
+        Logger.recordOutput(LogKey + "/Triggers/AtLowerLimit", atLowerLimit());
+        Logger.recordOutput(LogKey + "/Triggers/AtUpperLimit", atUpperLimit());
         Logger.recordOutput(
                 LogKey + "/PeriodicIOPeriodMs",
                 Units.secondsToMilliseconds(Timer.getFPGATimestamp() - turretPeriodicUpdateStart)
         );
-    }
-
-    public Command toTurretZero() {
-        return runOnce(() -> setGoal(Goal.CLIMB))
-                .withName("ToTurretZero");
     }
 
     public void setGoal(final Goal goal) {
@@ -141,17 +131,17 @@ public class Turret extends SubsystemBase {
         return Rotation2d.fromRotations(inputs.turretPositionRots);
     }
 
-    private boolean atTurretPositionSetpoint() {
+    private boolean atSetpoint() {
         return currentGoal == desiredGoal
-                && MathUtil.isNear(desiredGoal.getTurretPositionGoalRots(), inputs.turretPositionRots, PositionToleranceRots)
+                && MathUtil.isNear(desiredGoal.positionSetpointRots, inputs.turretPositionRots, PositionToleranceRots)
                 && MathUtil.isNear(robotAngularVelocitySupplier.getAsDouble(), inputs.turretVelocityRotsPerSec, VelocityToleranceRotsPerSec);
     }
 
-    private boolean atTurretLowerLimit() {
+    private boolean atLowerLimit() {
         return inputs.turretPositionRots <= constants.reverseLimitRots();
     }
 
-    private boolean atTurretUpperLimit() {
+    private boolean atUpperLimit() {
         return inputs.turretPositionRots >= constants.forwardLimitRots();
     }
 }
