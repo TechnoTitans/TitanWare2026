@@ -23,7 +23,6 @@ import frc.robot.constants.HardwareConstants;
 import frc.robot.utils.closeables.ToClose;
 import frc.robot.utils.control.DeltaTime;
 import frc.robot.utils.ctre.RefreshAll;
-import frc.robot.utils.sim.motors.TalonFXSim;
 
 public class IntakeRollerIOSim implements IntakeRollerIO {
     private static final double SIM_UPDATE_PERIOD_SEC = 0.005;
@@ -32,7 +31,6 @@ public class IntakeRollerIOSim implements IntakeRollerIO {
     private final HardwareConstants.IntakeRollerConstants constants;
 
     private final TalonFX rollerMotor;
-    private final TalonFXSim rollerMotorSim;
 
     private final VelocityTorqueCurrentFOC velocityTorqueCurrentFOC;
     private final TorqueCurrentFOC torqueCurrentFOC;
@@ -56,14 +54,6 @@ public class IntakeRollerIOSim implements IntakeRollerIO {
                         0.1 / (2 * Math.PI)
                 ),
                 DCMotor.getKrakenX44Foc(1)
-        );
-        this.rollerMotorSim = new TalonFXSim(
-                rollerMotor,
-                constants.rollerGearing(),
-                rollerMotorSim::update,
-                rollerMotorSim::setInputVoltage,
-                rollerMotorSim::getAngularPositionRad,
-                rollerMotorSim::getAngularVelocityRadPerSec
         );
 
         this.velocityTorqueCurrentFOC = new VelocityTorqueCurrentFOC(0);

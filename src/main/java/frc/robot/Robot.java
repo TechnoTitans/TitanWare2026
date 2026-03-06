@@ -166,6 +166,7 @@ public class Robot extends LoggedRobot {
     public final Autos autos = new Autos(
             swerve,
             superstructure,
+            feeder,
             photonVision,
             robotCommands
     );
@@ -321,7 +322,6 @@ public class Robot extends LoggedRobot {
         Logger.recordOutput("ScoringMode", scoringMode);
 
         componentsSolver.periodic();
-        robotCommands.periodic();
 
         //TODO: Just to find hood angle
         Logger.recordOutput("DistanceFromHub", swerve.getPose()

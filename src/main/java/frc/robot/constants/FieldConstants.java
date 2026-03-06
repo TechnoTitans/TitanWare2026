@@ -3,9 +3,9 @@ package frc.robot.constants;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
-import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Filesystem;
@@ -23,7 +23,7 @@ public class FieldConstants {
 
         public static final Pose2d HUB_CENTER_BLUE =
                 new Pose2d(new Translation2d(
-                        AprilTagLayoutType.OFFICIAL.getLayout().getTagPose(26).get().getX() + WIDTH / 2.0,
+                        AprilTagLayoutType.OFFICIAL.getLayout().getTagPose(26).orElse(Pose3d.kZero).getX() + WIDTH / 2.0,
                         FIELD_WIDTH_Y_METERS / 2.0), Rotation2d.kZero);
 
         public static final Pose2d HUB_CENTER_RED = HUB_CENTER_BLUE.relativeTo(RED_ORIGIN);

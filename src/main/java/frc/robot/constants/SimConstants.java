@@ -1,6 +1,5 @@
 package frc.robot.constants;
 
-import edu.wpi.first.math.geometry.*;
 import edu.wpi.first.math.util.Units;
 import frc.robot.subsystems.drive.constants.SwerveConstants;
 

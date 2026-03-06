@@ -15,7 +15,7 @@ import org.littletonrobotics.junction.Logger;
 
 public class IntakeSlide extends SubsystemBase {
     protected static final String LogKey = "Intake/Slide";
-    private static final double PositionToleranceRots = 0.01;
+    private static final double PositionToleranceRots = 0.1;
     private static final double VelocityToleranceRotsPerSec = 0.02;
     private static final double ZeroingCurrentThresholdAmps = 30;
 
@@ -32,13 +32,13 @@ public class IntakeSlide extends SubsystemBase {
 
     private boolean isHomed = false;
 
-    public final Trigger atSlideSetpoint = new Trigger(this::atSetpoint);
-//            .onTrue(Commands.runOnce(() -> controlMode = ControlMode.SOFT))
-//            .onFalse(Commands.runOnce(() -> {
-//                if (desiredGoal != currentGoal) {
-//                    controlMode = ControlMode.HARD;
-//                }
-//            }));
+    public final Trigger atSlideSetpoint = new Trigger(this::atSetpoint)
+            .onTrue(Commands.runOnce(() -> controlMode = ControlMode.SOFT))
+            .onFalse(Commands.runOnce(() -> {
+                if (desiredGoal != currentGoal) {
+                    controlMode = ControlMode.HARD;
+                }
+            }));
     private final Trigger isAboveHomingCurrent = new Trigger(
             () -> Math.abs(inputs.masterTorqueCurrentAmps) >= ZeroingCurrentThresholdAmps
             && Math.abs(inputs.followerTorqueCurrentAmps) >= ZeroingCurrentThresholdAmps
@@ -128,13 +128,13 @@ public class IntakeSlide extends SubsystemBase {
         return runEnd(
                 () -> setDesiredGoal(goal),
                 () -> setDesiredGoal(Goal.STOW)
-        ).withName("ToGoal: " + goal);
+        ).withName("ToGoal: " + goal.toString());
     }
 
     public Command setGoal(final Goal goal) {
         return runOnce(
                 () -> setDesiredGoal(goal)
-        ).withName("ToGoal: " + goal);
+        ).withName("ToGoal: " + goal.toString());
     }
 
     public boolean isHomed() {

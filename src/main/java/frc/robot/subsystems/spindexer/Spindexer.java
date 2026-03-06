@@ -17,11 +17,12 @@ public class Spindexer extends SubsystemBase {
     private final SpindexerIO spindexerIO;
     private final SpindexerIOInputsAutoLogged inputs;
 
-    private Goal desiredGoal = Goal.STOP;
+    private Goal desiredGoal = Goal.AGITATE;
     private Goal currentGoal = desiredGoal;
 
     public enum Goal {
         STOP(0),
+        AGITATE(10),
         FEED(50);
 
         private final double velocitySetpointRotsPerSec;
@@ -71,7 +72,7 @@ public class Spindexer extends SubsystemBase {
     public Command toGoal(final Goal goal) {
         return runEnd(
                 () -> setDesiredGoal(goal),
-                () -> setDesiredGoal(Goal.STOP)
+                () -> setDesiredGoal(Goal.AGITATE)
         ).withName("ToGoal: " + goal.toString());
     }
 

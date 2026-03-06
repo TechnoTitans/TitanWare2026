@@ -70,7 +70,7 @@ public class Feeder extends SubsystemBase {
         return runEnd(
                 () -> setDesiredGoal(goal),
                 () -> setDesiredGoal(Goal.STOP)
-        ).withName("ToGoal: " + goal);
+        ).withName("ToGoal: " + goal.toString());
     }
 
     private void setDesiredGoal(final Goal goal) {

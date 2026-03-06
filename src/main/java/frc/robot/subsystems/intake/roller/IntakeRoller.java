@@ -11,7 +11,7 @@ import org.littletonrobotics.junction.Logger;
 
 public class IntakeRoller extends SubsystemBase {
     protected static final String LogKey = "Intake/Roller";
-    private static final double VelocityToleranceRotsPerSec = 0.02;
+    private static final double VelocityToleranceRotsPerSec = 0.2;
 
     private final IntakeRollerIO intakeRollerIO;
     private final IntakeRollerIOInputsAutoLogged inputs;

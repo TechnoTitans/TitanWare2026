@@ -3,7 +3,7 @@ package frc.robot;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
-import edu.wpi.first.wpilibj2.command.button.Trigger;
+import frc.robot.constants.FieldConstants;
 import frc.robot.subsystems.climb.Climb;
 import frc.robot.subsystems.drive.Swerve;
 import frc.robot.subsystems.feeder.Feeder;
@@ -11,9 +11,9 @@ import frc.robot.subsystems.intake.roller.IntakeRoller;
 import frc.robot.subsystems.intake.slide.IntakeSlide;
 import frc.robot.subsystems.spindexer.Spindexer;
 import frc.robot.subsystems.superstructure.Superstructure;
+import frc.robot.utils.commands.LoggedTrigger;
 import frc.robot.utils.subsystems.VirtualSubsystem;
 import frc.robot.utils.teleop.SwerveSpeed;
-import org.littletonrobotics.junction.Logger;
 
 public class RobotCommands extends VirtualSubsystem {
     protected static final String LogKey = "RobotCommands";
@@ -27,7 +27,7 @@ public class RobotCommands extends VirtualSubsystem {
     private final Feeder feeder;
     private final Climb climb;
 
-    private final Trigger ableToShoot;
+    private final LoggedTrigger ableToShoot;
 
     public enum ScoringMode {
         Stationary,
@@ -51,20 +51,19 @@ public class RobotCommands extends VirtualSubsystem {
         this.feeder = feeder;
         this.climb = climb;
 
-        this.ableToShoot = new Trigger(() -> {
-            final ChassisSpeeds swerveChassisSpeed = swerve.getRobotRelativeSpeeds();
+        final LoggedTrigger.Group group = LoggedTrigger.Group.from(LogKey);
 
-            return Math.hypot(
-                    swerveChassisSpeed.vxMetersPerSecond,
-                    swerveChassisSpeed.vyMetersPerSecond
-            ) < AllowableSpeedToShootMetersPerSec;
-        });
-    }
+        this.ableToShoot = group.t(
+                "AbleToShoot",
+                () -> {
+                    final ChassisSpeeds swerveChassisSpeed = swerve.getRobotRelativeSpeeds();
 
-    //TODO: Make logged trigger
-    @Override
-    public void periodic() {
-        Logger.recordOutput(LogKey + "/AbleToShoot", ableToShoot);
+                    return Math.hypot(
+                            swerveChassisSpeed.vxMetersPerSecond,
+                            swerveChassisSpeed.vyMetersPerSecond
+                    ) < AllowableSpeedToShootMetersPerSec;
+                }
+        );
     }
 
     public Command deployIntake() {
@@ -123,13 +122,14 @@ public class RobotCommands extends VirtualSubsystem {
 
     public Command readyClimb() {
         return Commands.parallel(
-//                swerve.runToPose(FieldConstants::getClimbTarget),
+                swerve.runToPose(FieldConstants::getClimbTarget),
                 superstructure.setGoal(Superstructure.Goal.CLIMB),
-//                Commands.sequence(
-////                        stowIntake(),
-//                        Commands.waitUntil(intakeSlide.atSlideSetpoint),
+                Commands.sequence(
+                        stowIntake(),
+                        Commands.waitUntil(intakeSlide.atSlideSetpoint),
                         climb.setGoal(Climb.Goal.EXTEND)
-//                )
+                ),
+                spindexer.setGoal(Spindexer.Goal.STOP)
         ).withName("ReadyClimb");
     }
 
@@ -143,7 +143,8 @@ public class RobotCommands extends VirtualSubsystem {
     public Command unclimb() {
         return Commands.parallel(
                 superstructure.setGoal(Superstructure.Goal.TRACKING),
-                climb.setGoal(Climb.Goal.STOW)
+                climb.setGoal(Climb.Goal.STOW),
+                spindexer.setGoal(Spindexer.Goal.AGITATE)
         ).withName("Unclimb");
     }
 }
