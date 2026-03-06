@@ -12,10 +12,9 @@ import frc.robot.subsystems.intake.slide.IntakeSlide;
 import frc.robot.subsystems.spindexer.Spindexer;
 import frc.robot.subsystems.superstructure.Superstructure;
 import frc.robot.utils.commands.LoggedTrigger;
-import frc.robot.utils.subsystems.VirtualSubsystem;
 import frc.robot.utils.teleop.SwerveSpeed;
 
-public class RobotCommands extends VirtualSubsystem {
+public class RobotCommands {
     protected static final String LogKey = "RobotCommands";
     protected static final double AllowableSpeedToShootMetersPerSec = 0.1;
 
@@ -112,7 +111,7 @@ public class RobotCommands extends VirtualSubsystem {
                                 )
                         )
                 ),
-                intakeSlide.setGoal(IntakeSlide.Goal.SHOOTING),
+                intakeSlide.toGoal(IntakeSlide.Goal.SHOOTING),
                 spindexer.toGoal(Spindexer.Goal.FEED),
                 swerve.runWheelXCommand()
         )

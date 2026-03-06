@@ -5,8 +5,7 @@ import com.ctre.phoenix6.configs.Slot0Configs;
 import com.ctre.phoenix6.configs.Slot1Configs;
 import com.ctre.phoenix6.configs.Slot2Configs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
-import com.ctre.phoenix6.controls.PositionVoltage;
-import com.ctre.phoenix6.controls.TorqueCurrentFOC;
+import com.ctre.phoenix6.controls.*;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.mechanisms.DifferentialMechanism;
 import com.ctre.phoenix6.mechanisms.DifferentialMotorConstants;
@@ -52,6 +51,7 @@ public class IntakeSlideIOSim implements IntakeSlideIO {
     private final StatusSignal<AngularVelocity> averageVelocity;
     private final StatusSignal<Angle> differentialPosition;
 
+    private final MotionMagicVoltage averageMotionMagicVoltage;
     private final PositionVoltage averagePositionVoltage;
     private final PositionVoltage differentialPositionVoltage;
     private final TorqueCurrentFOC torqueCurrentFOC;
@@ -59,6 +59,7 @@ public class IntakeSlideIOSim implements IntakeSlideIO {
     public IntakeSlideIOSim(final HardwareConstants.IntakeSlideConstants constants) {
         this.deltaTime = new DeltaTime(true);
 
+        this.averageMotionMagicVoltage = new MotionMagicVoltage(0).withSlot(0);
         this.averagePositionVoltage = new PositionVoltage(0).withSlot(0);
         this.differentialPositionVoltage = new PositionVoltage(0).withSlot(1);
         this.torqueCurrentFOC = new TorqueCurrentFOC(0);
@@ -66,15 +67,17 @@ public class IntakeSlideIOSim implements IntakeSlideIO {
         final TalonFXConfiguration masterMotorConfig = new TalonFXConfiguration();
         // Average Slot
         masterMotorConfig.Slot0 = new Slot0Configs()
-                .withKV(2)
-                .withKP(9)
-                .withKD(3);
+                .withKV(6)
+                .withKP(10)
+                .withKD(6);
         // Diff Slot
         masterMotorConfig.Slot1 = new Slot1Configs()
-                .withKP(2);
+                .withKP(100)
+                .withKD(25);
         // Hold Slot
         masterMotorConfig.Slot2 = new Slot2Configs()
                 .withKP(0.1);
+        masterMotorConfig.MotionMagic.MotionMagicCruiseVelocity = 0;
         masterMotorConfig.TorqueCurrent.PeakForwardTorqueCurrent = 60;
         masterMotorConfig.TorqueCurrent.PeakReverseTorqueCurrent = -60;
         masterMotorConfig.CurrentLimits.StatorCurrentLimit = 60;
@@ -103,7 +106,7 @@ public class IntakeSlideIOSim implements IntakeSlideIO {
                         .withAlignment(MotorAlignmentValue.Opposed)
                         //TODO: Ratio might be wrong
                         .withSensorToDifferentialRatio(1)
-                        .withClosedLoopRate(100)
+                        .withClosedLoopRate(200)
                         .withLeaderInitialConfigs(masterMotorConfig)
                         .withFollowerInitialConfigs(followerConfig)
                         .withFollowerUsesCommonLeaderConfigs(true);
@@ -225,7 +228,7 @@ public class IntakeSlideIOSim implements IntakeSlideIO {
     @Override
     public void toSlidePosition(double positionRots) {
         diffMechanism.setControl(
-                averagePositionVoltage.withPosition(positionRots).withSlot(0),
+                averageMotionMagicVoltage.withPosition(positionRots).withSlot(0),
                 differentialPositionVoltage.withSlot(1)
         );
     }
@@ -233,14 +236,16 @@ public class IntakeSlideIOSim implements IntakeSlideIO {
     @Override
     public void holdSlidePosition(final double positionRots) {
         diffMechanism.setControl(
-                averagePositionVoltage.withPosition(positionRots).withSlot(2),
+                averageMotionMagicVoltage.withPosition(positionRots).withSlot(2),
                 differentialPositionVoltage.withSlot(1)
         );
     }
 
     @Override
     public void toSlidePositionUnprofiled(double positionRots, double velocityRotsPerSec) {
-        diffMechanism.setControl(averagePositionVoltage.withPosition(positionRots).withVelocity(velocityRotsPerSec),
+        diffMechanism.setControl(
+                averagePositionVoltage
+                        .withPosition(positionRots).withVelocity(velocityRotsPerSec).withSlot(0),
                 differentialPositionVoltage.withPosition(0).withSlot(1)
         );
     }

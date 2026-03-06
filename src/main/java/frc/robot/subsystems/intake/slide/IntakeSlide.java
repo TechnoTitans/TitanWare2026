@@ -3,6 +3,7 @@ package frc.robot.subsystems.intake.slide;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.filter.Debouncer;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -32,13 +33,13 @@ public class IntakeSlide extends SubsystemBase {
 
     private boolean isHomed = false;
 
-    public final Trigger atSlideSetpoint = new Trigger(this::atSetpoint)
-            .onTrue(Commands.runOnce(() -> controlMode = ControlMode.SOFT))
-            .onFalse(Commands.runOnce(() -> {
-                if (desiredGoal != currentGoal) {
-                    controlMode = ControlMode.HARD;
-                }
-            }));
+    public final Trigger atSlideSetpoint = new Trigger(this::atSetpoint);
+//            .onTrue(Commands.runOnce(() -> controlMode = ControlMode.SOFT))
+//            .onFalse(Commands.runOnce(() -> {
+//                if (desiredGoal != currentGoal) {
+//                    controlMode = ControlMode.HARD;
+//                }
+//            }));
     private final Trigger isAboveHomingCurrent = new Trigger(
             () -> Math.abs(inputs.masterTorqueCurrentAmps) >= ZeroingCurrentThresholdAmps
             && Math.abs(inputs.followerTorqueCurrentAmps) >= ZeroingCurrentThresholdAmps
@@ -47,8 +48,8 @@ public class IntakeSlide extends SubsystemBase {
     public enum Goal {
         HOMING(0),
         STOW(0),
-        INTAKE(5),
-        SHOOTING(3.8);
+        INTAKE(3.8),
+        SHOOTING(0);
 
         private final double positionSetpointRots;
 
@@ -86,7 +87,10 @@ public class IntakeSlide extends SubsystemBase {
                 case SOFT -> intakeSlideIO.holdSlidePosition(desiredGoal.positionSetpointRots);
                 case HARD -> {
                     if (desiredGoal == Goal.SHOOTING) {
-                        intakeSlideIO.toSlidePositionUnprofiled(desiredGoal.positionSetpointRots, -0.01);
+                        intakeSlideIO.toSlidePositionUnprofiled(
+                                desiredGoal.positionSetpointRots,
+                                -0.1
+                        );
                     } else {
                         intakeSlideIO.toSlidePosition(desiredGoal.positionSetpointRots);
                     }
@@ -127,7 +131,7 @@ public class IntakeSlide extends SubsystemBase {
     public Command toGoal(final Goal goal) {
         return runEnd(
                 () -> setDesiredGoal(goal),
-                () -> setDesiredGoal(Goal.STOW)
+                () -> setDesiredGoal(Goal.INTAKE)
         ).withName("ToGoal: " + goal.toString());
     }
 
