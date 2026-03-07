@@ -53,30 +53,33 @@ public class IntakeSlideIOSim implements IntakeSlideIO {
 
     private final MotionMagicVoltage averageMotionMagicVoltage;
     private final PositionVoltage averagePositionVoltage;
+    private final PositionTorqueCurrentFOC averagePositionTorqueCurrentFOC;
     private final PositionVoltage differentialPositionVoltage;
-    private final TorqueCurrentFOC torqueCurrentFOC;
+    private final PositionTorqueCurrentFOC differentialPositionTorqueCurrentFOC;
 
     public IntakeSlideIOSim(final HardwareConstants.IntakeSlideConstants constants) {
         this.deltaTime = new DeltaTime(true);
 
         this.averageMotionMagicVoltage = new MotionMagicVoltage(0).withSlot(0);
         this.averagePositionVoltage = new PositionVoltage(0).withSlot(0);
-        this.differentialPositionVoltage = new PositionVoltage(0).withSlot(1);
-        this.torqueCurrentFOC = new TorqueCurrentFOC(0);
+        this.averagePositionTorqueCurrentFOC = new PositionTorqueCurrentFOC(0).withSlot(1);
+        this.differentialPositionVoltage = new PositionVoltage(0).withSlot(2);
+        this.differentialPositionTorqueCurrentFOC = new PositionTorqueCurrentFOC(0).withSlot(1);
 
         final TalonFXConfiguration masterMotorConfig = new TalonFXConfiguration();
         // Average Slot
         masterMotorConfig.Slot0 = new Slot0Configs()
-                .withKV(6)
-                .withKP(10)
-                .withKD(6);
-        // Diff Slot
+                .withKV(2)
+                .withKP(6)
+                .withKD(1);
+        // Hold Slot
         masterMotorConfig.Slot1 = new Slot1Configs()
+                .withKP(1)
+                .withKD(0.1);
+        // Differential Slot
+        masterMotorConfig.Slot2 = new Slot2Configs()
                 .withKP(100)
                 .withKD(25);
-        // Hold Slot
-        masterMotorConfig.Slot2 = new Slot2Configs()
-                .withKP(0.1);
         masterMotorConfig.MotionMagic.MotionMagicCruiseVelocity = 0;
         masterMotorConfig.TorqueCurrent.PeakForwardTorqueCurrent = 60;
         masterMotorConfig.TorqueCurrent.PeakReverseTorqueCurrent = -60;
@@ -229,15 +232,15 @@ public class IntakeSlideIOSim implements IntakeSlideIO {
     public void toSlidePosition(double positionRots) {
         diffMechanism.setControl(
                 averageMotionMagicVoltage.withPosition(positionRots).withSlot(0),
-                differentialPositionVoltage.withSlot(1)
+                differentialPositionVoltage.withPosition(0).withSlot(2)
         );
     }
 
     @Override
     public void holdSlidePosition(final double positionRots) {
         diffMechanism.setControl(
-                averageMotionMagicVoltage.withPosition(positionRots).withSlot(2),
-                differentialPositionVoltage.withSlot(1)
+                averagePositionTorqueCurrentFOC.withPosition(positionRots).withSlot(2),
+                differentialPositionTorqueCurrentFOC.withPosition(0).withSlot(1)
         );
     }
 
@@ -246,13 +249,8 @@ public class IntakeSlideIOSim implements IntakeSlideIO {
         diffMechanism.setControl(
                 averagePositionVoltage
                         .withPosition(positionRots).withVelocity(velocityRotsPerSec).withSlot(0),
-                differentialPositionVoltage.withPosition(0).withSlot(1)
+                differentialPositionVoltage.withPosition(0).withSlot(2)
         );
-    }
-
-    @Override
-    public void toSlideTorqueCurrent(final double torqueCurrentAmps) {
-        diffMechanism.setControl(torqueCurrentFOC.withOutput(torqueCurrentAmps), torqueCurrentFOC.withOutput(0));
     }
 
     @Override

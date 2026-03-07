@@ -33,7 +33,5 @@ public interface IntakeSlideIO {
 
     default void holdSlidePosition(final double positionRots) {}
 
-    default void toSlideTorqueCurrent(final double torqueCurrentAmps) {}
-
     default void zeroMotors() {}
 }

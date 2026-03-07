@@ -108,18 +108,8 @@ public class HoodIOReal implements HoodIO {
     }
 
     @Override
-    public void toHoodContinuousPosition(final double positionRots) {
-        hoodMotor.setControl(positionVoltage.withPosition(positionRots));
-    }
-
-    @Override
     public void toHoodPosition(final double positionRots) {
         hoodMotor.setControl(positionVoltage.withPosition(positionRots));
-    }
-
-    @Override
-    public void toHoodTorqueCurrent(final double torqueCurrent) {
-        hoodMotor.setControl(torqueCurrentFOC.withOutput(torqueCurrent));
     }
 
     @Override

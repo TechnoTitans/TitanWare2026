@@ -5,9 +5,7 @@ import com.ctre.phoenix6.configs.Slot0Configs;
 import com.ctre.phoenix6.configs.Slot1Configs;
 import com.ctre.phoenix6.configs.Slot2Configs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
-import com.ctre.phoenix6.controls.MotionMagicExpoVoltage;
-import com.ctre.phoenix6.controls.PositionVoltage;
-import com.ctre.phoenix6.controls.TorqueCurrentFOC;
+import com.ctre.phoenix6.controls.*;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.mechanisms.DifferentialMechanism;
 import com.ctre.phoenix6.mechanisms.DifferentialMotorConstants;
@@ -37,29 +35,33 @@ public class IntakeSlideIOReal implements IntakeSlideIO {
     private final StatusSignal<AngularVelocity> averageVelocity;
     private final StatusSignal<Angle> differentialPosition;
 
-    private final MotionMagicExpoVoltage averageMotionMagicExpoVoltage;
+    private final MotionMagicVoltage averageMotionMagicVoltage;
     private final PositionVoltage averagePositionVoltage;
+    private final PositionTorqueCurrentFOC averagePositionTorqueCurrentFOC;
     private final PositionVoltage differentialPositionVoltage;
-    private final TorqueCurrentFOC torqueCurrentFOC;
+    private final PositionTorqueCurrentFOC differentialPositionTorqueCurrentFOC;
 
     public IntakeSlideIOReal(final HardwareConstants.IntakeSlideConstants constants) {
-        this.averageMotionMagicExpoVoltage = new MotionMagicExpoVoltage(0).withSlot(0);
+        this.averageMotionMagicVoltage = new MotionMagicVoltage(0).withSlot(0);
         this.averagePositionVoltage = new PositionVoltage(0).withSlot(0);
-        this.differentialPositionVoltage = new PositionVoltage(0).withSlot(1);
-        this.torqueCurrentFOC = new TorqueCurrentFOC(0);
+        this.averagePositionTorqueCurrentFOC = new PositionTorqueCurrentFOC(0).withSlot(1);
+        this.differentialPositionVoltage = new PositionVoltage(0).withSlot(2);
+        this.differentialPositionTorqueCurrentFOC = new PositionTorqueCurrentFOC(0).withSlot(1);
 
         final TalonFXConfiguration masterMotorConfig = new TalonFXConfiguration();
         // Average Slot
         masterMotorConfig.Slot0 = new Slot0Configs()
-                .withKV(0.35)
-                .withKP(15)
-                .withKD(0);
-        // Diff Slot
-        masterMotorConfig.Slot1 = new Slot1Configs()
-                .withKP(0.5);
+                .withKV(2)
+                .withKP(6)
+                .withKD(1);
         // Hold Slot
+        masterMotorConfig.Slot1 = new Slot1Configs()
+                .withKP(1)
+                .withKD(0.1);
+        // Differential Slot
         masterMotorConfig.Slot2 = new Slot2Configs()
-                .withKP(0.1);
+                .withKP(100)
+                .withKD(25);
         masterMotorConfig.MotionMagic.MotionMagicCruiseVelocity = 0;
         masterMotorConfig.TorqueCurrent.PeakForwardTorqueCurrent = 60;
         masterMotorConfig.TorqueCurrent.PeakReverseTorqueCurrent = -60;
@@ -71,7 +73,7 @@ public class IntakeSlideIOReal implements IntakeSlideIO {
         masterMotorConfig.CurrentLimits.SupplyCurrentLimitEnable = true;
         masterMotorConfig.Feedback.RotorToSensorRatio = 1;
         masterMotorConfig.Feedback.SensorToMechanismRatio = constants.slideGearing();
-        masterMotorConfig.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
+        masterMotorConfig.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
         masterMotorConfig.MotorOutput.NeutralMode = NeutralModeValue.Brake;
         masterMotorConfig.SoftwareLimitSwitch.ForwardSoftLimitThreshold = constants.upperLimitRots();
         masterMotorConfig.SoftwareLimitSwitch.ForwardSoftLimitEnable = true;
@@ -155,25 +157,27 @@ public class IntakeSlideIOReal implements IntakeSlideIO {
 
     @Override
     public void toSlidePosition(double positionRots) {
-        diffMechanism.setControl(averageMotionMagicExpoVoltage.withPosition(positionRots).withSlot(0), differentialPositionVoltage
-                .withPosition(0));
-    }
-
-    @Override
-    public void toSlidePositionUnprofiled(double positionRots, double velocityRotsPerSec) {
-        diffMechanism.setControl(averagePositionVoltage.withPosition(positionRots).withVelocity(velocityRotsPerSec),
-                differentialPositionVoltage.withPosition(0).withSlot(1)
+        diffMechanism.setControl(
+                averageMotionMagicVoltage.withPosition(positionRots).withSlot(0),
+                differentialPositionVoltage.withPosition(0).withSlot(2)
         );
     }
 
     @Override
     public void holdSlidePosition(final double positionRots) {
-        diffMechanism.setControl(averagePositionVoltage.withPosition(positionRots).withSlot(2), differentialPositionVoltage);
+        diffMechanism.setControl(
+                averagePositionTorqueCurrentFOC.withPosition(positionRots).withSlot(2),
+                differentialPositionTorqueCurrentFOC.withPosition(0).withSlot(1)
+        );
     }
 
     @Override
-    public void toSlideTorqueCurrent(final double torqueCurrentAmps) {
-        diffMechanism.setControl(torqueCurrentFOC.withOutput(torqueCurrentAmps), torqueCurrentFOC.withOutput(0));
+    public void toSlidePositionUnprofiled(double positionRots, double velocityRotsPerSec) {
+        diffMechanism.setControl(
+                averagePositionVoltage
+                        .withPosition(positionRots).withVelocity(velocityRotsPerSec).withSlot(0),
+                differentialPositionVoltage.withPosition(0).withSlot(2)
+        );
     }
 
     @Override

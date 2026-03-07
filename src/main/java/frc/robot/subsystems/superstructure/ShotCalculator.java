@@ -19,6 +19,9 @@ import frc.robot.constants.PoseConstants;
 import java.util.function.Supplier;
 
 public class ShotCalculator {
+
+    public static final double TURRET_ZERO_OFFSET = 0.25;
+
     public enum Target {
         HUB,
         FERRYING
@@ -86,10 +89,8 @@ public class ShotCalculator {
             ShotCalculator.Target target
     ) {}
 
-    private static final double hoodDownLowerXBoundary = Units.inchesToMeters(154);
-    //TODO: Might split this into different things
     private static final double FerryXBoundary = Units.inchesToMeters(200);
-    private static final double DelayTimeSec = 0.005;
+    private static final double DelayTimeSec = 0.01;
     private static final Rotation2d wrapOffset = Rotation2d.fromRotations(0.75);
     //TODO: Try to see if this is worth it
 //    private static final LinearFilter turretFilter = LinearFilter.movingAverage(5);
@@ -139,12 +140,9 @@ public class ShotCalculator {
 
         final HoodShooterCalculation hoodShooterCalculation = shotDataMap.get(turretToTargetDistance);
 
-        final Rotation2d hoodRotation = calculationPose.getX() > hoodDownLowerXBoundary && calculationPose.getX() < FerryXBoundary
-                ? Rotation2d.kZero : hoodShooterCalculation.hoodRotation;
-
         return new ShotCalculation(
                 wrapTurret(desiredTurretAngle),
-                hoodRotation,
+                hoodShooterCalculation.hoodRotation,
                 hoodShooterCalculation.flywheelVelocity(),
                 target
         );
@@ -191,7 +189,7 @@ public class ShotCalculator {
                             - PoseConstants.Turret.ROBOT_TO_TURRET_TRANSFORM_2D.getY() * Math.sin(robotAngle);
 
         double tOF;
-        Pose2d lookaheadPose = turretPose;
+        Pose2d lookaheadPose;
         double lookAheadTurretToTargetDistance = turretToTargetDistance;
 
         for (int i = 0; i < 20; i++) {
@@ -213,20 +211,16 @@ public class ShotCalculator {
         );
 
         final HoodShooterCalculation hoodShooterCalculation = shotDataMap.get(turretToTargetDistance);
-
-        final Rotation2d hoodRotation = calculationPose.getX() > hoodDownLowerXBoundary && calculationPose.getX() < FerryXBoundary
-                ? Rotation2d.kZero : hoodShooterCalculation.hoodRotation;
-
         return new ShotCalculation(
                 wrapTurret(desiredTurretAngle),
-                hoodRotation,
+                hoodShooterCalculation.hoodRotation,
                 hoodShooterCalculation.flywheelVelocity(),
                 target
         );
     }
 
     private static Rotation2d wrapTurret(final Rotation2d desiredTurretRotation) {
-        if (desiredTurretRotation.getRotations() > 0.25) {
+        if (desiredTurretRotation.getRotations() > TURRET_ZERO_OFFSET) {
             return desiredTurretRotation.minus(wrapOffset);
         }
 

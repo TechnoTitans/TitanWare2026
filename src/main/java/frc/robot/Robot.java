@@ -362,38 +362,25 @@ public class Robot extends LoggedRobot {
     }
 
     public void configureStateTriggers() {
-        if (Constants.CURRENT_MODE == Constants.RobotMode.REAL) {
-            autonomousEnabled.onTrue(
-                    Commands.parallel(
-                            Commands.sequence(
-                                    intakeSlide.home(),
-                                    robotCommands.deployIntake()
-                            ),
-                            Commands.sequence(
-                                    hood.home(),
-                                    superstructure.setGoal(Superstructure.Goal.TRACKING)
-                            )
-                    )
-            );
+        autonomousEnabled.onTrue(
+               Commands.parallel(
+                       intakeRoller.setGoal(IntakeRoller.Goal.INTAKE),
+                       intakeSlide.setGoal(IntakeSlide.Goal.INTAKE),
+                       superstructure.setGoal(Superstructure.Goal.TRACKING)
+               )
+        );
 
-            teleopEnabled.onTrue(
-                    Commands.parallel(
-                            hood.home()
-                                    .onlyIf(() -> !hood.isHomed()),
-                            intakeSlide.home()
-                                    .onlyIf(() -> !intakeSlide.isHomed()),
-                            Commands.sequence(
-                                    Commands.sequence(
-                                            climb.setGoal(Climb.Goal.EXTEND),
-                                            Commands.waitUntil(() -> !swerve.getPose().equals(FieldConstants.getClimbTarget())),
-                                            climb.setGoal(Climb.Goal.STOW)
-                                    ).onlyIf(climb::isExtended),
-                                    Commands.waitUntil(climb.atSetpoint.and(intakeSlide::isHomed)),
-                                    robotCommands.deployIntake()
-                            )
-                    )
-            );
-        }
+        teleopEnabled.onTrue(
+                Commands.sequence(
+                        Commands.sequence(
+                                climb.setGoal(Climb.Goal.EXTEND),
+                                Commands.waitUntil(() -> !swerve.getPose().equals(FieldConstants.getClimbTarget())),
+                                climb.setGoal(Climb.Goal.STOW)
+                        ).onlyIf(climb::isExtended),
+                        Commands.waitUntil(climb.atSetpoint),
+                        robotCommands.deployIntake()
+                )
+        );
 
         firstShiftStartTrigger.onTrue(Commands.runOnce(shiftTimer::start));
 
@@ -417,6 +404,20 @@ public class Robot extends LoggedRobot {
 
     public void configureAutos() {
         autonomousEnabled.whileTrue(Commands.deferredProxy(() -> autoChooser.getSelected().cmd()));
+
+        autoChooser.addAutoOption(new AutoOption(
+                    "LeftCenterLineDepot",
+                    autos::leftCenterLineDepot,
+                    Constants.CompetitionType.COMPETITION
+                )
+        );
+
+        autoChooser.addAutoOption(new AutoOption(
+                        "RightCenterLineDepot",
+                        autos::rightCenterLineDepot,
+                        Constants.CompetitionType.COMPETITION
+                )
+        );
     }
 
     public void configureButtonBindings(final EventLoop teleopEventLoop) {
@@ -443,7 +444,6 @@ public class Robot extends LoggedRobot {
 
         coController.a(teleopEventLoop).onTrue(robotCommands.stowIntake());
 
-        //TODO: Change scoring mode so that stationary is used
         coController.rightTrigger(0.5, teleopEventLoop).whileTrue(
                 Commands.parallel(
                         Commands.runOnce(() -> scoringMode = RobotCommands.ScoringMode.Stationary),

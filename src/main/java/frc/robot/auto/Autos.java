@@ -21,7 +21,6 @@ public class Autos {
     private final Superstructure superstructure;
     private final Feeder feeder;
     private final AutoFactory autoFactory;
-    private final RobotCommands robotCommands;
 
     public Autos(
             final Swerve swerve,
@@ -78,7 +77,53 @@ public class Autos {
         return routine;
     }
 
-    public AutoRoutine RightCenterLineDepot() {
+
+    //TODO: Move modified shooting stuff to robot commands?
+    public AutoRoutine leftCenterLineDepot() {
+        final AutoRoutine routine = autoFactory.newRoutine("LeftCenterLineDepot");
+        final AutoTrajectory startToCenterLineAndBack = routine.trajectory("LeftStartToCenterLineAndBack");
+        final AutoTrajectory zoneLineToDepot = routine.trajectory("LeftZoneLineToDepot");
+        final AutoTrajectory depotToScoring = routine.trajectory("LeftDepotToScoring");
+
+        routine.active().onTrue(runStartingTrajectory(startToCenterLineAndBack));
+
+        startToCenterLineAndBack.atTimeBeforeEnd(0.3).onTrue(
+                superstructure.setGoal(Superstructure.Goal.SHOOTING)
+        );
+
+        startToCenterLineAndBack.done().onTrue(
+                Commands.sequence(
+                        Commands.parallel(
+                                swerve.runWheelXCommand(),
+                                feeder.toGoal(Feeder.Goal.FEED)
+                        ).withTimeout(7),
+                        zoneLineToDepot.cmd()
+                )
+        );
+
+        zoneLineToDepot.done().onTrue(
+                Commands.sequence(
+                        Commands.waitSeconds(3),
+                        depotToScoring.cmd()
+                )
+        );
+
+        depotToScoring.done().onTrue(
+                Commands.parallel(
+                        swerve.runWheelXCommand(),
+                        feeder.toGoal(Feeder.Goal.FEED)
+                ).withTimeout(7)
+        );
+
+        routine.active().whileTrue(
+                Commands.waitUntil(RobotModeTriggers.autonomous().negate())
+        );
+
+
+        return routine;
+    }
+
+    public AutoRoutine rightCenterLineDepot() {
         final AutoRoutine routine = autoFactory.newRoutine("RightCenterLineDepot");
         final AutoTrajectory startToCenterLineAndBack = routine.trajectory("RightStartToCenterLineAndBack");
         final AutoTrajectory zoneLineToDepot = routine.trajectory("RightZoneLineToDepot");

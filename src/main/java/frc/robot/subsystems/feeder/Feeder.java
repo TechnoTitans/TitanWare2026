@@ -11,7 +11,7 @@ import org.littletonrobotics.junction.Logger;
 
 public class Feeder extends SubsystemBase {
     protected static final String LogKey = "Feeder";
-    private static final double VelocityToleranceRotsPerSec = 0.002;
+    private static final double VelocityToleranceRotsPerSec = 0.05;
 
     private final FeederIO feederIO;
     private final FeederIOInputsAutoLogged inputs;
@@ -52,7 +52,7 @@ public class Feeder extends SubsystemBase {
 
         if (desiredGoal != currentGoal) {
             feederIO.toRollerVelocity(desiredGoal.velocitySetpointRotsPerSec);
-            this.currentGoal = desiredGoal;
+            currentGoal = desiredGoal;
         }
 
         Logger.recordOutput(LogKey + "/CurrentGoal", currentGoal.toString());

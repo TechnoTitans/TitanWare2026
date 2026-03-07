@@ -10,7 +10,7 @@ import frc.robot.constants.HardwareConstants;
 import org.littletonrobotics.junction.Logger;
 
 public class IntakeRoller extends SubsystemBase {
-    protected static final String LogKey = "Intake/Roller";
+    protected static final String LogKey = "IntakeRoller";
     private static final double VelocityToleranceRotsPerSec = 0.2;
 
     private final IntakeRollerIO intakeRollerIO;
@@ -76,6 +76,10 @@ public class IntakeRoller extends SubsystemBase {
     public Command setGoal(final Goal goal) {
         return runOnce(() -> setDesiredGoal(goal))
                 .withName("SetGoal: " + goal.toString());
+    }
+
+    public boolean isIntaking() {
+        return currentGoal == Goal.INTAKE && atSetpoint();
     }
 
     private void setDesiredGoal(final Goal goal) {

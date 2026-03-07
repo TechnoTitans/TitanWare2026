@@ -1,9 +1,7 @@
 package frc.robot.subsystems.intake.slide;
 
 import edu.wpi.first.math.MathUtil;
-import edu.wpi.first.math.filter.Debouncer;
 import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -15,38 +13,34 @@ import frc.robot.constants.HardwareConstants;
 import org.littletonrobotics.junction.Logger;
 
 public class IntakeSlide extends SubsystemBase {
-    protected static final String LogKey = "Intake/Slide";
+    protected static final String LogKey = "IntakeSlide";
     private static final double PositionToleranceRots = 0.1;
     private static final double VelocityToleranceRotsPerSec = 0.02;
-    private static final double ZeroingCurrentThresholdAmps = 30;
 
     private final HardwareConstants.IntakeSlideConstants constants;
 
     private final IntakeSlideIO intakeSlideIO;
     private final IntakeSlideIOInputsAutoLogged inputs = new IntakeSlideIOInputsAutoLogged();
 
-    private Goal desiredGoal = Goal.HOMING;
+    private Goal desiredGoal = Goal.STOW;
     private Goal currentGoal = desiredGoal;
 
     //TODO: Need to implement
     private ControlMode controlMode = ControlMode.HARD;
 
-    private boolean isHomed = false;
-
-    public final Trigger atSlideSetpoint = new Trigger(this::atSetpoint);
-//            .onTrue(Commands.runOnce(() -> controlMode = ControlMode.SOFT))
-//            .onFalse(Commands.runOnce(() -> {
-//                if (desiredGoal != currentGoal) {
-//                    controlMode = ControlMode.HARD;
-//                }
-//            }));
-    private final Trigger isAboveHomingCurrent = new Trigger(
-            () -> Math.abs(inputs.masterTorqueCurrentAmps) >= ZeroingCurrentThresholdAmps
-            && Math.abs(inputs.followerTorqueCurrentAmps) >= ZeroingCurrentThresholdAmps
-    ).debounce(0.15, Debouncer.DebounceType.kRising);
+    public final Trigger atSlideSetpoint = new Trigger(this::atSetpoint)
+            .onTrue(Commands.runOnce(() -> {
+                if (currentGoal == Goal.INTAKE) {
+                    controlMode = ControlMode.SOFT;
+                }
+            }))
+            .onFalse(Commands.runOnce(() -> {
+                if (desiredGoal != currentGoal) {
+                    controlMode = ControlMode.HARD;
+                }
+            }));
 
     public enum Goal {
-        HOMING(0),
         STOW(0),
         INTAKE(3.8),
         SHOOTING(0);
@@ -104,27 +98,14 @@ public class IntakeSlide extends SubsystemBase {
         Logger.recordOutput(LogKey + "/DesiredGoal/PositionSetpointRots", desiredGoal.positionSetpointRots);
 
         Logger.recordOutput(LogKey + "/ControlMode", controlMode);
-        Logger.recordOutput(LogKey + "/IsHomed", isHomed);
 
         Logger.recordOutput(LogKey + "/Triggers/AtPositionSetpoint", atSetpoint());
         Logger.recordOutput(LogKey + "/Triggers/AtSlideLowerLimit", atLowerLimit());
         Logger.recordOutput(LogKey + "/Triggers/AtSlideUpperLimit", atUpperLimit());
-        Logger.recordOutput(LogKey + "/Triggers/IsAboveHomingCurrent", isAboveHomingCurrent);
 
         Logger.recordOutput(
                 LogKey + "/PeriodicIOPeriodMs",
                 Units.secondsToMilliseconds(Timer.getFPGATimestamp() - intakeSlidePeriodicUpdateStart)
-        );
-    }
-
-    public Command home() {
-        return Commands.sequence(
-                Commands.runOnce(() -> intakeSlideIO.toSlideTorqueCurrent(-10)),
-                Commands.waitUntil(isAboveHomingCurrent),
-                Commands.runOnce(() -> {
-                    intakeSlideIO.zeroMotors();
-                    isHomed = true;
-                })
         );
     }
 
@@ -139,10 +120,6 @@ public class IntakeSlide extends SubsystemBase {
         return runOnce(
                 () -> setDesiredGoal(goal)
         ).withName("ToGoal: " + goal.toString());
-    }
-
-    public boolean isHomed() {
-        return isHomed;
     }
 
     public Rotation2d getIntakeSlidePositionRots() {

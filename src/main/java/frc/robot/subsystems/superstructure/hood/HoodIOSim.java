@@ -110,7 +110,7 @@ public class HoodIOSim implements HoodIO {
     @Override
     public void config() {
         motorConfig.Slot0 = new Slot0Configs()
-                .withKP(30);
+                .withKP(50);
         motorConfig.CurrentLimits.StatorCurrentLimit = 60;
         motorConfig.CurrentLimits.StatorCurrentLimitEnable = true;
         motorConfig.CurrentLimits.SupplyCurrentLimit = 50;
@@ -158,16 +158,6 @@ public class HoodIOSim implements HoodIO {
     @Override
     public void toHoodPosition(final double positionRots) {
         hoodMotor.setControl(positionVoltage.withPosition(positionRots));
-    }
-
-    @Override
-    public void toHoodContinuousPosition(final double positionRots) {
-        hoodMotor.setControl(positionVoltage.withPosition(positionRots));
-    }
-
-    @Override
-    public void toHoodTorqueCurrent(final double torqueCurrent) {
-        hoodMotor.setControl(torqueCurrentFOC.withOutput(torqueCurrent));
     }
 
     @Override
