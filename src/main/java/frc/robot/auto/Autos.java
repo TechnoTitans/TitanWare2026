@@ -26,8 +26,7 @@ public class Autos {
             final Swerve swerve,
             final Superstructure superstructure,
             final Feeder feeder,
-            final PhotonVision photonVision,
-            final RobotCommands robotCommands
+            final PhotonVision photonVision
     ) {
         this.swerve = swerve;
         this.superstructure = superstructure;
@@ -56,8 +55,6 @@ public class Autos {
                     );
                 }
         );
-
-        this.robotCommands = robotCommands;
     }
 
     private Command runStartingTrajectory(final AutoTrajectory startingTrajectory) {

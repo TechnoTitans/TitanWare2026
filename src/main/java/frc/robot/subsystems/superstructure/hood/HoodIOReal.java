@@ -5,7 +5,6 @@ import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.Slot0Configs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.PositionVoltage;
-import com.ctre.phoenix6.controls.TorqueCurrentFOC;
 import com.ctre.phoenix6.hardware.ParentDevice;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.FeedbackSensorSourceValue;
@@ -30,7 +29,6 @@ public class HoodIOReal implements HoodIO {
     private final StatusSignal<Temperature> hoodDeviceTemp;
 
     private final PositionVoltage positionVoltage;
-    private final TorqueCurrentFOC torqueCurrentFOC;
 
     public HoodIOReal(final HardwareConstants.HoodConstants constants) {
         this.constants = constants;
@@ -45,7 +43,6 @@ public class HoodIOReal implements HoodIO {
         this.hoodDeviceTemp = hoodMotor.getDeviceTemp(false);
 
         this.positionVoltage = new PositionVoltage(0);
-        this.torqueCurrentFOC = new TorqueCurrentFOC(0);
 
         RefreshAll.add(
                 constants.CANBus(),
@@ -65,9 +62,9 @@ public class HoodIOReal implements HoodIO {
                 .withGravityType(GravityTypeValue.Arm_Cosine)
                 .withKP(375)
                 .withKD(0);
-        motorConfig.CurrentLimits.StatorCurrentLimit = 60;
+        motorConfig.CurrentLimits.StatorCurrentLimit = 50;
         motorConfig.CurrentLimits.StatorCurrentLimitEnable = true;
-        motorConfig.CurrentLimits.SupplyCurrentLimit = 50;
+        motorConfig.CurrentLimits.SupplyCurrentLimit = 40;
         motorConfig.CurrentLimits.SupplyCurrentLowerLimit = 40;
         motorConfig.CurrentLimits.SupplyCurrentLowerTime = 1;
         motorConfig.CurrentLimits.SupplyCurrentLimitEnable = true;

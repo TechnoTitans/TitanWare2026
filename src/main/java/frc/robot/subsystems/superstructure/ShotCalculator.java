@@ -51,6 +51,61 @@ public class ShotCalculator {
     );
 
     static {
+
+        //vids
+        shotDataMap.put(2.0952d, new HoodShooterCalculation(
+                Rotation2d.fromDegrees(0.79),
+                30,
+                1
+
+        ));
+
+        shotDataMap.put(2.841d, new HoodShooterCalculation(
+                Rotation2d.fromDegrees(1.6),
+                30,
+                1.1
+
+        ));
+
+        shotDataMap.put(3.875, new HoodShooterCalculation(
+                Rotation2d.fromDegrees(19.4238),
+                36,
+                1.3
+
+        ));
+
+        shotDataMap.put(5.0058, new HoodShooterCalculation(
+                Rotation2d.fromDegrees(20.65428),
+                40,
+                1.5
+
+        ));
+
+        shotDataMap.put(4.4723, new HoodShooterCalculation(
+                Rotation2d.fromDegrees(19.8512),
+                37,
+                1.5
+
+        ));
+
+        shotDataMap.put(5.19, new HoodShooterCalculation(
+                Rotation2d.fromDegrees(20.628),
+                42,
+                1.6
+
+        ));
+
+        shotDataMap.put(4.36, new HoodShooterCalculation(
+                Rotation2d.fromDegrees(20.0736),
+                37,
+                1
+
+        ));
+
+
+
+        //
+
         shotDataMap.put(1.7696d, new HoodShooterCalculation(
                 Rotation2d.fromDegrees(0),
                 30,
@@ -69,6 +124,12 @@ public class ShotCalculator {
                 1
         ));
 
+        shotDataMap.put(3.4454d, new HoodShooterCalculation(
+                Rotation2d.fromDegrees(9.5),
+                35,
+                1
+        ));
+
         shotDataMap.put(3.7005d, new HoodShooterCalculation(
                 Rotation2d.fromDegrees(19.332),
                 35,
@@ -78,6 +139,12 @@ public class ShotCalculator {
         shotDataMap.put(4.9717d, new HoodShooterCalculation(
                 Rotation2d.fromDegrees(21),
                 40,
+                1
+        ));
+
+        shotDataMap.put(5.43d, new HoodShooterCalculation(
+                Rotation2d.fromDegrees(21),
+                45,
                 1
         ));
     }
