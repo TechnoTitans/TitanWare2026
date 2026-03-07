@@ -1,6 +1,7 @@
 package frc.robot.subsystems.superstructure.hood;
 
 import edu.wpi.first.math.MathUtil;
+import edu.wpi.first.math.filter.Debouncer;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.Timer;
@@ -13,47 +14,44 @@ import frc.robot.constants.HardwareConstants;
 import org.littletonrobotics.junction.Logger;
 
 public class Hood extends SubsystemBase {
-    protected static final String LogKey = "Superstructure/Hood";
-    private static final double PositionToleranceRots = 0.001;
-    private static final double VelocityToleranceRotsPerSec = 0.001;
-    private static final double HardstopCurrentThreshold = 1;
+    protected static final String LogKey = "Hood";
+    private static final double PositionToleranceRots = 0.05;
+    private static final double VelocityToleranceRotsPerSec = 0.01;
+    private static final double ZeroingCurrentThresholdAmps = 2;
 
     private final HardwareConstants.HoodConstants constants;
 
     private final HoodIO hoodIO;
-    private final HoodIOInputsAutoLogged inputs;
+    private final HoodIOInputsAutoLogged inputs = new HoodIOInputsAutoLogged();
 
-    private Goal previousGoal = Goal.STOW;
-    private Goal desiredGoal = previousGoal;
+    private Goal desiredGoal = Goal.HOMING;
     private Goal currentGoal = desiredGoal;
 
-    public final Trigger atSetpoint = new Trigger(this::atHoodPositionSetpoint);
-    public final Trigger atHoodLowerLimit = new Trigger(this::atHoodLowerLimit);
-    public final Trigger atHoodUpperLimit = new Trigger(this::atHoodUpperLimit);
+    public final Trigger atSetpoint = new Trigger(this::atSetpoint);
+    private final Trigger isAboveHomingCurrent = new Trigger(
+            () -> Math.abs(inputs.hoodTorqueCurrentAmps) >= ZeroingCurrentThresholdAmps
+    ).debounce(0.15, Debouncer.DebounceType.kRising);
 
-    private boolean isHomed;
+    private boolean isHomed = false;
 
     public enum Goal {
+        HOMING(0, false),
         STOW(0, false),
         CLIMB(0, false),
         TRACKING(0, true);
 
-        private double hoodPositionGoalRots;
+        private double positionSetpointRots;
         private final boolean isDynamic;
 
-        Goal(final double initialHoodPositionGoalRots, final boolean isDynamic) {
-            this.hoodPositionGoalRots = initialHoodPositionGoalRots;
+        Goal(final double positionSetpointRots, final boolean isDynamic) {
+            this.positionSetpointRots = positionSetpointRots;
             this.isDynamic = isDynamic;
         }
 
         public void changeHoodPositionRots(final double desiredPositionRots) {
             if (isDynamic) {
-                this.hoodPositionGoalRots = desiredPositionRots;
+                this.positionSetpointRots = desiredPositionRots;
             }
-        }
-
-        public double getHoodPositionGoalRots() {
-            return hoodPositionGoalRots;
         }
     }
 
@@ -66,69 +64,61 @@ public class Hood extends SubsystemBase {
             };
         };
 
-        isHomed = Constants.CURRENT_MODE == Constants.RobotMode.SIM;
-
-        this.inputs = new HoodIOInputsAutoLogged();
-
-        this.hoodIO.config();
-        this.hoodIO.toHoodPosition(desiredGoal.getHoodPositionGoalRots());
+        hoodIO.config();
     }
 
     @Override
     public void periodic() {
-        final double HoodPeriodicUpdateStart = Timer.getFPGATimestamp();
+        final double hoodPeriodicUpdateStart = Timer.getFPGATimestamp();
         hoodIO.updateInputs(inputs);
         Logger.processInputs(LogKey, inputs);
 
         if (desiredGoal.isDynamic) {
-            hoodIO.toHoodContinuousPosition(desiredGoal.getHoodPositionGoalRots());
+            hoodIO.toHoodContinuousPosition(desiredGoal.positionSetpointRots);
         }
 
         if (desiredGoal != currentGoal) {
-            hoodIO.toHoodPosition(desiredGoal.getHoodPositionGoalRots());
+            hoodIO.toHoodPosition(desiredGoal.positionSetpointRots);
             this.currentGoal = desiredGoal;
         }
 
         Logger.recordOutput(LogKey + "/CurrentGoal", currentGoal.toString());
         Logger.recordOutput(LogKey + "/DesiredGoal", desiredGoal.toString());
-        Logger.recordOutput(LogKey + "/DesiredGoal/HoodPositionRots", desiredGoal.getHoodPositionGoalRots());
-        Logger.recordOutput(LogKey + "/Triggers/AtPositionSetpoint", atHoodPositionSetpoint());
-        Logger.recordOutput(LogKey + "/Triggers/AtHoodLowerLimit", atHoodLowerLimit());
-        Logger.recordOutput(LogKey + "/Triggers/AtHoodUpperLimit", atHoodUpperLimit());
+        Logger.recordOutput(LogKey + "/DesiredGoal/PositionSetpointRots", desiredGoal.positionSetpointRots);
+
         Logger.recordOutput(LogKey + "/IsHomed", isHomed);
+
+        Logger.recordOutput(LogKey + "/Triggers/AtSetpoint", atSetpoint());
+        Logger.recordOutput(LogKey + "/Triggers/AtHoodLowerLimit", atLowerLimit());
+        Logger.recordOutput(LogKey + "/Triggers/AtHoodUpperLimit", atUpperLimit());
+        Logger.recordOutput(LogKey + "/Triggers/IsAboveHomingCurrent", isAboveHomingCurrent);
 
         Logger.recordOutput(
                 LogKey + "/PeriodicIOPeriodMs",
-                Units.secondsToMilliseconds(Timer.getFPGATimestamp() - HoodPeriodicUpdateStart)
+                Units.secondsToMilliseconds(Timer.getFPGATimestamp() - hoodPeriodicUpdateStart)
         );
     }
 
     public Command home() {
         return Commands.sequence(
-                Commands.runOnce(hoodIO::home),
-                Commands.waitUntil(
-                        () -> getCurrent() >= HardstopCurrentThreshold
-                ),
+                Commands.runOnce(() -> hoodIO.toHoodTorqueCurrent(-10)),
+                Commands.waitUntil(isAboveHomingCurrent),
                 Commands.runOnce(() -> {
-                                    hoodIO.zeroMotor();
-                                    this.isHomed = true;
-                                }
-                        )
-                        .finallyDo(() -> {
-                            this.currentGoal = previousGoal;
-                            this.previousGoal = Goal.TRACKING;
-                        })
+                        hoodIO.zeroMotor();
+                        this.isHomed = true;
+                    }
+                )
         );
     }
 
-    public void setGoal(final Goal goal) {
-        this.desiredGoal = goal;
+    public void setDesiredGoal(final Goal goal) {
+        desiredGoal = goal;
         Logger.recordOutput(LogKey + "/CurrentGoal", currentGoal.toString());
         Logger.recordOutput(LogKey + "/DesiredGoal", desiredGoal.toString());
     }
 
     public void updateDesiredHoodPosition(final double desiredHoodPosition) {
-        this.desiredGoal.changeHoodPositionRots(desiredHoodPosition);
+        desiredGoal.changeHoodPositionRots(desiredHoodPosition);
     }
 
     public Rotation2d getHoodPosition() {
@@ -139,21 +129,17 @@ public class Hood extends SubsystemBase {
         return isHomed;
     }
 
-    private boolean atHoodPositionSetpoint() {
+    private boolean atSetpoint() {
         return currentGoal == desiredGoal
-                && MathUtil.isNear(desiredGoal.hoodPositionGoalRots, inputs.hoodPositionRots, PositionToleranceRots)
+                && MathUtil.isNear(desiredGoal.positionSetpointRots, inputs.hoodPositionRots, PositionToleranceRots)
                 && MathUtil.isNear(0, inputs.hoodVelocityRotsPerSec, VelocityToleranceRotsPerSec);
     }
 
-    private boolean atHoodLowerLimit() {
+    private boolean atLowerLimit() {
         return inputs.hoodPositionRots <= constants.hoodLowerLimitRots();
     }
 
-    private boolean atHoodUpperLimit() {
+    private boolean atUpperLimit() {
         return inputs.hoodPositionRots >= constants.hoodUpperLimitRots();
-    }
-
-    private double getCurrent() {
-        return inputs.hoodTorqueCurrentAmps;
     }
 }
