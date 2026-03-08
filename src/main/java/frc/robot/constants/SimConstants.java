@@ -43,7 +43,7 @@ public interface SimConstants {
     }
 
     interface IntakeSlide {
-        double MOMENT_OF_INERTIA = 0.3;
+        double MOMENT_OF_INERTIA = 0.0058;
     }
 
     interface Climb {

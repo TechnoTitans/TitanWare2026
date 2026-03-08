@@ -64,7 +64,7 @@ public class IntakeSlideIOSim implements IntakeSlideIO {
         final TalonFXConfiguration masterMotorConfig = new TalonFXConfiguration();
         // Average Slot
         masterMotorConfig.Slot0 = new Slot0Configs()
-                .withKV(0.25)
+                .withKV(10)
                 .withKA(0.1)
                 .withKP(200)
                 .withKD(10);
@@ -232,16 +232,24 @@ public class IntakeSlideIOSim implements IntakeSlideIO {
     @Override
     public void toSlidePosition(double positionRots) {
         diffMechanism.setControl(
-                averageMotionMagicExpoTorqueCurrent.withPosition(positionRots).withSlot(0),
-                differentialPositionTorqueCurrentFOC.withPosition(0).withSlot(2)
+                averageMotionMagicExpoTorqueCurrent
+                        .withPosition(positionRots)
+                        .withSlot(0),
+                differentialPositionTorqueCurrentFOC
+                        .withPosition(0)
+                        .withSlot(2)
         );
     }
 
     @Override
     public void holdSlidePosition(final double positionRots) {
         diffMechanism.setControl(
-                averagePositionTorqueCurrentFOC.withPosition(positionRots).withSlot(2),
-                differentialPositionTorqueCurrentFOC.withPosition(0).withSlot(2)
+                averagePositionTorqueCurrentFOC
+                        .withPosition(positionRots)
+                        .withSlot(2),
+                differentialPositionTorqueCurrentFOC
+                        .withPosition(0)
+                        .withSlot(2)
         );
     }
 
@@ -249,8 +257,12 @@ public class IntakeSlideIOSim implements IntakeSlideIO {
     public void toSlidePositionUnprofiled(double positionRots, double velocityRotsPerSec) {
         diffMechanism.setControl(
                 averagePositionTorqueCurrentFOC
-                        .withPosition(positionRots).withVelocity(velocityRotsPerSec).withSlot(0),
-                differentialPositionTorqueCurrentFOC.withPosition(0).withSlot(2)
+                        .withPosition(positionRots)
+                        .withVelocity(velocityRotsPerSec)
+                        .withSlot(0),
+                differentialPositionTorqueCurrentFOC
+                        .withPosition(0)
+                        .withSlot(2)
         );
     }
 
