@@ -7,7 +7,6 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
 import frc.robot.Robot;
-import frc.robot.RobotCommands;
 import frc.robot.subsystems.drive.Swerve;
 import frc.robot.subsystems.feeder.Feeder;
 import frc.robot.subsystems.superstructure.Superstructure;
@@ -79,8 +78,8 @@ public class Autos {
     public AutoRoutine leftCenterLineDepot() {
         final AutoRoutine routine = autoFactory.newRoutine("LeftCenterLineDepot");
         final AutoTrajectory startToCenterLineAndBack = routine.trajectory("LeftStartToCenterLineAndBack");
-        final AutoTrajectory zoneLineToDepot = routine.trajectory("LeftZoneLineToDepot");
-        final AutoTrajectory depotToScoring = routine.trajectory("LeftDepotToScoring");
+        final AutoTrajectory shootingToDepot = routine.trajectory("LeftShootingToDepot");
+        final AutoTrajectory depotToShooting = routine.trajectory("LeftDepotToShooting");
 
         routine.active().onTrue(runStartingTrajectory(startToCenterLineAndBack));
 
@@ -93,19 +92,16 @@ public class Autos {
                         Commands.parallel(
                                 swerve.runWheelXCommand(),
                                 feeder.toGoal(Feeder.Goal.FEED)
-                        ).withTimeout(7),
-                        zoneLineToDepot.cmd()
+                        ).withTimeout(4),
+                        shootingToDepot.cmd()
                 )
         );
 
-        zoneLineToDepot.done().onTrue(
-                Commands.sequence(
-                        Commands.waitSeconds(3),
-                        depotToScoring.cmd()
-                )
+        shootingToDepot.done().onTrue(
+                depotToShooting.cmd()
         );
 
-        depotToScoring.done().onTrue(
+        depotToShooting.done().onTrue(
                 Commands.parallel(
                         swerve.runWheelXCommand(),
                         feeder.toGoal(Feeder.Goal.FEED)
@@ -120,11 +116,11 @@ public class Autos {
         return routine;
     }
 
-    public AutoRoutine rightCenterLineDepot() {
-        final AutoRoutine routine = autoFactory.newRoutine("RightCenterLineDepot");
+    public AutoRoutine rightCenterLineOutpost() {
+        final AutoRoutine routine = autoFactory.newRoutine("RightCenterLineOutpost");
         final AutoTrajectory startToCenterLineAndBack = routine.trajectory("RightStartToCenterLineAndBack");
-        final AutoTrajectory zoneLineToDepot = routine.trajectory("RightZoneLineToDepot");
-        final AutoTrajectory depotToScoring = routine.trajectory("RightDepotToScoring");
+        final AutoTrajectory shootingToOutpost = routine.trajectory("RightShootingToOutput");
+        final AutoTrajectory outpostToShooting = routine.trajectory("RightOutpostToShooting");
 
         routine.active().onTrue(runStartingTrajectory(startToCenterLineAndBack));
 
@@ -137,19 +133,19 @@ public class Autos {
                         Commands.parallel(
                                 swerve.runWheelXCommand(),
                                 feeder.toGoal(Feeder.Goal.FEED)
-                        ).withTimeout(7),
-                        zoneLineToDepot.cmd()
+                        ).withTimeout(4),
+                        shootingToOutpost.cmd()
                 )
         );
 
-        zoneLineToDepot.done().onTrue(
+        shootingToOutpost.done().onTrue(
                 Commands.sequence(
                         Commands.waitSeconds(3),
-                        depotToScoring.cmd()
+                        outpostToShooting.cmd()
                 )
         );
 
-        depotToScoring.done().onTrue(
+        outpostToShooting.done().onTrue(
                 Commands.parallel(
                         swerve.runWheelXCommand(),
                         feeder.toGoal(Feeder.Goal.FEED)

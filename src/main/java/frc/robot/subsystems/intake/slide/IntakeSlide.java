@@ -2,6 +2,7 @@ package frc.robot.subsystems.intake.slide;
 
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -10,6 +11,7 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.constants.Constants;
 import frc.robot.constants.HardwareConstants;
+import frc.robot.utils.control.DeltaTime;
 import org.littletonrobotics.junction.Logger;
 
 public class IntakeSlide extends SubsystemBase {
@@ -24,6 +26,13 @@ public class IntakeSlide extends SubsystemBase {
 
     private Goal desiredGoal = Goal.STOW;
     private Goal currentGoal = desiredGoal;
+
+
+    private final DeltaTime deltaTime = new DeltaTime();
+    private final TrapezoidProfile profile =
+            new TrapezoidProfile(new TrapezoidProfile.Constraints(1.2, 0.75));
+    private final TrapezoidProfile.State profileGoal = new TrapezoidProfile.State(0,0);
+    private TrapezoidProfile.State profileSetpoint = new TrapezoidProfile.State(0,0);
 
     //TODO: Need to implement
     private ControlMode controlMode = ControlMode.HARD;
@@ -81,9 +90,10 @@ public class IntakeSlide extends SubsystemBase {
                 case SOFT -> intakeSlideIO.holdSlidePosition(desiredGoal.positionSetpointRots);
                 case HARD -> {
                     if (desiredGoal == Goal.SHOOTING) {
+                        profileSetpoint = profile.calculate(deltaTime.get(), profileSetpoint, profileGoal);
                         intakeSlideIO.toSlidePositionUnprofiled(
-                                desiredGoal.positionSetpointRots,
-                                -0.1
+                                profileSetpoint.position,
+                                profileSetpoint.velocity
                         );
                     } else {
                         intakeSlideIO.toSlidePosition(desiredGoal.positionSetpointRots);

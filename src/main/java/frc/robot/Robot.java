@@ -88,38 +88,38 @@ public class Robot extends LoggedRobot {
     );
 
     public final IntakeRoller intakeRoller = new IntakeRoller(
-            Constants.RobotMode.DISABLED,
+            Constants.CURRENT_MODE,
             HardwareConstants.INTAKE_ROLLER
     );
 
     public final IntakeSlide intakeSlide = new IntakeSlide(
-            Constants.RobotMode.DISABLED,
+            Constants.CURRENT_MODE,
             HardwareConstants.INTAKE_SLIDE
     );
 
     public final Feeder feeder = new Feeder(
-            Constants.RobotMode.DISABLED,
+            Constants.CURRENT_MODE,
             HardwareConstants.FEEDER
     );
 
     public final Hood hood = new Hood(
-            Constants.RobotMode.DISABLED,
+            Constants.CURRENT_MODE,
             HardwareConstants.HOOD
     );
 
     public final Turret turret = new Turret(
-            Constants.RobotMode.DISABLED,
+            Constants.CURRENT_MODE,
             HardwareConstants.TURRET,
             () -> swerve.getFieldRelativeSpeeds().omegaRadiansPerSecond
     );
 
     public final Shooter shooter = new Shooter(
-            Constants.RobotMode.DISABLED,
+            Constants.CURRENT_MODE,
             HardwareConstants.SHOOTER
     );
 
     public final Spindexer spindexer = new Spindexer(
-            Constants.RobotMode.DISABLED,
+            Constants.CURRENT_MODE,
             HardwareConstants.SPINDEXER
     );
 
@@ -415,9 +415,9 @@ public class Robot extends LoggedRobot {
         );
 
         autoChooser.addAutoOption(new AutoOption(
-                        "RightCenterLineDepot",
-                        autos::rightCenterLineDepot,
-                        Constants.CompetitionType.COMPETITION
+                    "RightCenterLineOutpost",
+                    autos::rightCenterLineOutpost,
+                    Constants.CompetitionType.COMPETITION
                 )
         );
     }

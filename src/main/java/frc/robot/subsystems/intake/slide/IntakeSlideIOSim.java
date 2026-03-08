@@ -9,9 +9,7 @@ import com.ctre.phoenix6.controls.*;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.mechanisms.DifferentialMechanism;
 import com.ctre.phoenix6.mechanisms.DifferentialMotorConstants;
-import com.ctre.phoenix6.signals.InvertedValue;
-import com.ctre.phoenix6.signals.MotorAlignmentValue;
-import com.ctre.phoenix6.signals.NeutralModeValue;
+import com.ctre.phoenix6.signals.*;
 import com.ctre.phoenix6.sim.TalonFXSimState;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.system.plant.LinearSystemId;
@@ -51,36 +49,38 @@ public class IntakeSlideIOSim implements IntakeSlideIO {
     private final StatusSignal<AngularVelocity> averageVelocity;
     private final StatusSignal<Angle> differentialPosition;
 
-    private final MotionMagicVoltage averageMotionMagicVoltage;
-    private final PositionVoltage averagePositionVoltage;
+    private final MotionMagicExpoTorqueCurrentFOC averageMotionMagicExpoTorqueCurrent;
     private final PositionTorqueCurrentFOC averagePositionTorqueCurrentFOC;
-    private final PositionVoltage differentialPositionVoltage;
     private final PositionTorqueCurrentFOC differentialPositionTorqueCurrentFOC;
+
 
     public IntakeSlideIOSim(final HardwareConstants.IntakeSlideConstants constants) {
         this.deltaTime = new DeltaTime(true);
 
-        this.averageMotionMagicVoltage = new MotionMagicVoltage(0).withSlot(0);
-        this.averagePositionVoltage = new PositionVoltage(0).withSlot(0);
+        this.averageMotionMagicExpoTorqueCurrent = new MotionMagicExpoTorqueCurrentFOC(0).withSlot(0);
         this.averagePositionTorqueCurrentFOC = new PositionTorqueCurrentFOC(0).withSlot(1);
-        this.differentialPositionVoltage = new PositionVoltage(0).withSlot(2);
-        this.differentialPositionTorqueCurrentFOC = new PositionTorqueCurrentFOC(0).withSlot(1);
+        this.differentialPositionTorqueCurrentFOC = new PositionTorqueCurrentFOC(0).withSlot(2);
 
         final TalonFXConfiguration masterMotorConfig = new TalonFXConfiguration();
         // Average Slot
         masterMotorConfig.Slot0 = new Slot0Configs()
-                .withKV(2)
-                .withKP(6)
-                .withKD(1);
+                .withKV(0.25)
+                .withKA(0.1)
+                .withKP(200)
+                .withKD(10);
         // Hold Slot
         masterMotorConfig.Slot1 = new Slot1Configs()
-                .withKP(1)
+                .withStaticFeedforwardSign(StaticFeedforwardSignValue.UseClosedLoopSign)
+                .withKP(10)
                 .withKD(0.1);
         // Differential Slot
         masterMotorConfig.Slot2 = new Slot2Configs()
-                .withKP(100)
-                .withKD(25);
+                .withStaticFeedforwardSign(StaticFeedforwardSignValue.UseClosedLoopSign)
+                .withKP(200)
+                .withKD(10);
         masterMotorConfig.MotionMagic.MotionMagicCruiseVelocity = 0;
+        masterMotorConfig.MotionMagic.MotionMagicExpo_kV = 0.6;
+        masterMotorConfig.MotionMagic.MotionMagicExpo_kA = 0.3;
         masterMotorConfig.TorqueCurrent.PeakForwardTorqueCurrent = 60;
         masterMotorConfig.TorqueCurrent.PeakReverseTorqueCurrent = -60;
         masterMotorConfig.CurrentLimits.StatorCurrentLimit = 60;
@@ -99,7 +99,9 @@ public class IntakeSlideIOSim implements IntakeSlideIO {
         masterMotorConfig.SoftwareLimitSwitch.ReverseSoftLimitEnable = true;
 
         final TalonFXConfiguration followerConfig = new TalonFXConfiguration();
-        followerConfig.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
+        followerConfig.Feedback.FeedbackSensorSource = FeedbackSensorSourceValue.RotorSensor;
+        followerConfig.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
+        followerConfig.Feedback.SensorToMechanismRatio = constants.slideGearing();
 
         final DifferentialMotorConstants<TalonFXConfiguration> diffConstants =
                 new DifferentialMotorConstants<TalonFXConfiguration>()
@@ -107,7 +109,6 @@ public class IntakeSlideIOSim implements IntakeSlideIO {
                         .withLeaderId(constants.masterMotorID())
                         .withFollowerId(constants.followerMotorID())
                         .withAlignment(MotorAlignmentValue.Opposed)
-                        //TODO: Ratio might be wrong
                         .withSensorToDifferentialRatio(1)
                         .withClosedLoopRate(200)
                         .withLeaderInitialConfigs(masterMotorConfig)
@@ -231,8 +232,8 @@ public class IntakeSlideIOSim implements IntakeSlideIO {
     @Override
     public void toSlidePosition(double positionRots) {
         diffMechanism.setControl(
-                averageMotionMagicVoltage.withPosition(positionRots).withSlot(0),
-                differentialPositionVoltage.withPosition(0).withSlot(2)
+                averageMotionMagicExpoTorqueCurrent.withPosition(positionRots).withSlot(0),
+                differentialPositionTorqueCurrentFOC.withPosition(0).withSlot(2)
         );
     }
 
@@ -240,16 +241,16 @@ public class IntakeSlideIOSim implements IntakeSlideIO {
     public void holdSlidePosition(final double positionRots) {
         diffMechanism.setControl(
                 averagePositionTorqueCurrentFOC.withPosition(positionRots).withSlot(2),
-                differentialPositionTorqueCurrentFOC.withPosition(0).withSlot(1)
+                differentialPositionTorqueCurrentFOC.withPosition(0).withSlot(2)
         );
     }
 
     @Override
     public void toSlidePositionUnprofiled(double positionRots, double velocityRotsPerSec) {
         diffMechanism.setControl(
-                averagePositionVoltage
+                averagePositionTorqueCurrentFOC
                         .withPosition(positionRots).withVelocity(velocityRotsPerSec).withSlot(0),
-                differentialPositionVoltage.withPosition(0).withSlot(2)
+                differentialPositionTorqueCurrentFOC.withPosition(0).withSlot(2)
         );
     }
 

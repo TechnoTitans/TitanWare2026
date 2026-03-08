@@ -5,10 +5,7 @@ import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.geometry.Twist2d;
-import edu.wpi.first.math.interpolation.Interpolatable;
-import edu.wpi.first.math.interpolation.InterpolatingTreeMap;
-import edu.wpi.first.math.interpolation.Interpolator;
-import edu.wpi.first.math.interpolation.InverseInterpolator;
+import edu.wpi.first.math.interpolation.*;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.DriverStation;
@@ -50,57 +47,66 @@ public class ShotCalculator {
             HoodShooterCalculation.interpolator
     );
 
+    private static final InterpolatingDoubleTreeMap TOFMap = new InterpolatingDoubleTreeMap();
+
     static {
+        TOFMap.put(2.0952d, 1.0);
+        TOFMap.put(2.841d, 1.1);
+        TOFMap.put(3.875d, 1.3);
+        TOFMap.put(5.0058d, 1.5);
+        TOFMap.put(4.4723d, 1.5);
+        TOFMap.put(5.19d, 1.6);
+        TOFMap.put(4.36d, 1.0);
 
-        //vids
-        shotDataMap.put(2.0952d, new HoodShooterCalculation(
-                Rotation2d.fromDegrees(0.79),
-                30,
-                1
-
-        ));
-
-        shotDataMap.put(2.841d, new HoodShooterCalculation(
-                Rotation2d.fromDegrees(1.6),
-                30,
-                1.1
-
-        ));
-
-        shotDataMap.put(3.875, new HoodShooterCalculation(
-                Rotation2d.fromDegrees(19.4238),
-                36,
-                1.3
-
-        ));
-
-        shotDataMap.put(5.0058, new HoodShooterCalculation(
-                Rotation2d.fromDegrees(20.65428),
-                40,
-                1.5
-
-        ));
-
-        shotDataMap.put(4.4723, new HoodShooterCalculation(
-                Rotation2d.fromDegrees(19.8512),
-                37,
-                1.5
-
-        ));
-
-        shotDataMap.put(5.19, new HoodShooterCalculation(
-                Rotation2d.fromDegrees(20.628),
-                42,
-                1.6
-
-        ));
-
-        shotDataMap.put(4.36, new HoodShooterCalculation(
-                Rotation2d.fromDegrees(20.0736),
-                37,
-                1
-
-        ));
+        // Might not need values
+//        shotDataMap.put(2.0952d, new HoodShooterCalculation(
+//                Rotation2d.fromDegrees(0.79),
+//                30,
+//                1
+//
+//        ));
+//
+//        shotDataMap.put(2.841d, new HoodShooterCalculation(
+//                Rotation2d.fromDegrees(1.6),
+//                30,
+//                1.1
+//
+//        ));
+//
+//        shotDataMap.put(3.875, new HoodShooterCalculation(
+//                Rotation2d.fromDegrees(19.4238),
+//                36,
+//                1.3
+//
+//        ));
+//
+//        shotDataMap.put(5.0058, new HoodShooterCalculation(
+//                Rotation2d.fromDegrees(20.65428),
+//                40,
+//                1.5
+//
+//        ));
+//
+//        shotDataMap.put(4.4723, new HoodShooterCalculation(
+//                Rotation2d.fromDegrees(19.8512),
+//                37,
+//                1.5
+//
+//        ));
+//
+//        shotDataMap.put(5.19, new HoodShooterCalculation(
+//                Rotation2d.fromDegrees(20.628),
+//                42,
+//                1.6
+//
+//        ));
+//
+//        shotDataMap.put(4.36, new HoodShooterCalculation(
+//                Rotation2d.fromDegrees(20.0736),
+//                37,
+//                1
+//
+//        ));
 
 
 
@@ -215,7 +221,6 @@ public class ShotCalculator {
         );
     }
 
-    //TODO: Needs to be implemented
     private static ShotCalculation getMovingShotCalculation(
             final Pose2d swervePose,
             final ChassisSpeeds swerveSpeeds

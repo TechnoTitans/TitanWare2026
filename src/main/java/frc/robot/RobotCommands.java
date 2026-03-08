@@ -82,9 +82,10 @@ public class RobotCommands {
     public Command shootWhileMoving() {
         return Commands.parallel(
                 superstructure.toGoal(Superstructure.Goal.SHOOTING),
-                Commands.parallel(
+                Commands.repeatingSequence(
                         Commands.waitUntil(superstructure.atSetpoint),
                         feeder.toGoal(Feeder.Goal.FEED)
+                                .until(superstructure.atSetpoint.negate())
                 ),
                 intakeSlide.toGoal(IntakeSlide.Goal.SHOOTING),
                 spindexer.toGoal(Spindexer.Goal.FEED),
@@ -120,7 +121,7 @@ public class RobotCommands {
 
     public Command readyClimb() {
         return Commands.parallel(
-//                swerve.runToPose(FieldConstants::getClimbTarget),
+                swerve.runToPose(FieldConstants::getClimbTarget),
                 superstructure.setGoal(Superstructure.Goal.CLIMB),
                 Commands.sequence(
                         stowIntake(),
