@@ -5,7 +5,8 @@ import com.ctre.phoenix6.configs.Slot0Configs;
 import com.ctre.phoenix6.configs.Slot1Configs;
 import com.ctre.phoenix6.configs.Slot2Configs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
-import com.ctre.phoenix6.controls.*;
+import com.ctre.phoenix6.controls.MotionMagicExpoTorqueCurrentFOC;
+import com.ctre.phoenix6.controls.PositionTorqueCurrentFOC;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.mechanisms.DifferentialMechanism;
 import com.ctre.phoenix6.mechanisms.DifferentialMotorConstants;
@@ -48,8 +49,8 @@ public class IntakeSlideIOReal implements IntakeSlideIO {
         final TalonFXConfiguration masterMotorConfig = new TalonFXConfiguration();
         // Average Slot
         masterMotorConfig.Slot0 = new Slot0Configs()
-                .withKV(1.5)
-                .withKP(3)
+                .withKV(5)
+                .withKP(20)
                 .withKD(0.5);
         // Hold Slot
         masterMotorConfig.Slot1 = new Slot1Configs()

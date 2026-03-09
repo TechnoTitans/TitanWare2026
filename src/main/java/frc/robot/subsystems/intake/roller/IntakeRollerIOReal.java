@@ -67,10 +67,6 @@ public class IntakeRollerIOReal implements IntakeRollerIO {
         motorConfiguration.TorqueCurrent.PeakReverseTorqueCurrent = -80;
         motorConfiguration.CurrentLimits.StatorCurrentLimit = 60;
         motorConfiguration.CurrentLimits.StatorCurrentLimitEnable = true;
-        motorConfiguration.CurrentLimits.SupplyCurrentLimit = 50;
-        motorConfiguration.CurrentLimits.SupplyCurrentLowerLimit = 40;
-        motorConfiguration.CurrentLimits.SupplyCurrentLowerTime = 1;
-        motorConfiguration.CurrentLimits.SupplyCurrentLimitEnable = true;
         motorConfiguration.MotorOutput.NeutralMode = NeutralModeValue.Brake;
         motorConfiguration.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
         motorConfiguration.Feedback.FeedbackSensorSource = FeedbackSensorSourceValue.RotorSensor;

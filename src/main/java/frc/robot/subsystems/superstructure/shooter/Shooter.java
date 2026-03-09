@@ -11,7 +11,7 @@ import org.littletonrobotics.junction.Logger;
 
 public class Shooter extends SubsystemBase {
     protected static final String LogKey = "Shooter";
-    private static final double VelocityToleranceRotsPerSec = 1;
+    private static final double VelocityToleranceRotsPerSec = 2;
 
     private final ShooterIO shooterIO;
     private final ShooterIOInputsAutoLogged inputs;

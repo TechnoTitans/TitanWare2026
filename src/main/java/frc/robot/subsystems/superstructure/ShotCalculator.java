@@ -50,13 +50,23 @@ public class ShotCalculator {
     private static final InterpolatingDoubleTreeMap TOFMap = new InterpolatingDoubleTreeMap();
 
     static {
-        TOFMap.put(2.0952d, 1.0);
-        TOFMap.put(2.841d, 1.1);
-        TOFMap.put(3.875d, 1.3);
-        TOFMap.put(5.0058d, 1.5);
-        TOFMap.put(4.4723d, 1.5);
-        TOFMap.put(5.19d, 1.6);
-        TOFMap.put(4.36d, 1.0);
+//        TOFMap.put(2.0952d, 1.0);
+//        TOFMap.put(2.841d, 1.1);
+//        TOFMap.put(3.875d, 1.3);
+//        TOFMap.put(5.0058d, 1.5);
+//        TOFMap.put(4.4723d, 1.5);
+//        TOFMap.put(5.19d, 1.6);
+//        TOFMap.put(4.36d, 1.0);
+
+
+        TOFMap.put(3.213d, 1.01);
+        TOFMap.put(3.664d, 1.19);
+        TOFMap.put(4.643, 1.21);
+        TOFMap.put(3.17, 1.13);
+        TOFMap.put(2.209, 1.15);
+        TOFMap.put(3.715, 1.08);
+        TOFMap.put(1.989, 1.2);
+        TOFMap.put(2.823, 1.18);
 
         // Might not need values
 //        shotDataMap.put(2.0952d, new HoodShooterCalculation(
@@ -142,6 +152,18 @@ public class ShotCalculator {
                 1
         ));
 
+        shotDataMap.put(3.664d, new HoodShooterCalculation(
+                Rotation2d.fromDegrees(16),
+            35,
+            1
+        ));
+
+        shotDataMap.put(3.973d, new HoodShooterCalculation(
+                Rotation2d.fromDegrees(18),
+                35,
+                1
+        ));
+
         shotDataMap.put(4.9717d, new HoodShooterCalculation(
                 Rotation2d.fromDegrees(21),
                 40,
@@ -150,7 +172,7 @@ public class ShotCalculator {
 
         shotDataMap.put(5.43d, new HoodShooterCalculation(
                 Rotation2d.fromDegrees(21),
-                45,
+                40,
                 1
         ));
     }
@@ -265,7 +287,7 @@ public class ShotCalculator {
         double lookAheadTurretToTargetDistance = turretToTargetDistance;
 
         for (int i = 0; i < 20; i++) {
-            tOF = shotDataMap.get(lookAheadTurretToTargetDistance).shotTime;
+            tOF = TOFMap.get(lookAheadTurretToTargetDistance);
             double offsetX = turretVelocityX * tOF;
             double offsetY = turretVelocityY * tOF;
             lookaheadPose =

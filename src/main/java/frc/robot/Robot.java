@@ -93,7 +93,7 @@ public class Robot extends LoggedRobot {
     );
 
     public final IntakeSlide intakeSlide = new IntakeSlide(
-            Constants.CURRENT_MODE,
+            Constants.RobotMode.DISABLED,
             HardwareConstants.INTAKE_SLIDE
     );
 
@@ -124,13 +124,13 @@ public class Robot extends LoggedRobot {
     );
 
     public final Climb climb = new Climb(
-            Constants.CURRENT_MODE,
+            Constants.RobotMode.DISABLED,
             HardwareConstants.CLIMB
     );
 
     //TODO: Change to Moving when SOTM is implemented
     private RobotCommands.ScoringMode scoringMode =
-            RobotCommands.ScoringMode.Stationary;
+            RobotCommands.ScoringMode.Moving;
 
     private final Supplier<ShotCalculator.ShotCalculation> shotCalculationSupplier =
             () -> ShotCalculator.getShotCalculation(
@@ -158,6 +158,7 @@ public class Robot extends LoggedRobot {
             intakeRoller,
             intakeSlide,
             superstructure,
+            shooter,
             spindexer,
             feeder,
             climb

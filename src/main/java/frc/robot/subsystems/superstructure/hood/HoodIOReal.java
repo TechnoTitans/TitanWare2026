@@ -42,7 +42,7 @@ public class HoodIOReal implements HoodIO {
         this.hoodTorqueCurrent = hoodMotor.getTorqueCurrent(false);
         this.hoodDeviceTemp = hoodMotor.getDeviceTemp(false);
 
-        this.positionVoltage = new PositionVoltage(0);
+        this.positionVoltage = new PositionVoltage(0).withSlot(0);
 
         RefreshAll.add(
                 constants.CANBus(),

@@ -16,7 +16,7 @@ import java.util.function.DoubleSupplier;
 public class Turret extends SubsystemBase {
     protected static final String LogKey = "Turret";
 
-    private static final double PositionToleranceRots = 0.01;
+    private static final double PositionToleranceRots = 0.001;
     private static final double VelocityToleranceRotsPerSec = 0.01;
     public static final double WRAP_THRESHOLD = 0.3;
 
@@ -69,15 +69,15 @@ public class Turret extends SubsystemBase {
 
         turretIO.updateInputs(inputs);
 
-        final double absolutePosition = ChineseRemainder.getAbsolutePosition(
-                constants.smallEncoderTooth() / constants.turretTooth(),
-                Units.rotationsToDegrees(inputs.smallEncoderPositionRots),
-                constants.largeEncoderTooth() / constants.turretTooth(),
-                Units.rotationsToDegrees(inputs.largeEncoderPositionRots),
-                constants.turretTooth()
-        ) % 1.0;
+        final Rotation2d absolutePosition = ChineseRemainder.findAbsolutePosition(
+                constants.turretTooth(),
+                inputs.smallEncoderPositionRots,
+                constants.smallEncoderTooth(),
+                inputs.largeEncoderPositionRots,
+                constants.largeEncoderTooth()
+        );
 
-        turretIO.setTurretPosition(absolutePosition);
+        turretIO.setTurretPosition(absolutePosition.getRotations());
 
         Logger.recordOutput(LogKey + "/CRTResult", absolutePosition);
     }

@@ -34,7 +34,6 @@ public class IntakeSlide extends SubsystemBase {
     private final TrapezoidProfile.State profileGoal = new TrapezoidProfile.State(0,0);
     private TrapezoidProfile.State profileSetpoint = new TrapezoidProfile.State(0,0);
 
-    //TODO: Need to implement
     private ControlMode controlMode = ControlMode.HARD;
 
     public final Trigger atSlideSetpoint = new Trigger(this::atSetpoint)

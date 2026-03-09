@@ -132,7 +132,10 @@ public class Autos {
                 Commands.sequence(
                         Commands.parallel(
                                 swerve.runWheelXCommand(),
-                                feeder.toGoal(Feeder.Goal.FEED)
+                                Commands.sequence(
+//                                        Commands.waitUntil(superstructure.atSetpoint),
+                                        feeder.toGoal(Feeder.Goal.FEED)
+                                )
                         ).withTimeout(4),
                         shootingToOutpost.cmd()
                 )
@@ -148,8 +151,9 @@ public class Autos {
         outpostToShooting.done().onTrue(
                 Commands.parallel(
                         swerve.runWheelXCommand(),
+//                        Commands.waitUntil(superstructure.atSetpoint),
                         feeder.toGoal(Feeder.Goal.FEED)
-                ).withTimeout(7)
+                ).withTimeout(4)
         );
 
         routine.active().whileTrue(

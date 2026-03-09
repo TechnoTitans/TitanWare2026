@@ -30,12 +30,12 @@ public class SwerveConstants {
     public static final SwerveConfig Config = new SwerveConfig(
             HardwareConstants.CANBus.CANIVORE,
             Units.inchesToMeters(2),
-            6.03,
+            7.03,
             287.0 / 11.0,
-            3.375,
-            Units.inchesToMeters(22.75),
-            Units.inchesToMeters(22.75),
-            Units.feetToMeters(15.0),
+            54.0 / 25.0,
+            Units.inchesToMeters(21.75),
+            Units.inchesToMeters(21.25),
+            Units.feetToMeters(14.36),
             4 * Math.PI,
             6 * Math.PI,
             Translation2d.kZero
@@ -111,12 +111,12 @@ public class SwerveConstants {
         }
 
         private static final Slot0Configs DriveGains = new Slot0Configs()
-                .withKS(1).withKV(0.1).withKA(2)
-                .withKP(5).withKD(0);
+                .withKS(4).withKV(0).withKA(5.55)
+                .withKP(30).withKD(0);
 
         private static final Slot0Configs SteerGains = new Slot0Configs()
-                .withKS(0).withKV(0).withKA(0)
-                .withKP(50).withKD(0)
+                .withKS(0.3).withKV(0).withKA(0)
+                .withKP(100).withKD(0.5)
                 .withStaticFeedforwardSign(StaticFeedforwardSignValue.UseClosedLoopSign);
 
         private static final Pigeon2Configuration Pigeon2Configuration = new Pigeon2Configuration();

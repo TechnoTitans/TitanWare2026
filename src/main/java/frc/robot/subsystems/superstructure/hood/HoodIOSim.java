@@ -5,10 +5,10 @@ import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.Slot0Configs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.PositionVoltage;
-import com.ctre.phoenix6.controls.TorqueCurrentFOC;
 import com.ctre.phoenix6.hardware.ParentDevice;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.FeedbackSensorSourceValue;
+import com.ctre.phoenix6.signals.GravityTypeValue;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 import com.ctre.phoenix6.sim.TalonFXSimState;
@@ -44,7 +44,6 @@ public class HoodIOSim implements HoodIO {
     private final StatusSignal<Temperature> hoodDeviceTemp;
 
     private final PositionVoltage positionVoltage;
-    private final TorqueCurrentFOC torqueCurrentFOC;
 
     public HoodIOSim(final HardwareConstants.HoodConstants constants) {
         this.deltaTime = new DeltaTime(true);
@@ -52,9 +51,10 @@ public class HoodIOSim implements HoodIO {
 
         final double zeroedPositionToHorizontalRads = PoseConstants.Hood.ZEROED_POSITION_TO_HORIZONTAL.getRadians();
         final SingleJointedArmSim hoodSim = new SingleJointedArmSim(
-                LinearSystemId.identifyPositionSystem(
-                        5 / (2d * Math.PI),
-                        0.04 / (2d * Math.PI)
+                LinearSystemId.createDCMotorSystem(
+                        DCMotor.getKrakenX44Foc(1),
+                        0.01,
+                        constants.hoodGearing()
                 ),
                 DCMotor.getKrakenX44Foc(1),
                 constants.hoodGearing(),
@@ -83,8 +83,7 @@ public class HoodIOSim implements HoodIO {
         this.hoodTorqueCurrent = hoodMotor.getTorqueCurrent(false);
         this.hoodDeviceTemp = hoodMotor.getDeviceTemp(false);
 
-        this.positionVoltage = new PositionVoltage(0);
-        this.torqueCurrentFOC = new TorqueCurrentFOC(0);
+        this.positionVoltage = new PositionVoltage(0).withSlot(0);
 
         RefreshAll.add(
                 constants.CANBus(),
@@ -110,7 +109,11 @@ public class HoodIOSim implements HoodIO {
     @Override
     public void config() {
         motorConfig.Slot0 = new Slot0Configs()
-                .withKP(50);
+                .withKS(0.35)
+                .withKG(0.03)
+                .withGravityType(GravityTypeValue.Arm_Cosine)
+                .withKP(200)
+                .withKD(0);
         motorConfig.CurrentLimits.StatorCurrentLimit = 60;
         motorConfig.CurrentLimits.StatorCurrentLimitEnable = true;
         motorConfig.CurrentLimits.SupplyCurrentLimit = 50;

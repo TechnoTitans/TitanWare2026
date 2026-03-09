@@ -12,8 +12,8 @@ import org.littletonrobotics.junction.Logger;
 
 public class Hood extends SubsystemBase {
     protected static final String LogKey = "Hood";
-    private static final double PositionToleranceRots = 0.001;
-    private static final double VelocityToleranceRotsPerSec = 0.001;
+    private static final double PositionToleranceRots = 0.005;
+    private static final double VelocityToleranceRotsPerSec = 0.01;
 
     private final HardwareConstants.HoodConstants constants;
 
@@ -63,6 +63,10 @@ public class Hood extends SubsystemBase {
         final double hoodPeriodicUpdateStart = Timer.getFPGATimestamp();
         hoodIO.updateInputs(inputs);
         Logger.processInputs(LogKey, inputs);
+
+        if (desiredGoal.isDynamic) {
+            hoodIO.toHoodPosition(desiredGoal.positionSetpointRots);
+        }
 
         if (desiredGoal != currentGoal) {
             hoodIO.toHoodPosition(desiredGoal.positionSetpointRots);

@@ -11,6 +11,7 @@ import frc.robot.subsystems.intake.roller.IntakeRoller;
 import frc.robot.subsystems.intake.slide.IntakeSlide;
 import frc.robot.subsystems.spindexer.Spindexer;
 import frc.robot.subsystems.superstructure.Superstructure;
+import frc.robot.subsystems.superstructure.shooter.Shooter;
 import frc.robot.utils.commands.LoggedTrigger;
 import frc.robot.utils.teleop.SwerveSpeed;
 
@@ -22,6 +23,7 @@ public class RobotCommands {
     private final IntakeRoller intakeRoller;
     private final IntakeSlide intakeSlide;
     private final Superstructure superstructure;
+    private final Shooter shooter;
     private final Spindexer spindexer;
     private final Feeder feeder;
     private final Climb climb;
@@ -38,6 +40,7 @@ public class RobotCommands {
             final IntakeRoller intakeRoller,
             final IntakeSlide intakeSlide,
             final Superstructure superstructure,
+            final Shooter shooter,
             final Spindexer spindexer,
             final Feeder feeder,
             final Climb climb
@@ -46,6 +49,7 @@ public class RobotCommands {
         this.intakeRoller = intakeRoller;
         this.intakeSlide = intakeSlide;
         this.superstructure = superstructure;
+        this.shooter = shooter;
         this.spindexer = spindexer;
         this.feeder = feeder;
         this.climb = climb;
@@ -82,11 +86,7 @@ public class RobotCommands {
     public Command shootWhileMoving() {
         return Commands.parallel(
                 superstructure.toGoal(Superstructure.Goal.SHOOTING),
-                Commands.repeatingSequence(
-                        Commands.waitUntil(superstructure.atSetpoint),
-                        feeder.toGoal(Feeder.Goal.FEED)
-                                .until(superstructure.atSetpoint.negate())
-                ),
+                feeder.toGoal(Feeder.Goal.FEED),
                 intakeSlide.toGoal(IntakeSlide.Goal.SHOOTING),
                 spindexer.toGoal(Spindexer.Goal.FEED),
                 Commands.runOnce(() -> SwerveSpeed.setSwerveSpeed(SwerveSpeed.Speeds.SHOOTING))
