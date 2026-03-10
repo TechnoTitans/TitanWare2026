@@ -120,6 +120,7 @@ public class Turret extends SubsystemExt {
         Logger.recordOutput(LogKey + "/CurrentGoal", currentGoal);
         Logger.recordOutput(LogKey + "/PositionSetpointRots", positionSetpointRots);
         Logger.recordOutput(LogKey + "/VelocitySetpointRotsPerSec", velocitySetpointRotsPerSec);
+        Logger.recordOutput(LogKey + "/AtSetpoint", atSetpoint());
 
         Logger.recordOutput(
                 LogKey + "/PeriodicIOPeriodMs",

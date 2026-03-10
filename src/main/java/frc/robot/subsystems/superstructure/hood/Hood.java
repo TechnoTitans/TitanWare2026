@@ -102,6 +102,7 @@ public class Hood extends SubsystemExt {
         Logger.recordOutput(LogKey + "/DesiredGoal", desiredGoal);
         Logger.recordOutput(LogKey + "/CurrentGoal", currentGoal);
         Logger.recordOutput(LogKey + "/PositionSetpointRots", positionSetpointRots);
+        Logger.recordOutput(LogKey + "/AtSetpoint", atSetpoint());
 
         Logger.recordOutput(
                 LogKey + "/PeriodicIOPeriodMs",

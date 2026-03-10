@@ -35,7 +35,7 @@ public class Spindexer extends SubsystemExt {
 
     private ControlMode controlMode;
     private double setpointOutput;
-    private Goal desiredGoal = Goal.OFF;
+    private Goal desiredGoal = Goal.AGITATE;
 
     public Spindexer(final Constants.RobotMode mode, final HardwareConstants.SpindexerConstants constants) {
         this.spindexerIO = switch (mode) {
@@ -88,7 +88,7 @@ public class Spindexer extends SubsystemExt {
     public Command toGoal(final Goal goal) {
         return startEnd(
                 () -> setGoalImpl(goal),
-                () -> setGoalImpl(Goal.OFF)
+                () -> setGoalImpl(Goal.AGITATE)
         );
     }
 }

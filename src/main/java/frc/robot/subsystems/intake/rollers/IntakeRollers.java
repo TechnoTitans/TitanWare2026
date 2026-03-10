@@ -86,13 +86,13 @@ public class IntakeRollers extends SubsystemExt {
         );
     }
 
-    private void setVelocityImpl(final double volts) {
+    private void setVoltageImpl(final double volts) {
         intakeRollersIO.toIntakeVoltage(volts);
     }
 
     private void setGoalImpl(final Goal goal) {
         desiredGoal = InternalGoal.fromGoal(goal);
-        setVelocityImpl(goal.volts);
+        setVoltageImpl(goal.volts);
     }
 
     public Command toInstantGoal(final Goal goal) {
