@@ -247,7 +247,7 @@ public class IntakeSlideIOSim implements IntakeSlideIO {
         diffMechanism.setControl(
                 averagePositionTorqueCurrentFOC
                         .withPosition(positionRots)
-                        .withSlot(2),
+                        .withSlot(1),
                 differentialPositionTorqueCurrentFOC
                         .withPosition(0)
                         .withSlot(2)
@@ -270,5 +270,11 @@ public class IntakeSlideIOSim implements IntakeSlideIO {
     @Override
     public void zeroMotors() {
         diffMechanism.setPosition(0);
+    }
+
+    @Override
+    public void testIntake() {
+        masterSim.rawUpdate(0, -5);
+        followerSim.rawUpdate(0, -5);
     }
 }

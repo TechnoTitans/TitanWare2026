@@ -63,11 +63,12 @@ public class Turret extends SubsystemBase {
         };
 
         this.inputs = new TurretIOInputsAutoLogged();
+
         this.turretIO.config();
+        this.turretIO.updateInputs(inputs);
+        Logger.processInputs(LogKey, inputs);
 
         this.robotAngularVelocitySupplier = robotAngularVelocitySupplier;
-
-        turretIO.updateInputs(inputs);
 
         final Rotation2d absolutePosition = ChineseRemainder.findAbsolutePosition(
                 constants.turretTooth(),
@@ -76,8 +77,7 @@ public class Turret extends SubsystemBase {
                 inputs.largeEncoderPositionRots,
                 constants.largeEncoderTooth()
         );
-
-        turretIO.setTurretPosition(absolutePosition.getRotations());
+        turretIO.seedTurretPosition(absolutePosition);
 
         Logger.recordOutput(LogKey + "/CRTResult", absolutePosition);
     }

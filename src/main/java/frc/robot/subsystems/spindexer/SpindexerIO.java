@@ -16,5 +16,5 @@ public interface SpindexerIO {
 
     default void config() {}
 
-    default void toWheelVelocity(final double wheelVelocityRotsPerSec) {}
+    default void toWheelVoltage(final double volts) {}
 }

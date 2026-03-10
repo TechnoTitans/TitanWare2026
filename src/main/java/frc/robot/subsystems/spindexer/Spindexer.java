@@ -12,7 +12,6 @@ import org.littletonrobotics.junction.Logger;
 
 public class Spindexer extends SubsystemBase {
     protected static final String LogKey = "Spindexer";
-    private static final double VelocityToleranceRotsPerSec = 0.002;
 
     private final SpindexerIO spindexerIO;
     private final SpindexerIOInputsAutoLogged inputs;
@@ -22,13 +21,13 @@ public class Spindexer extends SubsystemBase {
 
     public enum Goal {
         STOP(0),
-        AGITATE(10),
-        FEED(50);
+        AGITATE(4),
+        FEED(11);
 
-        private final double velocitySetpointRotsPerSec;
+        private final double voltageSetpoint;
 
-        Goal(final double velocitySetpointRotsPerSec) {
-            this.velocitySetpointRotsPerSec = velocitySetpointRotsPerSec;
+        Goal(final double voltageSetpoint) {
+            this.voltageSetpoint = voltageSetpoint;
         }
     }
 
@@ -42,8 +41,7 @@ public class Spindexer extends SubsystemBase {
         this.inputs = new SpindexerIOInputsAutoLogged();
 
         spindexerIO.config();
-
-        spindexerIO.toWheelVelocity(desiredGoal.velocitySetpointRotsPerSec);
+        spindexerIO.toWheelVoltage(desiredGoal.voltageSetpoint);
     }
 
     @Override
@@ -54,14 +52,13 @@ public class Spindexer extends SubsystemBase {
         Logger.processInputs(LogKey, inputs);
 
         if (desiredGoal != currentGoal) {
-            spindexerIO.toWheelVelocity(desiredGoal.velocitySetpointRotsPerSec);
+            spindexerIO.toWheelVoltage(desiredGoal.voltageSetpoint);
             currentGoal = desiredGoal;
         }
 
         Logger.recordOutput(LogKey + "/CurrentGoal", currentGoal.toString());
         Logger.recordOutput(LogKey + "/DesiredGoal", desiredGoal.toString());
-        Logger.recordOutput(LogKey + "/DesiredGoal/VelocitySetpointRotsPerSec", desiredGoal.velocitySetpointRotsPerSec);
-        Logger.recordOutput(LogKey + "/AtSetpoint", atVelocitySetpoint());
+        Logger.recordOutput(LogKey + "/DesiredGoal/VoltageSetpoint", desiredGoal.voltageSetpoint);
 
         Logger.recordOutput(
                 LogKey + "/PeriodicIOPeriodMs",
@@ -86,10 +83,5 @@ public class Spindexer extends SubsystemBase {
         desiredGoal = goal;
         Logger.recordOutput(LogKey + "/CurrentGoal", currentGoal.toString());
         Logger.recordOutput(LogKey + "/DesiredGoal", goal.toString());
-    }
-
-    private boolean atVelocitySetpoint() {
-        return currentGoal == desiredGoal
-                && MathUtil.isNear(desiredGoal.velocitySetpointRotsPerSec, inputs.wheelVelocityRotsPerSec, VelocityToleranceRotsPerSec);
     }
 }

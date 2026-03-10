@@ -5,6 +5,7 @@ import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.Slot0Configs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.VelocityTorqueCurrentFOC;
+import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.ParentDevice;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.FeedbackSensorSourceValue;
@@ -25,7 +26,7 @@ public class SpindexerIOReal implements SpindexerIO {
     private final StatusSignal<Current> wheelTorqueCurrent;
     private final StatusSignal<Temperature> wheelTemp;
 
-    private final VelocityTorqueCurrentFOC velocityTorqueCurrentFOC;
+    private final VoltageOut voltageOut;
 
     public SpindexerIOReal(final HardwareConstants.SpindexerConstants constants) {
         this.constants = constants;
@@ -38,7 +39,7 @@ public class SpindexerIOReal implements SpindexerIO {
         this.wheelTorqueCurrent = wheelMotor.getTorqueCurrent(false);
         this.wheelTemp = wheelMotor.getDeviceTemp(false);
 
-        this.velocityTorqueCurrentFOC = new VelocityTorqueCurrentFOC(0);
+        this.voltageOut = new VoltageOut(0);
 
         RefreshAll.add(
                 constants.CANBus(),
@@ -58,8 +59,6 @@ public class SpindexerIOReal implements SpindexerIO {
                 .withKV(0.14)
                 .withKP(8.5)
                 .withKD(0.05);
-        wheelConfiguration.TorqueCurrent.PeakForwardTorqueCurrent = 80;
-        wheelConfiguration.TorqueCurrent.PeakReverseTorqueCurrent = -80;
         wheelConfiguration.CurrentLimits.StatorCurrentLimit = 80;
         wheelConfiguration.CurrentLimits.StatorCurrentLimitEnable = true;
         wheelConfiguration.CurrentLimits.SupplyCurrentLimit = 70;
@@ -101,7 +100,7 @@ public class SpindexerIOReal implements SpindexerIO {
     }
 
     @Override
-    public void toWheelVelocity(final double wheelVelocityRotsPerSec) {
-        wheelMotor.setControl(velocityTorqueCurrentFOC.withVelocity(wheelVelocityRotsPerSec));
+    public void toWheelVoltage(final double volts) {
+        wheelMotor.setControl(voltageOut.withOutput(volts));
     }
 }

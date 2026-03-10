@@ -1,5 +1,6 @@
 package frc.robot.subsystems.superstructure.turret;
 
+import edu.wpi.first.math.geometry.Rotation2d;
 import org.littletonrobotics.junction.AutoLog;
 
 public interface TurretIO {
@@ -24,5 +25,5 @@ public interface TurretIO {
 
     default void toTurretContinuousPosition(final double positionRots, final double velocityRotsPerSec) {}
 
-    default void setTurretPosition(final double turretPositionRots) {}
+    default void seedTurretPosition(final Rotation2d turretPositionRots) {}
 }

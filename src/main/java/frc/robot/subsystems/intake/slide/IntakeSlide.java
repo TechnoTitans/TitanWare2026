@@ -36,17 +36,7 @@ public class IntakeSlide extends SubsystemBase {
 
     private ControlMode controlMode = ControlMode.HARD;
 
-    public final Trigger atSlideSetpoint = new Trigger(this::atSetpoint)
-            .onTrue(Commands.runOnce(() -> {
-                if (currentGoal == Goal.INTAKE) {
-                    controlMode = ControlMode.SOFT;
-                }
-            }))
-            .onFalse(Commands.runOnce(() -> {
-                if (desiredGoal != currentGoal) {
-                    controlMode = ControlMode.HARD;
-                }
-            }));
+    public final Trigger atSlideSetpoint = new Trigger(this::atSetpoint);
 
     public enum Goal {
         STOW(0),
@@ -75,6 +65,19 @@ public class IntakeSlide extends SubsystemBase {
         };
 
         intakeSlideIO.zeroMotors();
+
+        atSlideSetpoint
+                .onTrue(Commands.runOnce(() -> {
+                    if (currentGoal == Goal.INTAKE) {
+                        controlMode = ControlMode.SOFT;
+                        intakeSlideIO.holdSlidePosition(currentGoal.positionSetpointRots);
+                    }
+                }))
+                .onFalse(Commands.runOnce(() -> {
+                    if (desiredGoal != currentGoal) {
+                        controlMode = ControlMode.HARD;
+                    }
+                }));
     }
 
     @Override
@@ -87,20 +90,16 @@ public class IntakeSlide extends SubsystemBase {
         final double dt = deltaTime.get();
 
         if (desiredGoal != currentGoal) {
-            switch (controlMode) {
-                case SOFT -> intakeSlideIO.holdSlidePosition(desiredGoal.positionSetpointRots);
-                case HARD -> {
-                    if (desiredGoal == Goal.SHOOTING) {
-                        profileSetpoint.position = inputs.averagePositionRots;
-                        profileSetpoint.velocity = inputs.averageVelocityRotsPerSec;
+            if (desiredGoal == Goal.SHOOTING) {
+                profileSetpoint.position = inputs.averagePositionRots;
+                profileSetpoint.velocity = inputs.averageVelocityRotsPerSec;
 
-                        profileGoal.position = desiredGoal.positionSetpointRots;
-                        profileGoal.velocity = 0;
-                    } else {
-                        intakeSlideIO.toSlidePosition(desiredGoal.positionSetpointRots);
-                    }
-                }
+                profileGoal.position = desiredGoal.positionSetpointRots;
+                profileGoal.velocity = 0;
+            } else {
+                intakeSlideIO.toSlidePosition(desiredGoal.positionSetpointRots);
             }
+
             currentGoal = desiredGoal;
         }
 
@@ -163,5 +162,9 @@ public class IntakeSlide extends SubsystemBase {
 
     private boolean atUpperLimit() {
         return inputs.masterPositionRots >= constants.upperLimitRots();
+    }
+
+    public Command testIntake() {
+        return runOnce(intakeSlideIO::testIntake);
     }
 }

@@ -1,10 +1,7 @@
 package frc.robot.subsystems.superstructure;
 
 import edu.wpi.first.math.MathUtil;
-import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.geometry.Translation2d;
-import edu.wpi.first.math.geometry.Twist2d;
+import edu.wpi.first.math.geometry.*;
 import edu.wpi.first.math.interpolation.*;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.util.Units;
@@ -13,6 +10,7 @@ import frc.robot.RobotCommands;
 import frc.robot.constants.FieldConstants;
 import frc.robot.constants.PoseConstants;
 
+import javax.xml.crypto.dsig.Transform;
 import java.util.function.Supplier;
 
 public class ShotCalculator {
@@ -187,8 +185,6 @@ public class ShotCalculator {
     private static final double FerryXBoundary = Units.inchesToMeters(200);
     private static final double DelayTimeSec = 0.01;
     private static final Rotation2d wrapOffset = Rotation2d.fromRotations(0.75);
-    //TODO: Try to see if this is worth it
-//    private static final LinearFilter turretFilter = LinearFilter.movingAverage(5);
 
     public static ShotCalculation getShotCalculation(
             final Supplier<Pose2d> swervePoseSupplier,
@@ -247,12 +243,7 @@ public class ShotCalculator {
             final Pose2d swervePose,
             final ChassisSpeeds swerveSpeeds
     ) {
-        final Pose2d turretPose = swervePose.transformBy(PoseConstants.Turret.ROBOT_TO_TURRET_TRANSFORM_2D)
-                .exp(new Twist2d(
-                        swerveSpeeds.vxMetersPerSecond * DelayTimeSec,
-                        swerveSpeeds.vyMetersPerSecond * DelayTimeSec,
-                        swerveSpeeds.omegaRadiansPerSecond * DelayTimeSec
-                ));
+        final Pose2d turretPose = swervePose.transformBy(PoseConstants.Turret.ROBOT_TO_TURRET_TRANSFORM_2D);
 
         final Pose2d calculationPose = DriverStation.getAlliance().orElse(DriverStation.Alliance.Blue) == DriverStation.Alliance.Blue
                 ? turretPose : turretPose.relativeTo(FieldConstants.RED_ORIGIN);
@@ -269,47 +260,83 @@ public class ShotCalculator {
 
         final double turretToTargetDistance = targetTranslation.getDistance(turretPose.getTranslation());
 
-        final double robotAngle = swervePose.getRotation().getRadians();
-        final double turretVelocityX =
-                swerveSpeeds.vxMetersPerSecond
-                + swerveSpeeds.omegaRadiansPerSecond *
-                        (PoseConstants.Turret.ROBOT_TO_TURRET_TRANSFORM_2D.getY() * Math.cos(robotAngle))
-                            - PoseConstants.Turret.ROBOT_TO_TURRET_TRANSFORM_2D.getX() * Math.sin(robotAngle);
+        final Pose2d lookaheadRobotPose = swervePose.exp(new Twist2d(
+                swerveSpeeds.vxMetersPerSecond * DelayTimeSec,
+                swerveSpeeds.vyMetersPerSecond * DelayTimeSec,
+                swerveSpeeds.omegaRadiansPerSecond * DelayTimeSec
+        ));
 
-        final double turretVelocityY =
-                swerveSpeeds.vyMetersPerSecond
-                    + swerveSpeeds.omegaRadiansPerSecond
-                        * (PoseConstants.Turret.ROBOT_TO_TURRET_TRANSFORM_2D.getX() * Math.cos(robotAngle))
-                            - PoseConstants.Turret.ROBOT_TO_TURRET_TRANSFORM_2D.getY() * Math.sin(robotAngle);
+        final Rotation2d robotAngle = lookaheadRobotPose.getRotation();
+        final ChassisSpeeds fieldSpeeds = ChassisSpeeds.fromRobotRelativeSpeeds(
+                swerveSpeeds,
+                robotAngle
+        );
 
-        double tOF;
-        Pose2d lookaheadPose;
-        double lookAheadTurretToTargetDistance = turretToTargetDistance;
+        final Transform2d turretOffset = turretPose.minus(lookaheadRobotPose);
+        final ChassisSpeeds turretFieldVelocity = getTurretFieldSpeeds(lookaheadRobotPose, turretOffset, fieldSpeeds);
+
+        double timeOfFlight;
+        Pose2d futureTurretPose = turretPose;
+        double futureDistance = turretToTargetDistance;
 
         for (int i = 0; i < 20; i++) {
-            tOF = TOFMap.get(lookAheadTurretToTargetDistance);
-            double offsetX = turretVelocityX * tOF;
-            double offsetY = turretVelocityY * tOF;
-            lookaheadPose =
-                    new Pose2d(
-                            turretPose.getTranslation().plus(new Translation2d(offsetX, offsetY)),
-                            turretPose.getRotation()
-                    );
+            timeOfFlight = TOFMap.get(futureDistance);
 
-            lookAheadTurretToTargetDistance = targetTranslation.getDistance(lookaheadPose.getTranslation());
+            final Translation2d delta = new Translation2d(
+                    turretFieldVelocity.vxMetersPerSecond * timeOfFlight,
+                    turretFieldVelocity.vyMetersPerSecond * timeOfFlight
+            );
+            futureTurretPose = new Pose2d(
+                    turretPose.getTranslation().plus(delta),
+                    turretPose.getRotation()
+            );
+            futureDistance = futureTurretPose.getTranslation()
+                    .getDistance(targetTranslation);
         }
 
-
+        final Pose2d futureRobotPose = futureTurretPose.transformBy(turretOffset.inverse());
         final Rotation2d desiredTurretAngle = targetTranslation.minus(turretPose.getTranslation()).getAngle().minus(
                 turretPose.getRotation()
         );
 
-        final HoodShooterCalculation hoodShooterCalculation = shotDataMap.get(turretToTargetDistance);
+
         return new ShotCalculation(
                 wrapTurret(desiredTurretAngle),
-                hoodShooterCalculation.hoodRotation,
-                hoodShooterCalculation.flywheelVelocity(),
+                shotDataMap.get(futureDistance).hoodRotation,
+                shotDataMap.get(futureDistance).flywheelVelocity,
                 target
+        );
+    }
+
+    private static ChassisSpeeds getTurretFieldSpeeds(
+            final Pose2d robotPose,
+            final Translation2d turretTranslation,
+            final ChassisSpeeds fieldRelativeSpeeds
+    ) {
+        return getTurretFieldSpeeds(
+                robotPose,
+                new Transform2d(robotPose, new Pose2d(turretTranslation, Rotation2d.kZero)),
+                fieldRelativeSpeeds
+        );
+    }
+
+    private static ChassisSpeeds getTurretFieldSpeeds(
+            final Pose2d robotPose,
+            final Transform2d turretOffset,
+            final ChassisSpeeds fieldRelativeSpeeds
+    ) {
+        final double omega = fieldRelativeSpeeds.omegaRadiansPerSecond;
+        final Translation2d rField = turretOffset
+                .getTranslation()
+                .rotateBy(robotPose.getRotation());
+
+        final double tangentVx = -omega * rField.getY();
+        final double tangentVy = omega * rField.getX();
+
+        return new ChassisSpeeds(
+                fieldRelativeSpeeds.vxMetersPerSecond + tangentVx,
+                fieldRelativeSpeeds.vyMetersPerSecond + tangentVy,
+                omega
         );
     }
 

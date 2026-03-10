@@ -22,7 +22,7 @@ public class Shooter extends SubsystemBase {
     public final Trigger atSetpoint = new Trigger(this::atSetpoint);
 
     public enum Goal {
-        STOP(0, false),
+        STOP(20, false),
         TRACKING(0, true);
 
         private double velocitySetpointRotsPerSec;
@@ -60,12 +60,14 @@ public class Shooter extends SubsystemBase {
         shooterIO.updateInputs(inputs);
         Logger.processInputs(LogKey, inputs);
 
-        if (desiredGoal.isDynamic) {
-            shooterIO.toVelocity(desiredGoal.velocitySetpointRotsPerSec);
-        }
+
+
+//        if (desiredGoal.isDynamic) {
+//            shooterIO.toVelocity(desiredGoal.velocitySetpointRotsPerSec);
+//        }
 
         if (desiredGoal != currentGoal) {
-            shooterIO.toVelocity(desiredGoal.velocitySetpointRotsPerSec);
+//            shooterIO.toVelocity(desiredGoal.velocitySetpointRotsPerSec);
             currentGoal = desiredGoal;
         }
 

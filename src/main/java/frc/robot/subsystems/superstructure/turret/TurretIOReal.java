@@ -15,7 +15,10 @@ import com.ctre.phoenix6.signals.FeedbackSensorSourceValue;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 import com.ctre.phoenix6.signals.SensorDirectionValue;
+import edu.wpi.first.math.MathUtil;
+import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.units.measure.*;
+import edu.wpi.first.wpilibj.DriverStation;
 import frc.robot.constants.HardwareConstants;
 import frc.robot.utils.ctre.Phoenix6Utils;
 import frc.robot.utils.ctre.RefreshAll;
@@ -89,7 +92,7 @@ public class TurretIOReal implements TurretIO {
         motorConfig.CurrentLimits.SupplyCurrentLowerTime = 1;
         motorConfig.CurrentLimits.SupplyCurrentLimitEnable = true;
         motorConfig.Feedback.FeedbackSensorSource = FeedbackSensorSourceValue.RotorSensor;
-        motorConfig.Feedback.SensorToMechanismRatio = constants.turretToMechanismGearing();
+        motorConfig.Feedback.SensorToMechanismRatio = constants.motorToTurretGearing();
         motorConfig.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
         motorConfig.MotorOutput.NeutralMode = NeutralModeValue.Brake;
         motorConfig.SoftwareLimitSwitch.ForwardSoftLimitThreshold = constants.forwardLimitRots();
@@ -137,8 +140,8 @@ public class TurretIOReal implements TurretIO {
         inputs.turretTorqueCurrentAmps = turretTorqueCurrent.getValueAsDouble();
         inputs.turretTempCelsius = turretDeviceTemp.getValueAsDouble();
 
-        inputs.largeEncoderPositionRots = largeEncoderPosition.getValueAsDouble();
         inputs.smallEncoderPositionRots = smallEncoderPosition.getValueAsDouble();
+        inputs.largeEncoderPositionRots = largeEncoderPosition.getValueAsDouble();
     }
 
     @Override
@@ -152,7 +155,20 @@ public class TurretIOReal implements TurretIO {
     }
 
     @Override
-    public void setTurretPosition(final double turretPositionRots) {
-        Phoenix6Utils.reportIfNotOk(turretMotor, turretMotor.setPosition(turretPositionRots));
+    public void seedTurretPosition(final Rotation2d turretPosition) {
+        final double turretPositionRots = turretPosition.getRotations();
+        final double primaryGearing = constants.smallEncoderTooth();
+        final double primaryAbsolutePosition = smallEncoder.getAbsolutePosition().getValueAsDouble() * primaryGearing;
+
+        if (!MathUtil.isNear(primaryAbsolutePosition, turretPositionRots, 1e-6, 0, 1)) {
+            DriverStation.reportError(String.format(
+                    "Failed to seed turret position! Expected integer increment in position from: %.3f to %.3f",
+                    Math.min(primaryAbsolutePosition, turretPositionRots),
+                    Math.max(primaryAbsolutePosition, turretPositionRots)
+            ), true);
+            return;
+        }
+
+        Phoenix6Utils.reportIfNotOk(turretMotor, smallEncoder.setPosition(turretPositionRots / primaryGearing));
     }
 }

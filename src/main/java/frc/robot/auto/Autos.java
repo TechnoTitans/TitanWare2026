@@ -7,6 +7,7 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
 import frc.robot.Robot;
+import frc.robot.RobotCommands;
 import frc.robot.subsystems.drive.Swerve;
 import frc.robot.subsystems.feeder.Feeder;
 import frc.robot.subsystems.superstructure.Superstructure;
@@ -19,17 +20,21 @@ public class Autos {
     private final Swerve swerve;
     private final Superstructure superstructure;
     private final Feeder feeder;
+
+    private final RobotCommands robotCommands;
     private final AutoFactory autoFactory;
 
     public Autos(
             final Swerve swerve,
             final Superstructure superstructure,
             final Feeder feeder,
+            final RobotCommands robotCommands,
             final PhotonVision photonVision
     ) {
         this.swerve = swerve;
         this.superstructure = superstructure;
         this.feeder = feeder;
+        this.robotCommands = robotCommands;
 
         this.autoFactory = new AutoFactory(
                 swerve::getPose,
@@ -79,7 +84,6 @@ public class Autos {
         final AutoRoutine routine = autoFactory.newRoutine("LeftCenterLineDepot");
         final AutoTrajectory startToCenterLineAndBack = routine.trajectory("LeftStartToCenterLineAndBack");
         final AutoTrajectory shootingToDepot = routine.trajectory("LeftShootingToDepot");
-        final AutoTrajectory depotToShooting = routine.trajectory("LeftDepotToShooting");
 
         routine.active().onTrue(runStartingTrajectory(startToCenterLineAndBack));
 
@@ -98,14 +102,7 @@ public class Autos {
         );
 
         shootingToDepot.done().onTrue(
-                depotToShooting.cmd()
-        );
-
-        depotToShooting.done().onTrue(
-                Commands.parallel(
-                        swerve.runWheelXCommand(),
-                        feeder.toGoal(Feeder.Goal.FEED)
-                ).withTimeout(7)
+                robotCommands.shootStationary()
         );
 
         routine.active().whileTrue(
@@ -120,7 +117,6 @@ public class Autos {
         final AutoRoutine routine = autoFactory.newRoutine("RightCenterLineOutpost");
         final AutoTrajectory startToCenterLineAndBack = routine.trajectory("RightStartToCenterLineAndBack");
         final AutoTrajectory shootingToOutpost = routine.trajectory("RightShootingToOutput");
-        final AutoTrajectory outpostToShooting = routine.trajectory("RightOutpostToShooting");
 
         routine.active().onTrue(runStartingTrajectory(startToCenterLineAndBack));
 
@@ -142,18 +138,7 @@ public class Autos {
         );
 
         shootingToOutpost.done().onTrue(
-                Commands.sequence(
-                        Commands.waitSeconds(3),
-                        outpostToShooting.cmd()
-                )
-        );
-
-        outpostToShooting.done().onTrue(
-                Commands.parallel(
-                        swerve.runWheelXCommand(),
-//                        Commands.waitUntil(superstructure.atSetpoint),
-                        feeder.toGoal(Feeder.Goal.FEED)
-                ).withTimeout(4)
+                robotCommands.shootStationary()
         );
 
         routine.active().whileTrue(

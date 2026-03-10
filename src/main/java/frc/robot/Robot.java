@@ -83,12 +83,12 @@ public class Robot extends LoggedRobot {
     );
 
     public final PhotonVision photonVision = new PhotonVision(
-            Constants.CURRENT_MODE,
+            Constants.RobotMode.DISABLED,
             swerve
     );
 
     public final IntakeRoller intakeRoller = new IntakeRoller(
-            Constants.CURRENT_MODE,
+            Constants.RobotMode.DISABLED,
             HardwareConstants.INTAKE_ROLLER
     );
 
@@ -98,17 +98,17 @@ public class Robot extends LoggedRobot {
     );
 
     public final Feeder feeder = new Feeder(
-            Constants.CURRENT_MODE,
+            Constants.RobotMode.DISABLED,
             HardwareConstants.FEEDER
     );
 
     public final Hood hood = new Hood(
-            Constants.CURRENT_MODE,
+            Constants.RobotMode.DISABLED,
             HardwareConstants.HOOD
     );
 
     public final Turret turret = new Turret(
-            Constants.CURRENT_MODE,
+            Constants.RobotMode.DISABLED,
             HardwareConstants.TURRET,
             () -> swerve.getFieldRelativeSpeeds().omegaRadiansPerSecond
     );
@@ -119,7 +119,7 @@ public class Robot extends LoggedRobot {
     );
 
     public final Spindexer spindexer = new Spindexer(
-            Constants.CURRENT_MODE,
+            Constants.RobotMode.DISABLED,
             HardwareConstants.SPINDEXER
     );
 
@@ -168,6 +168,7 @@ public class Robot extends LoggedRobot {
             swerve,
             superstructure,
             feeder,
+            robotCommands,
             photonVision
     );
 
@@ -379,7 +380,7 @@ public class Robot extends LoggedRobot {
                         ).onlyIf(climb::isExtended),
                         Commands.parallel(
                                 intakeRoller.setGoal(IntakeRoller.Goal.INTAKE),
-//                                intakeSlide.setGoal(IntakeSlide.Goal.INTAKE),
+                                intakeSlide.setGoal(IntakeSlide.Goal.INTAKE),
                                 superstructure.setGoal(Superstructure.Goal.TRACKING)
                         )
                 )
@@ -438,10 +439,12 @@ public class Robot extends LoggedRobot {
 
         driverController.rightTrigger(0.5, teleopEventLoop).whileTrue(robotCommands.shootWhileMoving());
 
-        driverController.y().whileTrue(robotCommands.readyClimb())
-                .onFalse(robotCommands.climb());
+//        driverController.y(teleopEventLoop).whileTrue(robotCommands.readyClimb())
+//                .onFalse(robotCommands.climb());
 
-        driverController.a().onTrue(robotCommands.unclimb());
+        driverController.y(teleopEventLoop).onTrue(intakeSlide.testIntake());
+
+        driverController.a(teleopEventLoop).onTrue(robotCommands.unclimb());
 
         coController.y(teleopEventLoop).onTrue(robotCommands.deployIntake());
 

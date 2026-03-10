@@ -77,10 +77,14 @@ public class ShooterIOReal implements ShooterIO {
     public void config() {
         final TalonFXConfiguration motorConfiguration = new TalonFXConfiguration();
         motorConfiguration.Slot0 = new Slot0Configs()
-                .withKS(14.7)
-                .withKV(0.17)
-                .withKP(20)
-                .withKD(0.1);
+//                .withKS(14.7)
+//                .withKV(0.17)
+//                .withKP(20)
+//                .withKD(0.1);
+                .withKS(7.8)
+                .withKV(0)
+                .withKP(40)
+                .withKD(0);
         motorConfiguration.CurrentLimits.StatorCurrentLimit = 80;
         motorConfiguration.CurrentLimits.StatorCurrentLimitEnable = true;
         motorConfiguration.CurrentLimits.SupplyCurrentLimit = 70;

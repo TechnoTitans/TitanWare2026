@@ -34,4 +34,6 @@ public interface IntakeSlideIO {
     default void holdSlidePosition(final double positionRots) {}
 
     default void zeroMotors() {}
+
+    default void testIntake() {}
 }

@@ -58,7 +58,7 @@ public class HardwareConstants {
             15,
             16,
             10,
-            34.4,
+            3.8,
             0
     );
 
@@ -92,7 +92,7 @@ public class HardwareConstants {
             int turretMotorID,
             int smallEncoderID,
             int largeEncoderID,
-            double turretToMechanismGearing,
+            double motorToTurretGearing,
             int turretTooth,
             int smallEncoderTooth,
             int largeEncoderTooth,
@@ -111,8 +111,8 @@ public class HardwareConstants {
             80,
             13,
             17,
-            -0.451,
-            -0.061,
+            0, //-0.451,
+            0, //-0.061,
             0.5,
             -0.5
     );
