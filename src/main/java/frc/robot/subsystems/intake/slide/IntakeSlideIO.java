@@ -6,34 +6,33 @@ import org.littletonrobotics.junction.AutoLog;
 public interface IntakeSlideIO {
     @AutoLog
     class IntakeSlideIOInputs {
-        public double masterPositionRots = 0.0;
-        public double masterVelocityRotsPerSec = 0.0;
-        public double masterVoltage = 0.0;
-        public double masterTorqueCurrentAmps = 0.0;
-        public double masterTempCelsius = 0.0;
+        public MechanismState slideState;
 
-        public double followerPositionRots = 0.0;
-        public double followerVelocityRotsPerSec = 0.0;
-        public double followerVoltage = 0.0;
-        public double followerTorqueCurrentAmps = 0.0;
-        public double followerTempCelsius = 0.0;
+        public double slideAveragePositionRots = 0;
+        public double slideAverageVelocityRotsPerSec = 0;
+        public double slideDifferentialPositionRots = 0;
+        public double slideDifferentialVelocityRotsPerSec = 0;
 
-        public double averagePositionRots = 0.0;
-        public double averageVelocityRotsPerSec = 0.0;
-        public double differentialPositionRots = 0.0;
+        public double masterPositionRots = 0;
+        public double masterVelocityRotsPerSec = 0;
+        public double masterVoltage = 0;
+        public double masterTorqueCurrentAmps = 0;
+        public double masterTempCelsius = 0;
 
-        public MechanismState mechanism;
+        public double followerPositionRots = 0;
+        public double followerVelocityRotsPerSec = 0;
+        public double followerVoltage = 0;
+        public double followerTorqueCurrentAmps = 0;
+        public double followerTempCelsius = 0;
     }
 
     default void updateInputs(final IntakeSlideIOInputs inputs) {}
 
-    default void toSlidePosition(final double positionRots) {}
+    default void toSlidePosition(final double slidePositionRots) {}
 
-    default void toSlidePositionUnprofiled(final double positionRots, final double velocityRotsPerSec) {}
+    default void holdSlidePosition(final double slidePositionRots) {}
 
-    default void holdSlidePosition(final double positionRots) {}
+    default void toSlidePositionVelocity(final double slidePositionRots, final double slideVelocityRotsPerSec) {}
 
-    default void zeroMotors() {}
-
-    default void testIntake() {}
+    default void toSlideTorqueCurrent(final double slideTorqueCurrentAmps) {}
 }

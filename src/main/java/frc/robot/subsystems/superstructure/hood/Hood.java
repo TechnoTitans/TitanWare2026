@@ -4,113 +4,160 @@ import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.Timer;
-import edu.wpi.first.wpilibj2.command.SubsystemBase;
-import edu.wpi.first.wpilibj2.command.button.Trigger;
+import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.constants.Constants;
 import frc.robot.constants.HardwareConstants;
+import frc.robot.utils.commands.LoggedTrigger;
+import frc.robot.utils.commands.SubsystemExt;
 import org.littletonrobotics.junction.Logger;
 
-public class Hood extends SubsystemBase {
+import java.util.HashMap;
+import java.util.Objects;
+import java.util.function.DoubleSupplier;
+
+public class Hood extends SubsystemExt {
     protected static final String LogKey = "Hood";
-    private static final double PositionToleranceRots = 0.005;
-    private static final double VelocityToleranceRotsPerSec = 0.01;
-
-    private final HardwareConstants.HoodConstants constants;
-
-    private final HoodIO hoodIO;
-    private final HoodIOInputsAutoLogged inputs = new HoodIOInputsAutoLogged();
-
-    private Goal desiredGoal = Goal.STOW;
-    private Goal currentGoal = desiredGoal;
-
-    public final Trigger atSetpoint = new Trigger(this::atSetpoint);
+    private static final double PositionToleranceRots = 0.005; //TODO: Check
+    private static final double VelocityToleranceRotsPerSec = 0.1;
 
     public enum Goal {
-        STOW(0, false),
-        SHOOTING(0, true);
+        STOW(0);
 
-        private double positionSetpointRots;
-        private final boolean isDynamic;
+        public final double positionRots;
 
-        Goal(final double positionSetpointRots, final boolean isDynamic) {
-            this.positionSetpointRots = positionSetpointRots;
-            this.isDynamic = isDynamic;
-        }
-
-        public void changeHoodPositionRots(final double desiredPositionRots) {
-            if (isDynamic) {
-                this.positionSetpointRots = desiredPositionRots;
-            }
+        Goal(final double positionRots) {
+            this.positionRots = positionRots;
         }
     }
 
+    private enum InternalGoal {
+        NONE,
+        STOW(Goal.STOW),
+        TRACKING;
+
+        public static final HashMap<Goal, InternalGoal> GoalToInternal = new HashMap<>();
+        static {
+            for (final InternalGoal goal : InternalGoal.values()) {
+                if (goal.goal != null) {
+                    GoalToInternal.put(goal.goal, goal);
+                }
+            }
+        }
+
+        public static InternalGoal fromGoal(final Goal goal) {
+            return Objects.requireNonNull(GoalToInternal.get(goal));
+        }
+
+        public final Goal goal;
+
+        InternalGoal(final Goal goal) {
+            this.goal = goal;
+        }
+
+        InternalGoal() {
+            this(null);
+        }
+    }
+
+    private final LoggedTrigger.Group group = LoggedTrigger.Group.from(LogKey);
+
+    private final HoodIO hoodIO;
+    private final HoodIOInputsAutoLogged inputs;
+
+    private InternalGoal desiredGoal = InternalGoal.STOW;
+    private InternalGoal currentGoal = InternalGoal.NONE;
+
+    private double positionSetpointRots;
+
+    public final LoggedTrigger safeForTrench = atGoal(Hood.Goal.STOW);
+
     public Hood(final Constants.RobotMode mode, final HardwareConstants.HoodConstants constants) {
-        this.constants = constants;
         this.hoodIO = switch (mode) {
             case REAL -> new HoodIOReal(constants);
             case SIM -> new HoodIOSim(constants);
-            case DISABLED, REPLAY -> new HoodIO() {
-            };
+            case REPLAY, DISABLED -> new HoodIO() {};
         };
 
-        hoodIO.config();
-        hoodIO.zeroMotor();
+        this.inputs = new HoodIOInputsAutoLogged();
+
+        this.hoodIO.config();
+        this.hoodIO.setPosition(0);
     }
 
     @Override
     public void periodic() {
-        final double hoodPeriodicUpdateStart = Timer.getFPGATimestamp();
+        final double shooterPeriodicUpdateStart = Timer.getFPGATimestamp();
+
         hoodIO.updateInputs(inputs);
         Logger.processInputs(LogKey, inputs);
 
-        if (desiredGoal.isDynamic) {
-            hoodIO.toHoodPosition(desiredGoal.positionSetpointRots);
-        }
-
-        if (desiredGoal != currentGoal) {
-            hoodIO.toHoodPosition(desiredGoal.positionSetpointRots);
+        if (MathUtil.isNear(positionSetpointRots, inputs.pivotPositionRots, PositionToleranceRots)
+                && MathUtil.isNear(0, inputs.pivotVelocityRotsPerSec, VelocityToleranceRotsPerSec)
+        ) {
             currentGoal = desiredGoal;
+        } else {
+            currentGoal = InternalGoal.NONE;
         }
 
-        Logger.recordOutput(LogKey + "/CurrentGoal", currentGoal.toString());
-        Logger.recordOutput(LogKey + "/DesiredGoal", desiredGoal.toString());
-        Logger.recordOutput(LogKey + "/DesiredGoal/PositionSetpointRots", desiredGoal.positionSetpointRots);
-
-        Logger.recordOutput(LogKey + "/Triggers/AtSetpoint", atSetpoint());
-        Logger.recordOutput(LogKey + "/Triggers/AtHoodLowerLimit", atLowerLimit());
-        Logger.recordOutput(LogKey + "/Triggers/AtHoodUpperLimit", atUpperLimit());
+        Logger.recordOutput(LogKey + "/DesiredGoal", desiredGoal);
+        Logger.recordOutput(LogKey + "/CurrentGoal", currentGoal);
+        Logger.recordOutput(LogKey + "/PositionSetpointRots", positionSetpointRots);
 
         Logger.recordOutput(
                 LogKey + "/PeriodicIOPeriodMs",
-                Units.secondsToMilliseconds(Timer.getFPGATimestamp() - hoodPeriodicUpdateStart)
+                Units.secondsToMilliseconds(Timer.getFPGATimestamp() - shooterPeriodicUpdateStart)
         );
     }
 
-    public void setDesiredGoal(final Goal goal) {
-        desiredGoal = goal;
-        Logger.recordOutput(LogKey + "/CurrentGoal", currentGoal.toString());
-        Logger.recordOutput(LogKey + "/DesiredGoal", desiredGoal.toString());
+    public Rotation2d getPosition() {
+        return Rotation2d.fromRotations(inputs.pivotPositionRots);
     }
 
-    public void updateShootingDesiredPosition(final double position) {
-        Goal.SHOOTING.changeHoodPositionRots(position);
+    public boolean atSetpoint() {
+        return desiredGoal == currentGoal;
     }
 
-    public Rotation2d getHoodPosition() {
-        return Rotation2d.fromRotations(inputs.hoodPositionRots);
+    private boolean atGoal(final InternalGoal goal) {
+        return currentGoal == goal;
     }
 
-    private boolean atSetpoint() {
-        return currentGoal == desiredGoal
-                && MathUtil.isNear(desiredGoal.positionSetpointRots, inputs.hoodPositionRots, PositionToleranceRots)
-                && MathUtil.isNear(0, inputs.hoodVelocityRotsPerSec, VelocityToleranceRotsPerSec);
+    public LoggedTrigger atGoal(final Goal goal) {
+        return group.t("AtGoal", () -> atGoal(InternalGoal.fromGoal(goal)));
     }
 
-    private boolean atLowerLimit() {
-        return inputs.hoodPositionRots <= constants.lowerLimitRots();
+    private void setPositionImpl(final double positionRots) {
+        positionSetpointRots = positionRots;
+        hoodIO.toHoodPosition(positionSetpointRots);
     }
 
-    private boolean atUpperLimit() {
-        return inputs.hoodPositionRots >= constants.upperLimitRots();
+    private void setGoalImpl(final Goal goal) {
+        desiredGoal = InternalGoal.fromGoal(goal);
+        setPositionImpl(goal.positionRots);
+    }
+
+    public Command toGoal(final Goal goal) {
+        return startEnd(
+                () -> setGoalImpl(goal),
+                () -> setGoalImpl(Goal.STOW)
+        );
+    }
+
+    public Command runGoal(final Goal goal) {
+        return startEnd(() -> setGoalImpl(goal), () -> {});
+    }
+
+    public Command toPosition(final DoubleSupplier positionRotsSupplier) {
+        return instantRunEnd(
+                () -> desiredGoal = InternalGoal.TRACKING,
+                () -> setPositionImpl(positionRotsSupplier.getAsDouble()),
+                () -> setGoalImpl(Goal.STOW)
+        );
+    }
+
+    public Command runPosition(final DoubleSupplier positionRotsSupplier) {
+        return instantRun(
+                () -> desiredGoal = InternalGoal.TRACKING,
+                () -> setPositionImpl(positionRotsSupplier.getAsDouble())
+        );
     }
 }

@@ -155,7 +155,6 @@ public interface SwerveIO {
         @SuppressWarnings("unused")
         public static final SwerveDriveStateStruct struct = new SwerveDriveStateStruct();
         public static final SwerveDriveState EmptyState = new SwerveDriveState();
-
         static {
             EmptyState.ModuleStates = new SwerveModuleState[ModuleCount];
             EmptyState.ModuleTargets = new SwerveModuleState[ModuleCount];
@@ -219,14 +218,14 @@ public interface SwerveIO {
         @Override
         public String getSchema() {
             return "Pose2d Pose; ChassisSpeeds Speeds; SwerveModuleState ModuleStates[4];"
-                    + "SwerveModuleState ModuleTargets[4]; SwerveModulePosition ModulePositions[4];"
-                    + "Rotation2d RawHeading; double Timestamp; double OdometryPeriod; int32 SuccessfulDaqs;"
-                    + "int32 FailedDaqs";
+                + "SwerveModuleState ModuleTargets[4]; SwerveModulePosition ModulePositions[4];"
+                + "Rotation2d RawHeading; double Timestamp; double OdometryPeriod; int32 SuccessfulDaqs;"
+                + "int32 FailedDaqs";
         }
 
         @Override
         public Struct<?>[] getNested() {
-            return new Struct<?>[]{
+            return new Struct<?>[] {
                     Pose2d.struct,
                     ChassisSpeeds.struct,
                     SwerveModuleState.struct,

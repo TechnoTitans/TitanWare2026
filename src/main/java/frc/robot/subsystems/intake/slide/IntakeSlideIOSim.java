@@ -1,5 +1,6 @@
 package frc.robot.subsystems.intake.slide;
 
+import com.ctre.phoenix6.CANBus;
 import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.Slot0Configs;
 import com.ctre.phoenix6.configs.Slot1Configs;
@@ -7,10 +8,12 @@ import com.ctre.phoenix6.configs.Slot2Configs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.MotionMagicExpoTorqueCurrentFOC;
 import com.ctre.phoenix6.controls.PositionTorqueCurrentFOC;
+import com.ctre.phoenix6.controls.TorqueCurrentFOC;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.mechanisms.DifferentialMechanism;
 import com.ctre.phoenix6.mechanisms.DifferentialMotorConstants;
 import com.ctre.phoenix6.signals.*;
+import com.ctre.phoenix6.sim.ChassisReference;
 import com.ctre.phoenix6.sim.TalonFXSimState;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.system.plant.LinearSystemId;
@@ -18,21 +21,30 @@ import edu.wpi.first.units.measure.*;
 import edu.wpi.first.wpilibj.Notifier;
 import edu.wpi.first.wpilibj.simulation.DCMotorSim;
 import frc.robot.constants.HardwareConstants;
-import frc.robot.constants.SimConstants;
 import frc.robot.utils.closeables.ToClose;
 import frc.robot.utils.control.DeltaTime;
 import frc.robot.utils.ctre.RefreshAll;
+import frc.robot.utils.sim.SimUtils;
 import frc.robot.utils.sim.motors.TalonFXSim;
 
 public class IntakeSlideIOSim implements IntakeSlideIO {
     private static final double SIM_UPDATE_PERIOD_SEC = 0.005;
 
     private final DeltaTime deltaTime;
-
-    private final DifferentialMechanism<TalonFX> diffMechanism;
-
     private final TalonFXSim masterSim;
     private final TalonFXSim followerSim;
+
+    private final DifferentialMechanism<TalonFX> differentialMechanism;
+
+    private final MotionMagicExpoTorqueCurrentFOC avg_mmExpoTorqueCurrentFOC;
+    private final PositionTorqueCurrentFOC avg_positionTorqueCurrentFOC;
+    private final PositionTorqueCurrentFOC diff_positionTorqueCurrentFOC;
+    private final TorqueCurrentFOC avg_torqueCurrentFOC;
+
+    private final StatusSignal<Angle> averagePosition;
+    private final StatusSignal<AngularVelocity> averageVelocity;
+    private final StatusSignal<Angle> differentialPosition;
+    private final StatusSignal<AngularVelocity> differentialVelocity;
 
     private final StatusSignal<Angle> masterPosition;
     private final StatusSignal<AngularVelocity> masterVelocity;
@@ -46,121 +58,93 @@ public class IntakeSlideIOSim implements IntakeSlideIO {
     private final StatusSignal<Current> followerTorqueCurrent;
     private final StatusSignal<Temperature> followerDeviceTemp;
 
-    private final StatusSignal<Angle> averagePosition;
-    private final StatusSignal<AngularVelocity> averageVelocity;
-    private final StatusSignal<Angle> differentialPosition;
-
-    private final MotionMagicExpoTorqueCurrentFOC averageMotionMagicExpoTorqueCurrent;
-    private final PositionTorqueCurrentFOC averagePositionTorqueCurrentFOC;
-    private final PositionTorqueCurrentFOC differentialPositionTorqueCurrentFOC;
-
-
     public IntakeSlideIOSim(final HardwareConstants.IntakeSlideConstants constants) {
         this.deltaTime = new DeltaTime(true);
 
-        this.averageMotionMagicExpoTorqueCurrent = new MotionMagicExpoTorqueCurrentFOC(0).withSlot(0);
-        this.averagePositionTorqueCurrentFOC = new PositionTorqueCurrentFOC(0).withSlot(1);
-        this.differentialPositionTorqueCurrentFOC = new PositionTorqueCurrentFOC(0).withSlot(2);
+        final HardwareConstants.CANBus bus = constants.CANBus();
+        final CANBus p6Bus = bus.toPhoenix6CANBus();
 
-        final TalonFXConfiguration masterMotorConfig = new TalonFXConfiguration();
-        // Average Slot
-        masterMotorConfig.Slot0 = new Slot0Configs()
-                .withKV(0)
-                .withKA(0.1)
-                .withKP(200)
-                .withKD(10);
-        // Hold Slot
-        masterMotorConfig.Slot1 = new Slot1Configs()
+        this.avg_mmExpoTorqueCurrentFOC = new MotionMagicExpoTorqueCurrentFOC(0);
+        this.avg_positionTorqueCurrentFOC = new PositionTorqueCurrentFOC(0);
+        this.diff_positionTorqueCurrentFOC = new PositionTorqueCurrentFOC(0);
+        this.avg_torqueCurrentFOC = new TorqueCurrentFOC(0);
+
+        final TalonFXConfiguration masterConfiguration = new TalonFXConfiguration();
+        //Avg Stiff
+        masterConfiguration.Slot0 = new Slot0Configs() //TODO: Tune
+                .withKS(3)
+                .withKP(20)
+                .withKD(0.5);
+        //Avg / Diff Squishy
+        masterConfiguration.Slot1 = new Slot1Configs()
+                .withKS(0)
                 .withStaticFeedforwardSign(StaticFeedforwardSignValue.UseClosedLoopSign)
-                .withKP(10)
+                .withKA(0)
+                .withKP(15)
+                .withKD(0);
+        //Diff Stiff
+        masterConfiguration.Slot2 = new Slot2Configs()
+                .withKP(250)
                 .withKD(0.1);
-        // Differential Slot
-        masterMotorConfig.Slot2 = new Slot2Configs()
-                .withStaticFeedforwardSign(StaticFeedforwardSignValue.UseClosedLoopSign)
-                .withKP(200)
-                .withKD(10);
-        masterMotorConfig.MotionMagic.MotionMagicCruiseVelocity = 0;
-        masterMotorConfig.MotionMagic.MotionMagicExpo_kV = 0.6;
-        masterMotorConfig.MotionMagic.MotionMagicExpo_kA = 0.3;
-        masterMotorConfig.TorqueCurrent.PeakForwardTorqueCurrent = 60;
-        masterMotorConfig.TorqueCurrent.PeakReverseTorqueCurrent = -60;
-        masterMotorConfig.CurrentLimits.StatorCurrentLimit = 60;
-        masterMotorConfig.CurrentLimits.StatorCurrentLimitEnable = true;
-        masterMotorConfig.CurrentLimits.SupplyCurrentLimit = 50;
-        masterMotorConfig.CurrentLimits.SupplyCurrentLowerLimit = 40;
-        masterMotorConfig.CurrentLimits.SupplyCurrentLowerTime = 1;
-        masterMotorConfig.CurrentLimits.SupplyCurrentLimitEnable = true;
-        masterMotorConfig.Feedback.RotorToSensorRatio = 1;
-        masterMotorConfig.Feedback.SensorToMechanismRatio = constants.slideGearing();
-        masterMotorConfig.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
-        masterMotorConfig.MotorOutput.NeutralMode = NeutralModeValue.Brake;
-        masterMotorConfig.SoftwareLimitSwitch.ForwardSoftLimitThreshold = constants.upperLimitRots();
-        masterMotorConfig.SoftwareLimitSwitch.ForwardSoftLimitEnable = true;
-        masterMotorConfig.SoftwareLimitSwitch.ReverseSoftLimitThreshold = constants.lowerLimitRots();
-        masterMotorConfig.SoftwareLimitSwitch.ReverseSoftLimitEnable = true;
+        masterConfiguration.MotionMagic.MotionMagicCruiseVelocity = 0;
+        masterConfiguration.MotionMagic.MotionMagicExpo_kV = 0.6;
+        masterConfiguration.MotionMagic.MotionMagicExpo_kA = 0.3;
+        masterConfiguration.TorqueCurrent.PeakForwardTorqueCurrent = 60;
+        masterConfiguration.TorqueCurrent.PeakReverseTorqueCurrent = -60;
+        masterConfiguration.CurrentLimits.StatorCurrentLimit = 60;
+        masterConfiguration.CurrentLimits.StatorCurrentLimitEnable = true;
+        masterConfiguration.Feedback.FeedbackSensorSource = FeedbackSensorSourceValue.RotorSensor;
+        masterConfiguration.Feedback.SensorToMechanismRatio = constants.averageAxisGearing();
+        masterConfiguration.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
+        masterConfiguration.MotorOutput.NeutralMode = NeutralModeValue.Brake;
+        masterConfiguration.SoftwareLimitSwitch.ForwardSoftLimitThreshold = constants.forwardLimitRots();
+        masterConfiguration.SoftwareLimitSwitch.ForwardSoftLimitEnable = true;
+        masterConfiguration.SoftwareLimitSwitch.ReverseSoftLimitThreshold = constants.reverseLimitRots();
+        masterConfiguration.SoftwareLimitSwitch.ReverseSoftLimitEnable = true;
 
-        final TalonFXConfiguration followerConfig = new TalonFXConfiguration();
-        followerConfig.Feedback.FeedbackSensorSource = FeedbackSensorSourceValue.RotorSensor;
-        followerConfig.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
-        followerConfig.Feedback.SensorToMechanismRatio = constants.slideGearing();
+        final TalonFXConfiguration followerConfiguration = new TalonFXConfiguration();
+        followerConfiguration.Feedback.FeedbackSensorSource = FeedbackSensorSourceValue.RotorSensor;
+        followerConfiguration.Feedback.SensorToMechanismRatio = constants.averageAxisGearing();
 
-        final DifferentialMotorConstants<TalonFXConfiguration> diffConstants =
-                new DifferentialMotorConstants<TalonFXConfiguration>()
-                        .withCANBusName(constants.CANBus().name())
-                        .withLeaderId(constants.masterMotorID())
-                        .withFollowerId(constants.followerMotorID())
-                        .withAlignment(MotorAlignmentValue.Opposed)
-                        .withSensorToDifferentialRatio(1)
-                        .withClosedLoopRate(200)
-                        .withLeaderInitialConfigs(masterMotorConfig)
-                        .withFollowerInitialConfigs(followerConfig)
-                        .withFollowerUsesCommonLeaderConfigs(true);
+        final DifferentialMotorConstants<TalonFXConfiguration> differentialConstants =
+                new DifferentialMotorConstants<>();
+        differentialConstants.CANBusName = p6Bus.getName();
+        differentialConstants.LeaderId = constants.masterMotorId();
+        differentialConstants.FollowerId = constants.followerMotorId();
+        differentialConstants.Alignment = MotorAlignmentValue.Opposed;
+        differentialConstants.SensorToDifferentialRatio = constants.differentialAxisGearing();
+        differentialConstants.ClosedLoopRate = 200;
+        differentialConstants.LeaderInitialConfigs = masterConfiguration;
+        differentialConstants.FollowerInitialConfigs = followerConfiguration;
+        differentialConstants.FollowerUsesCommonLeaderConfigs = true;
 
-        this.diffMechanism = new DifferentialMechanism<>(TalonFX::new, diffConstants);
+        this.differentialMechanism = new DifferentialMechanism<>(TalonFX::new, differentialConstants);
 
-        final TalonFX masterMotor = diffMechanism.getLeader();
-        final TalonFX followerMotor = diffMechanism.getFollower();
+        this.averagePosition = differentialMechanism.getAveragePosition(false);
+        this.averageVelocity = differentialMechanism.getAverageVelocity(false);
+        this.differentialPosition = differentialMechanism.getDifferentialPosition(false);
+        this.differentialVelocity = differentialMechanism.getDifferentialVelocity(false);
 
-        masterMotor.getSimState().setMotorType(TalonFXSimState.MotorType.KrakenX44);
-        followerMotor.getSimState().setMotorType(TalonFXSimState.MotorType.KrakenX44);
+        final TalonFX masterMotor = differentialMechanism.getLeader();
+        {
+            final DCMotor dcMotor = DCMotor.getKrakenX44Foc(1);
+            final DCMotorSim dcMotorSim = new DCMotorSim(
+                    LinearSystemId.createDCMotorSystem(dcMotor, 0.0058, constants.averageAxisGearing()),
+                    dcMotor
+            );
+            this.masterSim = new TalonFXSim(
+                    masterMotor,
+                    constants.averageAxisGearing(),
+                    dcMotorSim::update,
+                    voltage -> dcMotorSim.setInputVoltage(SimUtils.addMotorFriction(voltage, 0.5)),
+                    dcMotorSim::getAngularPositionRad,
+                    dcMotorSim::getAngularVelocityRadPerSec
+            );
 
-        final DCMotor motor = DCMotor.getKrakenX44(1);
-
-        final DCMotorSim masterMotorSim = new DCMotorSim(
-                LinearSystemId.createDCMotorSystem(
-                        motor,
-                        SimConstants.IntakeSlide.MOMENT_OF_INERTIA,
-                        constants.slideGearing()
-                ),
-                motor
-        );
-
-        final DCMotorSim followerMotorSim = new DCMotorSim(
-                LinearSystemId.createDCMotorSystem(
-                        motor,
-                        SimConstants.IntakeSlide.MOMENT_OF_INERTIA,
-                        constants.slideGearing()
-                ),
-                motor
-        );
-
-        this.masterSim = new TalonFXSim(
-                masterMotor,
-                constants.slideGearing(),
-                masterMotorSim::update,
-                masterMotorSim::setInputVoltage,
-                masterMotorSim::getAngularPositionRad,
-                masterMotorSim::getAngularVelocityRadPerSec
-        );
-
-        this.followerSim = new TalonFXSim(
-                followerMotor,
-                constants.slideGearing(),
-                followerMotorSim::update,
-                followerMotorSim::setInputVoltage,
-                followerMotorSim::getAngularPositionRad,
-                followerMotorSim::getAngularVelocityRadPerSec
-        );
+            final TalonFXSimState simState = masterMotor.getSimState();
+            simState.Orientation = ChassisReference.CounterClockwise_Positive;
+            simState.setMotorType(TalonFXSimState.MotorType.KrakenX44);
+        }
 
         this.masterPosition = masterMotor.getPosition(false);
         this.masterVelocity = masterMotor.getVelocity(false);
@@ -168,18 +152,39 @@ public class IntakeSlideIOSim implements IntakeSlideIO {
         this.masterTorqueCurrent = masterMotor.getTorqueCurrent(false);
         this.masterDeviceTemp = masterMotor.getDeviceTemp(false);
 
+        final TalonFX followerMotor = differentialMechanism.getFollower();
+        {
+            final DCMotor dcMotor = DCMotor.getKrakenX44Foc(1);
+            final DCMotorSim dcMotorSim = new DCMotorSim(
+                    LinearSystemId.createDCMotorSystem(dcMotor, 0.0058, constants.averageAxisGearing()),
+                    dcMotor
+            );
+            this.followerSim = new TalonFXSim(
+                    followerMotor,
+                    constants.averageAxisGearing(),
+                    dcMotorSim::update,
+                    voltage -> dcMotorSim.setInputVoltage(SimUtils.addMotorFriction(voltage, 0.25)),
+                    dcMotorSim::getAngularPositionRad,
+                    dcMotorSim::getAngularVelocityRadPerSec
+            );
+
+            final TalonFXSimState simState = followerMotor.getSimState();
+            simState.Orientation = ChassisReference.CounterClockwise_Positive;
+            simState.setMotorType(TalonFXSimState.MotorType.KrakenX44);
+        }
+
         this.followerPosition = followerMotor.getPosition(false);
         this.followerVelocity = followerMotor.getVelocity(false);
         this.followerVoltage = followerMotor.getMotorVoltage(false);
         this.followerTorqueCurrent = followerMotor.getTorqueCurrent(false);
         this.followerDeviceTemp = followerMotor.getDeviceTemp(false);
 
-        this.averagePosition = diffMechanism.getAveragePosition(false);
-        this.averageVelocity = diffMechanism.getAverageVelocity(false);
-        this.differentialPosition = diffMechanism.getDifferentialPosition(false);
-
         RefreshAll.add(
-                constants.CANBus(),
+                bus,
+                averagePosition,
+                averageVelocity,
+                differentialPosition,
+                differentialVelocity,
                 masterPosition,
                 masterVelocity,
                 masterVoltage,
@@ -189,10 +194,7 @@ public class IntakeSlideIOSim implements IntakeSlideIO {
                 followerVelocity,
                 followerVoltage,
                 followerTorqueCurrent,
-                followerDeviceTemp,
-                averagePosition,
-                averageVelocity,
-                differentialPosition
+                followerDeviceTemp
         );
 
         final Notifier simUpdateNotifier = new Notifier(() -> {
@@ -210,7 +212,16 @@ public class IntakeSlideIOSim implements IntakeSlideIO {
     }
 
     @Override
-    public void updateInputs(IntakeSlideIOInputs inputs) {
+    public void updateInputs(final IntakeSlideIOInputs inputs) {
+        differentialMechanism.periodic();
+
+        inputs.slideState = differentialMechanism.getMechanismState();
+
+        inputs.slideAveragePositionRots = averagePosition.getValueAsDouble();
+        inputs.slideAverageVelocityRotsPerSec = averageVelocity.getValueAsDouble();
+        inputs.slideDifferentialPositionRots = differentialPosition.getValueAsDouble();
+        inputs.slideDifferentialVelocityRotsPerSec = differentialVelocity.getValueAsDouble();
+
         inputs.masterPositionRots = masterPosition.getValueAsDouble();
         inputs.masterVelocityRotsPerSec = masterVelocity.getValueAsDouble();
         inputs.masterVoltage = masterVoltage.getValueAsDouble();
@@ -222,59 +233,53 @@ public class IntakeSlideIOSim implements IntakeSlideIO {
         inputs.followerVoltage = followerVoltage.getValueAsDouble();
         inputs.followerTorqueCurrentAmps = followerTorqueCurrent.getValueAsDouble();
         inputs.followerTempCelsius = followerDeviceTemp.getValueAsDouble();
-
-        inputs.averagePositionRots = averagePosition.getValueAsDouble();
-        inputs.averageVelocityRotsPerSec = averageVelocity.getValueAsDouble();
-        inputs.differentialPositionRots = differentialPosition.getValueAsDouble();
-
-        inputs.mechanism = diffMechanism.getMechanismState();
     }
 
     @Override
-    public void toSlidePosition(double positionRots) {
-        diffMechanism.setControl(
-                averageMotionMagicExpoTorqueCurrent
-                        .withPosition(positionRots)
+    public void toSlidePosition(final double slidePositionRots) {
+        differentialMechanism.setControl(
+                avg_mmExpoTorqueCurrentFOC
+                        .withPosition(slidePositionRots)
                         .withSlot(0),
-                differentialPositionTorqueCurrentFOC
+                diff_positionTorqueCurrentFOC
                         .withPosition(0)
                         .withSlot(2)
         );
     }
 
     @Override
-    public void holdSlidePosition(final double positionRots) {
-        diffMechanism.setControl(
-                averagePositionTorqueCurrentFOC
-                        .withPosition(positionRots)
+    public void holdSlidePosition(final double slidePositionRots) {
+        differentialMechanism.setControl(
+                avg_positionTorqueCurrentFOC
+                        .withPosition(slidePositionRots)
                         .withSlot(1),
-                differentialPositionTorqueCurrentFOC
+                diff_positionTorqueCurrentFOC
                         .withPosition(0)
-                        .withSlot(2)
+                        .withSlot(1)
         );
     }
 
     @Override
-    public void toSlidePositionUnprofiled(double positionRots, double velocityRotsPerSec) {
-        diffMechanism.setControl(
-                averagePositionTorqueCurrentFOC
-                        .withPosition(positionRots)
-                        .withVelocity(velocityRotsPerSec)
+    public void toSlidePositionVelocity(final double slidePositionRots, final double slideVelocityRots) {
+        differentialMechanism.setControl(
+                avg_positionTorqueCurrentFOC
+                        .withPosition(slidePositionRots)
+                        .withVelocity(slideVelocityRots)
                         .withSlot(0),
-                differentialPositionTorqueCurrentFOC
+                diff_positionTorqueCurrentFOC
                         .withPosition(0)
                         .withSlot(2)
         );
     }
 
     @Override
-    public void zeroMotors() {
-        diffMechanism.setPosition(0);
-    }
-
-    @Override
-    public void testIntake() {
-        masterSim.rawUpdate(0, -5);
-        followerSim.rawUpdate(0, -5);
+    public void toSlideTorqueCurrent(final double slideTorqueCurrentAmps) {
+        differentialMechanism.setControl(
+                avg_torqueCurrentFOC
+                        .withOutput(slideTorqueCurrentAmps),
+                diff_positionTorqueCurrentFOC
+                        .withPosition(0)
+                        .withSlot(1)
+        );
     }
 }

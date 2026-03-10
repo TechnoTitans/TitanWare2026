@@ -1,7 +1,3 @@
-// Copyright (c) FIRST and other WPILib contributors.
-// Open Source Software; you can modify and/or share it under the terms of
-// the WPILib BSD license file in the root directory of this project.
-
 package frc.robot;
 
 import com.ctre.phoenix6.SignalLogger;
@@ -14,8 +10,6 @@ import edu.wpi.first.wpilibj.simulation.DriverStationSim;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
-import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
-import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.auto.AutoChooser;
 import frc.robot.auto.AutoOption;
 import frc.robot.auto.Autos;
@@ -23,21 +17,26 @@ import frc.robot.constants.Constants;
 import frc.robot.constants.FieldConstants;
 import frc.robot.constants.HardwareConstants;
 import frc.robot.constants.RobotMap;
+import frc.robot.subsystems.FuelState;
 import frc.robot.subsystems.drive.Swerve;
 import frc.robot.subsystems.drive.constants.SwerveConstants;
-import frc.robot.subsystems.feeder.Feeder;
-import frc.robot.subsystems.intake.roller.IntakeRoller;
+import frc.robot.subsystems.indexer.Indexer;
+import frc.robot.subsystems.indexer.feeder.Feeder;
+import frc.robot.subsystems.indexer.spindexer.Spindexer;
+import frc.robot.subsystems.intake.Intake;
+import frc.robot.subsystems.intake.rollers.IntakeRollers;
 import frc.robot.subsystems.intake.slide.IntakeSlide;
-import frc.robot.subsystems.spindexer.Spindexer;
-import frc.robot.subsystems.superstructure.ShotCalculator;
 import frc.robot.subsystems.superstructure.Superstructure;
 import frc.robot.subsystems.superstructure.hood.Hood;
 import frc.robot.subsystems.superstructure.shooter.Shooter;
 import frc.robot.subsystems.superstructure.turret.Turret;
 import frc.robot.subsystems.vision.PhotonVision;
 import frc.robot.utils.closeables.ToClose;
+import frc.robot.utils.commands.CommandsExt;
+import frc.robot.utils.commands.LoggedTrigger;
+import frc.robot.utils.commands.RobotModeLoggedTriggers;
 import frc.robot.utils.ctre.RefreshAll;
-import frc.robot.utils.logging.LoggedCommandScheduler;
+import frc.robot.utils.logging.CommandLogger;
 import frc.robot.utils.subsystems.VirtualSubsystem;
 import frc.robot.utils.teleop.ControllerUtils;
 import frc.robot.utils.teleop.SwerveSpeed;
@@ -53,9 +52,9 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Optional;
 import java.util.function.BooleanSupplier;
-import java.util.function.Supplier;
 
 public class Robot extends LoggedRobot {
+    protected static final String LogKey = "Robot";
     private static final String AKitLogPath = "/U/logs";
     private static final String HootLogPath = "/U/logs";
 
@@ -65,7 +64,7 @@ public class Robot extends LoggedRobot {
     };
 
     public final PowerDistribution powerDistribution = new PowerDistribution(
-            RobotMap.PowerDistributionHub, PowerDistribution.ModuleType.kRev
+            HardwareConstants.PowerDistributionHub, PowerDistribution.ModuleType.kRev
     );
 
     public final Swerve swerve = new Swerve(
@@ -88,78 +87,46 @@ public class Robot extends LoggedRobot {
             swerve
     );
 
-    public final IntakeRoller intakeRoller = new IntakeRoller(
+    public final Turret turret = new Turret(
             Constants.CURRENT_MODE,
-            HardwareConstants.INTAKE_ROLLER
+            HardwareConstants.TURRET_CONSTANTS
     );
+    public final Shooter shooter = new Shooter(
+            Constants.CURRENT_MODE,
+            HardwareConstants.SHOOTER_CONSTANTS
+    );
+    public final Hood hood = new Hood(
+            Constants.CURRENT_MODE,
+            HardwareConstants.HOOD_CONSTANTS
+    );
+    public final Superstructure superstructure = new Superstructure(
+            turret, shooter, hood
+    );
+
+    public final Spindexer spindexer = new Spindexer(Constants.CURRENT_MODE, HardwareConstants.SPINDEXER_CONSTANTS);
+    public final Feeder feeder = new Feeder(Constants.CURRENT_MODE, HardwareConstants.FEEDER_CONSTANTS);
+    public final Indexer indexer = new Indexer(spindexer, feeder);
 
     public final IntakeSlide intakeSlide = new IntakeSlide(
             Constants.CURRENT_MODE,
-            HardwareConstants.INTAKE_SLIDE
+            HardwareConstants.INTAKE_SLIDE_CONSTANTS
     );
-
-    public final Feeder feeder = new Feeder(
+    public final IntakeRollers intakeRollers = new IntakeRollers(
             Constants.CURRENT_MODE,
-            HardwareConstants.FEEDER
+            HardwareConstants.INTAKE_CONSTANTS
     );
+    public final Intake intake = new Intake(intakeSlide, intakeRollers);
 
-    public final Hood hood = new Hood(
-            Constants.CURRENT_MODE,
-            HardwareConstants.HOOD
-    );
-
-    public final Turret turret = new Turret(
-            Constants.CURRENT_MODE,
-            HardwareConstants.TURRET,
-            () -> swerve.getFieldRelativeSpeeds().omegaRadiansPerSecond
-    );
-
-    public final Shooter shooter = new Shooter(
-            Constants.CURRENT_MODE,
-            HardwareConstants.SHOOTER
-    );
-
-    public final Spindexer spindexer = new Spindexer(
-            Constants.CURRENT_MODE,
-            HardwareConstants.SPINDEXER
-    );
-
-    private RobotCommands.ScoringMode scoringMode =
-            RobotCommands.ScoringMode.Moving;
-
-    private final Supplier<ShotCalculator.ShotCalculation> shotCalculationSupplier =
-            () -> ShotCalculator.getShotCalculation(
-                    swerve::getPose,
-                    () -> scoringMode,
-                    swerve::getFieldRelativeSpeeds
-            );
-
-    public final Superstructure superstructure = new Superstructure(
-            turret,
-            hood,
-            shooter,
-            shotCalculationSupplier
-    );
-
-    private final RobotCommands robotCommands = new RobotCommands(
-            swerve,
-            intakeRoller,
-            intakeSlide,
-            superstructure,
-            shooter,
-            spindexer,
-            feeder
+    public final FuelState fuelState = new FuelState(Constants.CURRENT_MODE, swerve, intake, indexer, superstructure);
+    public final ShootCommands shootCommands = new ShootCommands(
+            swerve, intake, indexer, fuelState, superstructure
     );
 
     public final Autos autos = new Autos(
-            swerve,
-            superstructure,
-            feeder,
-            robotCommands,
+            swerve, intake, indexer, fuelState, superstructure,
             photonVision
     );
-
-    private final AutoChooser autoChooser = new AutoChooser(
+    public final AutoChooser autoChooser = new AutoChooser(
             new AutoOption(
                     "DoNothing",
                     autos::doNothing,
@@ -181,21 +148,19 @@ public class Robot extends LoggedRobot {
     private final EventLoop teleopEventLoop = new EventLoop();
     private final EventLoop testEventLoop = new EventLoop();
 
-    private final Trigger disabled = RobotModeTriggers.disabled();
-    public final Trigger autonomousEnabled = RobotModeTriggers.autonomous();
-    public final Trigger teleopEnabled = RobotModeTriggers.teleop();
-    private final Trigger endgameTrigger = new Trigger(() -> DriverStation.getMatchTime() <= 30)
+    private final LoggedTrigger.Group group = LoggedTrigger.Group.from(LogKey);
+
+    private final LoggedTrigger disabled = RobotModeLoggedTriggers.disabled(group);
+    private final LoggedTrigger teleopEnabled = RobotModeLoggedTriggers.teleop(group);
+    private final LoggedTrigger autonomousEnabled = RobotModeLoggedTriggers.autonomous(group);
+    private final LoggedTrigger endgameTrigger = group.t("endgame", () -> DriverStation.getMatchTime() <= 20)
             .and(DriverStation::isFMSAttached)
-            .and(RobotModeTriggers.teleop());
+            .and(teleopEnabled);
 
-    private final Timer shiftTimer = new Timer();
-    private final Trigger firstShiftStartTrigger = new Trigger(() -> DriverStation.getMatchTime() == 130);
-    private final Trigger shiftRumbleTrigger = new Trigger(() -> shiftTimer.hasElapsed(23));
-    private final Trigger shiftChangeTrigger = new Trigger(() -> shiftTimer.hasElapsed(25));
+    private final LoggedTrigger hubActive =
+            group.t("HubActive", () -> AllianceShift.get().hubStatus() == HubStatus.ACTIVE);
 
-
-    @Override
-    public void robotInit() {
+    public Robot() {
         if ((RobotBase.isReal() && Constants.CURRENT_MODE != Constants.RobotMode.REAL) ||
                 (RobotBase.isSimulation() && Constants.CURRENT_MODE == Constants.RobotMode.REAL)) {
             DriverStation.reportWarning(
@@ -218,7 +183,7 @@ public class Robot extends LoggedRobot {
         ToClose.hook();
 
         // disable joystick not found warnings when in sim
-        DriverStation.silenceJoystickConnectionWarning(Constants.CURRENT_MODE == Constants.RobotMode.SIM);
+        DriverStation.silenceJoystickConnectionWarning(Constants.CURRENT_MODE != Constants.RobotMode.REAL);
 
         switch (Constants.CURRENT_MODE) {
             case REAL -> {
@@ -278,7 +243,7 @@ public class Robot extends LoggedRobot {
         configureAutos();
         configureButtonBindings(teleopEventLoop);
 
-        LoggedCommandScheduler.init(CommandScheduler.getInstance());
+        CommandLogger.init(CommandScheduler.getInstance());
 
         SignalLogger.enableAutoLogging(true);
         SignalLogger.start();
@@ -287,7 +252,6 @@ public class Robot extends LoggedRobot {
         Logger.start();
 
         Logger.recordOutput("EmptyPose", Pose3d.kZero);
-        shiftTimer.start();
     }
 
     @Override
@@ -295,6 +259,8 @@ public class Robot extends LoggedRobot {
         RefreshAll.refreshAll();
 
         CommandScheduler.getInstance().run();
+        CommandLogger.periodic();
+
         VirtualSubsystem.run();
 
         logComponentPoses();
@@ -302,16 +268,23 @@ public class Robot extends LoggedRobot {
         driverControllerDisconnected.set(!driverController.getHID().isConnected());
         coControllerDisconnected.set(!coController.getHID().isConnected());
 
-        LoggedCommandScheduler.periodic();
-        Logger.recordOutput("ShotCalculation", shotCalculationSupplier.get());
-        Logger.recordOutput("ScoringMode", scoringMode);
-
         Logger.recordOutput(
                 "DistanceToHub",
-                FieldConstants.getHubTarget()
+                FieldConstants.getHubPose()
+                        .getTranslation()
                         .getDistance(superstructure.getTurretTranslation(swerve.getPose()))
         );
+
+        final AllianceShift allianceShift = AllianceShift.get();
+        Logger.recordOutput("AllianceShift", allianceShift);
+        Logger.recordOutput("HubStatus", allianceShift.hubStatus());
     }
+
+    @Override
+    public void disabledPeriodic() {}
+
+    @Override
+    public void autonomousPeriodic() {}
 
     @Override
     public void teleopInit() {
@@ -333,6 +306,11 @@ public class Robot extends LoggedRobot {
     @Override
     public void testInit() {
         CommandScheduler.getInstance().cancelAll();
+
+        driverController.leftBumper(testEventLoop).onTrue(Commands.runOnce(SignalLogger::stop));
+        driverController.a(testEventLoop).whileTrue(
+                swerve.wheelRadiusCharacterization()
+        );
     }
 
     @Override
@@ -344,13 +322,8 @@ public class Robot extends LoggedRobot {
     public void simulationPeriodic() {}
 
     public void logComponentPoses() {
-        final Pose3d[] superstructurePoses = ComponentsSolver.getSuperstructurePoses(
-                turret::getTurretPosition,
-                hood::getHoodPosition
-        );
-        final Pose3d[] intakeSlidePoses = ComponentsSolver
-                .getIntakeHopperPoses(intakeSlide::getIntakeSlidePositionRots);
-
+        final Pose3d[] superstructurePoses = superstructure.getComponentPoses();
+        final Pose3d[] intakeSlidePoses = intakeSlide.getComponentPoses();
         Logger.recordOutput(
                 "Components",
                 superstructurePoses[0],
@@ -361,38 +334,13 @@ public class Robot extends LoggedRobot {
     }
 
     public void configureStateTriggers() {
-        autonomousEnabled.onTrue(
-               Commands.parallel(
-                       intakeRoller.setGoal(IntakeRoller.Goal.INTAKE),
-                       intakeSlide.setGoal(IntakeSlide.Goal.INTAKE),
-                       superstructure.setGoal(Superstructure.Goal.TRACKING)
-               )
-        );
+        teleopEnabled.whileTrue(CommandsExt.defaultCommand(shootCommands.trackTarget()));
 
-        teleopEnabled.onTrue(
-                Commands.parallel(
-                        intakeRoller.setGoal(IntakeRoller.Goal.INTAKE),
-                        intakeSlide.setGoal(IntakeSlide.Goal.INTAKE),
-                        superstructure.setGoal(Superstructure.Goal.TRACKING)
-            )
-        );
+        autonomousEnabled.or(teleopEnabled).onTrue(intake.deploy());
 
-        firstShiftStartTrigger.onTrue(Commands.runOnce(shiftTimer::start));
-
-        shiftRumbleTrigger.onTrue(ControllerUtils.rumbleForDurationCommand(
-                driverController.getHID(), GenericHID.RumbleType.kBothRumble, 0.5, 1)
-        );
-
-        shiftChangeTrigger.onTrue(Commands.runOnce(shiftTimer::reset));
-
-        endgameTrigger.onTrue(
-                Commands.parallel(
-                        Commands.runOnce(shiftTimer::stop),
-                        ControllerUtils.rumbleForDurationCommand(
-                                driverController.getHID(), GenericHID.RumbleType.kBothRumble, 0.5, 1
-                        )
-                )
-        );
+        hubActive.onTrue(ControllerUtils.rumbleForDurationCommand(
+                driverController.getHID(), GenericHID.RumbleType.kBothRumble, 0.5, 1
+        ));
 
         disabled.onTrue(swerve.stopCommand());
     }
@@ -401,18 +349,16 @@ public class Robot extends LoggedRobot {
         autonomousEnabled.whileTrue(Commands.deferredProxy(() -> autoChooser.getSelected().cmd()));
 
         autoChooser.addAutoOption(new AutoOption(
-                    "LeftCenterLineDepot",
-                    autos::leftCenterLineDepot,
-                    Constants.CompetitionType.COMPETITION
-                )
-        );
+                "LeftCenterLineDepot",
+                autos::leftCenterLineDepot,
+                Constants.CompetitionType.COMPETITION
+        ));
 
         autoChooser.addAutoOption(new AutoOption(
-                    "RightCenterLineOutpost",
-                    autos::rightCenterLineOutpost,
-                    Constants.CompetitionType.COMPETITION
-                )
-        );
+                "RightCenterLineOutpost",
+                autos::rightCenterLineOutpost,
+                Constants.CompetitionType.COMPETITION
+        ));
     }
 
     public void configureButtonBindings(final EventLoop teleopEventLoop) {
@@ -428,19 +374,100 @@ public class Robot extends LoggedRobot {
                         () -> SwerveSpeed.setSwerveSpeed(SwerveSpeed.Speeds.NORMAL)
                 ).withName("SwerveSpeedSlow"));
 
-        driverController.rightTrigger(0.5, teleopEventLoop).whileTrue(robotCommands.shootWhileMoving());
+        driverController.leftTrigger(0.5, teleopEventLoop)
+                .whileTrue(shootCommands.shoot())
+                .onFalse(intake.deploy());
+        driverController.rightTrigger(0.5, teleopEventLoop).whileTrue(intake.intake());
+    }
 
-        driverController.y(teleopEventLoop).onTrue(intakeSlide.testIntake());
+    public enum HubStatus {
+        ACTIVE,
+        INACTIVE,
+        UNKNOWN
+    }
 
-        coController.y(teleopEventLoop).onTrue(robotCommands.deployIntake());
+    public enum AllianceShift {
+        AUTO,
+        TRANSITION,
+        SHIFT_1,
+        SHIFT_2,
+        SHIFT_3,
+        SHIFT_4,
+        ENDGAME,
+        UNKNOWN;
 
-        coController.a(teleopEventLoop).onTrue(robotCommands.stowIntake());
+        public HubStatus hubStatus() {
+            if (this == AUTO || this == TRANSITION || this == ENDGAME) {
+                return HubStatus.ACTIVE;
+            } else if (this == UNKNOWN) {
+                return HubStatus.UNKNOWN;
+            }
 
-        coController.rightTrigger(0.5, teleopEventLoop).whileTrue(
-                Commands.parallel(
-                        Commands.runOnce(() -> scoringMode = RobotCommands.ScoringMode.Stationary),
-                        robotCommands.shootStationary()
-                ).finallyDo(() -> scoringMode = RobotCommands.ScoringMode.Moving)
-        );
+            final String gameMessage = DriverStation.getGameSpecificMessage();
+            if (gameMessage.isEmpty()) {
+                return HubStatus.UNKNOWN;
+            }
+
+            final Optional<DriverStation.Alliance> maybeAlliance = DriverStation.getAlliance();
+            if (maybeAlliance.isEmpty()) {
+                return HubStatus.UNKNOWN;
+            }
+
+            final DriverStation.Alliance alliance = maybeAlliance.get();
+            final DriverStation.Alliance autoWinningAlliance;
+            switch (gameMessage.charAt(0)) {
+                case 'R' -> autoWinningAlliance = DriverStation.Alliance.Red;
+                case 'B' -> autoWinningAlliance = DriverStation.Alliance.Blue;
+                default -> {
+                    return HubStatus.UNKNOWN;
+                }
+            }
+
+            final boolean wonAuto = alliance == autoWinningAlliance;
+            return switch (this) {
+                case SHIFT_1, SHIFT_3 -> wonAuto ? HubStatus.INACTIVE : HubStatus.ACTIVE;
+                case SHIFT_2, SHIFT_4 -> wonAuto ? HubStatus.ACTIVE : HubStatus.INACTIVE;
+                default -> HubStatus.UNKNOWN;
+            };
+        }
+
+        public static AllianceShift get() {
+            if (DriverStation.isAutonomousEnabled()) {
+                return AUTO;
+            } else if (DriverStation.isDisabled()) {
+                return UNKNOWN;
+            }
+
+            final double matchTime = DriverStation.getMatchTime();
+            if (DriverStation.isFMSAttached()) {
+                if (matchTime > 130) {
+                    return TRANSITION;
+                } else if (matchTime > 105) {
+                    return SHIFT_1;
+                } else if (matchTime > 80) {
+                    return SHIFT_2;
+                } else if (matchTime > 55) {
+                    return SHIFT_3;
+                } else if (matchTime > 30) {
+                    return SHIFT_4;
+                } else {
+                    return ENDGAME;
+                }
+            } else {
+                if (matchTime > 110) {
+                    return ENDGAME;
+                } else if (matchTime > 85) {
+                    return SHIFT_4;
+                } else if (matchTime > 60) {
+                    return SHIFT_3;
+                } else if (matchTime > 35) {
+                    return SHIFT_2;
+                } else if (matchTime > 10) {
+                    return SHIFT_1;
+                } else {
+                    return TRANSITION;
+                }
+            }
+        }
     }
 }

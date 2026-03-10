@@ -9,15 +9,13 @@ public class PoseUtils {
     public static final double FIELD_WITHIN_BORDER_MARGIN = 0.5;
     public static final double FIELD_WITHIN_Z_MARGIN = 0.75;
 
-    private PoseUtils() {
-    }
+    private PoseUtils() {}
 
-    // TODO: verify that this actually works how we think it works
     public static Pose2d flip(final Pose2d pose2d) {
         final Rotation2d rotation = pose2d.getRotation();
         return new Pose2d(
                 FieldConstants.FIELD_LENGTH_X_METERS - pose2d.getX(),
-                pose2d.getY(),
+                FieldConstants.FIELD_WIDTH_Y_METERS - pose2d.getY(),
                 new Rotation2d(-rotation.getCos(), rotation.getSin())
         );
     }

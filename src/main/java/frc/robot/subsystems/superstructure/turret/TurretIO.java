@@ -4,26 +4,27 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import org.littletonrobotics.junction.AutoLog;
 
 public interface TurretIO {
-
     @AutoLog
     class TurretIOInputs {
-        public double turretPositionRots = 0.0;
-        public double turretVelocityRotsPerSec = 0.0;
-        public double turretVoltage = 0.0;
-        public double turretTorqueCurrentAmps = 0.0;
-        public double turretTempCelsius = 0.0;
+        public double motorPositionRots = 0;
+        public double motorVelocityRotsPerSec = 0;
+        public double motorVoltage = 0;
+        public double motorTorqueCurrentAmps = 0;
+        public double motorTempCelsius = 0;
 
-        public double largeEncoderPositionRots = 0.0;
-        public double smallEncoderPositionRots = 0.0;
+        public double primaryCANcoderPositionRots = 0;
+        public double secondaryCANcoderPositionRots = 0;
     }
 
     default void updateInputs(final TurretIOInputs inputs) {}
 
     default void config() {}
 
-    default void toTurretPosition(final double positionRots) {}
+    default void seedTurretPosition(final Rotation2d turretPosition) {}
 
-    default void toTurretContinuousPosition(final double positionRots, final double velocityRotsPerSec) {}
+    default void trackTurretPosition(final double turretPositionRots, final double turretVelocityRotsPerSec) {}
 
-    default void seedTurretPosition(final Rotation2d turretPositionRots) {}
+    default void toTurretPosition(final double turretPositionRots) {}
+
+    default void toTurretVoltage(final double turretVolts) {}
 }

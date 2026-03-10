@@ -7,9 +7,11 @@ import java.util.HashMap;
 import java.util.Objects;
 
 public class HardwareConstants {
+    public static final int PowerDistributionHub = 1;
+
     public enum CANBus {
         RIO("rio"),
-        CANIVORE("CANIVORE");
+        CANIVORE("CANivore");
 
         private static final HashMap<String, CANBus> BusNameToCANBus = new HashMap<>();
         static {
@@ -33,43 +35,45 @@ public class HardwareConstants {
         }
     }
 
-    public record IntakeRollerConstants(
+    public record IntakeRollersConstants(
             CANBus CANBus,
-            int motorID,
-            double rollerGearing
+            int motorId,
+            double gearing
     ) {}
 
-    public static final IntakeRollerConstants INTAKE_ROLLER = new IntakeRollerConstants(
+    public static final IntakeRollersConstants INTAKE_CONSTANTS = new IntakeRollersConstants(
             CANBus.RIO,
             14,
-            5.0 / 3
+            20.0 / 12.0
     );
 
     public record IntakeSlideConstants(
             CANBus CANBus,
-            int masterMotorID,
-            int followerMotorID,
-            double slideGearing,
-            double upperLimitRots,
-            double lowerLimitRots
+            int masterMotorId,
+            int followerMotorId,
+            double averageAxisGearing,
+            double differentialAxisGearing,
+            double forwardLimitRots,
+            double reverseLimitRots
     ) {}
 
-    public static final IntakeSlideConstants INTAKE_SLIDE = new IntakeSlideConstants(
+    public static final IntakeSlideConstants INTAKE_SLIDE_CONSTANTS = new IntakeSlideConstants(
             CANBus.CANIVORE,
             15,
             16,
-            10,
+            (60.0 / 12.0) * (40.0 / 18.0),
+            1,
             3.8,
             0
     );
 
     public record SpindexerConstants(
             CANBus CANBus,
-            int motorID,
-            double wheelGearing
+            int motorId,
+            double gearing
     ) {}
 
-    public static final SpindexerConstants SPINDEXER = new SpindexerConstants(
+    public static final SpindexerConstants SPINDEXER_CONSTANTS = new SpindexerConstants(
             CANBus.CANIVORE,
             17,
             2
@@ -77,72 +81,115 @@ public class HardwareConstants {
 
     public record FeederConstants(
             CANBus CANBus,
-            int motorID,
-            double rollerGearing
+            int motorId,
+            double gearing
     ) {}
 
-
-    public static final FeederConstants FEEDER = new FeederConstants(
+    public static final FeederConstants FEEDER_CONSTANTS = new FeederConstants(
             CANBus.CANIVORE,
             18,
-            3
+            (36.0 / 12.0) * (24.0 / 18.0) * (21.0 / 45.0)
     );
 
-    public record TurretConstants (
+    public record TurretConstants(
             CANBus CANBus,
-            int turretMotorID,
-            int smallEncoderID,
-            int largeEncoderID,
-            double motorToTurretGearing,
-            int turretTooth,
-            int smallEncoderTooth,
-            int largeEncoderTooth,
-            double smallEncoderOffset,
-            double largeEncoderOffset,
+            int motorId,
+            int primaryCANcoderId,
+            int secondaryCANcoderId,
+            double primaryCANcoderOffsetRots,
+            double secondaryCANcoderOffsetRots,
             double forwardLimitRots,
             double reverseLimitRots,
+            int drivingGearTeeth,
+            int drivenTurretGearTeeth,
+            int primaryCANcoderGearTeeth,
+            int secondaryCANcoderGearTeeth,
+            double motorToGearboxGearing,
+            double gearboxToTurretGearing,
+            double primaryCANcoderGearing,
+            double secondaryCANcoderGearing,
             Transform2d offsetFromCenter
-    ) {}
+    ) {
+        public TurretConstants(
+                CANBus CANBus,
+                int motorId,
+                int primaryCANcoderId,
+                int secondaryCANcoderId,
+                double primaryCANcoderOffsetRots,
+                double secondaryCANcoderOffsetRots,
+                double forwardLimitRots,
+                double reverseLimitRots,
+                int drivingGearTeeth,
+                int drivenTurretGearTeeth,
+                int primaryCANcoderGearTeeth,
+                int secondaryCANcoderGearTeeth,
+                double motorToGearboxGearing,
+                Transform2d offsetFromCenter
+        ) {
+            this(
+                    CANBus,
+                    motorId,
+                    primaryCANcoderId,
+                    secondaryCANcoderId,
+                    primaryCANcoderOffsetRots,
+                    secondaryCANcoderOffsetRots,
+                    forwardLimitRots,
+                    reverseLimitRots,
+                    drivingGearTeeth,
+                    drivenTurretGearTeeth,
+                    primaryCANcoderGearTeeth,
+                    secondaryCANcoderGearTeeth,
+                    motorToGearboxGearing,
+                    ((double) drivenTurretGearTeeth) / drivingGearTeeth,
+                    ((double) primaryCANcoderGearTeeth) / drivenTurretGearTeeth,
+                    ((double) secondaryCANcoderGearTeeth) / drivenTurretGearTeeth,
+                    offsetFromCenter
+            );
+        }
+    }
 
-    public static final TurretConstants TURRET = new TurretConstants(
+    public static final TurretConstants TURRET_CONSTANTS = new TurretConstants(
             CANBus.CANIVORE,
             19,
             20,
             21,
-            24,
+            //TODO: FIND OFFSETS
+            0,
+            0,
+            0.5,
+            -0.5,
+            10,
             80,
             13,
             17,
-            0, //-0.451,
-            0, //-0.061,
-            0.5,
-            -0.5,
+            36.0 / 12.0,
             new Transform2d(-0.127, 0, Rotation2d.kZero)
     );
+
     public record HoodConstants(
             CANBus CANBus,
-            int motorID,
+            int motorId,
             double gearing,
             double upperLimitRots,
             double lowerLimitRots
-    ){}
+    ) {}
 
-    public static final HoodConstants HOOD = new HoodConstants(
+    public static final HoodConstants HOOD_CONSTANTS = new HoodConstants(
             CANBus.RIO,
             22,
-            102,
-            0.1103,
+            (40.0 / 12.0) * (36.0 / 20.0) * (170.0 / 10.0),
+            0.1,
             0
     );
 
     public record ShooterConstants(
             CANBus CANBus,
-            int masterMotorID,
-            int followerMotorID,
+            int masterId,
+            int followerId,
             double gearing
     ) {}
 
-    public static final ShooterConstants SHOOTER = new ShooterConstants(
+    public static final ShooterConstants SHOOTER_CONSTANTS = new ShooterConstants(
             CANBus.RIO,
             23,
             24,

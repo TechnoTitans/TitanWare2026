@@ -19,9 +19,10 @@ import org.photonvision.PhotonPoseEstimator;
 import org.photonvision.simulation.PhotonCameraSim;
 import org.photonvision.simulation.VisionSystemSim;
 import org.photonvision.targeting.PhotonPipelineResult;
-import org.photonvision.targeting.PhotonTrackedTarget;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
 import java.util.function.Function;
 
 public class SimVisionRunner implements PhotonVisionRunner {
@@ -76,71 +77,6 @@ public class SimVisionRunner implements PhotonVisionRunner {
             inputs.distortionCoeffs = photonCamera.getDistCoeffs().orElse(EmptyDistortionCoeffs);
 
             inputs.pipelineResults = photonCamera.getAllUnreadResults().toArray(new PhotonPipelineResult[0]);
-        }
-    }
-
-    public static class VisionIOCoralTrackingSim implements VisionIO {
-        public final PhotonCamera photonCamera;
-        public final String cameraName;
-
-        public final double stdDevFactor;
-        public final Transform3d robotToCamera;
-
-        private final int resolutionWidthPx;
-        private final int resolutionHeightPx;
-
-        public VisionIOCoralTrackingSim(final TitanCamera titanCamera, final VisionSystemSim visionSystemSim) {
-            this.photonCamera = titanCamera.getPhotonCamera();
-            this.cameraName = photonCamera.getName();
-
-            this.stdDevFactor = titanCamera.getStdDevFactor();
-            this.robotToCamera = titanCamera.getRobotToCameraTransform();
-            final CameraProperties.Resolution resolution = titanCamera
-                    .getCameraProperties()
-                    .getFirstResolution();
-            this.resolutionWidthPx = resolution.getWidth();
-            this.resolutionHeightPx = resolution.getHeight();
-
-            final PhotonCameraSim photonCameraSim =
-                    new PhotonCameraSim(titanCamera.getPhotonCamera(), titanCamera.toSimCameraProperties());
-
-            photonCameraSim.enableDrawWireframe(true);
-            photonCameraSim.enableRawStream(true);
-            photonCameraSim.enableProcessedStream(true);
-
-            ToClose.add(photonCameraSim);
-            visionSystemSim.addCamera(photonCameraSim, titanCamera.getRobotToCameraTransform());
-        }
-
-        @Override
-        public void updateInputs(final VisionIOInputs inputs) {
-            inputs.name = cameraName;
-            inputs.isConnected = photonCamera.isConnected();
-            inputs.stdDevFactor = stdDevFactor;
-            inputs.robotToCamera = robotToCamera;
-
-            inputs.resolutionWidthPx = resolutionWidthPx;
-            inputs.resolutionHeightPx = resolutionHeightPx;
-
-            inputs.cameraMatrix = photonCamera.getCameraMatrix().orElse(EmptyCameraMatrix);
-            inputs.distortionCoeffs = photonCamera.getDistCoeffs().orElse(EmptyDistortionCoeffs);
-
-            // TODO kinda a nasty fix
-            final List<PhotonPipelineResult> pipelineResults = photonCamera.getAllUnreadResults();
-            final List<PhotonPipelineResult> filteredPipelineResults = new ArrayList<>();
-            for (final PhotonPipelineResult result : pipelineResults) {
-                final List<PhotonTrackedTarget> filteredTargets = result.targets.stream()
-                        .filter(target -> target.fiducialId == -1)
-                        .toList();
-
-                filteredPipelineResults.add(new PhotonPipelineResult(
-                        result.metadata,
-                        filteredTargets,
-                        result.multitagResult
-                ));
-            }
-
-            inputs.pipelineResults = filteredPipelineResults.toArray(PhotonPipelineResult[]::new);
         }
     }
 
@@ -235,7 +171,6 @@ public class SimVisionRunner implements PhotonVisionRunner {
 
     /**
      * Reset the simulated robot {@link Pose3d}.
-     *
      * @param robotPose the new robot {@link Pose3d}
      */
     @Override

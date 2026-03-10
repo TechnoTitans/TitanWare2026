@@ -1,16 +1,18 @@
 package frc.robot.subsystems.superstructure.hood;
 
 import com.ctre.phoenix6.BaseStatusSignal;
+import com.ctre.phoenix6.CANBus;
 import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.Slot0Configs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.PositionVoltage;
+import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.ParentDevice;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.FeedbackSensorSourceValue;
-import com.ctre.phoenix6.signals.GravityTypeValue;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
+import com.ctre.phoenix6.signals.StaticFeedforwardSignValue;
 import edu.wpi.first.units.measure.*;
 import frc.robot.constants.HardwareConstants;
 import frc.robot.utils.ctre.Phoenix6Utils;
@@ -18,99 +20,103 @@ import frc.robot.utils.ctre.RefreshAll;
 
 public class HoodIOReal implements HoodIO {
     private final HardwareConstants.HoodConstants constants;
-
-    private final TalonFX hoodMotor;
-    private final TalonFXConfiguration motorConfig;
-
-    private final StatusSignal<Angle> hoodPosition;
-    private final StatusSignal<AngularVelocity> hoodVelocity;
-    private final StatusSignal<Voltage> hoodVoltage;
-    private final StatusSignal<Current> hoodTorqueCurrent;
-    private final StatusSignal<Temperature> hoodDeviceTemp;
+    private final TalonFX motor;
 
     private final PositionVoltage positionVoltage;
+    private final VoltageOut voltageOut;
+
+    private final StatusSignal<Angle> motorPosition;
+    private final StatusSignal<AngularVelocity> motorVelocity;
+    private final StatusSignal<Voltage> motorVoltage;
+    private final StatusSignal<Current> motorTorqueCurrent;
+    private final StatusSignal<Temperature> motorDeviceTemp;
 
     public HoodIOReal(final HardwareConstants.HoodConstants constants) {
         this.constants = constants;
 
-        this.hoodMotor = new TalonFX(constants.motorID(), constants.CANBus().toPhoenix6CANBus());
-        this.motorConfig = new TalonFXConfiguration();
+        final HardwareConstants.CANBus bus = constants.CANBus();
+        final CANBus p6Bus = bus.toPhoenix6CANBus();
+        this.motor = new TalonFX(constants.motorId(), p6Bus);
 
-        this.hoodPosition = hoodMotor.getPosition(false);
-        this.hoodVelocity = hoodMotor.getVelocity(false);
-        this.hoodVoltage = hoodMotor.getMotorVoltage(false);
-        this.hoodTorqueCurrent = hoodMotor.getTorqueCurrent(false);
-        this.hoodDeviceTemp = hoodMotor.getDeviceTemp(false);
+        this.positionVoltage = new PositionVoltage(0);
+        this.voltageOut = new VoltageOut(0);
 
-        this.positionVoltage = new PositionVoltage(0).withSlot(0);
+        this.motorPosition = motor.getPosition(false);
+        this.motorVelocity = motor.getVelocity(false);
+        this.motorVoltage = motor.getMotorVoltage(false);
+        this.motorTorqueCurrent = motor.getTorqueCurrent(false);
+        this.motorDeviceTemp = motor.getDeviceTemp(false);
 
         RefreshAll.add(
-                constants.CANBus(),
-                hoodPosition,
-                hoodVelocity,
-                hoodVoltage,
-                hoodTorqueCurrent,
-                hoodDeviceTemp
+                bus,
+                motorPosition,
+                motorVelocity,
+                motorVoltage,
+                motorTorqueCurrent,
+                motorDeviceTemp
         );
+    }
+
+    @Override
+    public void updateInputs(final HoodIO.HoodIOInputs inputs) {
+        inputs.pivotPositionRots = motorPosition.getValueAsDouble();
+        inputs.pivotVelocityRotsPerSec = motorVelocity.getValueAsDouble();
+        inputs.pivotVoltage = motorVoltage.getValueAsDouble();
+        inputs.pivotTorqueCurrentAmps = motorTorqueCurrent.getValueAsDouble();
+        inputs.pivotTempCelsius = motorDeviceTemp.getValueAsDouble();
     }
 
     @Override
     public void config() {
-        motorConfig.Slot0 = new Slot0Configs()
+        final TalonFXConfiguration motorConfiguration = new TalonFXConfiguration();
+        motorConfiguration.Slot0 = new Slot0Configs()
                 .withKS(0.35)
-                .withKG(0.03)
-                .withGravityType(GravityTypeValue.Arm_Cosine)
+                .withStaticFeedforwardSign(StaticFeedforwardSignValue.UseClosedLoopSign)
                 .withKP(375)
                 .withKD(0);
-        motorConfig.CurrentLimits.StatorCurrentLimit = 50;
-        motorConfig.CurrentLimits.StatorCurrentLimitEnable = true;
-        motorConfig.CurrentLimits.SupplyCurrentLimit = 40;
-        motorConfig.CurrentLimits.SupplyCurrentLowerLimit = 40;
-        motorConfig.CurrentLimits.SupplyCurrentLowerTime = 1;
-        motorConfig.CurrentLimits.SupplyCurrentLimitEnable = true;
-        motorConfig.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
-        motorConfig.MotorOutput.NeutralMode = NeutralModeValue.Brake;
-        motorConfig.Feedback.FeedbackSensorSource = FeedbackSensorSourceValue.RotorSensor;
-        motorConfig.Feedback.SensorToMechanismRatio = constants.gearing();
-        motorConfig.SoftwareLimitSwitch.ForwardSoftLimitThreshold = constants.upperLimitRots();
-        motorConfig.SoftwareLimitSwitch.ForwardSoftLimitEnable = true;
-        motorConfig.SoftwareLimitSwitch.ReverseSoftLimitThreshold = constants.lowerLimitRots();
-        motorConfig.SoftwareLimitSwitch.ReverseSoftLimitEnable = true;
-        hoodMotor.getConfigurator().apply(motorConfig);
+        motorConfiguration.CurrentLimits.StatorCurrentLimit = 60;
+        motorConfiguration.CurrentLimits.StatorCurrentLimitEnable = true;
+        motorConfiguration.Feedback.FeedbackSensorSource = FeedbackSensorSourceValue.RotorSensor;
+        motorConfiguration.Feedback.SensorToMechanismRatio = constants.gearing();
+        motorConfiguration.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
+        motorConfiguration.MotorOutput.NeutralMode = NeutralModeValue.Brake;
+        motorConfiguration.SoftwareLimitSwitch.ForwardSoftLimitThreshold = constants.upperLimitRots();
+        motorConfiguration.SoftwareLimitSwitch.ForwardSoftLimitEnable = true;
+        motorConfiguration.SoftwareLimitSwitch.ReverseSoftLimitThreshold = constants.lowerLimitRots();
+        motorConfiguration.SoftwareLimitSwitch.ReverseSoftLimitEnable = true;
+        Phoenix6Utils.tryUntilOk(motor, () -> motor.getConfigurator().apply(motorConfiguration));
 
         BaseStatusSignal.setUpdateFrequencyForAll(
                 100,
-                hoodPosition,
-                hoodVelocity,
-                hoodVoltage,
-                hoodTorqueCurrent
+                motorPosition,
+                motorVelocity,
+                motorVoltage,
+                motorTorqueCurrent
         );
+
         BaseStatusSignal.setUpdateFrequencyForAll(
                 4,
-                hoodDeviceTemp
+                motorDeviceTemp
         );
+
         ParentDevice.optimizeBusUtilizationForAll(
                 4,
-                hoodMotor
+                motor
         );
     }
 
     @Override
-    public void updateInputs(HoodIOInputs inputs) {
-        inputs.hoodPositionRots = hoodPosition.getValueAsDouble();
-        inputs.hoodVelocityRotsPerSec = hoodVelocity.getValueAsDouble();
-        inputs.hoodVoltage = hoodVoltage.getValueAsDouble();
-        inputs.hoodTorqueCurrentAmps = hoodTorqueCurrent.getValueAsDouble();
-        inputs.hoodTempCelsius = hoodDeviceTemp.getValueAsDouble();
+    public void toHoodPosition(final double turretPositionRots) {
+        motor.setControl(positionVoltage.withPosition(turretPositionRots));
     }
 
     @Override
-    public void toHoodPosition(final double positionRots) {
-        hoodMotor.setControl(positionVoltage.withPosition(positionRots));
+    public void toHoodVoltage(final double hoodVolts) {
+        motor.setControl(voltageOut.withOutput(hoodVolts));
     }
 
     @Override
-    public void zeroMotor() {
-        Phoenix6Utils.reportIfNotOk(hoodMotor, hoodMotor.setPosition(0));
+    public void setPosition(final double positionRots) {
+        motor.setPosition(positionRots);
     }
 }

@@ -23,9 +23,6 @@ public class AutoChooser extends LoggedNetworkInput implements AutoCloseable {
     private final StringSubscriber selectedAutoSubscriber;
     private final LinkedHashMap<String, AutoOption> autoMap;
     private final HashSet<AutoOption> ignoredSet;
-    private final AutoOption defaultAuto;
-    private String dashboardSelectedAuto;
-    private String selectedAuto;
     private final LoggableInputs inputs = new LoggableInputs() {
         @Override
         public void toLog(LogTable table) {
@@ -39,6 +36,10 @@ public class AutoChooser extends LoggedNetworkInput implements AutoCloseable {
             selectedAuto = table.get(ntTableName + "/SelectedAuto", selectedAuto);
         }
     };
+
+    private final AutoOption defaultAuto;
+    private String dashboardSelectedAuto;
+    private String selectedAuto;
     private AutoRoutine selectedAutoRoutine;
     private DriverStation.Alliance selectedAutoAlliance;
 

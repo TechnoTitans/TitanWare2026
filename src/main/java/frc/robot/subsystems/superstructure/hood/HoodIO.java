@@ -5,18 +5,20 @@ import org.littletonrobotics.junction.AutoLog;
 public interface HoodIO {
     @AutoLog
     class HoodIOInputs {
-        public double hoodPositionRots = 0.0;
-        public double hoodVelocityRotsPerSec = 0.0;
-        public double hoodVoltage = 0.0;
-        public double hoodTorqueCurrentAmps = 0.0;
-        public double hoodTempCelsius = 0.0;
+        public double pivotPositionRots = 0;
+        public double pivotVelocityRotsPerSec = 0;
+        public double pivotVoltage = 0;
+        public double pivotTorqueCurrentAmps = 0;
+        public double pivotTempCelsius = 0;
     }
 
     default void updateInputs(final HoodIOInputs inputs) {}
 
     default void config() {}
 
-    default void toHoodPosition(final double positionRots) {}
+    default void toHoodPosition(final double hoodPositionRots) {}
 
-    default void zeroMotor() {}
+    default void toHoodVoltage(final double hoodVolts) {}
+
+    default void setPosition(final double positionRots) {}
 }

@@ -33,15 +33,15 @@ public record AutoOption(
         );
     }
 
+    public boolean hasCompetitionType(final Constants.CompetitionType competitionType) {
+        return competitionTypes.contains(competitionType);
+    }
+
     private static Set<Constants.CompetitionType> addDefaultCompetitionType(
             final Constants.CompetitionType[] competitionTypes
     ) {
         final HashSet<Constants.CompetitionType> set = new HashSet<>(defaultCompetitionTypes);
         set.addAll(Arrays.asList(competitionTypes));
         return set;
-    }
-
-    public boolean hasCompetitionType(final Constants.CompetitionType competitionType) {
-        return competitionTypes.contains(competitionType);
     }
 }

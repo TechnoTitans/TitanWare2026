@@ -20,8 +20,7 @@ import java.util.function.Function;
 public class VisionPoseEstimator {
     private static final int EdgeTolerancePixels = 15;
 
-    private VisionPoseEstimator() {
-    }
+    private VisionPoseEstimator() {}
 
     private static VisionResult constrainedPnpStrategy(
             final AprilTagFieldLayout fieldLayout,
@@ -173,15 +172,6 @@ public class VisionPoseEstimator {
         if (maybeTagPose.isEmpty()) {
             return VisionResult.invalid(VisionResult.Result.SINGLE_TARGET_INVALID_TAG);
         }
-
-        //TODO: Integrate Rebuilt's tag ids IDs'
-//        final Set<Integer> oppositeReefTagIds = Robot.IsRedAlliance.getAsBoolean()
-//                ? FieldConstants.Reef.BLUE_APRILTAG_IDS
-//                : FieldConstants.Reef.RED_APRILTAG_IDS;
-//
-//        if (oppositeReefTagIds.contains(target.getFiducialId())) {
-//            return VisionResult.invalid(VisionResult.Result.SINGLE_TARGET_OPPOSITE_REEF);
-//        }
 
         for (final TargetCorner targetCorner : target.detectedCorners) {
             final double x = targetCorner.x;

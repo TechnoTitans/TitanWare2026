@@ -35,7 +35,6 @@ import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
-import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.Robot;
@@ -46,6 +45,7 @@ import frc.robot.subsystems.drive.constants.SwerveConstants;
 import frc.robot.subsystems.drive.controllers.HolonomicChoreoController;
 import frc.robot.subsystems.drive.controllers.HolonomicDriveController;
 import frc.robot.utils.commands.LoggedTrigger;
+import frc.robot.utils.commands.SubsystemExt;
 import frc.robot.utils.gyro.GyroUtils;
 import frc.robot.utils.teleop.ControllerUtils;
 import frc.robot.utils.teleop.SwerveSpeed;
@@ -63,7 +63,7 @@ import java.util.function.Supplier;
 import static edu.wpi.first.units.Units.*;
 import static frc.robot.subsystems.drive.constants.SwerveConstants.Config;
 
-public class Swerve extends SubsystemBase {
+public class Swerve extends SubsystemExt {
     protected static final String LogKey = "Swerve";
     protected static final String OdometryLogKey = LogKey + "/Odometry";
     private static final double OdometryBufferHistorySeconds = 1.5;
@@ -178,7 +178,7 @@ public class Swerve extends SubsystemBase {
         this.replayPoseEstimator = new SwerveDrivePoseEstimator(
                 kinematics,
                 Rotation2d.kZero,
-                new SwerveModulePosition[]{
+                new SwerveModulePosition[] {
                         new SwerveModulePosition(),
                         new SwerveModulePosition(),
                         new SwerveModulePosition(),
@@ -404,7 +404,6 @@ public class Swerve extends SubsystemBase {
 
     /**
      * Get the estimated {@link Pose2d} of the robot from the {@link SwerveDrivePoseEstimator}.
-     *
      * @return the estimated position of the robot, as a {@link Pose2d}
      */
     public Pose2d getPose() {
@@ -587,31 +586,31 @@ public class Swerve extends SubsystemBase {
             final DoubleSupplier ySpeedSupplier,
             final Supplier<Rotation2d> rotationTargetSupplier
     ) {
-        return Commands.sequence(
-                        runOnce(() -> {
-                            headingControllerActive = true;
-                            headingController.reset();
-                        }),
-                        run(() -> {
-                            final SwerveSpeed.Speeds swerveSpeed = SwerveSpeed.getSwerveSpeed();
+        return instantRun(
+                () -> {
+                    headingControllerActive = true;
+                    headingController.reset();
+                },
+                () -> {
+                    final SwerveSpeed.Speeds swerveSpeed = SwerveSpeed.getSwerveSpeed();
 
-                            final Translation2d translationInput = ControllerUtils.calculateLinearVelocity(
-                                    -xSpeedSupplier.getAsDouble(),
-                                    -ySpeedSupplier.getAsDouble(),
-                                    0.01
-                            );
+                    final Translation2d translationInput = ControllerUtils.calculateLinearVelocity(
+                            -xSpeedSupplier.getAsDouble(),
+                            -ySpeedSupplier.getAsDouble(),
+                            0.01
+                    );
 
-                            this.headingTarget = rotationTargetSupplier.get();
-                            driveFieldRelative(
-                                    translationInput.getX()
-                                            * swerveSpeed.getTranslationSpeed(),
-                                    translationInput.getY()
-                                            * swerveSpeed.getTranslationSpeed(),
-                                    headingController.calculate(getYaw().getRadians(), headingTarget.getRadians()),
-                                    SwerveRequest.ForwardPerspectiveValue.OperatorPerspective
-                            );
-                        })
-                )
+                    this.headingTarget = rotationTargetSupplier.get();
+                    driveFieldRelative(
+                            translationInput.getX()
+                                    * swerveSpeed.getTranslationSpeed(),
+                            translationInput.getY()
+                                    * swerveSpeed.getTranslationSpeed(),
+                            headingController.calculate(getYaw().getRadians(), headingTarget.getRadians()),
+                            SwerveRequest.ForwardPerspectiveValue.OperatorPerspective
+                    );
+                }
+        )
                 .finallyDo(() -> headingControllerActive = false)
                 .withName("TeleopFacingAngle");
     }
@@ -621,73 +620,75 @@ public class Swerve extends SubsystemBase {
             final DoubleSupplier ySpeedSupplier,
             final Supplier<Rotation2d> rotationTargetSupplier
     ) {
-        return Commands.sequence(
-                        runOnce(() -> {
-                            headingControllerActive = true;
-                            headingController.reset();
-                        }),
-                        run(() -> {
-                            this.headingTarget = rotationTargetSupplier.get();
-                            driveRobotRelative(
-                                    xSpeedSupplier.getAsDouble(),
-                                    ySpeedSupplier.getAsDouble(),
-                                    headingController.calculate(getYaw().getRadians(), headingTarget.getRadians())
-                            );
-                        })
-                )
+        return instantRun(
+                () -> {
+                    headingControllerActive = true;
+                    headingController.reset();
+                },
+                () -> {
+                    this.headingTarget = rotationTargetSupplier.get();
+                    driveRobotRelative(
+                            xSpeedSupplier.getAsDouble(),
+                            ySpeedSupplier.getAsDouble(),
+                            headingController.calculate(getYaw().getRadians(), headingTarget.getRadians())
+                    );
+                }
+        )
                 .finallyDo(() -> headingControllerActive = false)
                 .withName("RobotRelativeFacingAngle");
     }
 
     public Command faceAngle(final Supplier<Rotation2d> rotationTargetSupplier) {
-        return Commands.sequence(
-                        runOnce(() -> {
-                            headingControllerActive = true;
-                            headingController.reset();
-                        }),
-                        run(() -> {
-                            this.headingTarget = rotationTargetSupplier.get();
-                            driveFieldRelative(
-                                    0,
-                                    0,
-                                    headingController.calculate(getYaw().getRadians(), headingTarget.getRadians()),
-                                    SwerveRequest.ForwardPerspectiveValue.BlueAlliance
-                            );
-                        })
-                )
+        return instantRun(
+                () -> {
+                    headingControllerActive = true;
+                    headingController.reset();
+                },
+                () -> {
+                    this.headingTarget = rotationTargetSupplier.get();
+                    driveFieldRelative(
+                            0,
+                            0,
+                            headingController.calculate(getYaw().getRadians(), headingTarget.getRadians()),
+                            SwerveRequest.ForwardPerspectiveValue.BlueAlliance
+                    );
+                }
+        )
                 .finallyDo(() -> headingControllerActive = false)
                 .withName("FaceAngle");
     }
 
     public Command driveToPose(final Supplier<Pose2d> poseSupplier) {
         return Commands.sequence(
-                        runOnce(() -> {
+                instantRun(
+                        () -> {
                             holonomicControllerActive = true;
                             holonomicPoseTarget = poseSupplier.get();
                             holonomicDriveController.reset(getPose(), holonomicPoseTarget);
-                        }),
-                        run(() -> {
+                        },
+                        () -> {
                             holonomicPoseTarget = poseSupplier.get();
                             drive(holonomicDriveController.calculate(getPose(), holonomicPoseTarget));
-                        }).until(atHolonomicDrivePose),
-                        runOnce(this::stop)
-                )
+                        }
+                ).until(atHolonomicDrivePose),
+                runOnce(this::stop)
+        )
                 .finallyDo(() -> holonomicControllerActive = false)
                 .withName("DriveToPose");
     }
 
     public Command runToPose(final Supplier<Pose2d> poseSupplier) {
-        return Commands.sequence(
-                        runOnce(() -> {
-                            holonomicControllerActive = true;
-                            holonomicPoseTarget = poseSupplier.get();
-                            holonomicDriveController.reset(getPose(), holonomicPoseTarget);
-                        }),
-                        run(() -> {
-                            holonomicPoseTarget = poseSupplier.get();
-                            drive(holonomicDriveController.calculate(getPose(), holonomicPoseTarget));
-                        })
-                )
+        return instantRun(
+                () -> {
+                    holonomicControllerActive = true;
+                    holonomicPoseTarget = poseSupplier.get();
+                    holonomicDriveController.reset(getPose(), holonomicPoseTarget);
+                },
+                () -> {
+                    holonomicPoseTarget = poseSupplier.get();
+                    drive(holonomicDriveController.calculate(getPose(), holonomicPoseTarget));
+                }
+        )
                 .finallyDo(() -> holonomicControllerActive = false)
                 .withName("RunToPose");
     }
@@ -698,33 +699,33 @@ public class Swerve extends SubsystemBase {
             final DoubleSupplier speedSupplier,
             final Supplier<Rotation2d> rotationTargetSupplier
     ) {
-        return Commands.sequence(
-                        runOnce(() -> {
-                            headingControllerActive = true;
-                            headingController.reset();
-                            holdAxisPID.reset();
-                        }),
-                        run(() -> {
-                            final Pose2d currentPose = getPose();
-                            this.headingTarget = rotationTargetSupplier.get();
+        return instantRun(
+                () -> {
+                    headingControllerActive = true;
+                    headingController.reset();
+                    holdAxisPID.reset();
+                },
+                () -> {
+                    final Pose2d currentPose = getPose();
+                    this.headingTarget = rotationTargetSupplier.get();
 
-                            final double holdEffort = holdAxisPID.calculate(
-                                    holdAxis == DriveAxis.X
-                                            ? currentPose.getX()
-                                            : currentPose.getY(),
-                                    holdPosition
-                            );
+                    final double holdEffort = holdAxisPID.calculate(
+                            holdAxis == DriveAxis.X
+                                    ? currentPose.getX()
+                                    : currentPose.getY(),
+                            holdPosition
+                    );
 
-                            final double xSpeed = holdAxis == DriveAxis.X ? holdEffort : speedSupplier.getAsDouble();
-                            final double ySpeed = holdAxis == DriveAxis.Y ? holdEffort : speedSupplier.getAsDouble();
-                            driveFieldRelative(
-                                    xSpeed,
-                                    ySpeed,
-                                    headingController.calculate(getYaw().getRadians(), headingTarget.getRadians()),
-                                    SwerveRequest.ForwardPerspectiveValue.BlueAlliance
-                            );
-                        })
-                )
+                    final double xSpeed = holdAxis == DriveAxis.X ? holdEffort : speedSupplier.getAsDouble();
+                    final double ySpeed = holdAxis == DriveAxis.Y ? holdEffort : speedSupplier.getAsDouble();
+                    driveFieldRelative(
+                            xSpeed,
+                            ySpeed,
+                            headingController.calculate(getYaw().getRadians(), headingTarget.getRadians()),
+                            SwerveRequest.ForwardPerspectiveValue.BlueAlliance
+                    );
+                }
+        )
                 .finallyDo(() -> headingControllerActive = false)
                 .withName("TeleopHoldAxisFacingAngle");
     }
@@ -735,33 +736,33 @@ public class Swerve extends SubsystemBase {
             final double driveSpeed,
             final Supplier<Rotation2d> headingTarget
     ) {
-        return Commands.sequence(
-                        runOnce(() -> {
-                            headingControllerActive = true;
-                            headingController.reset();
-                            holdAxisPID.reset();
-                        }),
-                        run(() -> {
-                            final Pose2d currentPose = getPose();
-                            this.headingTarget = headingTarget.get();
+        return instantRun(
+                () -> {
+                    headingControllerActive = true;
+                    headingController.reset();
+                    holdAxisPID.reset();
+                },
+                () -> {
+                    final Pose2d currentPose = getPose();
+                    this.headingTarget = headingTarget.get();
 
-                            final double holdEffort = holdAxisPID.calculate(
-                                    holdAxis == DriveAxis.X
-                                            ? currentPose.getX()
-                                            : currentPose.getY(),
-                                    holdPosition.getAsDouble()
-                            );
+                    final double holdEffort = holdAxisPID.calculate(
+                            holdAxis == DriveAxis.X
+                                    ? currentPose.getX()
+                                    : currentPose.getY(),
+                            holdPosition.getAsDouble()
+                    );
 
-                            final double xSpeed = holdAxis == DriveAxis.X ? holdEffort : driveSpeed;
-                            final double ySpeed = holdAxis == DriveAxis.Y ? holdEffort : driveSpeed;
-                            driveFieldRelative(
-                                    xSpeed,
-                                    ySpeed,
-                                    headingController.calculate(getYaw().getRadians(), this.headingTarget.getRadians()),
-                                    SwerveRequest.ForwardPerspectiveValue.BlueAlliance
-                            );
-                        })
-                )
+                    final double xSpeed = holdAxis == DriveAxis.X ? holdEffort : driveSpeed;
+                    final double ySpeed = holdAxis == DriveAxis.Y ? holdEffort : driveSpeed;
+                    driveFieldRelative(
+                            xSpeed,
+                            ySpeed,
+                            headingController.calculate(getYaw().getRadians(), this.headingTarget.getRadians()),
+                            SwerveRequest.ForwardPerspectiveValue.BlueAlliance
+                    );
+                }
+        )
                 .finallyDo(() -> headingControllerActive = false)
                 .withName("HoldAxisFacingAngleAndDrive");
     }
@@ -778,33 +779,34 @@ public class Swerve extends SubsystemBase {
                         : () -> getPose().getY()
         );
 
-        return Commands.sequence(
-                        runOnce(() -> {
-                            headingControllerActive = true;
-                            headingController.reset();
-                            holdAxisPID.reset();
-                        }),
-                        run(() -> {
-                            final Pose2d currentPose = getPose();
-                            this.headingTarget = headingTarget.get();
+        return instantRun(
+                () -> {
+                    headingControllerActive = true;
+                    headingController.reset();
+                    holdAxisPID.reset();
+                },
+                () -> {
+                    final Pose2d currentPose = getPose();
+                    this.headingTarget = headingTarget.get();
 
-                            final double holdEffort = holdAxisPID.calculate(
-                                    holdAxis == DriveAxis.X
-                                            ? currentPose.getX()
-                                            : currentPose.getY(),
-                                    holdPosition.getAsDouble()
-                            );
+                    final double holdEffort = holdAxisPID.calculate(
+                            holdAxis == DriveAxis.X
+                                    ? currentPose.getX()
+                                    : currentPose.getY(),
+                            holdPosition.getAsDouble()
+                    );
 
-                            final double xSpeed = holdAxis == DriveAxis.X ? holdEffort : 0;
-                            final double ySpeed = holdAxis == DriveAxis.Y ? holdEffort : 0;
-                            driveFieldRelative(
-                                    xSpeed,
-                                    ySpeed,
-                                    headingController.calculate(getYaw().getRadians(), this.headingTarget.getRadians()),
-                                    SwerveRequest.ForwardPerspectiveValue.BlueAlliance
-                            );
-                        })
-                ).until(atAxis)
+                    final double xSpeed = holdAxis == DriveAxis.X ? holdEffort : 0;
+                    final double ySpeed = holdAxis == DriveAxis.Y ? holdEffort : 0;
+                    driveFieldRelative(
+                            xSpeed,
+                            ySpeed,
+                            headingController.calculate(getYaw().getRadians(), this.headingTarget.getRadians()),
+                            SwerveRequest.ForwardPerspectiveValue.BlueAlliance
+                    );
+                }
+        )
+                .until(atAxis)
                 .finallyDo(() -> headingControllerActive = false)
                 .withName("HoldAxisFacingAngleAndDrive");
     }
@@ -980,7 +982,8 @@ public class Swerve extends SubsystemBase {
 
         public StatusCode apply(
                 final SwerveDrivetrain.SwerveControlParameters parameters,
-                final SwerveModule<?, ?, ?>... modulesToApply) {
+                final SwerveModule<?, ?, ?>... modulesToApply)
+        {
             for (final SwerveModule<?, ?, ?> swerveModule : modulesToApply) {
                 switch (swerveModule.getSteerClosedLoopOutputType()) {
                     case Voltage:
@@ -1020,7 +1023,8 @@ public class Swerve extends SubsystemBase {
 
         public StatusCode apply(
                 final SwerveDrivetrain.SwerveControlParameters parameters,
-                final SwerveModule<?, ?, ?>... modulesToApply) {
+                final SwerveModule<?, ?, ?>... modulesToApply)
+        {
             for (int i = 0; i < modulesToApply.length; ++i) {
                 final var angle = parameters.moduleLocations[i].getAngle().plus(Rotation2d.kCCW_90deg);
                 final var swerveModule = modulesToApply[i];

@@ -31,11 +31,12 @@ public interface Constants {
         String AUTO_SELECTED_SUBSCRIBER = "SelectedAuto";
     }
 
-    //TODO: Update
     interface Vision {
-        Vector<N3> VISION_STD_DEV_COEFFS = VecBuilder.fill(0.02, 0.02, 0.02);
+        /**
+         * Standard deviations of the supplied pose estimate (before vision, likely to be solely wheel odometry)
+         */
         double VISION_CAMERA_DEFAULT_STD_DEV_FACTOR = 1.0;
-
+        Vector<N3> VISION_STD_DEV_COEFFS = VecBuilder.fill(0.02, 0.02, 0.02);
         double MAX_ACCEPT_BEST_POSE_AMBIGUITY = 0.15;
 
         Transform3d FRONT_HOPPER_CAMERA = new Transform3d(

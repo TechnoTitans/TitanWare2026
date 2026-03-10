@@ -5,56 +5,73 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.Timer;
-import edu.wpi.first.wpilibj2.command.SubsystemBase;
-import edu.wpi.first.wpilibj2.command.button.Trigger;
+import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.constants.Constants;
 import frc.robot.constants.HardwareConstants;
-import frc.robot.utils.position.ChineseRemainder;
+import frc.robot.utils.commands.SubsystemExt;
 import org.littletonrobotics.junction.Logger;
 
+import java.util.HashMap;
+import java.util.Objects;
 import java.util.function.DoubleSupplier;
+import java.util.function.Supplier;
 
-public class Turret extends SubsystemBase {
+public class Turret extends SubsystemExt {
     protected static final String LogKey = "Turret";
+    private static final double PositionToleranceRots = 0.025; //TODO: Check
+    private static final double VelocityToleranceRotsPerSec = 0.25;
 
-    private static final double PositionToleranceRots = 0.001;
-    private static final double VelocityToleranceRotsPerSec = 0.01;
-    public static final double WRAP_THRESHOLD = 0.3;
+    public enum Goal {
+        IDLE(0);
+
+        public final double positionRots;
+
+        Goal(final double positionRots) {
+            this.positionRots = positionRots;
+        }
+    }
+
+    private enum InternalGoal {
+        NONE,
+        IDLE(Goal.IDLE),
+        TRACKING;
+
+        public static final HashMap<Goal, InternalGoal> GoalToInternal = new HashMap<>();
+        static {
+            for (final InternalGoal goal : InternalGoal.values()) {
+                if (goal.goal != null) {
+                    GoalToInternal.put(goal.goal, goal);
+                }
+            }
+        }
+
+        public static InternalGoal fromGoal(final Goal goal) {
+            return Objects.requireNonNull(GoalToInternal.get(goal));
+        }
+
+        public final Goal goal;
+
+        InternalGoal(final Goal goal) {
+            this.goal = goal;
+        }
+
+        InternalGoal() {
+            this(null);
+        }
+    }
 
     private final HardwareConstants.TurretConstants constants;
-    private final DoubleSupplier robotAngularVelocitySupplier;
 
     private final TurretIO turretIO;
     private final TurretIOInputsAutoLogged inputs;
 
-    private Goal desiredGoal = Goal.TRACKING;
-    private Goal currentGoal = desiredGoal;
+    private InternalGoal desiredGoal = InternalGoal.IDLE;
+    private InternalGoal currentGoal = InternalGoal.NONE;
 
-    public final Trigger atSetpoint = new Trigger(this::atSetpoint);
+    private double positionSetpointRots;
+    private double velocitySetpointRotsPerSec;
 
-    public enum Goal {
-        TRACKING(0, true);
-
-        private double positionSetpointRots;
-        private final boolean isDynamic;
-
-        Goal(final double positionSetpointRots, final boolean isDynamic) {
-            this.positionSetpointRots = positionSetpointRots;
-            this.isDynamic = isDynamic;
-        }
-
-        public void changeTurretPositionRots(final double desiredTurretPositionRots) {
-            if (isDynamic) {
-                this.positionSetpointRots = desiredTurretPositionRots;
-            }
-        }
-    }
-
-    public Turret(
-            final Constants.RobotMode mode,
-            final HardwareConstants.TurretConstants constants,
-            final DoubleSupplier robotAngularVelocitySupplier
-    ) {
+    public Turret(final Constants.RobotMode mode, final HardwareConstants.TurretConstants constants) {
         this.constants = constants;
         this.turretIO = switch (mode) {
             case REAL -> new TurretIOReal(constants);
@@ -68,18 +85,14 @@ public class Turret extends SubsystemBase {
         this.turretIO.updateInputs(inputs);
         Logger.processInputs(LogKey, inputs);
 
-        this.robotAngularVelocitySupplier = robotAngularVelocitySupplier;
-
-        final Rotation2d absolutePosition = ChineseRemainder.findAbsolutePosition(
-                constants.turretTooth(),
-                inputs.smallEncoderPositionRots,
-                constants.smallEncoderTooth(),
-                inputs.largeEncoderPositionRots,
-                constants.largeEncoderTooth()
+        final Rotation2d absolutePosition = CRT.findAbsolutePosition(
+                constants.drivenTurretGearTeeth(),
+                inputs.primaryCANcoderPositionRots,
+                constants.primaryCANcoderGearTeeth(),
+                inputs.secondaryCANcoderPositionRots,
+                constants.secondaryCANcoderGearTeeth()
         );
-        turretIO.seedTurretPosition(absolutePosition);
-
-        Logger.recordOutput(LogKey + "/CRTResult", absolutePosition);
+        this.turretIO.seedTurretPosition(absolutePosition);
     }
 
     @Override
@@ -89,28 +102,25 @@ public class Turret extends SubsystemBase {
         turretIO.updateInputs(inputs);
         Logger.processInputs(LogKey, inputs);
 
-        if (desiredGoal.isDynamic) {
-            if (Math.abs(inputs.turretPositionRots - desiredGoal.positionSetpointRots) > WRAP_THRESHOLD) {
-                turretIO.toTurretPosition(desiredGoal.positionSetpointRots);
-            } else {
-                turretIO.toTurretContinuousPosition(desiredGoal.positionSetpointRots,
-                        Units.radiansToRotations(-robotAngularVelocitySupplier.getAsDouble())
-                );
-            }
-        }
-
-        if (desiredGoal != currentGoal) {
-            turretIO.toTurretPosition(desiredGoal.positionSetpointRots);
+        if (MathUtil.isNear(
+                positionSetpointRots,
+                inputs.motorPositionRots,
+                PositionToleranceRots
+        ) && MathUtil.isNear(
+                velocitySetpointRotsPerSec,
+                inputs.motorVelocityRotsPerSec,
+                VelocityToleranceRotsPerSec
+        )) {
             currentGoal = desiredGoal;
+        } else {
+            currentGoal = InternalGoal.NONE;
         }
 
-        Logger.recordOutput(LogKey + "/CurrentGoal", currentGoal.toString());
-        Logger.recordOutput(LogKey + "/DesiredGoal", desiredGoal.toString());
-        Logger.recordOutput(LogKey + "/DesiredGoal/PositionSetpointRots", desiredGoal.positionSetpointRots);
+        Logger.recordOutput(LogKey + "/DesiredGoal", desiredGoal);
+        Logger.recordOutput(LogKey + "/CurrentGoal", currentGoal);
+        Logger.recordOutput(LogKey + "/PositionSetpointRots", positionSetpointRots);
+        Logger.recordOutput(LogKey + "/VelocitySetpointRotsPerSec", velocitySetpointRotsPerSec);
 
-        Logger.recordOutput(LogKey + "/Triggers/AtSetpoint", atSetpoint());
-        Logger.recordOutput(LogKey + "/Triggers/AtLowerLimit", atLowerLimit());
-        Logger.recordOutput(LogKey + "/Triggers/AtUpperLimit", atUpperLimit());
         Logger.recordOutput(
                 LogKey + "/PeriodicIOPeriodMs",
                 Units.secondsToMilliseconds(Timer.getFPGATimestamp() - turretPeriodicUpdateStart)
@@ -121,31 +131,56 @@ public class Turret extends SubsystemBase {
         return constants.offsetFromCenter();
     }
 
-    public void setGoal(final Goal goal) {
-        desiredGoal = goal;
-        Logger.recordOutput(LogKey + "/CurrentGoal", currentGoal);
-        Logger.recordOutput(LogKey + "/DesiredGoal", goal);
+    public Rotation2d getPosition() {
+        return Rotation2d.fromRotations(inputs.motorPositionRots);
     }
 
-    public void updatePositionSetpoint(final double desiredTurretPosition) {
-        desiredGoal.changeTurretPositionRots(desiredTurretPosition);
+    public boolean atSetpoint() {
+        return desiredGoal == currentGoal;
     }
 
-    public Rotation2d getTurretPosition() {
-        return Rotation2d.fromRotations(inputs.turretPositionRots);
+    private void setPositionImpl(final double positionRots, final double velocityRotsPerSec) {
+        positionSetpointRots = positionRots;
+        velocitySetpointRotsPerSec = velocityRotsPerSec;
+        turretIO.trackTurretPosition(positionSetpointRots, velocityRotsPerSec);
     }
 
-    private boolean atSetpoint() {
-        return currentGoal == desiredGoal
-                && MathUtil.isNear(desiredGoal.positionSetpointRots, inputs.turretPositionRots, PositionToleranceRots)
-                && MathUtil.isNear(robotAngularVelocitySupplier.getAsDouble(), inputs.turretVelocityRotsPerSec, VelocityToleranceRotsPerSec);
+    private void setGoalImpl(final Goal goal) {
+        desiredGoal = InternalGoal.fromGoal(goal);
+        positionSetpointRots = goal.positionRots;
+        velocitySetpointRotsPerSec = 0;
+        turretIO.toTurretPosition(positionSetpointRots);
     }
 
-    private boolean atLowerLimit() {
-        return inputs.turretPositionRots <= constants.reverseLimitRots();
+    public Command toGoal(final Goal goal) {
+        return startEnd(
+                () -> setGoalImpl(goal),
+                () -> setGoalImpl(Goal.IDLE)
+        );
     }
 
-    private boolean atUpperLimit() {
-        return inputs.turretPositionRots >= constants.forwardLimitRots();
+    public Command runGoal(final Goal goal) {
+        return startEnd(() -> setGoalImpl(goal), () -> {});
+    }
+
+    public Command toPosition(
+            final Supplier<Rotation2d> positionSupplier,
+            final DoubleSupplier velocitySupplier
+    ) {
+        return instantRunEnd(
+                () -> desiredGoal = InternalGoal.TRACKING,
+                () -> setPositionImpl(positionSupplier.get().getRotations(), velocitySupplier.getAsDouble()),
+                () -> setGoalImpl(Goal.IDLE)
+        );
+    }
+
+    public Command runPosition(
+            final Supplier<Rotation2d> positionSupplier,
+            final DoubleSupplier velocitySupplier
+    ) {
+        return instantRun(
+                () -> desiredGoal = InternalGoal.TRACKING,
+                () -> setPositionImpl(positionSupplier.get().getRotations(), velocitySupplier.getAsDouble())
+        );
     }
 }
