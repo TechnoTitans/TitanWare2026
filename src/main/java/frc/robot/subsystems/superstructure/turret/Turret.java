@@ -2,6 +2,7 @@ package frc.robot.subsystems.superstructure.turret;
 
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
@@ -32,7 +33,6 @@ public class Turret extends SubsystemBase {
     public final Trigger atSetpoint = new Trigger(this::atSetpoint);
 
     public enum Goal {
-        CLIMB(0, false),
         TRACKING(0, true);
 
         private double positionSetpointRots;
@@ -115,6 +115,10 @@ public class Turret extends SubsystemBase {
                 LogKey + "/PeriodicIOPeriodMs",
                 Units.secondsToMilliseconds(Timer.getFPGATimestamp() - turretPeriodicUpdateStart)
         );
+    }
+
+    public Transform2d getOffsetFromCenter() {
+        return constants.offsetFromCenter();
     }
 
     public void setGoal(final Goal goal) {

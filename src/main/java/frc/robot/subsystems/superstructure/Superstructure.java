@@ -1,5 +1,8 @@
 package frc.robot.subsystems.superstructure;
 
+import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Transform2d;
+import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.wpilibj.event.EventLoop;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
@@ -32,7 +35,6 @@ public class Superstructure extends VirtualSubsystem {
     private final Supplier<ShotCalculator.ShotCalculation> shotCalculationSupplier;
 
     public enum Goal {
-        CLIMB(Turret.Goal.CLIMB, Hood.Goal.CLIMB, Shooter.Goal.STOP, false),
         TRACKING(Turret.Goal.TRACKING, Hood.Goal.STOW, Shooter.Goal.STOP, true),
         SHOOTING(Turret.Goal.TRACKING, Hood.Goal.SHOOTING, Shooter.Goal.TRACKING, true);
 
@@ -96,8 +98,8 @@ public class Superstructure extends VirtualSubsystem {
             final ShotCalculator.ShotCalculation shotCalculation = shotCalculationSupplier.get();
 
             turret.updatePositionSetpoint(shotCalculation.desiredTurretRotation().getRotations());
-            hood.updateShootingDesiredPosition(shotCalculation.desiredHoodRotation().getRotations());
-            shooter.updateVelocitySetpoint(shotCalculation.desiredShooterVelocity());
+            hood.updateShootingDesiredPosition(shotCalculation.desiredHoodRotation());
+            shooter.updateVelocitySetpoint(shotCalculation.desiredShooterVelocityRotsPerSec());
         }
 
         if (desiredGoal != runningGoal) {
@@ -115,6 +117,14 @@ public class Superstructure extends VirtualSubsystem {
 
         Logger.recordOutput(LogKey + "/Triggers/DesiredGoalIsRunningGoal", desiredGoalIsRunningGoal);
         Logger.recordOutput(LogKey + "/Triggers/DesiredGoalChanged", desiredGoalChanged);
+    }
+
+    public Transform2d getOffsetFromCenter() {
+        return turret.getOffsetFromCenter();
+    }
+
+    public Translation2d getTurretTranslation(final Pose2d robotPose) {
+        return robotPose.plus(getOffsetFromCenter()).getTranslation();
     }
 
     public Trigger atSetpoint(final Goal goal) {

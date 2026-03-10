@@ -19,8 +19,6 @@ import edu.wpi.first.units.measure.*;
 import edu.wpi.first.wpilibj.Notifier;
 import edu.wpi.first.wpilibj.simulation.SingleJointedArmSim;
 import frc.robot.constants.HardwareConstants;
-import frc.robot.constants.PoseConstants;
-import frc.robot.constants.SimConstants;
 import frc.robot.utils.closeables.ToClose;
 import frc.robot.utils.control.DeltaTime;
 import frc.robot.utils.ctre.Phoenix6Utils;
@@ -49,20 +47,16 @@ public class HoodIOSim implements HoodIO {
         this.deltaTime = new DeltaTime(true);
         this.constants = constants;
 
-        final double zeroedPositionToHorizontalRads = PoseConstants.Hood.ZEROED_POSITION_TO_HORIZONTAL.getRadians();
-        final SingleJointedArmSim hoodSim = new SingleJointedArmSim(
-                LinearSystemId.createDCMotorSystem(
-                        DCMotor.getKrakenX44Foc(1),
-                        0.01,
-                        constants.hoodGearing()
-                ),
-                DCMotor.getKrakenX44Foc(1),
-                constants.hoodGearing(),
-                SimConstants.Hood.LENGTH_METERS,
-                Units.rotationsToRadians(constants.hoodLowerLimitRots()) + zeroedPositionToHorizontalRads,
-                Units.rotationsToRadians(constants.hoodUpperLimitRots()) + zeroedPositionToHorizontalRads,
-                true,
-                PoseConstants.Hood.STARTING_ANGLE.getRadians()
+        final DCMotor dcMotor = DCMotor.getKrakenX44Foc(1);
+        final SingleJointedArmSim armSim = new SingleJointedArmSim(
+                LinearSystemId.createSingleJointedArmSystem(dcMotor,0.04, constants.gearing()),
+                dcMotor,
+                constants.gearing(),
+                Units.inchesToMeters(8),
+                Units.rotationsToRadians(constants.lowerLimitRots()),
+                Units.rotationsToRadians(constants.upperLimitRots()),
+                false,
+                0
         );
 
         this.hoodMotor = new TalonFX(constants.motorID(), constants.CANBus().toPhoenix6CANBus());
@@ -70,11 +64,11 @@ public class HoodIOSim implements HoodIO {
 
         this.hoodTalonFXSim = new TalonFXSim(
                 hoodMotor,
-                constants.hoodGearing(),
-                hoodSim::update,
-                hoodSim::setInputVoltage,
-                () -> hoodSim.getAngleRads() - zeroedPositionToHorizontalRads,
-                hoodSim::getVelocityRadPerSec
+                constants.gearing(),
+                armSim::update,
+                armSim::setInputVoltage,
+                armSim::getAngleRads,
+                armSim::getVelocityRadPerSec
         );
 
         this.hoodPosition = hoodMotor.getPosition(false);
@@ -116,17 +110,13 @@ public class HoodIOSim implements HoodIO {
                 .withKD(0);
         motorConfig.CurrentLimits.StatorCurrentLimit = 60;
         motorConfig.CurrentLimits.StatorCurrentLimitEnable = true;
-        motorConfig.CurrentLimits.SupplyCurrentLimit = 50;
-        motorConfig.CurrentLimits.SupplyCurrentLowerLimit = 40;
-        motorConfig.CurrentLimits.SupplyCurrentLowerTime = 1;
-        motorConfig.CurrentLimits.SupplyCurrentLimitEnable = true;
         motorConfig.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
         motorConfig.MotorOutput.NeutralMode = NeutralModeValue.Brake;
         motorConfig.Feedback.FeedbackSensorSource = FeedbackSensorSourceValue.RotorSensor;
-        motorConfig.Feedback.SensorToMechanismRatio = constants.hoodGearing();
-        motorConfig.SoftwareLimitSwitch.ForwardSoftLimitThreshold = constants.hoodUpperLimitRots();
+        motorConfig.Feedback.SensorToMechanismRatio = constants.gearing();
+        motorConfig.SoftwareLimitSwitch.ForwardSoftLimitThreshold = constants.upperLimitRots();
         motorConfig.SoftwareLimitSwitch.ForwardSoftLimitEnable = true;
-        motorConfig.SoftwareLimitSwitch.ReverseSoftLimitThreshold = constants.hoodLowerLimitRots();
+        motorConfig.SoftwareLimitSwitch.ReverseSoftLimitThreshold = constants.lowerLimitRots();
         motorConfig.SoftwareLimitSwitch.ReverseSoftLimitEnable = true;
         hoodMotor.getConfigurator().apply(motorConfig);
 

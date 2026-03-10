@@ -1,5 +1,8 @@
 package frc.robot.constants;
 
+import edu.wpi.first.math.geometry.Pose3d;
+import edu.wpi.first.math.geometry.Rotation3d;
+import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.math.util.Units;
 import frc.robot.subsystems.drive.constants.SwerveConstants;
 
@@ -32,6 +35,8 @@ public interface SimConstants {
 
     interface Hood {
         double LENGTH_METERS = Units.inchesToMeters(9.4);
+
+        Translation3d TURRET_OFFSET = new Translation3d(0.121, 0, 0.054);
     }
 
     interface Shooter {
@@ -40,13 +45,27 @@ public interface SimConstants {
 
     interface Turret {
         double MOMENT_OF_INERTIA = 0.1068;
+
+        Translation3d ORIGIN_OFFSET = new Translation3d(-0.127, 0, 0.386);
+    }
+
+    interface Hopper {
+        Pose3d EXTENDED_POSE = new Pose3d(Units.inchesToMeters(12.606), 0, 0, Rotation3d.kZero);
+        Pose3d RETRACTED_POSE = Pose3d.kZero;
     }
 
     interface IntakeSlide {
         double MOMENT_OF_INERTIA = 0.0058;
-    }
 
-    interface Climb {
-        double MASS_KG = 6;
+        double DrivingGearDiameter = Units.inchesToMeters(1);
+        double SlideRotationsToLinearDistanceMetersRatio = 2 * Math.PI * (DrivingGearDiameter / 2);
+
+        Pose3d EXTENDED_POSE = Pose3d.kZero;
+        Pose3d RETRACTED_POSE = new Pose3d(
+                Units.inchesToMeters(-10.616),
+                0,
+                Units.inchesToMeters(3.655),
+                Rotation3d.kZero
+        );
     }
 }

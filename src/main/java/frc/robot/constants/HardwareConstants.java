@@ -1,6 +1,7 @@
 package frc.robot.constants;
 
-import edu.wpi.first.math.util.Units;
+import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Transform2d;
 
 import java.util.HashMap;
 import java.util.Objects;
@@ -99,7 +100,8 @@ public class HardwareConstants {
             double smallEncoderOffset,
             double largeEncoderOffset,
             double forwardLimitRots,
-            double reverseLimitRots
+            double reverseLimitRots,
+            Transform2d offsetFromCenter
     ) {}
 
     public static final TurretConstants TURRET = new TurretConstants(
@@ -114,14 +116,15 @@ public class HardwareConstants {
             0, //-0.451,
             0, //-0.061,
             0.5,
-            -0.5
+            -0.5,
+            new Transform2d(-0.127, 0, Rotation2d.kZero)
     );
     public record HoodConstants(
             CANBus CANBus,
             int motorID,
-            double hoodGearing,
-            double hoodUpperLimitRots,
-            double hoodLowerLimitRots
+            double gearing,
+            double upperLimitRots,
+            double lowerLimitRots
     ){}
 
     public static final HoodConstants HOOD = new HoodConstants(
@@ -144,23 +147,5 @@ public class HardwareConstants {
             23,
             24,
             2
-    );
-
-    public record ClimbConstants(
-            CANBus CANBus,
-            int motorID,
-            double climbGearing,
-            double upperLimitRots,
-            double lowerLimitRots,
-            double spoolDiameterMeters
-    ){}
-
-    public static final ClimbConstants CLIMB = new ClimbConstants(
-            CANBus.CANIVORE,
-            25,
-            48,
-            4.7,
-            0.0,
-            Units.inchesToMeters(1)
     );
 }
