@@ -19,8 +19,10 @@ import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.auto.AutoChooser;
 import frc.robot.auto.AutoOption;
 import frc.robot.auto.Autos;
-import frc.robot.constants.*;
-import frc.robot.subsystems.climb.Climb;
+import frc.robot.constants.Constants;
+import frc.robot.constants.FieldConstants;
+import frc.robot.constants.HardwareConstants;
+import frc.robot.constants.RobotMap;
 import frc.robot.subsystems.drive.Swerve;
 import frc.robot.subsystems.drive.constants.SwerveConstants;
 import frc.robot.subsystems.feeder.Feeder;
@@ -49,7 +51,6 @@ import org.littletonrobotics.junction.wpilog.WPILOGWriter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.Arrays;
 import java.util.Optional;
 import java.util.function.BooleanSupplier;
 import java.util.function.Supplier;
@@ -88,27 +89,27 @@ public class Robot extends LoggedRobot {
     );
 
     public final IntakeRoller intakeRoller = new IntakeRoller(
-            Constants.RobotMode.DISABLED,
+            Constants.CURRENT_MODE,
             HardwareConstants.INTAKE_ROLLER
     );
 
     public final IntakeSlide intakeSlide = new IntakeSlide(
-            Constants.RobotMode.DISABLED,
+            Constants.CURRENT_MODE,
             HardwareConstants.INTAKE_SLIDE
     );
 
     public final Feeder feeder = new Feeder(
-            Constants.RobotMode.DISABLED,
+            Constants.CURRENT_MODE,
             HardwareConstants.FEEDER
     );
 
     public final Hood hood = new Hood(
-            Constants.RobotMode.DISABLED,
+            Constants.CURRENT_MODE,
             HardwareConstants.HOOD
     );
 
     public final Turret turret = new Turret(
-            Constants.RobotMode.DISABLED,
+            Constants.CURRENT_MODE,
             HardwareConstants.TURRET,
             () -> swerve.getFieldRelativeSpeeds().omegaRadiansPerSecond
     );
@@ -119,16 +120,10 @@ public class Robot extends LoggedRobot {
     );
 
     public final Spindexer spindexer = new Spindexer(
-            Constants.RobotMode.DISABLED,
+            Constants.CURRENT_MODE,
             HardwareConstants.SPINDEXER
     );
 
-    public final Climb climb = new Climb(
-            Constants.RobotMode.DISABLED,
-            HardwareConstants.CLIMB
-    );
-
-    //TODO: Change to Moving when SOTM is implemented
     private RobotCommands.ScoringMode scoringMode =
             RobotCommands.ScoringMode.Moving;
 
@@ -146,13 +141,6 @@ public class Robot extends LoggedRobot {
             shotCalculationSupplier
     );
 
-    private final ComponentsSolver componentsSolver = new ComponentsSolver(
-            turret::getTurretPosition,
-            hood::getHoodPosition,
-            intakeSlide::getIntakeSlidePositionRots,
-            climb::getExtensionMeters
-    );
-
     private final RobotCommands robotCommands = new RobotCommands(
             swerve,
             intakeRoller,
@@ -160,8 +148,7 @@ public class Robot extends LoggedRobot {
             superstructure,
             shooter,
             spindexer,
-            feeder,
-            climb
+            feeder
     );
 
     public final Autos autos = new Autos(
@@ -301,19 +288,16 @@ public class Robot extends LoggedRobot {
 
         Logger.recordOutput("EmptyPose", Pose3d.kZero);
         shiftTimer.start();
-
-        final Pose3d[] emptyPoseArray = new Pose3d[6];
-        Arrays.fill(emptyPoseArray, Pose3d.kZero);
-        Logger.recordOutput("EmptyPoses", emptyPoseArray);
     }
 
     @Override
     public void robotPeriodic() {
-//        Threads.setCurrentThreadPriority(true, 99);
         RefreshAll.refreshAll();
 
         CommandScheduler.getInstance().run();
         VirtualSubsystem.run();
+
+        logComponentPoses();
 
         driverControllerDisconnected.set(!driverController.getHID().isConnected());
         coControllerDisconnected.set(!coController.getHID().isConnected());
@@ -322,13 +306,11 @@ public class Robot extends LoggedRobot {
         Logger.recordOutput("ShotCalculation", shotCalculationSupplier.get());
         Logger.recordOutput("ScoringMode", scoringMode);
 
-        componentsSolver.periodic();
-
-        //TODO: Just to find hood angle
-        Logger.recordOutput("DistanceFromHub", swerve.getPose()
-                .transformBy(PoseConstants.Turret.ROBOT_TO_TURRET_TRANSFORM_2D).getTranslation().getDistance(FieldConstants.getHubTarget()));
-
-//        Threads.setCurrentThreadPriority(false, 10);
+        Logger.recordOutput(
+                "DistanceToHub",
+                FieldConstants.getHubTarget()
+                        .getDistance(superstructure.getTurretTranslation(swerve.getPose()))
+        );
     }
 
     @Override
@@ -359,7 +341,23 @@ public class Robot extends LoggedRobot {
     }
 
     @Override
-    public void simulationPeriodic() {
+    public void simulationPeriodic() {}
+
+    public void logComponentPoses() {
+        final Pose3d[] superstructurePoses = ComponentsSolver.getSuperstructurePoses(
+                turret::getTurretPosition,
+                hood::getHoodPosition
+        );
+        final Pose3d[] intakeSlidePoses = ComponentsSolver
+                .getIntakeHopperPoses(intakeSlide::getIntakeSlidePositionRots);
+
+        Logger.recordOutput(
+                "Components",
+                superstructurePoses[0],
+                intakeSlidePoses[1],
+                intakeSlidePoses[0],
+                superstructurePoses[1]
+        );
     }
 
     public void configureStateTriggers() {
@@ -372,18 +370,11 @@ public class Robot extends LoggedRobot {
         );
 
         teleopEnabled.onTrue(
-                Commands.sequence(
-                        Commands.sequence(
-                                climb.setGoal(Climb.Goal.EXTEND),
-                                Commands.waitUntil(() -> !swerve.getPose().equals(FieldConstants.getClimbTarget())),
-                                climb.setGoal(Climb.Goal.STOW)
-                        ).onlyIf(climb::isExtended),
-                        Commands.parallel(
-                                intakeRoller.setGoal(IntakeRoller.Goal.INTAKE),
-                                intakeSlide.setGoal(IntakeSlide.Goal.INTAKE),
-                                superstructure.setGoal(Superstructure.Goal.TRACKING)
-                        )
-                )
+                Commands.parallel(
+                        intakeRoller.setGoal(IntakeRoller.Goal.INTAKE),
+                        intakeSlide.setGoal(IntakeSlide.Goal.INTAKE),
+                        superstructure.setGoal(Superstructure.Goal.TRACKING)
+            )
         );
 
         firstShiftStartTrigger.onTrue(Commands.runOnce(shiftTimer::start));
@@ -439,12 +430,7 @@ public class Robot extends LoggedRobot {
 
         driverController.rightTrigger(0.5, teleopEventLoop).whileTrue(robotCommands.shootWhileMoving());
 
-//        driverController.y(teleopEventLoop).whileTrue(robotCommands.readyClimb())
-//                .onFalse(robotCommands.climb());
-
         driverController.y(teleopEventLoop).onTrue(intakeSlide.testIntake());
-
-        driverController.a(teleopEventLoop).onTrue(robotCommands.unclimb());
 
         coController.y(teleopEventLoop).onTrue(robotCommands.deployIntake());
 
