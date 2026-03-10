@@ -61,7 +61,7 @@ public class Shooter extends SubsystemExt {
     private final ShooterIO shooterIO;
     private final ShooterIOInputsAutoLogged inputs;
 
-    private InternalGoal desiredGoal = InternalGoal.IDLE;
+    private InternalGoal desiredGoal = InternalGoal.OFF;
     private InternalGoal currentGoal = InternalGoal.NONE;
 
     private double velocitySetpointRotsPerSec;
