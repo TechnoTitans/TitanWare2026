@@ -3,6 +3,8 @@ package frc.robot;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
+import frc.robot.constants.FieldConstants;
+import frc.robot.subsystems.climb.Climb;
 import frc.robot.subsystems.drive.Swerve;
 import frc.robot.subsystems.feeder.Feeder;
 import frc.robot.subsystems.intake.roller.IntakeRoller;
@@ -22,6 +24,7 @@ public class RobotCommands {
     private final Superstructure superstructure;
     private final Spindexer spindexer;
     private final Feeder feeder;
+    private final Climb climb;
 
     private final LoggedTrigger ableToShoot;
 
@@ -36,7 +39,8 @@ public class RobotCommands {
             final IntakeSlide intakeSlide,
             final Superstructure superstructure,
             final Spindexer spindexer,
-            final Feeder feeder
+            final Feeder feeder,
+            final Climb climb
     ) {
         this.swerve = swerve;
         this.intakeRoller = intakeRoller;
@@ -44,6 +48,7 @@ public class RobotCommands {
         this.superstructure = superstructure;
         this.spindexer = spindexer;
         this.feeder = feeder;
+        this.climb = climb;
 
         final LoggedTrigger.Group group = LoggedTrigger.Group.from(LogKey);
 
@@ -108,5 +113,33 @@ public class RobotCommands {
         )
                 .finallyDo(() -> intakeSlide.setGoal(IntakeSlide.Goal.INTAKE))
                 .withName("ShootStationary");
+    }
+
+    public Command readyClimb() {
+        return Commands.parallel(
+                swerve.runToPose(FieldConstants::getClimbTarget),
+                superstructure.setGoal(Superstructure.Goal.CLIMB),
+                Commands.sequence(
+                        stowIntake(),
+                        Commands.waitUntil(intakeSlide.atSlideSetpoint),
+                        climb.setGoal(Climb.Goal.EXTEND)
+                ),
+                spindexer.setGoal(Spindexer.Goal.STOP)
+        ).withName("ReadyClimb");
+    }
+
+    public Command climb() {
+        return Commands.parallel(
+                swerve.wheelXCommand(),
+                climb.setGoal(Climb.Goal.CLIMB_DOWN)
+        ).withName("Climb");
+    }
+
+    public Command unclimb() {
+        return Commands.parallel(
+                superstructure.setGoal(Superstructure.Goal.TRACKING),
+                climb.setGoal(Climb.Goal.STOW),
+                spindexer.setGoal(Spindexer.Goal.AGITATE)
+        ).withName("Unclimb");
     }
 }
