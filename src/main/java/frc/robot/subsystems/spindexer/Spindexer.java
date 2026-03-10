@@ -1,6 +1,5 @@
 package frc.robot.subsystems.spindexer;
 
-import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;

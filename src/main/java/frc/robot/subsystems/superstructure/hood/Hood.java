@@ -27,7 +27,6 @@ public class Hood extends SubsystemBase {
 
     public enum Goal {
         STOW(0, false),
-        CLIMB(0, false),
         SHOOTING(0, true);
 
         private double positionSetpointRots;
@@ -108,10 +107,10 @@ public class Hood extends SubsystemBase {
     }
 
     private boolean atLowerLimit() {
-        return inputs.hoodPositionRots <= constants.hoodLowerLimitRots();
+        return inputs.hoodPositionRots <= constants.lowerLimitRots();
     }
 
     private boolean atUpperLimit() {
-        return inputs.hoodPositionRots >= constants.hoodUpperLimitRots();
+        return inputs.hoodPositionRots >= constants.upperLimitRots();
     }
 }

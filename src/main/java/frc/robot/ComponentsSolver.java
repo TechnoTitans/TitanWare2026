@@ -4,111 +4,49 @@ import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Transform3d;
-import frc.robot.constants.HardwareConstants;
-import frc.robot.constants.PoseConstants;
-import org.littletonrobotics.junction.Logger;
+import frc.robot.constants.SimConstants;
+import frc.robot.utils.subsystems.VirtualSubsystem;
 
-import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
 
-@SuppressWarnings("ClassCanBeRecord")
-public class ComponentsSolver {
-    private final Supplier<Rotation2d> turretRotationSupplier;
-    private final Supplier<Rotation2d> hoodRotationSupplier;
-    private final Supplier<Rotation2d> intakeSlideRotationSupplier;
-    private final DoubleSupplier climbExtensionMetersSupplier;
-
-    public ComponentsSolver(
+public class ComponentsSolver extends VirtualSubsystem {
+    public static Pose3d[] getSuperstructurePoses(
             final Supplier<Rotation2d> turretRotationSupplier,
-            final Supplier<Rotation2d> hoodRotationSupplier,
-            final Supplier<Rotation2d> intakeSlideRotationSupplier,
-            final DoubleSupplier climbExtensionMetersSupplier
+            final Supplier<Rotation2d> hoodRotationSupplier
     ) {
-        this.turretRotationSupplier = turretRotationSupplier;
-        this.hoodRotationSupplier = hoodRotationSupplier;
-        this.intakeSlideRotationSupplier = intakeSlideRotationSupplier;
-        this.climbExtensionMetersSupplier = climbExtensionMetersSupplier;
-    }
-
-    public void periodic() {
-        final Pose3d[] superstructurePoses = getSuperstructurePoses();
-        final Pose3d[] intakeHopperPoses = getIntakeHopperPoses();
-        final Pose3d[] climbPoses = getClimbPoses();
-
-        Logger.recordOutput(
-                "Components",
-                superstructurePoses[0],
-                superstructurePoses[1],
-                intakeHopperPoses[0],
-                intakeHopperPoses[1],
-                climbPoses[0],
-                climbPoses[1]
-        );
-    }
-
-    private Pose3d[] getSuperstructurePoses() {
         final Pose3d turretPose = new Pose3d(
-                PoseConstants.Turret.ORIGIN,
-                new Rotation3d(turretRotationSupplier.get()).plus(PoseConstants.Turret.TURRET_ZERO_OFFSET)
+                SimConstants.Turret.ORIGIN_OFFSET,
+                new Rotation3d(turretRotationSupplier.get())
         );
 
-        final Pose3d hoodPose = turretPose.transformBy(
-                new Transform3d(
-                        PoseConstants.Hood.TURRET_TO_HOOD_TRANSLATION,
-                        new Rotation3d(
-                                hoodRotationSupplier.get()
-                                        .unaryMinus()
-                                        .plus(PoseConstants.Hood.ZEROED_POSITION_TO_HORIZONTAL).getRadians(),
-                                0,
-                                0
-                        )
-                )
-        );
+        final Pose3d hoodPose = turretPose
+                .plus(new Transform3d(
+                        SimConstants.Hood.TURRET_OFFSET,
+                        new Rotation3d(0, hoodRotationSupplier.get().getRadians(), 0)
+                ));
 
-        return new Pose3d[]{turretPose, hoodPose};
+        return new Pose3d[] {
+                turretPose,
+                hoodPose
+        };
     }
 
-    private Pose3d[] getIntakeHopperPoses() {
-        final double extensionRatio = intakeSlideRotationSupplier.get().getRotations()
-                / (HardwareConstants.INTAKE_SLIDE.upperLimitRots() - HardwareConstants.INTAKE_SLIDE.lowerLimitRots());
+    public static Pose3d[] getIntakeHopperPoses(final Supplier<Rotation2d> intakeSlideRotationSupplier) {
+        final Pose3d slideExtended = SimConstants.IntakeSlide.EXTENDED_POSE;
+        final Pose3d slideRetracted = SimConstants.IntakeSlide.RETRACTED_POSE;
 
-        final Pose3d intakePose = PoseConstants.IntakeSlide.RETRACTED_POSE
-                .interpolate(PoseConstants.IntakeSlide.EXTENDED_POSE, extensionRatio);
+        final Pose3d hopperExtended = SimConstants.Hopper.EXTENDED_POSE;
+        final Pose3d hopperRetracted = SimConstants.Hopper.RETRACTED_POSE;
 
-        final Pose3d hopperPose = PoseConstants.Hopper.RETRACTED_POSE
-                .interpolate(PoseConstants.Hopper.EXTENDED_POSE, extensionRatio);
+        final double extensionMeters = intakeSlideRotationSupplier.get().getRotations()
+                * SimConstants.IntakeSlide.SlideRotationsToLinearDistanceMetersRatio;
+        final double totalExtensionDistance = slideExtended.getTranslation()
+                .getDistance(slideRetracted.getTranslation());
+        final double extensionRatio = extensionMeters / totalExtensionDistance;
 
-        return new Pose3d[]{intakePose, hopperPose};
-    }
-
-    //TODO: Fix
-    private Pose3d[] getClimbPoses() {
-        final double extensionMeters = climbExtensionMetersSupplier.getAsDouble();
-
-        final double stage1ExtensionMeters = Math.min(extensionMeters, PoseConstants.Climb.STAGE_1_MAX_EXTENSION);
-
-        final Pose3d stage1Pose = new Pose3d(PoseConstants.Climb.ORIGIN,
-                PoseConstants.Climb.ANGLE_FROM_HORIZONTAL
-        ).transformBy(
-                new Transform3d(
-                        0,
-                        0,
-                        stage1ExtensionMeters,
-                        Rotation3d.kZero
-                )
-        );
-
-        final double stage2ExtensionMeters =
-                Math.min(extensionMeters - stage1ExtensionMeters, PoseConstants.Climb.STAGE_2_MAX_EXTENSION);
-        final Pose3d stage2Pose = stage1Pose.transformBy(
-                new Transform3d(
-                        0,
-                        0,
-                        stage2ExtensionMeters,
-                        Rotation3d.kZero
-                )
-        );
-
-        return new Pose3d[]{stage1Pose, stage2Pose};
+        return new Pose3d[] {
+                slideRetracted.interpolate(slideExtended, extensionRatio),
+                hopperRetracted.interpolate(hopperExtended, extensionRatio)
+        };
     }
 }

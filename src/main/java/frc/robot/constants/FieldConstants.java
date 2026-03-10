@@ -1,52 +1,33 @@
 package frc.robot.constants;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.DriverStation;
-import edu.wpi.first.wpilibj.Filesystem;
 
-import java.io.IOException;
-
-//Credit to FRC Team 6328
 public class FieldConstants {
-    public static final double FIELD_LENGTH_X_METERS = AprilTagLayoutType.OFFICIAL.getLayout().getFieldLength();
-    public static final double FIELD_WIDTH_Y_METERS = AprilTagLayoutType.OFFICIAL.getLayout().getFieldWidth();
+    public static final double FIELD_LENGTH_X_METERS = Units.inchesToMeters(690.876);
+    public static final double FIELD_WIDTH_Y_METERS = Units.inchesToMeters(317);
     public static final Pose2d RED_ORIGIN = new Pose2d(FIELD_LENGTH_X_METERS, FIELD_WIDTH_Y_METERS, Rotation2d.k180deg);
 
-    public static class Hub {
-        public static final double WIDTH = Units.inchesToMeters(47.0);
+    public static final Pose2d BLUE_HUB_POSE = new Pose2d(
+            4.626,
+            4.033,
+            Rotation2d.kZero
+    );
 
-        public static final Pose2d HUB_CENTER_BLUE =
-                new Pose2d(new Translation2d(
-                        AprilTagLayoutType.OFFICIAL.getLayout().getTagPose(26).orElse(Pose3d.kZero).getX() + WIDTH / 2.0,
-                        FIELD_WIDTH_Y_METERS / 2.0), Rotation2d.kZero);
+    public static final Pose2d RED_HUB_POSE = BLUE_HUB_POSE.relativeTo(RED_ORIGIN);
 
-        public static final Pose2d HUB_CENTER_RED = HUB_CENTER_BLUE.relativeTo(RED_ORIGIN);
-    }
+    public static final Pose2d TOP_FERRYING_BLUE =
+            new Pose2d(new Translation2d(2, FIELD_WIDTH_Y_METERS - 2.0), Rotation2d.kZero);
 
-    public static class Ferrying {
-        public static final Pose2d TOP_FERRYING_BLUE =
-                new Pose2d(new Translation2d(2, FIELD_WIDTH_Y_METERS - 2.0), Rotation2d.kZero);
+    public static final Pose2d TOP_FERRYING_RED = TOP_FERRYING_BLUE.relativeTo(RED_ORIGIN);
 
-        public static final Pose2d TOP_FERRYING_RED = TOP_FERRYING_BLUE.relativeTo(RED_ORIGIN);
+    public static final Pose2d BOTTOM_FERRYING_BLUE =
+            new Pose2d(new Translation2d(2, 2), Rotation2d.kZero);
 
-        public static final Pose2d BOTTOM_FERRYING_BLUE =
-                new Pose2d(new Translation2d(2, 2), Rotation2d.kZero);
-
-        public static final Pose2d BOTTOM_FERRYING_RED = BOTTOM_FERRYING_BLUE.relativeTo(RED_ORIGIN);
-    }
-
-    public static class Climb {
-        //TODO: Change
-        public static final Pose2d CLIMB_ALIGN_BLUE = new Pose2d(new Translation2d(2, 2), Rotation2d.k180deg);
-
-        public static final Pose2d CLIMB_ALIGN_RED = CLIMB_ALIGN_BLUE.relativeTo(RED_ORIGIN);
-    }
+    public static final Pose2d BOTTOM_FERRYING_RED = BOTTOM_FERRYING_BLUE.relativeTo(RED_ORIGIN);
 
     private static <T> T getAllianceFlipped(final T blueAlliance, final T redAlliance) {
         return DriverStation.getAlliance()
@@ -55,54 +36,12 @@ public class FieldConstants {
     }
 
     public static Translation2d getHubTarget() {
-        return getAllianceFlipped(Hub.HUB_CENTER_BLUE, Hub.HUB_CENTER_RED).getTranslation();
+        return getAllianceFlipped(BLUE_HUB_POSE, RED_HUB_POSE).getTranslation();
     }
 
     public static Translation2d getFerryingTarget(final double robotYPositionMeters) {
-        return (robotYPositionMeters > FIELD_WIDTH_Y_METERS / 2 ?
-                getAllianceFlipped(Ferrying.TOP_FERRYING_BLUE, Ferrying.TOP_FERRYING_RED)
-                : getAllianceFlipped(Ferrying.BOTTOM_FERRYING_BLUE, Ferrying.BOTTOM_FERRYING_RED)).getTranslation();
+        return (robotYPositionMeters > FIELD_WIDTH_Y_METERS / 2.0 ?
+                getAllianceFlipped(TOP_FERRYING_BLUE, TOP_FERRYING_RED)
+                : getAllianceFlipped(BOTTOM_FERRYING_BLUE, BOTTOM_FERRYING_RED)).getTranslation();
     }
-
-    public static Pose2d getClimbTarget() {
-        return getAllianceFlipped(Climb.CLIMB_ALIGN_BLUE, Climb.CLIMB_ALIGN_RED);
-    }
-
-    public enum AprilTagLayoutType {
-        OFFICIAL("2026-official"),
-        NONE("2026-none");
-
-        private final String name;
-        private volatile AprilTagFieldLayout layout;
-        private volatile String layoutString;
-
-        AprilTagLayoutType(String name) {
-            this.name = name;
-        }
-
-        public AprilTagFieldLayout getLayout() {
-            if (layout == null) {
-                synchronized (this) {
-                    if (layout == null) {
-                        try {
-                            String p = Filesystem.getDeployDirectory().getPath() + "/2026-rebuilt-welded.json";
-                            layout = new AprilTagFieldLayout(p);
-                            layoutString = new ObjectMapper().writeValueAsString(layout);
-                        } catch (IOException e) {
-                            throw new RuntimeException(e);
-                        }
-                    }
-                }
-            }
-            return layout;
-        }
-
-        public String getLayoutString() {
-            if (layoutString == null) {
-                getLayout();
-            }
-            return layoutString;
-        }
-    }
-
 }
