@@ -95,7 +95,7 @@ public class IntakeSlideIOSim implements IntakeSlideIO {
         masterConfiguration.CurrentLimits.StatorCurrentLimitEnable = true;
         masterConfiguration.Feedback.FeedbackSensorSource = FeedbackSensorSourceValue.RotorSensor;
         masterConfiguration.Feedback.SensorToMechanismRatio = constants.averageAxisGearing();
-        masterConfiguration.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
+        masterConfiguration.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
         masterConfiguration.MotorOutput.NeutralMode = NeutralModeValue.Brake;
         masterConfiguration.SoftwareLimitSwitch.ForwardSoftLimitThreshold = constants.forwardLimitRots();
         masterConfiguration.SoftwareLimitSwitch.ForwardSoftLimitEnable = true;
@@ -142,7 +142,7 @@ public class IntakeSlideIOSim implements IntakeSlideIO {
             );
 
             final TalonFXSimState simState = masterMotor.getSimState();
-            simState.Orientation = ChassisReference.CounterClockwise_Positive;
+            simState.Orientation = ChassisReference.Clockwise_Positive;
             simState.setMotorType(TalonFXSimState.MotorType.KrakenX44);
         }
 

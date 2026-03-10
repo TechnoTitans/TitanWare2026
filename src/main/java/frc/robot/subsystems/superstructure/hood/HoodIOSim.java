@@ -130,7 +130,7 @@ public class HoodIOSim implements HoodIO {
         motorConfiguration.CurrentLimits.StatorCurrentLimitEnable = true;
         motorConfiguration.Feedback.FeedbackSensorSource = FeedbackSensorSourceValue.RotorSensor;
         motorConfiguration.Feedback.SensorToMechanismRatio = constants.gearing();
-        motorConfiguration.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
+        motorConfiguration.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
         motorConfiguration.MotorOutput.NeutralMode = NeutralModeValue.Brake;
         motorConfiguration.SoftwareLimitSwitch.ForwardSoftLimitThreshold = constants.upperLimitRots();
         motorConfiguration.SoftwareLimitSwitch.ForwardSoftLimitEnable = true;
@@ -157,7 +157,7 @@ public class HoodIOSim implements HoodIO {
         );
 
         final TalonFXSimState motorSimState = motor.getSimState();
-        motorSimState.Orientation = ChassisReference.CounterClockwise_Positive;
+        motorSimState.Orientation = ChassisReference.Clockwise_Positive;
         motorSimState.setMotorType(TalonFXSimState.MotorType.KrakenX44);
     }
 

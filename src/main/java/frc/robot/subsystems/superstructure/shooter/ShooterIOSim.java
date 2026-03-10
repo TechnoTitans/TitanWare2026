@@ -140,19 +140,17 @@ public class ShooterIOSim implements ShooterIO {
     public void config() {
         final TalonFXConfiguration motorConfiguration = new TalonFXConfiguration();
         motorConfiguration.Slot0 = new Slot0Configs()
-                .withKS(0)
+                .withKS(7.8)
                 .withStaticFeedforwardSign(StaticFeedforwardSignValue.UseClosedLoopSign)
-                .withKV(0)
-                .withKA(0)
-                .withKP(120)
-                .withKD(40);
+                .withKP(40)
+                .withKD(0);
         motorConfiguration.TorqueCurrent.PeakForwardTorqueCurrent = 80;
         motorConfiguration.TorqueCurrent.PeakReverseTorqueCurrent = -80;
         motorConfiguration.CurrentLimits.StatorCurrentLimit = 80;
         motorConfiguration.CurrentLimits.StatorCurrentLimitEnable = true;
         motorConfiguration.Feedback.FeedbackSensorSource = FeedbackSensorSourceValue.RotorSensor;
         motorConfiguration.Feedback.SensorToMechanismRatio = constants.gearing();
-        motorConfiguration.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
+        motorConfiguration.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
         motorConfiguration.MotorOutput.NeutralMode = NeutralModeValue.Coast;
 
         Phoenix6Utils.tryUntilOk(masterMotor, () -> masterMotor.getConfigurator().apply(motorConfiguration));

@@ -69,8 +69,8 @@ public class IntakeSlideIOReal implements IntakeSlideIO {
                 .withKP(250)
                 .withKD(0.1);
         masterConfiguration.MotionMagic.MotionMagicCruiseVelocity = 0;
-        masterConfiguration.MotionMagic.MotionMagicExpo_kV = 0.12;
-        masterConfiguration.MotionMagic.MotionMagicExpo_kA = 0.1;
+        masterConfiguration.MotionMagic.MotionMagicExpo_kV = 0.6;
+        masterConfiguration.MotionMagic.MotionMagicExpo_kA = 0.3;
         masterConfiguration.TorqueCurrent.PeakForwardTorqueCurrent = 60;
         masterConfiguration.TorqueCurrent.PeakReverseTorqueCurrent = -60;
         masterConfiguration.CurrentLimits.StatorCurrentLimit = 60;

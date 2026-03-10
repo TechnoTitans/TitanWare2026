@@ -5,6 +5,8 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.util.Units;
 import frc.robot.Robot;
 
+import java.util.Set;
+
 public class FieldConstants {
     public static final double FIELD_LENGTH_X_METERS = Units.inchesToMeters(690.876);
     public static final double FIELD_WIDTH_Y_METERS = Units.inchesToMeters(317);
@@ -48,6 +50,12 @@ public class FieldConstants {
     public static final double RED_TURRET_SAFE_X_FAR_BOUNDARY = RED_HUB_POSE.getX()
             - (TRENCH_WIDTH / 2)
             - TURRET_SAFE_BUFFER;
+
+    public static final Set<Integer> BLUE_APRILTAG_IDS =
+            Set.of(17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32);
+
+    public static final Set<Integer> RED_APRILTAG_IDS =
+            Set.of(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16);
 
     private static <T> T getAllianceFlipped(final T blueAlliance, final T redAlliance) {
         return Robot.IsRedAlliance.getAsBoolean() ? redAlliance : blueAlliance;

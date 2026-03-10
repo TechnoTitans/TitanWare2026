@@ -59,7 +59,7 @@ public class HardwareConstants {
 
     public static final IntakeSlideConstants INTAKE_SLIDE_CONSTANTS = new IntakeSlideConstants(
             CANBus.CANIVORE,
-            15,
+            15, // Left motor
             16,
             (60.0 / 12.0) * (40.0 / 18.0),
             1,

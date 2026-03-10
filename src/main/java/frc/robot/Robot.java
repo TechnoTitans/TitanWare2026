@@ -374,10 +374,19 @@ public class Robot extends LoggedRobot {
                         () -> SwerveSpeed.setSwerveSpeed(SwerveSpeed.Speeds.NORMAL)
                 ).withName("SwerveSpeedSlow"));
 
-        driverController.leftTrigger(0.5, teleopEventLoop)
+        driverController.rightTrigger(0.5, teleopEventLoop)
                 .whileTrue(shootCommands.shoot())
                 .onFalse(intake.deploy());
-        driverController.rightTrigger(0.5, teleopEventLoop).whileTrue(intake.intake());
+
+        driverController.leftTrigger(0.5, teleopEventLoop).whileTrue(intake.intake());
+
+        coController.y(teleopEventLoop).onTrue(intake.deploy());
+
+        coController.a(teleopEventLoop).onTrue(intake.stow());
+
+        coController.rightTrigger(0.5, teleopEventLoop)
+                .whileTrue(shootCommands.stopAndShoot())
+                .onFalse(intake.deploy());
     }
 
     public enum HubStatus {
