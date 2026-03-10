@@ -8,7 +8,6 @@ import frc.robot.constants.HardwareConstants;
 import frc.robot.constants.PoseConstants;
 import org.littletonrobotics.junction.Logger;
 
-import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
 
 @SuppressWarnings("ClassCanBeRecord")
@@ -16,33 +15,27 @@ public class ComponentsSolver {
     private final Supplier<Rotation2d> turretRotationSupplier;
     private final Supplier<Rotation2d> hoodRotationSupplier;
     private final Supplier<Rotation2d> intakeSlideRotationSupplier;
-    private final DoubleSupplier climbExtensionMetersSupplier;
 
     public ComponentsSolver(
             final Supplier<Rotation2d> turretRotationSupplier,
             final Supplier<Rotation2d> hoodRotationSupplier,
-            final Supplier<Rotation2d> intakeSlideRotationSupplier,
-            final DoubleSupplier climbExtensionMetersSupplier
+            final Supplier<Rotation2d> intakeSlideRotationSupplier
     ) {
         this.turretRotationSupplier = turretRotationSupplier;
         this.hoodRotationSupplier = hoodRotationSupplier;
         this.intakeSlideRotationSupplier = intakeSlideRotationSupplier;
-        this.climbExtensionMetersSupplier = climbExtensionMetersSupplier;
     }
 
     public void periodic() {
         final Pose3d[] superstructurePoses = getSuperstructurePoses();
         final Pose3d[] intakeHopperPoses = getIntakeHopperPoses();
-        final Pose3d[] climbPoses = getClimbPoses();
 
         Logger.recordOutput(
                 "Components",
                 superstructurePoses[0],
                 superstructurePoses[1],
                 intakeHopperPoses[0],
-                intakeHopperPoses[1],
-                climbPoses[0],
-                climbPoses[1]
+                intakeHopperPoses[1]
         );
     }
 
@@ -79,36 +72,5 @@ public class ComponentsSolver {
                 .interpolate(PoseConstants.Hopper.EXTENDED_POSE, extensionRatio);
 
         return new Pose3d[]{intakePose, hopperPose};
-    }
-
-    //TODO: Fix
-    private Pose3d[] getClimbPoses() {
-        final double extensionMeters = climbExtensionMetersSupplier.getAsDouble();
-
-        final double stage1ExtensionMeters = Math.min(extensionMeters, PoseConstants.Climb.STAGE_1_MAX_EXTENSION);
-
-        final Pose3d stage1Pose = new Pose3d(PoseConstants.Climb.ORIGIN,
-                PoseConstants.Climb.ANGLE_FROM_HORIZONTAL
-        ).transformBy(
-                new Transform3d(
-                        0,
-                        0,
-                        stage1ExtensionMeters,
-                        Rotation3d.kZero
-                )
-        );
-
-        final double stage2ExtensionMeters =
-                Math.min(extensionMeters - stage1ExtensionMeters, PoseConstants.Climb.STAGE_2_MAX_EXTENSION);
-        final Pose3d stage2Pose = stage1Pose.transformBy(
-                new Transform3d(
-                        0,
-                        0,
-                        stage2ExtensionMeters,
-                        Rotation3d.kZero
-                )
-        );
-
-        return new Pose3d[]{stage1Pose, stage2Pose};
     }
 }

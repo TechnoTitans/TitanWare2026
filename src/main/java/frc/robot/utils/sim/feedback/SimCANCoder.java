@@ -14,22 +14,22 @@ public class SimCANCoder implements SimFeedbackSensor {
     }
 
     @Override
-    public void setSupplyVoltage(double volts) {
+    public void setSupplyVoltage(final double volts) {
         Phoenix6Utils.reportIfNotOk(canCoder, simState.setSupplyVoltage(volts));
     }
 
     @Override
-    public void setRawPosition(double rotations) {
+    public void setRawPosition(final double rotations) {
         Phoenix6Utils.reportIfNotOk(canCoder, simState.setRawPosition(rotations));
     }
 
     @Override
-    public void addPosition(double deltaRotations) {
+    public void addPosition(final double deltaRotations) {
         Phoenix6Utils.reportIfNotOk(canCoder, simState.addPosition(deltaRotations));
     }
 
     @Override
-    public void setVelocity(double rotationsPerSec) {
+    public void setVelocity(final double rotationsPerSec) {
         Phoenix6Utils.reportIfNotOk(canCoder, simState.setVelocity(rotationsPerSec));
     }
 }

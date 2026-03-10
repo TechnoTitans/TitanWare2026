@@ -16,7 +16,7 @@ public record VisionResult(
         SINGLE_TARGET_RESULT,
         SINGLE_TARGET_INVALID_TAG,
         SINGLE_TARGET_AMBIGUOUS_NO_POSE,
-        SINGLE_TARGET_OPPOSITE_REEF,
+        SINGLE_TARGET_OPPOSITE_SIDE,
         SINGLE_TARGET_DISAMBIGUATE_POSE0_RESULT,
         SINGLE_TARGET_DISAMBIGUATE_POSE1_RESULT,
         SINGLE_TARGET_CUTOFF_CORNER,
@@ -30,8 +30,7 @@ public record VisionResult(
             Pose3d ambiguousPose,
             double timestamp,
             List<PhotonTrackedTarget> targetsUsed
-    ) {
-    }
+    ) {}
 
     public static VisionResult invalid(final Result result) {
         return new VisionResult(result, Optional.empty());

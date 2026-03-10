@@ -20,7 +20,6 @@ import frc.robot.auto.AutoChooser;
 import frc.robot.auto.AutoOption;
 import frc.robot.auto.Autos;
 import frc.robot.constants.*;
-import frc.robot.subsystems.climb.Climb;
 import frc.robot.subsystems.drive.Swerve;
 import frc.robot.subsystems.drive.constants.SwerveConstants;
 import frc.robot.subsystems.feeder.Feeder;
@@ -35,7 +34,7 @@ import frc.robot.subsystems.superstructure.turret.Turret;
 import frc.robot.subsystems.vision.PhotonVision;
 import frc.robot.utils.closeables.ToClose;
 import frc.robot.utils.ctre.RefreshAll;
-import frc.robot.utils.logging.LoggedCommandScheduler;
+import frc.robot.utils.logging.CommandLogger;
 import frc.robot.utils.subsystems.VirtualSubsystem;
 import frc.robot.utils.teleop.ControllerUtils;
 import frc.robot.utils.teleop.SwerveSpeed;
@@ -83,32 +82,32 @@ public class Robot extends LoggedRobot {
     );
 
     public final PhotonVision photonVision = new PhotonVision(
-            Constants.RobotMode.DISABLED,
+            Constants.CURRENT_MODE,
             swerve
     );
 
     public final IntakeRoller intakeRoller = new IntakeRoller(
-            Constants.RobotMode.DISABLED,
+            Constants.CURRENT_MODE,
             HardwareConstants.INTAKE_ROLLER
     );
 
     public final IntakeSlide intakeSlide = new IntakeSlide(
-            Constants.RobotMode.DISABLED,
+            Constants.CURRENT_MODE,
             HardwareConstants.INTAKE_SLIDE
     );
 
     public final Feeder feeder = new Feeder(
-            Constants.RobotMode.DISABLED,
+            Constants.CURRENT_MODE,
             HardwareConstants.FEEDER
     );
 
     public final Hood hood = new Hood(
-            Constants.RobotMode.DISABLED,
+            Constants.CURRENT_MODE,
             HardwareConstants.HOOD
     );
 
     public final Turret turret = new Turret(
-            Constants.RobotMode.DISABLED,
+            Constants.CURRENT_MODE,
             HardwareConstants.TURRET,
             () -> swerve.getFieldRelativeSpeeds().omegaRadiansPerSecond
     );
@@ -119,13 +118,8 @@ public class Robot extends LoggedRobot {
     );
 
     public final Spindexer spindexer = new Spindexer(
-            Constants.RobotMode.DISABLED,
+            Constants.CURRENT_MODE,
             HardwareConstants.SPINDEXER
-    );
-
-    public final Climb climb = new Climb(
-            Constants.RobotMode.DISABLED,
-            HardwareConstants.CLIMB
     );
 
     //TODO: Change to Moving when SOTM is implemented
@@ -149,8 +143,7 @@ public class Robot extends LoggedRobot {
     private final ComponentsSolver componentsSolver = new ComponentsSolver(
             turret::getTurretPosition,
             hood::getHoodPosition,
-            intakeSlide::getIntakeSlidePositionRots,
-            climb::getExtensionMeters
+            intakeSlide::getIntakeSlidePositionRots
     );
 
     private final RobotCommands robotCommands = new RobotCommands(
@@ -158,10 +151,8 @@ public class Robot extends LoggedRobot {
             intakeRoller,
             intakeSlide,
             superstructure,
-            shooter,
             spindexer,
-            feeder,
-            climb
+            feeder
     );
 
     public final Autos autos = new Autos(
@@ -203,7 +194,7 @@ public class Robot extends LoggedRobot {
 
     private final Timer shiftTimer = new Timer();
     private final Trigger firstShiftStartTrigger = new Trigger(() -> DriverStation.getMatchTime() == 130);
-    private final Trigger shiftRumbleTrigger = new Trigger(() -> shiftTimer.hasElapsed(23));
+    private final Trigger shiftRumbleTrigger = new Trigger(() -> shiftTimer.hasElapsed(23.5));
     private final Trigger shiftChangeTrigger = new Trigger(() -> shiftTimer.hasElapsed(25));
 
 
@@ -291,7 +282,7 @@ public class Robot extends LoggedRobot {
         configureAutos();
         configureButtonBindings(teleopEventLoop);
 
-        LoggedCommandScheduler.init(CommandScheduler.getInstance());
+        CommandLogger.init(CommandScheduler.getInstance());
 
         SignalLogger.enableAutoLogging(true);
         SignalLogger.start();
@@ -318,7 +309,7 @@ public class Robot extends LoggedRobot {
         driverControllerDisconnected.set(!driverController.getHID().isConnected());
         coControllerDisconnected.set(!coController.getHID().isConnected());
 
-        LoggedCommandScheduler.periodic();
+        CommandLogger.periodic();
         Logger.recordOutput("ShotCalculation", shotCalculationSupplier.get());
         Logger.recordOutput("ScoringMode", scoringMode);
 
@@ -372,17 +363,10 @@ public class Robot extends LoggedRobot {
         );
 
         teleopEnabled.onTrue(
-                Commands.sequence(
-                        Commands.sequence(
-                                climb.setGoal(Climb.Goal.EXTEND),
-                                Commands.waitUntil(() -> !swerve.getPose().equals(FieldConstants.getClimbTarget())),
-                                climb.setGoal(Climb.Goal.STOW)
-                        ).onlyIf(climb::isExtended),
-                        Commands.parallel(
-                                intakeRoller.setGoal(IntakeRoller.Goal.INTAKE),
-                                intakeSlide.setGoal(IntakeSlide.Goal.INTAKE),
-                                superstructure.setGoal(Superstructure.Goal.TRACKING)
-                        )
+                Commands.parallel(
+                        intakeRoller.setGoal(IntakeRoller.Goal.INTAKE),
+                        intakeSlide.setGoal(IntakeSlide.Goal.INTAKE),
+                        superstructure.setGoal(Superstructure.Goal.TRACKING)
                 )
         );
 
@@ -439,12 +423,7 @@ public class Robot extends LoggedRobot {
 
         driverController.rightTrigger(0.5, teleopEventLoop).whileTrue(robotCommands.shootWhileMoving());
 
-//        driverController.y(teleopEventLoop).whileTrue(robotCommands.readyClimb())
-//                .onFalse(robotCommands.climb());
-
         driverController.y(teleopEventLoop).onTrue(intakeSlide.testIntake());
-
-        driverController.a(teleopEventLoop).onTrue(robotCommands.unclimb());
 
         coController.y(teleopEventLoop).onTrue(robotCommands.deployIntake());
 

@@ -7,11 +7,11 @@ public interface SimConstants {
     double SIM_UPDATE_PERIOD_SEC = 0.005;
 
     // Assume 2mOhm resistance for voltage drop calculation
-    double FALCON_MOTOR_RESISTANCE = 0.002;
+    double MotorResistance = 0.002;
 
     interface CTRE {
-        boolean DISABLE_NEUTRAL_MODE_IN_SIM = false;
-        double CONFIG_TIMEOUT_SECONDS = 0.2;
+        boolean DisableNeutralModeInSim = false;
+        double ConfigTimeoutSeconds = 0.2;
     }
 
     interface SwerveModules {

@@ -1,9 +1,11 @@
 package frc.robot.utils.control;
 
+import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.Timer;
 import frc.robot.constants.Constants;
 
 public class DeltaTime {
+    private static final double MICRO_TO_SEC = 1e-6;
     private final Timer timer;
     private final boolean disableLoggedTimestamps;
     private boolean isFirstCall = true;
@@ -16,7 +18,7 @@ public class DeltaTime {
     public DeltaTime(final boolean disableDeterministicTimestamps) {
         this.timer = new Timer();
         this.disableLoggedTimestamps = disableDeterministicTimestamps;
-        this.lastRealFPGASeconds = Timer.getFPGATimestamp();
+        this.lastRealFPGASeconds = MICRO_TO_SEC * RobotController.getFPGATime();
     }
 
     /**
@@ -47,7 +49,7 @@ public class DeltaTime {
             return dtSeconds;
         } else {
             final double lastFPGASeconds = lastRealFPGASeconds;
-            final double newRealTimestampSeconds = Timer.getFPGATimestamp();
+            final double newRealTimestampSeconds = MICRO_TO_SEC * RobotController.getFPGATime();
 
             lastRealFPGASeconds = newRealTimestampSeconds;
             return newRealTimestampSeconds - lastFPGASeconds;

@@ -9,10 +9,9 @@ import java.util.function.Supplier;
 public class Container<T> implements Supplier<T> {
     private T value;
 
-    @SuppressWarnings("unused")
-    public Container() {}
+    private Container() {}
 
-    public Container(T initialValue) {
+    private Container(T initialValue) {
         this.value = initialValue;
     }
 
@@ -28,12 +27,24 @@ public class Container<T> implements Supplier<T> {
         this.value = value;
     }
 
+    public void clear() {
+        this.value = null;
+    }
+
     public Command setCommand(final Supplier<T> valueSupplier) {
-        return Commands.runOnce(() -> this.set(valueSupplier.get())).withName("Container");
+        return Commands.runOnce(() -> set(valueSupplier.get())).withName("Container");
     }
 
     public Command setCommand(final T value) {
         return setCommand(() -> value);
+    }
+
+    public Command clearCommand() {
+        return Commands.runOnce(this::clear);
+    }
+
+    public boolean hasValue() {
+        return value != null;
     }
 
     public static <T> Container<T> of(final T value) {

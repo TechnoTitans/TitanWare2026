@@ -3,15 +3,12 @@ package frc.robot;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
-import frc.robot.constants.FieldConstants;
-import frc.robot.subsystems.climb.Climb;
 import frc.robot.subsystems.drive.Swerve;
 import frc.robot.subsystems.feeder.Feeder;
 import frc.robot.subsystems.intake.roller.IntakeRoller;
 import frc.robot.subsystems.intake.slide.IntakeSlide;
 import frc.robot.subsystems.spindexer.Spindexer;
 import frc.robot.subsystems.superstructure.Superstructure;
-import frc.robot.subsystems.superstructure.shooter.Shooter;
 import frc.robot.utils.commands.LoggedTrigger;
 import frc.robot.utils.teleop.SwerveSpeed;
 
@@ -23,10 +20,8 @@ public class RobotCommands {
     private final IntakeRoller intakeRoller;
     private final IntakeSlide intakeSlide;
     private final Superstructure superstructure;
-    private final Shooter shooter;
     private final Spindexer spindexer;
     private final Feeder feeder;
-    private final Climb climb;
 
     private final LoggedTrigger ableToShoot;
 
@@ -40,19 +35,15 @@ public class RobotCommands {
             final IntakeRoller intakeRoller,
             final IntakeSlide intakeSlide,
             final Superstructure superstructure,
-            final Shooter shooter,
             final Spindexer spindexer,
-            final Feeder feeder,
-            final Climb climb
+            final Feeder feeder
     ) {
         this.swerve = swerve;
         this.intakeRoller = intakeRoller;
         this.intakeSlide = intakeSlide;
         this.superstructure = superstructure;
-        this.shooter = shooter;
         this.spindexer = spindexer;
         this.feeder = feeder;
-        this.climb = climb;
 
         final LoggedTrigger.Group group = LoggedTrigger.Group.from(LogKey);
 
@@ -117,33 +108,5 @@ public class RobotCommands {
         )
                 .finallyDo(() -> intakeSlide.setGoal(IntakeSlide.Goal.INTAKE))
                 .withName("ShootStationary");
-    }
-
-    public Command readyClimb() {
-        return Commands.parallel(
-                swerve.runToPose(FieldConstants::getClimbTarget),
-                superstructure.setGoal(Superstructure.Goal.CLIMB),
-                Commands.sequence(
-                        stowIntake(),
-                        Commands.waitUntil(intakeSlide.atSlideSetpoint),
-                        climb.setGoal(Climb.Goal.EXTEND)
-                ),
-                spindexer.setGoal(Spindexer.Goal.STOP)
-        ).withName("ReadyClimb");
-    }
-
-    public Command climb() {
-        return Commands.parallel(
-                swerve.wheelXCommand(),
-                climb.setGoal(Climb.Goal.CLIMB_DOWN)
-        ).withName("Climb");
-    }
-
-    public Command unclimb() {
-        return Commands.parallel(
-                superstructure.setGoal(Superstructure.Goal.TRACKING),
-                climb.setGoal(Climb.Goal.STOW),
-                spindexer.setGoal(Spindexer.Goal.AGITATE)
-        ).withName("Unclimb");
     }
 }

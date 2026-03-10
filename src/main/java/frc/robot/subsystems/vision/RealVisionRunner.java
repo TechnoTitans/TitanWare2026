@@ -97,27 +97,6 @@ public class RealVisionRunner implements PhotonVisionRunner {
         }
     }
 
-    public static class VisionIOCoralTrackingReal implements VisionIO {
-        private final PhotonCamera photonCamera;
-        private final String cameraName;
-
-        private final Transform3d robotToCamera;
-
-        public VisionIOCoralTrackingReal(final TitanCamera titanCamera) {
-            this.photonCamera = titanCamera.getPhotonCamera();
-            this.cameraName = photonCamera.getName();
-            this.robotToCamera = titanCamera.getRobotToCameraTransform();
-        }
-
-        @Override
-        public void updateInputs(VisionIOInputs inputs) {
-            inputs.name = cameraName;
-            inputs.stdDevFactor = -1;
-            inputs.robotToCamera = robotToCamera;
-            inputs.pipelineResults = photonCamera.getAllUnreadResults().toArray(new PhotonPipelineResult[0]);
-        }
-    }
-
     private final AprilTagFieldLayout aprilTagFieldLayout;
     private final Map<VisionIOApriltagReal, VisionIO.VisionIOInputs> apriltagVisionIOInputsMap;
 
@@ -170,7 +149,7 @@ public class RealVisionRunner implements PhotonVisionRunner {
                 visionResults[i] = visionResult;
             }
 
-            // TODO does this actually fix anything?
+            // TODO: does this actually fix anything?
             visionResultsByVisionIO.put(
                     visionIO,
                     visionResults
@@ -180,12 +159,10 @@ public class RealVisionRunner implements PhotonVisionRunner {
 
     /**
      * Reset the simulated robot {@link Pose3d}.
-     *
      * @param robotPose the new robot {@link Pose3d}
      */
     @Override
-    public void resetRobotPose(final Pose3d robotPose) {
-    }
+    public void resetRobotPose(final Pose3d robotPose) {}
 
     @Override
     public Map<VisionIOApriltagReal, VisionIO.VisionIOInputs> getApriltagVisionIOInputsMap() {

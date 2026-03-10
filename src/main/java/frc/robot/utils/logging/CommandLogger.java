@@ -9,7 +9,7 @@ import org.littletonrobotics.junction.Logger;
 import java.util.*;
 
 
-public class LoggedCommandScheduler {
+public class CommandLogger {
     private static final String LogKey = "Commands";
     private static final String AlertType = "Alerts";
 
@@ -23,7 +23,7 @@ public class LoggedCommandScheduler {
     private static final String PadFirstTrigger = " ".repeat(4);
     private static final String PadRest = " ".repeat(8);
 
-    private LoggedCommandScheduler() {
+    private CommandLogger() {
     }
 
     private static void commandStarted(final Command command) {
@@ -47,8 +47,8 @@ public class LoggedCommandScheduler {
     }
 
     public static void init(final CommandScheduler commandScheduler) {
-        commandScheduler.onCommandInitialize(LoggedCommandScheduler::commandStarted);
-        commandScheduler.onCommandFinish(LoggedCommandScheduler::commandEnded);
+        commandScheduler.onCommandInitialize(CommandLogger::commandStarted);
+        commandScheduler.onCommandFinish(CommandLogger::commandEnded);
 
         commandScheduler.onCommandInterrupt((interrupted, interrupting) -> {
             interrupting.ifPresent(interrupter -> {
@@ -104,9 +104,9 @@ public class LoggedCommandScheduler {
 
                     interrupters.add(
                             interrupter.getName()
-                                    + " interrupted "
-                                    + interrupted.getName()
-                                    + " (" + requirements + ")"
+                            + " interrupted "
+                            + interrupted.getName()
+                            + " (" + requirements + ")"
                     );
 
                     if (ScheduledBy.containsKey(interrupter)) {

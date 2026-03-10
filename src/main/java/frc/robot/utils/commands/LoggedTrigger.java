@@ -4,7 +4,7 @@ import edu.wpi.first.math.filter.Debouncer;
 import edu.wpi.first.wpilibj.event.EventLoop;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
-import frc.robot.utils.logging.LoggedCommandScheduler;
+import frc.robot.utils.logging.CommandLogger;
 
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
@@ -40,18 +40,16 @@ public class LoggedTrigger implements BooleanSupplier {
         }
     }
 
-    /**
-     * Functional interface for the body of a trigger binding.
-     */
+    /** Functional interface for the body of a trigger binding. */
     @FunctionalInterface
     private interface BindingBody {
         /**
          * Executes the body of the binding.
          *
          * @param previous The previous state of the condition.
-         * @param current  The current state of the condition.
+         * @param current The current state of the condition.
          * @param schedule Consumer for the command(s) to schedule.
-         * @param cancel   Consumer for the command(s) to cancel.
+         * @param cancel Consumer for the command(s) to cancel.
          */
         void run(
                 final boolean previous,
@@ -62,13 +60,11 @@ public class LoggedTrigger implements BooleanSupplier {
     }
 
     private static final int ItemsPerDescriptorLine = 3;
-
     private static int getDescriptorLineCount(final LoggedTrigger trigger) {
         return Math.floorDiv(trigger.names.length, ItemsPerDescriptorLine);
     }
 
     private static int LoggedTriggerId = 0;
-
     private static int nextId() {
         return LoggedTriggerId++;
     }
@@ -85,15 +81,15 @@ public class LoggedTrigger implements BooleanSupplier {
     /**
      * Creates a new trigger based on the given condition.
      *
-     * @param group     The group that created the trigger
-     * @param name      The name of the trigger
-     * @param loop      The loop instance that polls this trigger
+     * @param group The group that created the trigger
+     * @param name The name of the trigger
+     * @param loop The loop instance that polls this trigger
      * @param condition The condition represented by this trigger
      */
     private LoggedTrigger(final Group group, final String name, final EventLoop loop, final BooleanSupplier condition) {
         this.id = nextId();
         this.group = group;
-        this.names = new String[]{"", name, ""};
+        this.names = new String[] {"", name, ""};
 
         this.loop = requireNonNullParam(loop, "loop", "LoggedTrigger");
         this.condition = requireNonNullParam(condition, "condition", "LoggedTrigger");
@@ -104,8 +100,8 @@ public class LoggedTrigger implements BooleanSupplier {
      *
      * <p>Polled by the default scheduler button loop.
      *
-     * @param group     The group that created the trigger
-     * @param name      The name of the trigger
+     * @param group The group that created the trigger
+     * @param name The name of the trigger
      * @param condition The condition represented by this trigger
      */
     private LoggedTrigger(final Group group, final String name, final BooleanSupplier condition) {
@@ -194,7 +190,7 @@ public class LoggedTrigger implements BooleanSupplier {
                                 previous,
                                 current,
                                 command -> {
-                                    LoggedCommandScheduler.scheduledBy(command, trigger);
+                                    CommandLogger.scheduledBy(command, trigger);
                                     CommandScheduler.getInstance().schedule(command);
                                 },
                                 Command::cancel
@@ -499,7 +495,7 @@ public class LoggedTrigger implements BooleanSupplier {
      * been active for longer than the specified period.
      *
      * @param seconds The debounce period.
-     * @param type    The debounce type.
+     * @param type The debounce type.
      * @return The debounced trigger.
      */
     public LoggedTrigger debounce(final double seconds, final Debouncer.DebounceType type) {
