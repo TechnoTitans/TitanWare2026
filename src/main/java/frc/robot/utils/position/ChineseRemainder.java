@@ -1,5 +1,6 @@
 package frc.robot.utils.position;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.wpilibj.DriverStation;
 
 public class ChineseRemainder {
     private static final long CRT_RESOLUTION = 1_000_000;
@@ -43,7 +44,9 @@ public class ChineseRemainder {
         final long x = vals[1];
 
         if ((a - b) % g != 0) {
-            throw new IllegalArgumentException("No solutions exist for the given inputs.");
+            DriverStation.reportError("No solutions exist for the given inputs.", true);
+            return 0;
+//            throw new IllegalArgumentException("No solutions exist for the given inputs.");
         }
 
         final long lcm = (m / g) * n;

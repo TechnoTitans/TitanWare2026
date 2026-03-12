@@ -197,8 +197,8 @@ public class TurretIOSim implements TurretIO {
         inputs.turretTorqueCurrentAmps = turretTorqueCurrent.getValueAsDouble();
         inputs.turretTempCelsius = turretDeviceTemp.getValueAsDouble();
 
-        inputs.smallEncoderPositionRots = smallEncoderPosition.getValueAsDouble();
-        inputs.largeEncoderPositionRots = largeEncoderPosition.getValueAsDouble();
+        inputs.primaryEncoderPositionRots = smallEncoderPosition.getValueAsDouble();
+        inputs.secondaryEncoderPositionRots = largeEncoderPosition.getValueAsDouble();
     }
 
     @Override

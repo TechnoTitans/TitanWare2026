@@ -3,6 +3,8 @@ package frc.robot.subsystems.superstructure.shooter;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.Timer;
+import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.constants.Constants;
@@ -85,6 +87,10 @@ public class Shooter extends SubsystemBase {
         desiredGoal = goal;
         Logger.recordOutput(LogKey + "/CurrentGoal", currentGoal.toString());
         Logger.recordOutput(LogKey + "/DesiredGoal", goal.toString());
+    }
+
+    public Command setGoalCommand(final Goal goal) {
+        return Commands.runOnce(() -> setGoal(goal));
     }
 
     public void updateVelocitySetpoint(final double desiredShooterVelocity) {

@@ -45,20 +45,20 @@ public class IntakeSlideIOReal implements IntakeSlideIO {
 
         final TalonFXConfiguration masterConfiguration = new TalonFXConfiguration();
         //Avg Stiff
-        masterConfiguration.Slot0 = new Slot0Configs() //TODO: Tune
-                .withKS(5)
-                .withKP(10)
-                .withKD(0);
+        masterConfiguration.Slot0 = new Slot0Configs()
+                .withKS(1)
+                .withStaticFeedforwardSign(StaticFeedforwardSignValue.UseClosedLoopSign)
+                .withKP(13)
+                .withKD(0.12);
         //Avg / Diff Squishy
         masterConfiguration.Slot1 = new Slot1Configs()
-                .withKS(0)
+                .withKS(1)
                 .withStaticFeedforwardSign(StaticFeedforwardSignValue.UseClosedLoopSign)
-                .withKA(0)
-                .withKP(0) //15
-                .withKD(0);
+                .withKP(8) //15
+                .withKD(0.12);
         //Diff Stiff
         masterConfiguration.Slot2 = new Slot2Configs()
-                .withKP(30)
+                .withKP(150)
                 .withKD(0);
         masterConfiguration.MotionMagic.MotionMagicCruiseVelocity = 0;
         masterConfiguration.MotionMagic.MotionMagicExpo_kV = 0.6;
@@ -72,11 +72,15 @@ public class IntakeSlideIOReal implements IntakeSlideIO {
         masterConfiguration.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
         masterConfiguration.MotorOutput.NeutralMode = NeutralModeValue.Coast;
         masterConfiguration.SoftwareLimitSwitch.ForwardSoftLimitThreshold = constants.forwardLimitRots();
-        masterConfiguration.SoftwareLimitSwitch.ForwardSoftLimitEnable = false;
+        masterConfiguration.SoftwareLimitSwitch.ForwardSoftLimitEnable = true;
         masterConfiguration.SoftwareLimitSwitch.ReverseSoftLimitThreshold = constants.reverseLimitRots();
-        masterConfiguration.SoftwareLimitSwitch.ReverseSoftLimitEnable = false;
+        masterConfiguration.SoftwareLimitSwitch.ReverseSoftLimitEnable = true;
 
         final TalonFXConfiguration followerConfiguration = new TalonFXConfiguration();
+        followerConfiguration.TorqueCurrent.PeakForwardTorqueCurrent = 60;
+        followerConfiguration.TorqueCurrent.PeakReverseTorqueCurrent = -60;
+        followerConfiguration.CurrentLimits.StatorCurrentLimit = 60;
+        followerConfiguration.CurrentLimits.StatorCurrentLimitEnable = true;
         followerConfiguration.Feedback.FeedbackSensorSource = FeedbackSensorSourceValue.RotorSensor;
         followerConfiguration.Feedback.SensorToMechanismRatio = constants.slideGearing();
 
@@ -153,7 +157,7 @@ public class IntakeSlideIOReal implements IntakeSlideIO {
     }
 
     @Override
-    public void toSlidePosition(double positionRots) {
+    public void toSlidePosition(final double positionRots) {
         diffMechanism.setControl(
                 averageMotionMagicExpoTorqueCurrent.withPosition(positionRots).withSlot(0),
                 differentialPositionTorqueCurrentFOC.withPosition(0).withSlot(2)
@@ -169,7 +173,7 @@ public class IntakeSlideIOReal implements IntakeSlideIO {
     }
 
     @Override
-    public void toSlidePositionUnprofiled(double positionRots, double velocityRotsPerSec) {
+    public void toSlidePositionUnprofiled(final double positionRots, final double velocityRotsPerSec) {
         diffMechanism.setControl(
                 averagePositionTorqueCurrentFOC
                         .withPosition(positionRots).withVelocity(velocityRotsPerSec).withSlot(0),
@@ -179,6 +183,8 @@ public class IntakeSlideIOReal implements IntakeSlideIO {
 
     @Override
     public void zeroMotors() {
+        diffMechanism.getLeader().setPosition(0);
+        diffMechanism.getFollower().setPosition(0);
         diffMechanism.setPosition(0);
     }
 }

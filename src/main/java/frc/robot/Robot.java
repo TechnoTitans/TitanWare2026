@@ -85,7 +85,7 @@ public class Robot extends LoggedRobot {
     );
 
     public final PhotonVision photonVision = new PhotonVision(
-            Constants.CURRENT_MODE,
+            Constants.RobotMode.DISABLED,
             swerve
     );
 
@@ -365,18 +365,21 @@ public class Robot extends LoggedRobot {
     public void configureStateTriggers() {
         autonomousEnabled.or(teleopEnabled).onTrue(
                Commands.parallel(
-                       intakeSlide.setGoal(IntakeSlide.Goal.EXTEND),
-                       superstructure.setGoal(Superstructure.Goal.TRACKING)
+                       intakeSlide.setGoalCommand(IntakeSlide.Goal.EXTEND),
+                       superstructure.setGoalCommand(Superstructure.Goal.TRACKING)
                )
         );
 
         firstShiftStartTrigger.onTrue(Commands.runOnce(shiftTimer::start));
 
         shiftRumbleTrigger.onTrue(ControllerUtils.rumbleForDurationCommand(
-                driverController.getHID(), GenericHID.RumbleType.kBothRumble, 0.5, 1)
-        );
+                driverController.getHID(), GenericHID.RumbleType.kBothRumble, 0.5, 1
+        ));
 
         shiftChangeTrigger.onTrue(Commands.runOnce(shiftTimer::reset));
+        disabled.onTrue(ControllerUtils.rumbleForDurationCommand(
+                driverController.getHID(), GenericHID.RumbleType.kBothRumble, 0, 1
+        ));
 
         endgameTrigger.onTrue(
                 Commands.parallel(
@@ -432,13 +435,6 @@ public class Robot extends LoggedRobot {
         );
 
         driverController.rightTrigger(0.5, teleopEventLoop).whileTrue(robotCommands.shootWhileMoving());
-
-        driverController.y(teleopEventLoop).onTrue(intakeSlide.setGoal(IntakeSlide.Goal.EXTEND));
-        driverController.a(teleopEventLoop).onTrue(intakeSlide.setGoal(IntakeSlide.Goal.STOW));
-
-        if (Constants.CURRENT_MODE == Constants.RobotMode.SIM) {
-            driverController.povRight().onTrue(intakeSlide.testIntakeSim());
-        }
 
         coController.leftTrigger(0.5, teleopEventLoop).whileTrue(
                 intakeRoller.toGoal(IntakeRoller.Goal.INTAKE)

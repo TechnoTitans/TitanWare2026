@@ -4,6 +4,7 @@ import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.Timer;
+import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.constants.Constants;
@@ -27,7 +28,7 @@ public class Hood extends SubsystemBase {
 
     public enum Goal {
         STOW(0, false),
-        SHOOTING(0, true);
+        SHOOTING(0.09, true);
 
         private double positionSetpointRots;
         private final boolean isDynamic;
@@ -86,10 +87,14 @@ public class Hood extends SubsystemBase {
         );
     }
 
-    public void setDesiredGoal(final Goal goal) {
+    public void setGoal(final Goal goal) {
         desiredGoal = goal;
         Logger.recordOutput(LogKey + "/CurrentGoal", currentGoal.toString());
         Logger.recordOutput(LogKey + "/DesiredGoal", desiredGoal.toString());
+    }
+
+    public Command setGoalCommand(final Goal goal) {
+        return runOnce(() -> setGoal(goal));
     }
 
     public void updateShootingDesiredPosition(final double position) {

@@ -58,8 +58,8 @@ public class HardwareConstants {
             CANBus.CANIVORE,
             15,
             16,
-            11.11111,
-            3.8,
+            11.111,
+            3.5,
             0
     );
 
@@ -113,8 +113,8 @@ public class HardwareConstants {
             80,
             13,
             17,
-            0, //-0.451,
-            0, //-0.061,
+            -0.448486,
+            -0.059082,
             0.5,
             -0.5,
             new Transform2d(-0.127, 0, Rotation2d.kZero)
@@ -131,7 +131,7 @@ public class HardwareConstants {
             CANBus.RIO,
             22,
             102,
-            0.1103,
+            0.11,
             0
     );
 

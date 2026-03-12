@@ -77,21 +77,14 @@ public class ShooterIOReal implements ShooterIO {
     public void config() {
         final TalonFXConfiguration motorConfiguration = new TalonFXConfiguration();
         motorConfiguration.Slot0 = new Slot0Configs()
-//                .withKS(14.7)
-//                .withKV(0.17)
-//                .withKP(20)
-//                .withKD(0.1);
-                .withKS(7.8)
-                .withKV(0)
-                .withKP(40)
+                .withKS(6.75)
+                .withKP(11)
                 .withKD(0);
+        motorConfiguration.TorqueCurrent.PeakForwardTorqueCurrent = 80;
+        motorConfiguration.TorqueCurrent.PeakReverseTorqueCurrent = -80;
         motorConfiguration.CurrentLimits.StatorCurrentLimit = 80;
         motorConfiguration.CurrentLimits.StatorCurrentLimitEnable = true;
-        motorConfiguration.CurrentLimits.SupplyCurrentLimit = 70;
-        motorConfiguration.CurrentLimits.SupplyCurrentLowerLimit = 40;
-        motorConfiguration.CurrentLimits.SupplyCurrentLowerTime = 4;
-        motorConfiguration.CurrentLimits.SupplyCurrentLimitEnable = true;
-        motorConfiguration.MotorOutput.NeutralMode = NeutralModeValue.Brake;
+        motorConfiguration.MotorOutput.NeutralMode = NeutralModeValue.Coast;
         motorConfiguration.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
         motorConfiguration.Feedback.FeedbackSensorSource = FeedbackSensorSourceValue.RotorSensor;
         motorConfiguration.Feedback.SensorToMechanismRatio = constants.wheelGearing();

@@ -8,9 +8,9 @@ import com.ctre.phoenix6.controls.PositionVoltage;
 import com.ctre.phoenix6.hardware.ParentDevice;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.FeedbackSensorSourceValue;
-import com.ctre.phoenix6.signals.GravityTypeValue;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
+import com.ctre.phoenix6.signals.StaticFeedforwardSignValue;
 import edu.wpi.first.units.measure.*;
 import frc.robot.constants.HardwareConstants;
 import frc.robot.utils.ctre.Phoenix6Utils;
@@ -20,7 +20,6 @@ public class HoodIOReal implements HoodIO {
     private final HardwareConstants.HoodConstants constants;
 
     private final TalonFX hoodMotor;
-    private final TalonFXConfiguration motorConfig;
 
     private final StatusSignal<Angle> hoodPosition;
     private final StatusSignal<AngularVelocity> hoodVelocity;
@@ -34,7 +33,6 @@ public class HoodIOReal implements HoodIO {
         this.constants = constants;
 
         this.hoodMotor = new TalonFX(constants.motorID(), constants.CANBus().toPhoenix6CANBus());
-        this.motorConfig = new TalonFXConfiguration();
 
         this.hoodPosition = hoodMotor.getPosition(false);
         this.hoodVelocity = hoodMotor.getVelocity(false);
@@ -56,18 +54,14 @@ public class HoodIOReal implements HoodIO {
 
     @Override
     public void config() {
+        final TalonFXConfiguration motorConfig = new TalonFXConfiguration();
         motorConfig.Slot0 = new Slot0Configs()
-                .withKS(0.35)
-                .withKG(0.03)
-                .withGravityType(GravityTypeValue.Arm_Cosine)
-                .withKP(375)
-                .withKD(0);
-        motorConfig.CurrentLimits.StatorCurrentLimit = 50;
+                .withKS(0.3)
+                .withStaticFeedforwardSign(StaticFeedforwardSignValue.UseClosedLoopSign)
+                .withKP(300)
+                .withKD(0.1);
+        motorConfig.CurrentLimits.StatorCurrentLimit = 60;
         motorConfig.CurrentLimits.StatorCurrentLimitEnable = true;
-        motorConfig.CurrentLimits.SupplyCurrentLimit = 40;
-        motorConfig.CurrentLimits.SupplyCurrentLowerLimit = 40;
-        motorConfig.CurrentLimits.SupplyCurrentLowerTime = 1;
-        motorConfig.CurrentLimits.SupplyCurrentLimitEnable = true;
         motorConfig.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
         motorConfig.MotorOutput.NeutralMode = NeutralModeValue.Brake;
         motorConfig.Feedback.FeedbackSensorSource = FeedbackSensorSourceValue.RotorSensor;
@@ -76,7 +70,7 @@ public class HoodIOReal implements HoodIO {
         motorConfig.SoftwareLimitSwitch.ForwardSoftLimitEnable = true;
         motorConfig.SoftwareLimitSwitch.ReverseSoftLimitThreshold = constants.lowerLimitRots();
         motorConfig.SoftwareLimitSwitch.ReverseSoftLimitEnable = true;
-        hoodMotor.getConfigurator().apply(motorConfig);
+        Phoenix6Utils.tryUntilOk(hoodMotor, () -> hoodMotor.getConfigurator().apply(motorConfig));
 
         BaseStatusSignal.setUpdateFrequencyForAll(
                 100,

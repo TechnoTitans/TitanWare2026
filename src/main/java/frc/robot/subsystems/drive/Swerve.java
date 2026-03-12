@@ -38,7 +38,6 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.Robot;
-import frc.robot.auto.Autos;
 import frc.robot.constants.Constants;
 import frc.robot.subsystems.drive.SwerveIO.SwerveDriveState;
 import frc.robot.subsystems.drive.constants.SwerveConstants;
@@ -893,18 +892,18 @@ public class Swerve extends SubsystemExt {
         final Pose2d currentPose = getPose();
         final ChassisSpeeds speeds = choreoController.calculate(currentPose, swerveSample);
 
-        Logger.recordOutput(Autos.LogKey + "/Timestamp", swerveSample.getTimestamp());
-        Logger.recordOutput(Autos.LogKey + "/CurrentPose", currentPose);
-        Logger.recordOutput(Autos.LogKey + "/TargetSpeeds", swerveSample.getChassisSpeeds());
-        Logger.recordOutput(Autos.LogKey + "/TargetPose", swerveSample.getPose());
+        Logger.recordOutput(LogKey + "/Timestamp", swerveSample.getTimestamp());
+        Logger.recordOutput(LogKey + "/CurrentPose", currentPose);
+        Logger.recordOutput(LogKey + "/TargetSpeeds", swerveSample.getChassisSpeeds());
+        Logger.recordOutput(LogKey + "/TargetPose", swerveSample.getPose());
 
         Logger.recordOutput(
-                Autos.LogKey + "/TargetRotation",
+                LogKey + "/TargetRotation",
                 MathUtil.angleModulus(swerveSample.heading)
         );
 
         Logger.recordOutput(
-                Autos.LogKey + "/CurrentRotation",
+                LogKey + "/CurrentRotation",
                 MathUtil.angleModulus(currentPose.getRotation().getRadians())
         );
 

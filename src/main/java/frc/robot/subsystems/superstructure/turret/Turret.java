@@ -5,6 +5,7 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.Timer;
+import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.constants.Constants;
@@ -33,7 +34,8 @@ public class Turret extends SubsystemBase {
     public final Trigger atSetpoint = new Trigger(this::atSetpoint);
 
     public enum Goal {
-        TRACKING(0, true);
+        TRACKING(0, true),
+        THING(0.1, true);
 
         private double positionSetpointRots;
         private final boolean isDynamic;
@@ -70,16 +72,16 @@ public class Turret extends SubsystemBase {
 
         this.robotAngularVelocitySupplier = robotAngularVelocitySupplier;
 
-//        final Rotation2d absolutePosition = ChineseRemainder.findAbsolutePosition(
-//                constants.turretTooth(),
-//                inputs.smallEncoderPositionRots,
-//                constants.primaryEncoderTooth(),
-//                inputs.largeEncoderPositionRots,
-//                constants.secondaryEncoderTooth()
-//        );
-//        turretIO.seedTurretPosition(absolutePosition);
-//
-//        Logger.recordOutput(LogKey + "/CRTResult", absolutePosition);
+        final Rotation2d absolutePosition = ChineseRemainder.findAbsolutePosition(
+                constants.turretTooth(),
+                inputs.primaryEncoderPositionRots,
+                constants.primaryEncoderTooth(),
+                inputs.secondaryEncoderPositionRots,
+                constants.secondaryEncoderTooth()
+        );
+        turretIO.seedTurretPosition(absolutePosition);
+
+        Logger.recordOutput(LogKey + "/CRTResult", absolutePosition);
     }
 
     @Override
@@ -89,20 +91,20 @@ public class Turret extends SubsystemBase {
         turretIO.updateInputs(inputs);
         Logger.processInputs(LogKey, inputs);
 
-        if (desiredGoal.isDynamic) {
-            if (Math.abs(inputs.turretPositionRots - desiredGoal.positionSetpointRots) > WRAP_THRESHOLD) {
-                turretIO.toTurretPosition(desiredGoal.positionSetpointRots);
-            } else {
-                turretIO.toTurretContinuousPosition(desiredGoal.positionSetpointRots,
-                        Units.radiansToRotations(-robotAngularVelocitySupplier.getAsDouble())
-                );
-            }
-        }
-
-        if (desiredGoal != currentGoal) {
-            turretIO.toTurretPosition(desiredGoal.positionSetpointRots);
-            currentGoal = desiredGoal;
-        }
+//        if (desiredGoal.isDynamic) {
+//            if (Math.abs(inputs.turretPositionRots - desiredGoal.positionSetpointRots) > WRAP_THRESHOLD) {
+//                turretIO.toTurretPosition(desiredGoal.positionSetpointRots);
+//            } else {
+//                turretIO.toTurretContinuousPosition(desiredGoal.positionSetpointRots,
+//                        Units.radiansToRotations(-robotAngularVelocitySupplier.getAsDouble())
+//                );
+//            }
+//        }
+//
+//        if (desiredGoal != currentGoal) {
+            turretIO.toTurretContinuousPosition(desiredGoal.positionSetpointRots, 0);
+//            currentGoal = desiredGoal;
+//        }
 
         Logger.recordOutput(LogKey + "/CurrentGoal", currentGoal.toString());
         Logger.recordOutput(LogKey + "/DesiredGoal", desiredGoal.toString());
@@ -126,6 +128,10 @@ public class Turret extends SubsystemBase {
         desiredGoal = goal;
         Logger.recordOutput(LogKey + "/CurrentGoal", currentGoal);
         Logger.recordOutput(LogKey + "/DesiredGoal", goal);
+    }
+
+    public Command setGoalCommand(final Goal goal) {
+        return runOnce(() -> setGoal(goal));
     }
 
     public void updatePositionSetpoint(final double desiredTurretPosition) {

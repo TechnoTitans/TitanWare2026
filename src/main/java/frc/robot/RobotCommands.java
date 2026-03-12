@@ -70,13 +70,13 @@ public class RobotCommands {
     public Command deployIntake() {
         return Commands.parallel(
                 intakeRoller.setGoal(IntakeRoller.Goal.INTAKE),
-                intakeSlide.setGoal(IntakeSlide.Goal.EXTEND)
+                intakeSlide.setGoalCommand(IntakeSlide.Goal.EXTEND)
         ).withName("DeployIntake");
     }
 
     public Command stowIntake() {
         return Commands.parallel(
-                intakeSlide.setGoal(IntakeSlide.Goal.STOW),
+                intakeSlide.setGoalCommand(IntakeSlide.Goal.STOW),
                 intakeRoller.setGoal(IntakeRoller.Goal.STOP)
         ).withName("StowIntake");
     }
@@ -91,7 +91,7 @@ public class RobotCommands {
         )
             .finallyDo(() -> {
                 SwerveSpeed.setSwerveSpeed(SwerveSpeed.Speeds.NORMAL);
-                intakeSlide.setGoal(IntakeSlide.Goal.EXTEND);
+                intakeSlide.setGoalCommand(IntakeSlide.Goal.EXTEND);
             })
             .withName("ShootWhileMoving");
     }
@@ -113,7 +113,7 @@ public class RobotCommands {
                 spindexer.toGoal(Spindexer.Goal.FEED),
                 swerve.runWheelXCommand()
         )
-                .finallyDo(() -> intakeSlide.setGoal(IntakeSlide.Goal.EXTEND))
+                .finallyDo(() -> intakeSlide.setGoalCommand(IntakeSlide.Goal.EXTEND))
                 .withName("ShootStationary");
     }
 }

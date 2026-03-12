@@ -80,7 +80,7 @@ public class Superstructure extends VirtualSubsystem {
         this.shotCalculationSupplier = shotCalculationSupplier;
 
         turret.setGoal(desiredGoal.turretGoal);
-        hood.setDesiredGoal(desiredGoal.hoodGoal);
+        hood.setGoal(desiredGoal.hoodGoal);
         shooter.setGoal(desiredGoal.shooterGoal);
     }
 
@@ -106,7 +106,7 @@ public class Superstructure extends VirtualSubsystem {
 
         if (desiredGoal != runningGoal) {
             turret.setGoal(desiredGoal.turretGoal);
-            hood.setDesiredGoal(desiredGoal.hoodGoal);
+            hood.setGoal(desiredGoal.hoodGoal);
             shooter.setGoal(desiredGoal.shooterGoal);
 
             runningGoal = desiredGoal;
@@ -142,7 +142,7 @@ public class Superstructure extends VirtualSubsystem {
         return atSetpoint(() -> goal);
     }
 
-    public Command setGoal(final Goal goal) {
+    public Command setGoalCommand(final Goal goal) {
         return Commands.runOnce(
                 () -> setDesiredGoal(goal)
         ).withName("SetGoal: " + goal.toString());

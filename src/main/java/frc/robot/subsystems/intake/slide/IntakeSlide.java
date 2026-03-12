@@ -40,7 +40,7 @@ public class IntakeSlide extends SubsystemBase {
 
     public enum Goal {
         STOW(0),
-        EXTEND(3.8),
+        EXTEND(3.4),
         SHOOTING(0);
 
         private final double positionSetpointRots;
@@ -97,7 +97,7 @@ public class IntakeSlide extends SubsystemBase {
                 profileGoal.position = desiredGoal.positionSetpointRots;
                 profileGoal.velocity = 0;
             } else {
-                intakeSlideIO.toSlidePosition(3);
+                intakeSlideIO.toSlidePosition(desiredGoal.positionSetpointRots);
             }
 
             currentGoal = desiredGoal;
@@ -134,10 +134,8 @@ public class IntakeSlide extends SubsystemBase {
         ).withName("ToGoal: " + goal.toString());
     }
 
-    public Command setGoal(final Goal goal) {
-        return runOnce(
-                () -> setDesiredGoal(goal)
-        ).withName("ToGoal: " + goal.toString());
+    public Command setGoalCommand(final Goal goal) {
+        return runOnce(() -> setDesiredGoal(goal)).withName("ToGoal: " + goal.toString());
     }
 
     public Rotation2d getIntakeSlidePositionRots() {
