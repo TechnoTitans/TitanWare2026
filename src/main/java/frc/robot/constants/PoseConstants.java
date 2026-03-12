@@ -1,7 +1,6 @@
 package frc.robot.constants;
 
 import edu.wpi.first.math.geometry.*;
-import edu.wpi.first.math.util.Units;
 
 public interface PoseConstants {
     interface Hood {

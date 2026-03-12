@@ -1,11 +1,5 @@
 package frc.robot.constants;
 
-import edu.wpi.first.math.geometry.Pose3d;
-import edu.wpi.first.math.geometry.Rotation3d;
-import edu.wpi.first.math.geometry.Translation3d;
-import edu.wpi.first.math.util.Units;
-import frc.robot.subsystems.drive.constants.SwerveConstants;
-
 public interface SimConstants {
     // TODO: Make constant for sim periodic so that every subsystem uses same
 
