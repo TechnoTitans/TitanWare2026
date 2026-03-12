@@ -98,8 +98,8 @@ public class Superstructure extends VirtualSubsystem {
             final ShotCalculator.ShotCalculation shotCalculation = shotCalculationSupplier.get();
 
             turret.updatePositionSetpoint(shotCalculation.desiredTurretRotation().getRotations());
-            hood.updateShootingDesiredPosition(shotCalculation.desiredHoodRotation());
-            shooter.updateVelocitySetpoint(shotCalculation.desiredShooterVelocityRotsPerSec());
+            hood.updateShootingDesiredPosition(shotCalculation.desiredHoodRotation().getRotations());
+            shooter.updateVelocitySetpoint(shotCalculation.desiredShooterVelocity());
         }
 
         if (desiredGoal != runningGoal) {

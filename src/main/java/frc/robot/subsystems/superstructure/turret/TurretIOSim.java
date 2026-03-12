@@ -127,14 +127,14 @@ public class TurretIOSim implements TurretIO {
     public void config() {
         final TalonFXConfiguration motorConfig = new TalonFXConfiguration();
         motorConfig.Slot0 = new Slot0Configs()
-                .withKS(0.1)
+                .withKS(0.366)
                 .withKV(5)
-                .withKP(60)
-                .withKD(0.1);
+                .withKP(30)
+                .withKD(0);
         motorConfig.Slot1 = new Slot1Configs()
-                .withKS(0.1)
-                .withKP(36)
-                .withKD(9.5);
+                .withKS(0.366)
+                .withKP(80)
+                .withKD(0.45);
         motorConfig.MotionMagic.MotionMagicCruiseVelocity = 0;
         motorConfig.CurrentLimits.StatorCurrentLimit = 70;
         motorConfig.CurrentLimits.StatorCurrentLimitEnable = true;

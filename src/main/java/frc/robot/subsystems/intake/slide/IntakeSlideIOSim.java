@@ -106,7 +106,7 @@ public class IntakeSlideIOSim implements IntakeSlideIO {
 
         final DifferentialMotorConstants<TalonFXConfiguration> diffConstants =
                 new DifferentialMotorConstants<TalonFXConfiguration>()
-                        .withCANBusName(constants.CANBus().name())
+                        .withCANBusName(constants.CANBus().name)
                         .withLeaderId(constants.masterMotorID())
                         .withFollowerId(constants.followerMotorID())
                         .withAlignment(MotorAlignmentValue.Opposed)

@@ -6,6 +6,7 @@ package frc.robot;
 
 import com.ctre.phoenix6.SignalLogger;
 import edu.wpi.first.hal.AllianceStationID;
+import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.wpilibj.*;
 import edu.wpi.first.wpilibj.event.EventLoop;
@@ -16,6 +17,7 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
+import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.auto.AutoChooser;
 import frc.robot.auto.AutoOption;
 import frc.robot.auto.Autos;
@@ -82,12 +84,12 @@ public class Robot extends LoggedRobot {
     );
 
     public final PhotonVision photonVision = new PhotonVision(
-            Constants.CURRENT_MODE,
+            Constants.RobotMode.DISABLED,
             swerve
     );
 
     public final IntakeRoller intakeRoller = new IntakeRoller(
-            Constants.CURRENT_MODE,
+            Constants.RobotMode.DISABLED,
             HardwareConstants.INTAKE_ROLLER
     );
 
@@ -97,28 +99,28 @@ public class Robot extends LoggedRobot {
     );
 
     public final Feeder feeder = new Feeder(
-            Constants.CURRENT_MODE,
+            Constants.RobotMode.DISABLED,
             HardwareConstants.FEEDER
     );
 
     public final Hood hood = new Hood(
-            Constants.CURRENT_MODE,
+            Constants.RobotMode.DISABLED,
             HardwareConstants.HOOD
     );
 
     public final Turret turret = new Turret(
-            Constants.CURRENT_MODE,
+            Constants.RobotMode.DISABLED,
             HardwareConstants.TURRET,
             () -> swerve.getFieldRelativeSpeeds().omegaRadiansPerSecond
     );
 
     public final Shooter shooter = new Shooter(
-            Constants.CURRENT_MODE,
+            Constants.RobotMode.DISABLED,
             HardwareConstants.SHOOTER
     );
 
     public final Spindexer spindexer = new Spindexer(
-            Constants.CURRENT_MODE,
+            Constants.RobotMode.DISABLED,
             HardwareConstants.SPINDEXER
     );
 
@@ -159,7 +161,8 @@ public class Robot extends LoggedRobot {
             swerve,
             superstructure,
             feeder,
-            robotCommands,
+            intakeRoller,
+            intakeSlide,
             photonVision
     );
 
@@ -300,7 +303,6 @@ public class Robot extends LoggedRobot {
 
     @Override
     public void robotPeriodic() {
-//        Threads.setCurrentThreadPriority(true, 99);
         RefreshAll.refreshAll();
 
         CommandScheduler.getInstance().run();
@@ -318,8 +320,6 @@ public class Robot extends LoggedRobot {
         //TODO: Just to find hood angle
         Logger.recordOutput("DistanceFromHub", swerve.getPose()
                 .transformBy(PoseConstants.Turret.ROBOT_TO_TURRET_TRANSFORM_2D).getTranslation().getDistance(FieldConstants.getHubTarget()));
-
-//        Threads.setCurrentThreadPriority(false, 10);
     }
 
     @Override
@@ -337,11 +337,19 @@ public class Robot extends LoggedRobot {
     @Override
     public void teleopPeriodic() {
         teleopEventLoop.poll();
+
     }
 
     @Override
     public void testInit() {
         CommandScheduler.getInstance().cancelAll();
+
+        driverController.y(testEventLoop).whileTrue(swerve.linearTorqueCurrentSysIdQuasistaticCommand(SysIdRoutine.Direction.kForward));
+        driverController.a(testEventLoop).whileTrue(swerve.linearTorqueCurrentSysIdQuasistaticCommand(SysIdRoutine.Direction.kReverse));
+        driverController.x(testEventLoop).whileTrue(swerve.linearTorqueCurrentSysIdDynamicCommand(SysIdRoutine.Direction.kForward));
+        driverController.b(testEventLoop).whileTrue(swerve.linearTorqueCurrentSysIdDynamicCommand(SysIdRoutine.Direction.kReverse));
+
+        driverController.leftBumper(testEventLoop).onTrue(Commands.runOnce(SignalLogger::stop));
     }
 
     @Override
@@ -354,20 +362,12 @@ public class Robot extends LoggedRobot {
     }
 
     public void configureStateTriggers() {
-        autonomousEnabled.onTrue(
+        autonomousEnabled.or(teleopEnabled).onTrue(
                Commands.parallel(
                        intakeRoller.setGoal(IntakeRoller.Goal.INTAKE),
                        intakeSlide.setGoal(IntakeSlide.Goal.INTAKE),
                        superstructure.setGoal(Superstructure.Goal.TRACKING)
                )
-        );
-
-        teleopEnabled.onTrue(
-                Commands.parallel(
-                        intakeRoller.setGoal(IntakeRoller.Goal.INTAKE),
-                        intakeSlide.setGoal(IntakeSlide.Goal.INTAKE),
-                        superstructure.setGoal(Superstructure.Goal.TRACKING)
-                )
         );
 
         firstShiftStartTrigger.onTrue(Commands.runOnce(shiftTimer::start));

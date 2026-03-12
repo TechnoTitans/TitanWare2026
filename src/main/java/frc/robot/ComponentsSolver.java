@@ -8,6 +8,7 @@ import frc.robot.constants.HardwareConstants;
 import frc.robot.constants.PoseConstants;
 import org.littletonrobotics.junction.Logger;
 
+import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
 
 @SuppressWarnings("ClassCanBeRecord")
