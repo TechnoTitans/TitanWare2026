@@ -26,7 +26,7 @@ import java.util.function.Supplier;
 import static edu.wpi.first.wpilibj2.command.Commands.*;
 
 public class Autos {
-    protected static final String LogKey = "Auto";
+    public static final String LogKey = "Auto";
     private static final int SHOOTING_TIME = 4;
 
     private final Swerve swerve;
@@ -138,7 +138,7 @@ public class Autos {
                                         .and(superstructure.atSetpoint))
                                 .finallyDo(timer::stop)
                 ).until(() -> timer.hasElapsed(SHOOTING_TIME)),
-                superstructure.toGoal(Superstructure.Goal.SHOOTING)
+                superstructure.setGoal(Superstructure.Goal.STATIC_SHOOTING)
                         .onlyIf(turretSafe),
                 intakeSlide.toGoal(IntakeSlide.Goal.SHOOTING),
                 swerve.runWheelXCommand(),
@@ -146,7 +146,8 @@ public class Autos {
                         () -> Logger.recordOutput("RobotStopped", robotStopped)
                 ),
                 runOnce(timer::reset)
-        ).withName("ShootStatic");
+        )
+                .withName("ShootStatic");
     }
 
     public AutoRoutine doNothing() {
@@ -187,7 +188,11 @@ public class Autos {
         routine.active().onTrue(
                 Commands.parallel(
                         runStartingTrajectory(startToCenterLineAndBack),
-                        intakeRoller.setGoal(IntakeRoller.Goal.INTAKE)
+                        intakeRoller.setGoal(IntakeRoller.Goal.INTAKE),
+                        Commands.sequence(
+                                superstructure.setGoal(Superstructure.Goal.STATIC_SHOT_PREP),
+                                Commands.runOnce(() -> superstructure.updateStaticShotParameter(firstShotCalculation))
+                        )
                 ).withName("StartCenterLine")
         );
 
@@ -196,7 +201,9 @@ public class Autos {
                         intakeRoller.setGoal(IntakeRoller.Goal.STOP),
                         sequence(
                                 shootStatic(),
-                                shootingToDepot.cmd().asProxy()
+                                superstructure.setGoal(Superstructure.Goal.STATIC_SHOT_PREP),
+                                Commands.runOnce(() -> superstructure.updateStaticShotParameter(secondShotCalculation)),
+                                shootingToDepot.cmd()
                         )
                 ).withName("CenterLineShoot")
         );
@@ -211,10 +218,22 @@ public class Autos {
         final AutoTrajectory startToCenterLineAndBack = routine.trajectory("RightStartToCenterLineAndBack");
         final AutoTrajectory shootingToOutpost = routine.trajectory("RightShootingToOutput");
 
+        final ShotCalculator.ShotCalculation firstShotCalculation = ShotCalculator.getShotCalculationFromPose(
+                startToCenterLineAndBack.getFinalPose().orElse(Pose2d.kZero)
+        );
+
+        final ShotCalculator.ShotCalculation secondShotCalculation = ShotCalculator.getShotCalculationFromPose(
+                shootingToOutpost.getFinalPose().orElse(Pose2d.kZero)
+        );
+
         routine.active().onTrue(
                 Commands.parallel(
                         runStartingTrajectory(startToCenterLineAndBack),
-                        intakeRoller.setGoal(IntakeRoller.Goal.INTAKE)
+                        intakeRoller.setGoal(IntakeRoller.Goal.INTAKE),
+                        Commands.sequence(
+                                superstructure.setGoal(Superstructure.Goal.STATIC_SHOT_PREP),
+                                Commands.runOnce(() -> superstructure.updateStaticShotParameter(firstShotCalculation))
+                        )
                 ).withName("StartCenterLine")
         );
 
@@ -222,6 +241,8 @@ public class Autos {
                 Commands.parallel(
                         intakeRoller.setGoal(IntakeRoller.Goal.STOP),
                         sequence(
+                                shootStatic(),
+                                superstructure.setGoal(Superstructure.Goal.STATIC_SHOT_PREP),
                                 shootStatic(),
                                 shootingToOutpost.cmd().asProxy()
                         )

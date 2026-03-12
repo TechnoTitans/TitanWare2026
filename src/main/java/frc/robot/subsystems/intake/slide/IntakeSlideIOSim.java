@@ -86,10 +86,6 @@ public class IntakeSlideIOSim implements IntakeSlideIO {
         masterMotorConfig.TorqueCurrent.PeakReverseTorqueCurrent = -60;
         masterMotorConfig.CurrentLimits.StatorCurrentLimit = 60;
         masterMotorConfig.CurrentLimits.StatorCurrentLimitEnable = true;
-        masterMotorConfig.CurrentLimits.SupplyCurrentLimit = 50;
-        masterMotorConfig.CurrentLimits.SupplyCurrentLowerLimit = 40;
-        masterMotorConfig.CurrentLimits.SupplyCurrentLowerTime = 1;
-        masterMotorConfig.CurrentLimits.SupplyCurrentLimitEnable = true;
         masterMotorConfig.Feedback.RotorToSensorRatio = 1;
         masterMotorConfig.Feedback.SensorToMechanismRatio = constants.slideGearing();
         masterMotorConfig.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;

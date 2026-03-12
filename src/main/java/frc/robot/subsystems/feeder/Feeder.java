@@ -74,7 +74,7 @@ public class Feeder extends SubsystemBase {
     }
 
     private void setDesiredGoal(final Goal goal) {
-        this.desiredGoal = goal;
+        desiredGoal = goal;
         Logger.recordOutput(LogKey + "/CurrentGoal", currentGoal.toString());
         Logger.recordOutput(LogKey + "/DesiredGoal", goal.toString());
     }
