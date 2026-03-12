@@ -64,10 +64,6 @@ public class HoodIOReal implements HoodIO {
                 .withKD(0);
         motorConfig.CurrentLimits.StatorCurrentLimit = 50;
         motorConfig.CurrentLimits.StatorCurrentLimitEnable = true;
-        motorConfig.CurrentLimits.SupplyCurrentLimit = 40;
-        motorConfig.CurrentLimits.SupplyCurrentLowerLimit = 40;
-        motorConfig.CurrentLimits.SupplyCurrentLowerTime = 1;
-        motorConfig.CurrentLimits.SupplyCurrentLimitEnable = true;
         motorConfig.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
         motorConfig.MotorOutput.NeutralMode = NeutralModeValue.Brake;
         motorConfig.Feedback.FeedbackSensorSource = FeedbackSensorSourceValue.RotorSensor;

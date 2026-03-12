@@ -98,10 +98,6 @@ public class SpindexerIOSim implements SpindexerIO {
         wheelConfiguration.Slot0 = new Slot0Configs();
         wheelConfiguration.CurrentLimits.StatorCurrentLimit = 80;
         wheelConfiguration.CurrentLimits.StatorCurrentLimitEnable = true;
-        wheelConfiguration.CurrentLimits.SupplyCurrentLimit = 70;
-        wheelConfiguration.CurrentLimits.SupplyCurrentLowerLimit = 40;
-        wheelConfiguration.CurrentLimits.SupplyCurrentLowerTime = 1;
-        wheelConfiguration.CurrentLimits.SupplyCurrentLimitEnable = true;
         wheelConfiguration.MotorOutput.NeutralMode = NeutralModeValue.Brake;
         wheelConfiguration.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
         wheelConfiguration.Feedback.FeedbackSensorSource = FeedbackSensorSourceValue.RotorSensor;

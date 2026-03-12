@@ -14,22 +14,18 @@ import java.util.function.Supplier;
 
 //TODO: If ball hit hub, no shoot
 public class ShotCalculator {
-
-    public static final double TURRET_ZERO_OFFSET = 0.25;
-
     public enum Target {
         HUB,
-        FERRYING
+        FERRYING;
     }
-
     public record HoodShooterCalculation(
             Rotation2d hoodRotation,
             double flywheelVelocity,
             double shotTime
     ) implements Interpolatable<HoodShooterCalculation> {
 
-        public static final Interpolator<HoodShooterCalculation> interpolator = HoodShooterCalculation::interpolate;
 
+        public static final Interpolator<HoodShooterCalculation> interpolator = HoodShooterCalculation::interpolate;
         @Override
         public HoodShooterCalculation interpolate(final HoodShooterCalculation endShotCalculation, final double t) {
             return new HoodShooterCalculation(
@@ -38,6 +34,7 @@ public class ShotCalculator {
                     MathUtil.interpolate(this.shotTime, endShotCalculation.shotTime, t)
             );
         }
+
     }
 
     private static final InterpolatingTreeMap<Double, HoodShooterCalculation> shotDataMap = new InterpolatingTreeMap<>(
@@ -46,7 +43,6 @@ public class ShotCalculator {
     );
 
     private static final InterpolatingDoubleTreeMap TOFMap = new InterpolatingDoubleTreeMap();
-
     static {
 //        TOFMap.put(2.0952d, 1.0);
 //        TOFMap.put(2.841d, 1.1);
@@ -182,9 +178,12 @@ public class ShotCalculator {
             ShotCalculator.Target target
     ) {}
 
+
     private static final double FerryXBoundary = Units.inchesToMeters(200);
-    private static final double DelayTimeSec = 0.01;
-    private static final Rotation2d wrapOffset = Rotation2d.fromRotations(0.75);
+    private static final double DelayTimeSec = 0.025;
+
+    private static final double TurretZeroOffset = 0.25;
+    private static final Rotation2d WrapOffset = Rotation2d.fromRotations(0.75);
 
     public static ShotCalculation getShotCalculation(
             final Supplier<Pose2d> swervePoseSupplier,
@@ -325,7 +324,6 @@ public class ShotCalculator {
                     .getDistance(targetTranslation);
         }
 
-        final Pose2d futureRobotPose = futureTurretPose.transformBy(turretOffset.inverse());
         final Rotation2d desiredTurretAngle = targetTranslation.minus(turretPose.getTranslation()).getAngle().minus(
                 turretPose.getRotation()
         );
@@ -360,8 +358,8 @@ public class ShotCalculator {
     }
 
     private static Rotation2d wrapTurret(final Rotation2d desiredTurretRotation) {
-        if (desiredTurretRotation.getRotations() > TURRET_ZERO_OFFSET) {
-            return desiredTurretRotation.minus(wrapOffset);
+        if (desiredTurretRotation.getRotations() > TurretZeroOffset) {
+            return desiredTurretRotation.minus(WrapOffset);
         }
 
         return desiredTurretRotation.rotateBy(Rotation2d.kCCW_90deg);

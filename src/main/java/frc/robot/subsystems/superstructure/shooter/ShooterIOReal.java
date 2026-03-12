@@ -87,10 +87,6 @@ public class ShooterIOReal implements ShooterIO {
                 .withKD(0);
         motorConfiguration.CurrentLimits.StatorCurrentLimit = 80;
         motorConfiguration.CurrentLimits.StatorCurrentLimitEnable = true;
-        motorConfiguration.CurrentLimits.SupplyCurrentLimit = 70;
-        motorConfiguration.CurrentLimits.SupplyCurrentLowerLimit = 40;
-        motorConfiguration.CurrentLimits.SupplyCurrentLowerTime = 4;
-        motorConfiguration.CurrentLimits.SupplyCurrentLimitEnable = true;
         motorConfiguration.MotorOutput.NeutralMode = NeutralModeValue.Brake;
         motorConfiguration.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
         motorConfiguration.Feedback.FeedbackSensorSource = FeedbackSensorSourceValue.RotorSensor;

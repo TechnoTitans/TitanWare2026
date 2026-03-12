@@ -118,8 +118,6 @@ public class HoodIOSim implements HoodIO {
                 .withStaticFeedforwardSign(StaticFeedforwardSignValue.UseClosedLoopSign)
                 .withKP(450)
                 .withKD(0);
-        motorConfiguration.TorqueCurrent.PeakForwardTorqueCurrent = 60;
-        motorConfiguration.TorqueCurrent.PeakReverseTorqueCurrent = -60;
         motorConfiguration.CurrentLimits.StatorCurrentLimit = 60;
         motorConfiguration.CurrentLimits.StatorCurrentLimitEnable = true;
         motorConfiguration.Feedback.FeedbackSensorSource = FeedbackSensorSourceValue.RotorSensor;

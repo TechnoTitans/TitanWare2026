@@ -1,6 +1,5 @@
 package frc.robot.subsystems.intake.roller;
 
-import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -11,7 +10,6 @@ import org.littletonrobotics.junction.Logger;
 
 public class IntakeRoller extends SubsystemBase {
     protected static final String LogKey = "IntakeRoller";
-    private static final double VelocityToleranceRotsPerSec = 0.2;
 
     private final IntakeRollerIO intakeRollerIO;
     private final IntakeRollerIOInputsAutoLogged inputs;
@@ -23,10 +21,10 @@ public class IntakeRoller extends SubsystemBase {
         STOP(0),
         INTAKE(8);
 
-        private final double velocitySetpointRotsPerSec;
+        private final double voltageSetpoint;
 
-        Goal(final double velocitySetpointRotsPerSec) {
-            this.velocitySetpointRotsPerSec = velocitySetpointRotsPerSec;
+        Goal(final double voltageSetpoint) {
+            this.voltageSetpoint = voltageSetpoint;
         }
     }
 
@@ -49,16 +47,14 @@ public class IntakeRoller extends SubsystemBase {
         Logger.processInputs(LogKey, inputs);
 
         if (desiredGoal != currentGoal) {
-            intakeRollerIO.toRollerVoltage(desiredGoal.velocitySetpointRotsPerSec);
+            intakeRollerIO.toRollerVoltage(desiredGoal.voltageSetpoint);
 
             currentGoal = desiredGoal;
         }
 
         Logger.recordOutput(LogKey + "/CurrentGoal", currentGoal.toString());
         Logger.recordOutput(LogKey + "/DesiredGoal", desiredGoal.toString());
-        Logger.recordOutput(LogKey + "/DesiredGoal/VelocitySetpointRotsPerSec", desiredGoal.velocitySetpointRotsPerSec);
-
-        Logger.recordOutput(LogKey + "/AtSetpoint", atSetpoint());
+        Logger.recordOutput(LogKey + "/DesiredGoal/VoltageSetpoint", desiredGoal.voltageSetpoint);
 
         Logger.recordOutput(
                 LogKey + "/PeriodicIOPeriodMs",
@@ -82,14 +78,5 @@ public class IntakeRoller extends SubsystemBase {
         desiredGoal = goal;
         Logger.recordOutput(LogKey + "/CurrentGoal", currentGoal.toString());
         Logger.recordOutput(LogKey + "/DesiredGoal", desiredGoal.toString());
-    }
-
-    private boolean atSetpoint() {
-        return currentGoal == desiredGoal
-                && MathUtil.isNear(
-                desiredGoal.velocitySetpointRotsPerSec,
-                inputs.rollerVelocityRotsPerSec,
-                VelocityToleranceRotsPerSec
-        );
     }
 }
