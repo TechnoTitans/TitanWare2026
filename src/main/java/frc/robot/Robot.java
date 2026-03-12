@@ -6,6 +6,7 @@ package frc.robot;
 
 import com.ctre.phoenix6.SignalLogger;
 import edu.wpi.first.hal.AllianceStationID;
+import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.wpilibj.*;
 import edu.wpi.first.wpilibj.event.EventLoop;
@@ -16,13 +17,11 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
+import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.auto.AutoChooser;
 import frc.robot.auto.AutoOption;
 import frc.robot.auto.Autos;
-import frc.robot.constants.Constants;
-import frc.robot.constants.FieldConstants;
-import frc.robot.constants.HardwareConstants;
-import frc.robot.constants.RobotMap;
+import frc.robot.constants.*;
 import frc.robot.subsystems.drive.Swerve;
 import frc.robot.subsystems.drive.constants.SwerveConstants;
 import frc.robot.subsystems.feeder.Feeder;
@@ -37,7 +36,7 @@ import frc.robot.subsystems.superstructure.turret.Turret;
 import frc.robot.subsystems.vision.PhotonVision;
 import frc.robot.utils.closeables.ToClose;
 import frc.robot.utils.ctre.RefreshAll;
-import frc.robot.utils.logging.LoggedCommandScheduler;
+import frc.robot.utils.logging.CommandLogger;
 import frc.robot.utils.subsystems.VirtualSubsystem;
 import frc.robot.utils.teleop.ControllerUtils;
 import frc.robot.utils.teleop.SwerveSpeed;
@@ -51,6 +50,7 @@ import org.littletonrobotics.junction.wpilog.WPILOGWriter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.Arrays;
 import java.util.Optional;
 import java.util.function.BooleanSupplier;
 import java.util.function.Supplier;
@@ -89,7 +89,7 @@ public class Robot extends LoggedRobot {
     );
 
     public final IntakeRoller intakeRoller = new IntakeRoller(
-            Constants.CURRENT_MODE,
+            Constants.RobotMode.DISABLED,
             HardwareConstants.INTAKE_ROLLER
     );
 
@@ -99,31 +99,32 @@ public class Robot extends LoggedRobot {
     );
 
     public final Feeder feeder = new Feeder(
-            Constants.CURRENT_MODE,
+            Constants.RobotMode.DISABLED,
             HardwareConstants.FEEDER
     );
 
     public final Hood hood = new Hood(
-            Constants.CURRENT_MODE,
+            Constants.RobotMode.DISABLED,
             HardwareConstants.HOOD
     );
 
     public final Turret turret = new Turret(
-            Constants.CURRENT_MODE,
+            Constants.RobotMode.DISABLED,
             HardwareConstants.TURRET,
             () -> swerve.getFieldRelativeSpeeds().omegaRadiansPerSecond
     );
 
     public final Shooter shooter = new Shooter(
-            Constants.CURRENT_MODE,
+            Constants.RobotMode.DISABLED,
             HardwareConstants.SHOOTER
     );
 
     public final Spindexer spindexer = new Spindexer(
-            Constants.CURRENT_MODE,
+            Constants.RobotMode.DISABLED,
             HardwareConstants.SPINDEXER
     );
 
+    //TODO: Change to Moving when SOTM is implemented
     private RobotCommands.ScoringMode scoringMode =
             RobotCommands.ScoringMode.Moving;
 
@@ -141,12 +142,17 @@ public class Robot extends LoggedRobot {
             shotCalculationSupplier
     );
 
+    private final ComponentsSolver componentsSolver = new ComponentsSolver(
+            turret::getTurretPosition,
+            hood::getHoodPosition,
+            intakeSlide::getIntakeSlidePositionRots
+    );
+
     private final RobotCommands robotCommands = new RobotCommands(
             swerve,
             intakeRoller,
             intakeSlide,
             superstructure,
-            shooter,
             spindexer,
             feeder
     );
@@ -155,7 +161,8 @@ public class Robot extends LoggedRobot {
             swerve,
             superstructure,
             feeder,
-            robotCommands,
+            intakeRoller,
+            intakeSlide,
             photonVision
     );
 
@@ -190,7 +197,7 @@ public class Robot extends LoggedRobot {
 
     private final Timer shiftTimer = new Timer();
     private final Trigger firstShiftStartTrigger = new Trigger(() -> DriverStation.getMatchTime() == 130);
-    private final Trigger shiftRumbleTrigger = new Trigger(() -> shiftTimer.hasElapsed(23));
+    private final Trigger shiftRumbleTrigger = new Trigger(() -> shiftTimer.hasElapsed(23.5));
     private final Trigger shiftChangeTrigger = new Trigger(() -> shiftTimer.hasElapsed(25));
 
 
@@ -278,7 +285,7 @@ public class Robot extends LoggedRobot {
         configureAutos();
         configureButtonBindings(teleopEventLoop);
 
-        LoggedCommandScheduler.init(CommandScheduler.getInstance());
+        CommandLogger.init(CommandScheduler.getInstance());
 
         SignalLogger.enableAutoLogging(true);
         SignalLogger.start();
@@ -288,6 +295,10 @@ public class Robot extends LoggedRobot {
 
         Logger.recordOutput("EmptyPose", Pose3d.kZero);
         shiftTimer.start();
+
+        final Pose3d[] emptyPoseArray = new Pose3d[6];
+        Arrays.fill(emptyPoseArray, Pose3d.kZero);
+        Logger.recordOutput("EmptyPoses", emptyPoseArray);
     }
 
     @Override
@@ -297,20 +308,18 @@ public class Robot extends LoggedRobot {
         CommandScheduler.getInstance().run();
         VirtualSubsystem.run();
 
-        logComponentPoses();
-
         driverControllerDisconnected.set(!driverController.getHID().isConnected());
         coControllerDisconnected.set(!coController.getHID().isConnected());
 
-        LoggedCommandScheduler.periodic();
+        CommandLogger.periodic();
         Logger.recordOutput("ShotCalculation", shotCalculationSupplier.get());
         Logger.recordOutput("ScoringMode", scoringMode);
 
-        Logger.recordOutput(
-                "DistanceToHub",
-                FieldConstants.getHubTarget()
-                        .getDistance(superstructure.getTurretTranslation(swerve.getPose()))
-        );
+        componentsSolver.periodic();
+
+        //TODO: Just to find hood angle
+        Logger.recordOutput("DistanceFromHub", swerve.getPose()
+                .transformBy(PoseConstants.Turret.ROBOT_TO_TURRET_TRANSFORM_2D).getTranslation().getDistance(FieldConstants.getHubTarget()));
     }
 
     @Override
@@ -328,11 +337,19 @@ public class Robot extends LoggedRobot {
     @Override
     public void teleopPeriodic() {
         teleopEventLoop.poll();
+
     }
 
     @Override
     public void testInit() {
         CommandScheduler.getInstance().cancelAll();
+
+        driverController.y(testEventLoop).whileTrue(swerve.linearTorqueCurrentSysIdQuasistaticCommand(SysIdRoutine.Direction.kForward));
+        driverController.a(testEventLoop).whileTrue(swerve.linearTorqueCurrentSysIdQuasistaticCommand(SysIdRoutine.Direction.kReverse));
+        driverController.x(testEventLoop).whileTrue(swerve.linearTorqueCurrentSysIdDynamicCommand(SysIdRoutine.Direction.kForward));
+        driverController.b(testEventLoop).whileTrue(swerve.linearTorqueCurrentSysIdDynamicCommand(SysIdRoutine.Direction.kReverse));
+
+        driverController.leftBumper(testEventLoop).onTrue(Commands.runOnce(SignalLogger::stop));
     }
 
     @Override
@@ -341,40 +358,16 @@ public class Robot extends LoggedRobot {
     }
 
     @Override
-    public void simulationPeriodic() {}
-
-    public void logComponentPoses() {
-        final Pose3d[] superstructurePoses = ComponentsSolver.getSuperstructurePoses(
-                turret::getTurretPosition,
-                hood::getHoodPosition
-        );
-        final Pose3d[] intakeSlidePoses = ComponentsSolver
-                .getIntakeHopperPoses(intakeSlide::getIntakeSlidePositionRots);
-
-        Logger.recordOutput(
-                "Components",
-                superstructurePoses[0],
-                intakeSlidePoses[1],
-                intakeSlidePoses[0],
-                superstructurePoses[1]
-        );
+    public void simulationPeriodic() {
     }
 
     public void configureStateTriggers() {
-        autonomousEnabled.onTrue(
+        autonomousEnabled.or(teleopEnabled).onTrue(
                Commands.parallel(
                        intakeRoller.setGoal(IntakeRoller.Goal.INTAKE),
                        intakeSlide.setGoal(IntakeSlide.Goal.INTAKE),
                        superstructure.setGoal(Superstructure.Goal.TRACKING)
                )
-        );
-
-        teleopEnabled.onTrue(
-                Commands.parallel(
-                        intakeRoller.setGoal(IntakeRoller.Goal.INTAKE),
-                        intakeSlide.setGoal(IntakeSlide.Goal.INTAKE),
-                        superstructure.setGoal(Superstructure.Goal.TRACKING)
-            )
         );
 
         firstShiftStartTrigger.onTrue(Commands.runOnce(shiftTimer::start));

@@ -1,15 +1,17 @@
 package frc.robot;
 
+import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
+import frc.robot.constants.FieldConstants;
 import frc.robot.subsystems.drive.Swerve;
 import frc.robot.subsystems.feeder.Feeder;
 import frc.robot.subsystems.intake.roller.IntakeRoller;
 import frc.robot.subsystems.intake.slide.IntakeSlide;
 import frc.robot.subsystems.spindexer.Spindexer;
+import frc.robot.subsystems.superstructure.ShotCalculator;
 import frc.robot.subsystems.superstructure.Superstructure;
-import frc.robot.subsystems.superstructure.shooter.Shooter;
 import frc.robot.utils.commands.LoggedTrigger;
 import frc.robot.utils.teleop.SwerveSpeed;
 
@@ -21,7 +23,6 @@ public class RobotCommands {
     private final IntakeRoller intakeRoller;
     private final IntakeSlide intakeSlide;
     private final Superstructure superstructure;
-    private final Shooter shooter;
     private final Spindexer spindexer;
     private final Feeder feeder;
 
@@ -37,7 +38,6 @@ public class RobotCommands {
             final IntakeRoller intakeRoller,
             final IntakeSlide intakeSlide,
             final Superstructure superstructure,
-            final Shooter shooter,
             final Spindexer spindexer,
             final Feeder feeder
     ) {
@@ -45,7 +45,6 @@ public class RobotCommands {
         this.intakeRoller = intakeRoller;
         this.intakeSlide = intakeSlide;
         this.superstructure = superstructure;
-        this.shooter = shooter;
         this.spindexer = spindexer;
         this.feeder = feeder;
 
@@ -61,6 +60,13 @@ public class RobotCommands {
                             swerveChassisSpeed.vyMetersPerSecond
                     ) < AllowableSpeedToShootMetersPerSec;
                 }
+        );
+    }
+
+    public static double linearSpeed(final ChassisSpeeds speeds) {
+        return Math.hypot(
+                speeds.vxMetersPerSecond,
+                speeds.vyMetersPerSecond
         );
     }
 

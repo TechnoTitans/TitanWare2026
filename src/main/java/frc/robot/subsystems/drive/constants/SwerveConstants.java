@@ -29,7 +29,7 @@ public class SwerveConstants {
     public static final int ModuleCount = 4;
     public static final SwerveConfig Config = new SwerveConfig(
             HardwareConstants.CANBus.CANIVORE,
-            Units.inchesToMeters(2),
+            0.0508,
             7.03,
             287.0 / 11.0,
             54.0 / 25.0,
@@ -58,7 +58,7 @@ public class SwerveConstants {
             1,
             2,
             3,
-            -0.074,
+            0.423828,
             SwerveConstants.KrakenX60Foc.KtNMPerAmp
     );
 
@@ -69,7 +69,7 @@ public class SwerveConstants {
             4,
             5,
             6,
-            -0.662,
+            -0.12207,
             SwerveConstants.KrakenX60Foc.KtNMPerAmp
     );
 
@@ -80,7 +80,7 @@ public class SwerveConstants {
             7,
             8,
             9,
-            -0.064,
+            0.437012,
             SwerveConstants.KrakenX60Foc.KtNMPerAmp
     );
 
@@ -91,7 +91,7 @@ public class SwerveConstants {
             10,
             11,
             12,
-            -0.319,
+            0.180664,
             SwerveConstants.KrakenX60Foc.KtNMPerAmp
     );
 
@@ -100,7 +100,6 @@ public class SwerveConstants {
         public static final Vector<N3> OdometryStdDevs = VecBuilder.fill(0.1, 0.1, Units.degreesToRadians(1));
         public static final Vector<N3> UnusedVisionStdDevs = VecBuilder.fill(0.6, 0.6, Units.degreesToRadians(80));
         public static final int BufferSize = 40;
-
         static {
             final int minBufferSize = (int) Math.ceil(Constants.LOOP_PERIOD_SECONDS * OdometryFreqHz);
             if (BufferSize < minBufferSize) {
@@ -111,57 +110,49 @@ public class SwerveConstants {
         }
 
         private static final Slot0Configs DriveGains = new Slot0Configs()
-                .withKS(4).withKV(0).withKA(5.55)
-                .withKP(30).withKD(0);
+                .withKS(2).withKV(0).withKA(0.558)
+                .withKP(4).withKD(0);
 
         private static final Slot0Configs SteerGains = new Slot0Configs()
-                .withKS(0.3).withKV(0).withKA(0)
-                .withKP(100).withKD(0.5)
+                .withKS(0.2).withKV(0).withKA(0)
+                .withKP(100).withKD(1.5)
                 .withStaticFeedforwardSign(StaticFeedforwardSignValue.UseClosedLoopSign);
 
-        private static final Pigeon2Configuration Pigeon2Configuration = new Pigeon2Configuration();
-
-        static {
-            Pigeon2Configuration.MountPose.MountPoseRoll = -0.7136042714118958;
-            Pigeon2Configuration.MountPose.MountPosePitch = 0.5430453419685364;
-            Pigeon2Configuration.MountPose.MountPoseYaw = -89.58695220947266;
+        private static final Pigeon2Configuration Pigeon2Configuration = new Pigeon2Configuration(); static {
+            Pigeon2Configuration.MountPose.MountPoseRoll = -0.6777163147926331;
+            Pigeon2Configuration.MountPose.MountPosePitch = 0.5968738794326782;
+            Pigeon2Configuration.MountPose.MountPoseYaw = -0.6375366449356079;
         }
 
         private static final double SlipCurrentAmps = 70;
-        private static final InvertedValue DriveMotorInverted = InvertedValue.Clockwise_Positive;
+        private static final InvertedValue DriveMotorInverted = InvertedValue.CounterClockwise_Positive;
         private static final InvertedValue TurnMotorInverted = InvertedValue.CounterClockwise_Positive;
         private static final SensorDirectionValue TurnEncoderDirection = SensorDirectionValue.CounterClockwise_Positive;
 
-        private static final TalonFXConfiguration DriveTalonFXConfiguration = new TalonFXConfiguration();
-
-        static {
+        private static final TalonFXConfiguration DriveTalonFXConfiguration = new TalonFXConfiguration(); static {
             DriveTalonFXConfiguration.TorqueCurrent.PeakForwardTorqueCurrent = SlipCurrentAmps;
             DriveTalonFXConfiguration.TorqueCurrent.PeakReverseTorqueCurrent = -SlipCurrentAmps;
         }
 
-        private static final TalonFXConfiguration TurnTalonFXConfiguration = new TalonFXConfiguration();
-
-        static {
+        private static final TalonFXConfiguration TurnTalonFXConfiguration = new TalonFXConfiguration(); static {
             TurnTalonFXConfiguration.CurrentLimits.StatorCurrentLimit = 40;
             TurnTalonFXConfiguration.CurrentLimits.StatorCurrentLimitEnable = true;
             TurnTalonFXConfiguration.CurrentLimits.SupplyCurrentLimit = 40;
             TurnTalonFXConfiguration.CurrentLimits.SupplyCurrentLimitEnable = true;
         }
 
-        private static final CANcoderConfiguration CanCoderConfiguration = new CANcoderConfiguration();
-
-        static {
+        private static final CANcoderConfiguration CanCoderConfiguration = new CANcoderConfiguration(); static {
             CanCoderConfiguration.MagnetSensor.AbsoluteSensorDiscontinuityPoint = 0.5;
         }
 
-        private static final double DriveInertiaKgMSquared = 0.01;
+        private static final double DriveInertiaKgMSquared = 0.035;
         private static final double SteerInertiaKgMSquared = 0.01;
 
         private static final double DriveKsFrictionVolts = 0.2;
         private static final double TurnKsFrictionVolts = 0.2;
 
         public static final SwerveDrivetrainConstants DrivetrainConstants = new SwerveDrivetrainConstants()
-                .withCANBusName(Config.canBus.name())
+                .withCANBusName(Config.canBus.name)
                 .withPigeon2Id(Gyro.gyroId)
                 .withPigeon2Configs(Pigeon2Configuration);
 

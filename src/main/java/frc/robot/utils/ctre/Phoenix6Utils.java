@@ -36,7 +36,8 @@ public class Phoenix6Utils {
      * @see StatusCode
      * @see BaseStatusSignal#getLatencyCompensatedValue(StatusSignal, StatusSignal)
      */
-    public static <U extends Unit, U_PER_SEC extends PerUnit<U, TimeUnit>, MEAS extends Measure<U>, MEAS_PER_SEC extends Measure<U_PER_SEC>>
+    public static
+    <U extends Unit, U_PER_SEC extends PerUnit<U, TimeUnit>, MEAS extends Measure<U>, MEAS_PER_SEC extends Measure<U_PER_SEC>>
     double latencyCompensateIfSignalIsGood(
             final StatusSignal<MEAS> refreshedSignal,
             final StatusSignal<MEAS_PER_SEC> refreshedDeltaSignal
@@ -96,12 +97,12 @@ public class Phoenix6Utils {
         return status;
     }
 
-    public static void reportIfNotOk(final ParentDevice parentDevice, final StatusCode statusCode) {
+    public static void reportIfNotOk(final ParentDevice device, final StatusCode statusCode) {
         if (!statusCode.isOK()) {
             DriverStation.reportError(
                     String.format(
-                            "Failed on Device %d: %s",
-                            parentDevice.getDeviceID(),
+                            "Failed on device %d: %s",
+                            device.getDeviceID(),
                             statusCode.getName()
                     ),
                     false
@@ -124,7 +125,7 @@ public class Phoenix6Utils {
             // use longer timeout when in sim
             Phoenix6Utils.reportIfNotOk(
                     talonFX,
-                    configurator.refresh(configuration, SimConstants.CTRE.CONFIG_TIMEOUT_SECONDS)
+                    configurator.refresh(configuration, SimConstants.CTRE.ConfigTimeoutSeconds)
             );
         }
 

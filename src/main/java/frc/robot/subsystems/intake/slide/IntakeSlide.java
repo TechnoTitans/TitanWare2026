@@ -89,27 +89,27 @@ public class IntakeSlide extends SubsystemBase {
 
         final double dt = deltaTime.get();
 
-        if (desiredGoal != currentGoal) {
-            if (desiredGoal == Goal.SHOOTING) {
-                profileSetpoint.position = inputs.averagePositionRots;
-                profileSetpoint.velocity = inputs.averageVelocityRotsPerSec;
-
-                profileGoal.position = desiredGoal.positionSetpointRots;
-                profileGoal.velocity = 0;
-            } else {
-                intakeSlideIO.toSlidePosition(desiredGoal.positionSetpointRots);
-            }
-
-            currentGoal = desiredGoal;
-        }
-
-        if (currentGoal == Goal.SHOOTING) {
-            profileSetpoint = profile.calculate(dt, profileSetpoint, profileGoal);
-            intakeSlideIO.toSlidePositionUnprofiled(
-                    profileSetpoint.position,
-                    profileSetpoint.velocity
-            );
-        }
+//        if (desiredGoal != currentGoal) {
+//            if (desiredGoal == Goal.SHOOTING) {
+//                profileSetpoint.position = inputs.averagePositionRots;
+//                profileSetpoint.velocity = inputs.averageVelocityRotsPerSec;
+//
+//                profileGoal.position = desiredGoal.positionSetpointRots;
+//                profileGoal.velocity = 0;
+//            } else {
+                intakeSlideIO.toSlidePosition(3);
+//            }
+//
+//            currentGoal = desiredGoal;
+//        }
+//
+//        if (currentGoal == Goal.SHOOTING) {
+//            profileSetpoint = profile.calculate(dt, profileSetpoint, profileGoal);
+//            intakeSlideIO.toSlidePositionUnprofiled(
+//                    profileSetpoint.position,
+//                    profileSetpoint.velocity
+//            );
+//        }
 
         Logger.recordOutput(LogKey + "/CurrentGoal", currentGoal.toString());
         Logger.recordOutput(LogKey + "/DesiredGoal", desiredGoal.toString());

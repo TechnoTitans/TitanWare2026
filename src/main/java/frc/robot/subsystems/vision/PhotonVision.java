@@ -1,6 +1,7 @@
 package frc.robot.subsystems.vision;
 
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
+import edu.wpi.first.apriltag.AprilTagFields;
 import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.Vector;
 import edu.wpi.first.math.geometry.*;
@@ -8,7 +9,6 @@ import edu.wpi.first.math.kinematics.SwerveDriveOdometry;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.math.util.Units;
-import edu.wpi.first.wpilibj.Filesystem;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.constants.Constants;
@@ -23,7 +23,6 @@ import org.littletonrobotics.junction.Logger;
 import org.photonvision.simulation.VisionSystemSim;
 import org.photonvision.targeting.PhotonTrackedTarget;
 
-import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -39,19 +38,8 @@ public class PhotonVision extends VirtualSubsystem {
     private final double maxAngularVelocity = SwerveConstants.Config.maxAngularVelocityRadsPerSec();
 
     public static final AprilTagFieldLayout apriltagFieldLayout;
-
     static {
-        try {
-            apriltagFieldLayout = new AprilTagFieldLayout(
-                    Filesystem.getDeployDirectory().getPath() + "/2026-rebuilt-welded.json"
-            );
-
-//            apriltagFieldLayout = new AprilTagFieldLayout(
-//                    Filesystem.getDeployDirectory().getPath() + "/2026-rebuilt-andymark.json"
-//            );
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+        apriltagFieldLayout = AprilTagFieldLayout.loadField(AprilTagFields.k2026RebuiltWelded);
         apriltagFieldLayout.setOrigin(AprilTagFieldLayout.OriginPosition.kBlueAllianceWallRightSide);
     }
 
@@ -94,7 +82,7 @@ public class PhotonVision extends VirtualSubsystem {
                         new SwerveDriveOdometry(
                                 swerve.getKinematics(),
                                 Rotation2d.kZero,
-                                new SwerveModulePosition[]{
+                                new SwerveModulePosition[] {
                                         new SwerveModulePosition(),
                                         new SwerveModulePosition(),
                                         new SwerveModulePosition(),

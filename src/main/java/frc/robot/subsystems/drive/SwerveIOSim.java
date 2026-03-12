@@ -104,11 +104,9 @@ public class SwerveIOSim implements SwerveIO {
         }
 
         final int nStates = freeBuffer.size();
-//        final double[] fpgaTimestamps = new double[nStates];
         final SwerveDriveState[] states = new SwerveDriveState[nStates];
         for (int i = 0; i < nStates; i++) {
             final SwerveDrivetrain.SwerveDriveState state = freeBuffer.removeFirst();
-//            fpgaTimestamps[i] = Utils.currentTimeToFPGATime(state.Timestamp);
             states[i] = new SwerveDriveState(state);
         }
 
@@ -124,7 +122,6 @@ public class SwerveIOSim implements SwerveIO {
         inputs.fpgaTimeSeconds = Timer.getFPGATimestamp();
         inputs.currentTimeSeconds = Utils.getCurrentTimeSeconds();
 
-//        inputs.fpgaTimestamps = fpgaTimestamps;
         for (int i = 0; i < modules.length; i++) {
             modules[i].updateInputs(moduleIOInputs[i]);
         }

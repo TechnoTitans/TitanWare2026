@@ -9,7 +9,7 @@ import java.util.Objects;
 public class HardwareConstants {
     public enum CANBus {
         RIO("rio"),
-        CANIVORE("CANIVORE");
+        CANIVORE("CANivore");
 
         private static final HashMap<String, CANBus> BusNameToCANBus = new HashMap<>();
         static {
@@ -58,7 +58,7 @@ public class HardwareConstants {
             CANBus.CANIVORE,
             15,
             16,
-            10,
+            11.111,
             3.8,
             0
     );

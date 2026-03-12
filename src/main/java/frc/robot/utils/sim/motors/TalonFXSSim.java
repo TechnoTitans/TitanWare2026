@@ -119,7 +119,7 @@ public class TalonFXSSim implements SimMotorController {
             simState.setRotorVelocity(gearRatio * mechanismAngularVelocityRotsPerSec);
             simState.setSupplyVoltage(
                     RobotController.getBatteryVoltage() -
-                            (simState.getSupplyCurrent() * SimConstants.FALCON_MOTOR_RESISTANCE)
+                            (simState.getSupplyCurrent() * SimConstants.MotorResistance)
             );
         }
 

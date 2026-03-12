@@ -114,16 +114,18 @@ public class TalonFXSim implements SimMotorController {
         final double mechanismAngularPositionRots = getAngularPositionRots();
         final double mechanismAngularVelocityRotsPerSec = getAngularVelocityRotsPerSec();
 
+        final double batteryVoltage = RobotController.getBatteryVoltage();
         for (final TalonFXSimState simState : simStates) {
             simState.setRawRotorPosition(gearRatio * mechanismAngularPositionRots);
             simState.setRotorVelocity(gearRatio * mechanismAngularVelocityRotsPerSec);
             simState.setSupplyVoltage(
-                    RobotController.getBatteryVoltage() -
-                            (simState.getSupplyCurrent() * SimConstants.FALCON_MOTOR_RESISTANCE)
+                    batteryVoltage -
+                            (simState.getSupplyCurrent() * SimConstants.MotorResistance)
             );
         }
 
         if (hasRemoteSensor) {
+            feedbackSensor.setSupplyVoltage(batteryVoltage);
             feedbackSensor.setRawPosition(mechanismAngularPositionRots);
             feedbackSensor.setVelocity(mechanismAngularVelocityRotsPerSec);
         }

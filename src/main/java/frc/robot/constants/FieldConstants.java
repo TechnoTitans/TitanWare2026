@@ -19,6 +19,22 @@ public class FieldConstants {
 
     public static final Pose2d RED_HUB_POSE = BLUE_HUB_POSE.relativeTo(RED_ORIGIN);
 
+    private static final double TRENCH_WIDTH = Units.inchesToMeters(6);
+    private static final double TURRET_SAFE_BUFFER = Units.inchesToMeters(12);
+    public static final double BLUE_TURRET_SAFE_X_CLOSE_BOUNDARY = BLUE_HUB_POSE.getX()
+            - (TRENCH_WIDTH / 2)
+            - TURRET_SAFE_BUFFER;
+    public static final double RED_TURRET_SAFE_X_CLOSE_BOUNDARY = RED_HUB_POSE.getX()
+            + (TRENCH_WIDTH / 2)
+            + TURRET_SAFE_BUFFER;
+
+    public static final double BLUE_TURRET_SAFE_X_FAR_BOUNDARY = BLUE_HUB_POSE.getX()
+            + (TRENCH_WIDTH / 2)
+            + TURRET_SAFE_BUFFER;
+    public static final double RED_TURRET_SAFE_X_FAR_BOUNDARY = RED_HUB_POSE.getX()
+            - (TRENCH_WIDTH / 2)
+            - TURRET_SAFE_BUFFER;
+
     public static final Pose2d TOP_FERRYING_BLUE =
             new Pose2d(new Translation2d(2, FIELD_WIDTH_Y_METERS - 2.0), Rotation2d.kZero);
 
@@ -43,5 +59,13 @@ public class FieldConstants {
         return (robotYPositionMeters > FIELD_WIDTH_Y_METERS / 2.0 ?
                 getAllianceFlipped(TOP_FERRYING_BLUE, TOP_FERRYING_RED)
                 : getAllianceFlipped(BOTTOM_FERRYING_BLUE, BOTTOM_FERRYING_RED)).getTranslation();
+    }
+
+    public static double getTurretSafeXCloseBoundary() {
+        return getAllianceFlipped(BLUE_TURRET_SAFE_X_CLOSE_BOUNDARY, RED_TURRET_SAFE_X_CLOSE_BOUNDARY);
+    }
+
+    public static double getTurretSafeXFarBoundary() {
+        return getAllianceFlipped(BLUE_TURRET_SAFE_X_FAR_BOUNDARY, RED_TURRET_SAFE_X_FAR_BOUNDARY);
     }
 }

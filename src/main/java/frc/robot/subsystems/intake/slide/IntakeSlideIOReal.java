@@ -10,10 +10,7 @@ import com.ctre.phoenix6.controls.PositionTorqueCurrentFOC;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.mechanisms.DifferentialMechanism;
 import com.ctre.phoenix6.mechanisms.DifferentialMotorConstants;
-import com.ctre.phoenix6.signals.FeedbackSensorSourceValue;
-import com.ctre.phoenix6.signals.InvertedValue;
-import com.ctre.phoenix6.signals.MotorAlignmentValue;
-import com.ctre.phoenix6.signals.NeutralModeValue;
+import com.ctre.phoenix6.signals.*;
 import edu.wpi.first.units.measure.*;
 import frc.robot.constants.HardwareConstants;
 import frc.robot.utils.ctre.RefreshAll;
@@ -46,56 +43,56 @@ public class IntakeSlideIOReal implements IntakeSlideIO {
         this.averagePositionTorqueCurrentFOC = new PositionTorqueCurrentFOC(0).withSlot(1);
         this.differentialPositionTorqueCurrentFOC = new PositionTorqueCurrentFOC(0).withSlot(2);
 
-        final TalonFXConfiguration masterMotorConfig = new TalonFXConfiguration();
-        // Average Slot
-        masterMotorConfig.Slot0 = new Slot0Configs()
-                .withKV(5)
-                .withKP(20)
-                .withKD(0.5);
-        // Hold Slot
-        masterMotorConfig.Slot1 = new Slot1Configs()
-                .withKP(1)
-                .withKD(0.1);
-        // Differential Slot
-        masterMotorConfig.Slot2 = new Slot2Configs()
-                .withKP(250)
-                .withKD(0.1);
-        masterMotorConfig.MotionMagic.MotionMagicCruiseVelocity = 0;
-        masterMotorConfig.TorqueCurrent.PeakForwardTorqueCurrent = 60;
-        masterMotorConfig.TorqueCurrent.PeakReverseTorqueCurrent = -60;
-        masterMotorConfig.CurrentLimits.StatorCurrentLimit = 60;
-        masterMotorConfig.CurrentLimits.StatorCurrentLimitEnable = true;
-        masterMotorConfig.CurrentLimits.SupplyCurrentLimit = 50;
-        masterMotorConfig.CurrentLimits.SupplyCurrentLowerLimit = 40;
-        masterMotorConfig.CurrentLimits.SupplyCurrentLowerTime = 1;
-        masterMotorConfig.CurrentLimits.SupplyCurrentLimitEnable = true;
-        masterMotorConfig.Feedback.RotorToSensorRatio = 1;
-        masterMotorConfig.Feedback.SensorToMechanismRatio = constants.slideGearing();
-        masterMotorConfig.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
-        masterMotorConfig.MotorOutput.NeutralMode = NeutralModeValue.Brake;
-        masterMotorConfig.SoftwareLimitSwitch.ForwardSoftLimitThreshold = constants.upperLimitRots();
-        masterMotorConfig.SoftwareLimitSwitch.ForwardSoftLimitEnable = true;
-        masterMotorConfig.SoftwareLimitSwitch.ReverseSoftLimitThreshold = constants.lowerLimitRots();
-        masterMotorConfig.SoftwareLimitSwitch.ReverseSoftLimitEnable = true;
+        final TalonFXConfiguration masterConfiguration = new TalonFXConfiguration();
+        //Avg Stiff
+        masterConfiguration.Slot0 = new Slot0Configs() //TODO: Tune
+                .withKS(5)
+                .withKP(10)
+                .withKD(0);
+        //Avg / Diff Squishy
+        masterConfiguration.Slot1 = new Slot1Configs()
+                .withKS(0)
+                .withStaticFeedforwardSign(StaticFeedforwardSignValue.UseClosedLoopSign)
+                .withKA(0)
+                .withKP(0) //15
+                .withKD(0);
+        //Diff Stiff
+        masterConfiguration.Slot2 = new Slot2Configs()
+                .withKP(30)
+                .withKD(0);
+        masterConfiguration.MotionMagic.MotionMagicCruiseVelocity = 0;
+        masterConfiguration.MotionMagic.MotionMagicExpo_kV = 0.6;
+        masterConfiguration.MotionMagic.MotionMagicExpo_kA = 0.3;
+        masterConfiguration.TorqueCurrent.PeakForwardTorqueCurrent = 60;
+        masterConfiguration.TorqueCurrent.PeakReverseTorqueCurrent = -60;
+        masterConfiguration.CurrentLimits.StatorCurrentLimit = 60;
+        masterConfiguration.CurrentLimits.StatorCurrentLimitEnable = true;
+        masterConfiguration.Feedback.FeedbackSensorSource = FeedbackSensorSourceValue.RotorSensor;
+        masterConfiguration.Feedback.SensorToMechanismRatio = constants.slideGearing();
+        masterConfiguration.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
+        masterConfiguration.MotorOutput.NeutralMode = NeutralModeValue.Coast;
+        masterConfiguration.SoftwareLimitSwitch.ForwardSoftLimitThreshold = constants.upperLimitRots();
+        masterConfiguration.SoftwareLimitSwitch.ForwardSoftLimitEnable = false;
+        masterConfiguration.SoftwareLimitSwitch.ReverseSoftLimitThreshold = constants.lowerLimitRots();
+        masterConfiguration.SoftwareLimitSwitch.ReverseSoftLimitEnable = false;
 
-        final TalonFXConfiguration followerConfig = new TalonFXConfiguration();
-        followerConfig.Feedback.FeedbackSensorSource = FeedbackSensorSourceValue.RotorSensor;
-        followerConfig.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
-        followerConfig.Feedback.SensorToMechanismRatio = constants.slideGearing();
+        final TalonFXConfiguration followerConfiguration = new TalonFXConfiguration();
+        followerConfiguration.Feedback.FeedbackSensorSource = FeedbackSensorSourceValue.RotorSensor;
+        followerConfiguration.Feedback.SensorToMechanismRatio = constants.slideGearing();
 
-        final DifferentialMotorConstants<TalonFXConfiguration> diffConstants =
-                new DifferentialMotorConstants<TalonFXConfiguration>()
-                        .withCANBusName(constants.CANBus().name())
-                        .withLeaderId(constants.masterMotorID())
-                        .withFollowerId(constants.followerMotorID())
-                        .withAlignment(MotorAlignmentValue.Opposed)
-                        .withSensorToDifferentialRatio(1)
-                        .withClosedLoopRate(200)
-                        .withLeaderInitialConfigs(masterMotorConfig)
-                        .withFollowerInitialConfigs(followerConfig)
-                        .withFollowerUsesCommonLeaderConfigs(true);
+        final DifferentialMotorConstants<TalonFXConfiguration> differentialConstants =
+                new DifferentialMotorConstants<>();
+        differentialConstants.LeaderId = constants.masterMotorID();
+        differentialConstants.FollowerId = constants.followerMotorID();
+        differentialConstants.CANBusName = constants.CANBus().name;
+        differentialConstants.Alignment = MotorAlignmentValue.Opposed;
+        differentialConstants.SensorToDifferentialRatio = 1;
+        differentialConstants.ClosedLoopRate = 200;
+        differentialConstants.LeaderInitialConfigs = masterConfiguration;
+        differentialConstants.FollowerInitialConfigs = followerConfiguration;
+        differentialConstants.FollowerUsesCommonLeaderConfigs = true;
 
-        this.diffMechanism = new DifferentialMechanism<>(TalonFX::new, diffConstants);
+        this.diffMechanism = new DifferentialMechanism<>(TalonFX::new, differentialConstants);
 
         final TalonFX masterMotor = diffMechanism.getLeader();
         final TalonFX followerMotor = diffMechanism.getFollower();

@@ -25,6 +25,15 @@ public class RobotModeLoggedTriggers {
     }
 
     /**
+     * Returns a trigger that is true when the robot is enabled.
+     *
+     * @return A trigger that is true when the robot is enabled.
+     */
+    public static LoggedTrigger enabled(final LoggedTrigger.Group group) {
+        return autonomous(group).or(teleop(group));
+    }
+
+    /**
      * Returns a trigger that is true when the robot is disabled.
      *
      * @return A trigger that is true when the robot is disabled.
