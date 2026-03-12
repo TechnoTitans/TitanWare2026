@@ -35,5 +35,5 @@ public interface IntakeSlideIO {
 
     default void zeroMotors() {}
 
-    default void testIntake() {}
+    default void testIntakeSim() {}
 }

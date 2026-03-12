@@ -71,9 +71,9 @@ public class IntakeSlideIOReal implements IntakeSlideIO {
         masterConfiguration.Feedback.SensorToMechanismRatio = constants.slideGearing();
         masterConfiguration.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
         masterConfiguration.MotorOutput.NeutralMode = NeutralModeValue.Coast;
-        masterConfiguration.SoftwareLimitSwitch.ForwardSoftLimitThreshold = constants.upperLimitRots();
+        masterConfiguration.SoftwareLimitSwitch.ForwardSoftLimitThreshold = constants.forwardLimitRots();
         masterConfiguration.SoftwareLimitSwitch.ForwardSoftLimitEnable = false;
-        masterConfiguration.SoftwareLimitSwitch.ReverseSoftLimitThreshold = constants.lowerLimitRots();
+        masterConfiguration.SoftwareLimitSwitch.ReverseSoftLimitThreshold = constants.reverseLimitRots();
         masterConfiguration.SoftwareLimitSwitch.ReverseSoftLimitEnable = false;
 
         final TalonFXConfiguration followerConfiguration = new TalonFXConfiguration();

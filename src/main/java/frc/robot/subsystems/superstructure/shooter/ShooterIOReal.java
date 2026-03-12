@@ -94,7 +94,7 @@ public class ShooterIOReal implements ShooterIO {
         motorConfiguration.MotorOutput.NeutralMode = NeutralModeValue.Brake;
         motorConfiguration.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
         motorConfiguration.Feedback.FeedbackSensorSource = FeedbackSensorSourceValue.RotorSensor;
-        motorConfiguration.Feedback.SensorToMechanismRatio = constants.gearing();
+        motorConfiguration.Feedback.SensorToMechanismRatio = constants.wheelGearing();
         masterMotor.getConfigurator().apply(motorConfiguration);
 
         BaseStatusSignal.setUpdateFrequencyForAll(

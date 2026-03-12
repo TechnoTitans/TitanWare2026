@@ -8,7 +8,6 @@ import frc.robot.constants.HardwareConstants;
 import frc.robot.constants.PoseConstants;
 import org.littletonrobotics.junction.Logger;
 
-import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
 
 @SuppressWarnings("ClassCanBeRecord")
@@ -64,7 +63,7 @@ public class ComponentsSolver {
 
     private Pose3d[] getIntakeHopperPoses() {
         final double extensionRatio = intakeSlideRotationSupplier.get().getRotations()
-                / (HardwareConstants.INTAKE_SLIDE.upperLimitRots() - HardwareConstants.INTAKE_SLIDE.lowerLimitRots());
+                / (HardwareConstants.INTAKE_SLIDE.forwardLimitRots() - HardwareConstants.INTAKE_SLIDE.reverseLimitRots());
 
         final Pose3d intakePose = PoseConstants.IntakeSlide.RETRACTED_POSE
                 .interpolate(PoseConstants.IntakeSlide.EXTENDED_POSE, extensionRatio);

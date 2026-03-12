@@ -94,9 +94,9 @@ public class IntakeSlideIOSim implements IntakeSlideIO {
         masterMotorConfig.Feedback.SensorToMechanismRatio = constants.slideGearing();
         masterMotorConfig.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
         masterMotorConfig.MotorOutput.NeutralMode = NeutralModeValue.Brake;
-        masterMotorConfig.SoftwareLimitSwitch.ForwardSoftLimitThreshold = constants.upperLimitRots();
+        masterMotorConfig.SoftwareLimitSwitch.ForwardSoftLimitThreshold = constants.forwardLimitRots();
         masterMotorConfig.SoftwareLimitSwitch.ForwardSoftLimitEnable = true;
-        masterMotorConfig.SoftwareLimitSwitch.ReverseSoftLimitThreshold = constants.lowerLimitRots();
+        masterMotorConfig.SoftwareLimitSwitch.ReverseSoftLimitThreshold = constants.reverseLimitRots();
         masterMotorConfig.SoftwareLimitSwitch.ReverseSoftLimitEnable = true;
 
         final TalonFXConfiguration followerConfig = new TalonFXConfiguration();
@@ -273,7 +273,7 @@ public class IntakeSlideIOSim implements IntakeSlideIO {
     }
 
     @Override
-    public void testIntake() {
+    public void testIntakeSim() {
         masterSim.rawUpdate(0, -5);
         followerSim.rawUpdate(0, -5);
     }

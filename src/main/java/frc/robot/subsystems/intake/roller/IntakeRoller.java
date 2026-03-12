@@ -78,10 +78,6 @@ public class IntakeRoller extends SubsystemBase {
                 .withName("SetGoal: " + goal.toString());
     }
 
-    public boolean isIntaking() {
-        return currentGoal == Goal.INTAKE && atSetpoint();
-    }
-
     private void setDesiredGoal(final Goal goal) {
         desiredGoal = goal;
         Logger.recordOutput(LogKey + "/CurrentGoal", currentGoal.toString());

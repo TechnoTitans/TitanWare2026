@@ -65,8 +65,8 @@ public class TurretIOSim implements TurretIO {
         this.constants = constants;
 
         this.turretMotor = new TalonFX(constants.turretMotorID(), constants.CANBus().toPhoenix6CANBus());
-        this.largeEncoder = new CANcoder(constants.largeEncoderID(), constants.CANBus().toPhoenix6CANBus());
-        this.smallEncoder = new CANcoder(constants.smallEncoderID(), constants.CANBus().toPhoenix6CANBus());
+        this.largeEncoder = new CANcoder(constants.secondaryEncoderID(), constants.CANBus().toPhoenix6CANBus());
+        this.smallEncoder = new CANcoder(constants.primaryEncoderID(), constants.CANBus().toPhoenix6CANBus());
 
         final DCMotor dcMotor = DCMotor.getKrakenX60Foc(1);
         final DCMotorSim turretSim = new DCMotorSim(
@@ -153,12 +153,12 @@ public class TurretIOSim implements TurretIO {
         turretMotor.getConfigurator().apply(motorConfig);
 
         final CANcoderConfiguration smallEncoderConfig = new CANcoderConfiguration();
-        smallEncoderConfig.MagnetSensor.MagnetOffset = constants.smallEncoderOffset();
+        smallEncoderConfig.MagnetSensor.MagnetOffset = constants.primaryEncoderOffset();
         smallEncoderConfig.MagnetSensor.SensorDirection = SensorDirectionValue.CounterClockwise_Positive;
         smallEncoder.getConfigurator().apply(smallEncoderConfig);
 
         final CANcoderConfiguration largeEncoderConfig = new CANcoderConfiguration();
-        largeEncoderConfig.MagnetSensor.MagnetOffset = constants.largeEncoderOffset();
+        largeEncoderConfig.MagnetSensor.MagnetOffset = constants.secondaryEncoderOffset();
         largeEncoderConfig.MagnetSensor.SensorDirection = SensorDirectionValue.CounterClockwise_Positive;
         largeEncoder.getConfigurator().apply(largeEncoderConfig);
 
@@ -216,7 +216,7 @@ public class TurretIOSim implements TurretIO {
     @Override
     public void seedTurretPosition(final Rotation2d turretPosition) {
         final double turretPositionRots = turretPosition.getRotations();
-        final double primaryGearing = constants.smallEncoderTooth();
+        final double primaryGearing = constants.primaryEncoderTooth();
         final double primaryAbsolutePosition = smallEncoder.getAbsolutePosition().getValueAsDouble() * primaryGearing;
 
         if (!MathUtil.isNear(primaryAbsolutePosition, turretPositionRots, 1e-6, 0, 1)) {
@@ -262,28 +262,28 @@ public class TurretIOSim implements TurretIO {
         @Override
         public void setRawPosition(final double rotations) {
             Phoenix6Utils.reportIfNotOk(primaryCANcoder,
-                    primarySimState.setRawPosition(rotations / constants.smallEncoderTooth()));
+                    primarySimState.setRawPosition(rotations / constants.primaryEncoderTooth()));
 
             Phoenix6Utils.reportIfNotOk(secondaryCANcoder,
-                    secondarySimState.setRawPosition(rotations / constants.largeEncoderTooth()));
+                    secondarySimState.setRawPosition(rotations / constants.secondaryEncoderTooth()));
         }
 
         @Override
         public void addPosition(final double deltaRotations) {
             Phoenix6Utils.reportIfNotOk(primaryCANcoder,
-                    primarySimState.addPosition(deltaRotations / constants.smallEncoderTooth()));
+                    primarySimState.addPosition(deltaRotations / constants.primaryEncoderTooth()));
 
             Phoenix6Utils.reportIfNotOk(secondaryCANcoder,
-                    secondarySimState.addPosition(deltaRotations / constants.largeEncoderTooth()));
+                    secondarySimState.addPosition(deltaRotations / constants.secondaryEncoderTooth()));
         }
 
         @Override
         public void setVelocity(final double rotationsPerSec) {
             Phoenix6Utils.reportIfNotOk(primaryCANcoder,
-                    primarySimState.setVelocity(rotationsPerSec / constants.smallEncoderTooth()));
+                    primarySimState.setVelocity(rotationsPerSec / constants.primaryEncoderTooth()));
 
             Phoenix6Utils.reportIfNotOk(secondaryCANcoder,
-                    secondarySimState.setVelocity(rotationsPerSec / constants.largeEncoderTooth()));
+                    secondarySimState.setVelocity(rotationsPerSec / constants.secondaryEncoderTooth()));
         }
     }
 }

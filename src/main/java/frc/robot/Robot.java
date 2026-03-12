@@ -6,7 +6,6 @@ package frc.robot;
 
 import com.ctre.phoenix6.SignalLogger;
 import edu.wpi.first.hal.AllianceStationID;
-import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.wpilibj.*;
 import edu.wpi.first.wpilibj.event.EventLoop;
@@ -84,12 +83,12 @@ public class Robot extends LoggedRobot {
     );
 
     public final PhotonVision photonVision = new PhotonVision(
-            Constants.RobotMode.DISABLED,
+            Constants.CURRENT_MODE,
             swerve
     );
 
     public final IntakeRoller intakeRoller = new IntakeRoller(
-            Constants.RobotMode.DISABLED,
+            Constants.CURRENT_MODE,
             HardwareConstants.INTAKE_ROLLER
     );
 
@@ -99,28 +98,28 @@ public class Robot extends LoggedRobot {
     );
 
     public final Feeder feeder = new Feeder(
-            Constants.RobotMode.DISABLED,
+            Constants.CURRENT_MODE,
             HardwareConstants.FEEDER
     );
 
     public final Hood hood = new Hood(
-            Constants.RobotMode.DISABLED,
+            Constants.CURRENT_MODE,
             HardwareConstants.HOOD
     );
 
     public final Turret turret = new Turret(
-            Constants.RobotMode.DISABLED,
+            Constants.CURRENT_MODE,
             HardwareConstants.TURRET,
             () -> swerve.getFieldRelativeSpeeds().omegaRadiansPerSecond
     );
 
     public final Shooter shooter = new Shooter(
-            Constants.RobotMode.DISABLED,
+            Constants.CURRENT_MODE,
             HardwareConstants.SHOOTER
     );
 
     public final Spindexer spindexer = new Spindexer(
-            Constants.RobotMode.DISABLED,
+            Constants.CURRENT_MODE,
             HardwareConstants.SPINDEXER
     );
 
@@ -317,9 +316,9 @@ public class Robot extends LoggedRobot {
 
         componentsSolver.periodic();
 
-        //TODO: Just to find hood angle
-        Logger.recordOutput("DistanceFromHub", swerve.getPose()
-                .transformBy(PoseConstants.Turret.ROBOT_TO_TURRET_TRANSFORM_2D).getTranslation().getDistance(FieldConstants.getHubTarget()));
+        final AllianceShift allianceShift = AllianceShift.get();
+        Logger.recordOutput("AllianceShift", allianceShift);
+        Logger.recordOutput("HubStatus", allianceShift.hubStatus());
     }
 
     @Override
@@ -364,8 +363,7 @@ public class Robot extends LoggedRobot {
     public void configureStateTriggers() {
         autonomousEnabled.or(teleopEnabled).onTrue(
                Commands.parallel(
-                       intakeRoller.setGoal(IntakeRoller.Goal.INTAKE),
-                       intakeSlide.setGoal(IntakeSlide.Goal.INTAKE),
+                       intakeSlide.setGoal(IntakeSlide.Goal.EXTEND),
                        superstructure.setGoal(Superstructure.Goal.TRACKING)
                )
         );
@@ -421,9 +419,22 @@ public class Robot extends LoggedRobot {
                         () -> SwerveSpeed.setSwerveSpeed(SwerveSpeed.Speeds.NORMAL)
                 ).withName("SwerveSpeedSlow"));
 
+        driverController.leftTrigger(0.5, teleopEventLoop).whileTrue(
+                intakeRoller.toGoal(IntakeRoller.Goal.INTAKE)
+        );
+
         driverController.rightTrigger(0.5, teleopEventLoop).whileTrue(robotCommands.shootWhileMoving());
 
-        driverController.y(teleopEventLoop).onTrue(intakeSlide.testIntake());
+        driverController.y(teleopEventLoop).onTrue(intakeSlide.setGoal(IntakeSlide.Goal.EXTEND));
+        driverController.a(teleopEventLoop).onTrue(intakeSlide.setGoal(IntakeSlide.Goal.STOW));
+
+        if (Constants.CURRENT_MODE == Constants.RobotMode.SIM) {
+            driverController.povRight().onTrue(intakeSlide.testIntakeSim());
+        }
+
+        coController.leftTrigger(0.5, teleopEventLoop).whileTrue(
+                intakeRoller.toGoal(IntakeRoller.Goal.INTAKE)
+        );
 
         coController.y(teleopEventLoop).onTrue(robotCommands.deployIntake());
 

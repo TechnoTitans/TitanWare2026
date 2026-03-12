@@ -46,8 +46,8 @@ public class TurretIOReal implements TurretIO {
         this.constants = constants;
 
         this.turretMotor = new TalonFX(constants.turretMotorID(), constants.CANBus().toPhoenix6CANBus());
-        this.largeEncoder = new CANcoder(constants.largeEncoderID(), constants.CANBus().toPhoenix6CANBus());
-        this.smallEncoder = new CANcoder(constants.smallEncoderID(), constants.CANBus().toPhoenix6CANBus());
+        this.largeEncoder = new CANcoder(constants.secondaryEncoderID(), constants.CANBus().toPhoenix6CANBus());
+        this.smallEncoder = new CANcoder(constants.primaryEncoderID(), constants.CANBus().toPhoenix6CANBus());
 
         this.turretPosition = turretMotor.getPosition(false);
         this.turretVelocity = turretMotor.getVelocity(false);
@@ -102,12 +102,12 @@ public class TurretIOReal implements TurretIO {
         turretMotor.getConfigurator().apply(motorConfig);
 
         final CANcoderConfiguration largeEncoderConfig = new CANcoderConfiguration();
-        largeEncoderConfig.MagnetSensor.MagnetOffset = constants.largeEncoderOffset();
+        largeEncoderConfig.MagnetSensor.MagnetOffset = constants.secondaryEncoderOffset();
         largeEncoderConfig.MagnetSensor.SensorDirection = SensorDirectionValue.CounterClockwise_Positive;
         largeEncoder.getConfigurator().apply(largeEncoderConfig);
 
         final CANcoderConfiguration smallEncoderConfig = new CANcoderConfiguration();
-        smallEncoderConfig.MagnetSensor.MagnetOffset = constants.smallEncoderOffset();
+        smallEncoderConfig.MagnetSensor.MagnetOffset = constants.primaryEncoderOffset();
         smallEncoderConfig.MagnetSensor.SensorDirection = SensorDirectionValue.Clockwise_Positive;
         smallEncoder.getConfigurator().apply(smallEncoderConfig);
 
@@ -157,7 +157,7 @@ public class TurretIOReal implements TurretIO {
     @Override
     public void seedTurretPosition(final Rotation2d turretPosition) {
         final double turretPositionRots = turretPosition.getRotations();
-        final double primaryGearing = constants.smallEncoderTooth();
+        final double primaryGearing = constants.primaryEncoderTooth();
         final double primaryAbsolutePosition = smallEncoder.getAbsolutePosition().getValueAsDouble() * primaryGearing;
 
         if (!MathUtil.isNear(primaryAbsolutePosition, turretPositionRots, 1e-6, 0, 1)) {

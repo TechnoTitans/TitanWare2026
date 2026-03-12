@@ -50,8 +50,8 @@ public class HardwareConstants {
             int masterMotorID,
             int followerMotorID,
             double slideGearing,
-            double upperLimitRots,
-            double lowerLimitRots
+            double forwardLimitRots,
+            double reverseLimitRots
     ) {}
 
     public static final IntakeSlideConstants INTAKE_SLIDE = new IntakeSlideConstants(
@@ -78,27 +78,27 @@ public class HardwareConstants {
     public record FeederConstants(
             CANBus CANBus,
             int motorID,
-            double rollerGearing
+            double wheelGearing
     ) {}
 
 
     public static final FeederConstants FEEDER = new FeederConstants(
             CANBus.CANIVORE,
             18,
-            3
+            1.86667
     );
 
     public record TurretConstants (
             CANBus CANBus,
             int turretMotorID,
-            int smallEncoderID,
-            int largeEncoderID,
+            int primaryEncoderID,
+            int secondaryEncoderID,
             double motorToTurretGearing,
             int turretTooth,
-            int smallEncoderTooth,
-            int largeEncoderTooth,
-            double smallEncoderOffset,
-            double largeEncoderOffset,
+            int primaryEncoderTooth,
+            int secondaryEncoderTooth,
+            double primaryEncoderOffset,
+            double secondaryEncoderOffset,
             double forwardLimitRots,
             double reverseLimitRots,
             Transform2d offsetFromCenter
@@ -139,7 +139,7 @@ public class HardwareConstants {
             CANBus CANBus,
             int masterMotorID,
             int followerMotorID,
-            double gearing
+            double wheelGearing
     ) {}
 
     public static final ShooterConstants SHOOTER = new ShooterConstants(

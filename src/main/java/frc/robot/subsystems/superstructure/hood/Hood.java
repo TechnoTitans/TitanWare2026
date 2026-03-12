@@ -106,11 +106,11 @@ public class Hood extends SubsystemBase {
                 && MathUtil.isNear(0, inputs.hoodVelocityRotsPerSec, VelocityToleranceRotsPerSec);
     }
 
-    private boolean atLowerLimit() {
-        return inputs.hoodPositionRots <= constants.lowerLimitRots();
-    }
-
     private boolean atUpperLimit() {
         return inputs.hoodPositionRots >= constants.upperLimitRots();
+    }
+
+    private boolean atLowerLimit() {
+        return inputs.hoodPositionRots <= constants.lowerLimitRots();
     }
 }

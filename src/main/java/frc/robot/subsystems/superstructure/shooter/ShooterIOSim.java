@@ -62,7 +62,7 @@ public class ShooterIOSim implements ShooterIO {
                 LinearSystemId.createDCMotorSystem(
                         DCMotor.getKrakenX60Foc(2),
                         SimConstants.Shooter.MOMENT_OF_INERTIA,
-                        constants.gearing()
+                        constants.wheelGearing()
                 ),
                 DCMotor.getKrakenX60Foc(2)
         );
@@ -72,7 +72,7 @@ public class ShooterIOSim implements ShooterIO {
 
         this.motorsSim = new TalonFXSim(
                 List.of(masterMotor, followerMotor),
-                constants.gearing(),
+                constants.wheelGearing(),
                 motorsSim::update,
                 motorsSim::setInputVoltage,
                 motorsSim::getAngularPositionRad,
@@ -136,7 +136,7 @@ public class ShooterIOSim implements ShooterIO {
         motorConfiguration.MotorOutput.NeutralMode = NeutralModeValue.Brake;
         motorConfiguration.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
         motorConfiguration.Feedback.FeedbackSensorSource = FeedbackSensorSourceValue.RotorSensor;
-        motorConfiguration.Feedback.SensorToMechanismRatio = constants.gearing();
+        motorConfiguration.Feedback.SensorToMechanismRatio = constants.wheelGearing();
 
         masterMotor.getConfigurator().apply(motorConfiguration);
         motorConfiguration.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;

@@ -40,7 +40,7 @@ public class IntakeSlide extends SubsystemBase {
 
     public enum Goal {
         STOW(0),
-        INTAKE(3.8),
+        EXTEND(3.8),
         SHOOTING(0);
 
         private final double positionSetpointRots;
@@ -68,7 +68,7 @@ public class IntakeSlide extends SubsystemBase {
 
         atSlideSetpoint
                 .onTrue(Commands.runOnce(() -> {
-                    if (currentGoal == Goal.INTAKE) {
+                    if (currentGoal == Goal.EXTEND) {
                         controlMode = ControlMode.SOFT;
                         intakeSlideIO.holdSlidePosition(currentGoal.positionSetpointRots);
                     }
@@ -89,27 +89,27 @@ public class IntakeSlide extends SubsystemBase {
 
         final double dt = deltaTime.get();
 
-//        if (desiredGoal != currentGoal) {
-//            if (desiredGoal == Goal.SHOOTING) {
-//                profileSetpoint.position = inputs.averagePositionRots;
-//                profileSetpoint.velocity = inputs.averageVelocityRotsPerSec;
-//
-//                profileGoal.position = desiredGoal.positionSetpointRots;
-//                profileGoal.velocity = 0;
-//            } else {
+        if (desiredGoal != currentGoal) {
+            if (desiredGoal == Goal.SHOOTING) {
+                profileSetpoint.position = inputs.averagePositionRots;
+                profileSetpoint.velocity = inputs.averageVelocityRotsPerSec;
+
+                profileGoal.position = desiredGoal.positionSetpointRots;
+                profileGoal.velocity = 0;
+            } else {
                 intakeSlideIO.toSlidePosition(3);
-//            }
-//
-//            currentGoal = desiredGoal;
-//        }
-//
-//        if (currentGoal == Goal.SHOOTING) {
-//            profileSetpoint = profile.calculate(dt, profileSetpoint, profileGoal);
-//            intakeSlideIO.toSlidePositionUnprofiled(
-//                    profileSetpoint.position,
-//                    profileSetpoint.velocity
-//            );
-//        }
+            }
+
+            currentGoal = desiredGoal;
+        }
+
+        if (currentGoal == Goal.SHOOTING) {
+            profileSetpoint = profile.calculate(dt, profileSetpoint, profileGoal);
+            intakeSlideIO.toSlidePositionUnprofiled(
+                    profileSetpoint.position,
+                    profileSetpoint.velocity
+            );
+        }
 
         Logger.recordOutput(LogKey + "/CurrentGoal", currentGoal.toString());
         Logger.recordOutput(LogKey + "/DesiredGoal", desiredGoal.toString());
@@ -130,7 +130,7 @@ public class IntakeSlide extends SubsystemBase {
     public Command toGoal(final Goal goal) {
         return runEnd(
                 () -> setDesiredGoal(goal),
-                () -> setDesiredGoal(Goal.INTAKE)
+                () -> setDesiredGoal(Goal.EXTEND)
         ).withName("ToGoal: " + goal.toString());
     }
 
@@ -157,14 +157,14 @@ public class IntakeSlide extends SubsystemBase {
     }
 
     private boolean atLowerLimit() {
-        return inputs.masterPositionRots <= constants.lowerLimitRots();
+        return inputs.masterPositionRots <= constants.reverseLimitRots();
     }
 
     private boolean atUpperLimit() {
-        return inputs.masterPositionRots >= constants.upperLimitRots();
+        return inputs.masterPositionRots >= constants.forwardLimitRots();
     }
 
-    public Command testIntake() {
-        return runOnce(intakeSlideIO::testIntake);
+    public Command testIntakeSim() {
+        return runOnce(intakeSlideIO::testIntakeSim);
     }
 }

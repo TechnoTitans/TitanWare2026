@@ -56,7 +56,7 @@ public class FeederIOSim implements FeederIO {
 
         this.rollerTalonFXSim = new TalonFXSim(
                 rollerMotor,
-                constants.rollerGearing(),
+                constants.wheelGearing(),
                 rollerSim::update,
                 rollerSim::setInputVoltage,
                 rollerSim::getAngularPositionRad,
@@ -107,7 +107,7 @@ public class FeederIOSim implements FeederIO {
         rollerConfiguration.MotorOutput.NeutralMode = NeutralModeValue.Brake;
         rollerConfiguration.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
         rollerConfiguration.Feedback.FeedbackSensorSource = FeedbackSensorSourceValue.RotorSensor;
-        rollerConfiguration.Feedback.SensorToMechanismRatio = constants.rollerGearing();
+        rollerConfiguration.Feedback.SensorToMechanismRatio = constants.wheelGearing();
         rollerMotor.getConfigurator().apply(rollerConfiguration);
 
         BaseStatusSignal.setUpdateFrequencyForAll(
@@ -134,15 +134,15 @@ public class FeederIOSim implements FeederIO {
 
     @Override
     public void updateInputs(FeederIO.FeederIOInputs inputs) {
-        inputs.rollerPositionRots = rollerPosition.getValueAsDouble();
-        inputs.rollerVelocityRotsPerSec = rollerVelocity.getValueAsDouble();
-        inputs.rollerVoltage = rollerVoltage.getValueAsDouble();
-        inputs.rollerTorqueCurrentAmps = rollerTorqueCurrent.getValueAsDouble();
-        inputs.rollerTempCelsius = rollerDeviceTemp.getValueAsDouble();
+        inputs.wheelPositionRots = rollerPosition.getValueAsDouble();
+        inputs.wheelVelocityRotsPerSec = rollerVelocity.getValueAsDouble();
+        inputs.wheelVoltage = rollerVoltage.getValueAsDouble();
+        inputs.wheelTorqueCurrentAmps = rollerTorqueCurrent.getValueAsDouble();
+        inputs.wheelTempCelsius = rollerDeviceTemp.getValueAsDouble();
     }
 
     @Override
-    public void toRollerVelocity(final double velocityRotsPerSec) {
+    public void toWheelVelocity(final double velocityRotsPerSec) {
         rollerMotor.setControl(velocityTorqueCurrentFOC.withVelocity(velocityRotsPerSec));
     }
 }

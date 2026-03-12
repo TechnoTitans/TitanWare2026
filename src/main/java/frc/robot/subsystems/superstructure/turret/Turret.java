@@ -18,7 +18,7 @@ public class Turret extends SubsystemBase {
     protected static final String LogKey = "Turret";
 
     private static final double PositionToleranceRots = 0.02;
-    private static final double VelocityToleranceRotsPerSec = 0.01;
+    private static final double VelocityToleranceRotsPerSec = 0.02;
     public static final double WRAP_THRESHOLD = 0.3;
 
     private final HardwareConstants.TurretConstants constants;
@@ -70,16 +70,16 @@ public class Turret extends SubsystemBase {
 
         this.robotAngularVelocitySupplier = robotAngularVelocitySupplier;
 
-//        final Rotation2d absolutePosition = ChineseRemainder.findAbsolutePosition(
-//                constants.turretTooth(),
-//                inputs.smallEncoderPositionRots,
-//                constants.smallEncoderTooth(),
-//                inputs.largeEncoderPositionRots,
-//                constants.largeEncoderTooth()
-//        );
+        final Rotation2d absolutePosition = ChineseRemainder.findAbsolutePosition(
+                constants.turretTooth(),
+                inputs.smallEncoderPositionRots,
+                constants.primaryEncoderTooth(),
+                inputs.largeEncoderPositionRots,
+                constants.secondaryEncoderTooth()
+        );
         turretIO.seedTurretPosition(Rotation2d.kZero);
 
-//        Logger.recordOutput(LogKey + "/CRTResult", absolutePosition);
+        Logger.recordOutput(LogKey + "/CRTResult", absolutePosition);
     }
 
     @Override
@@ -111,6 +111,7 @@ public class Turret extends SubsystemBase {
         Logger.recordOutput(LogKey + "/Triggers/AtSetpoint", atSetpoint());
         Logger.recordOutput(LogKey + "/Triggers/AtLowerLimit", atLowerLimit());
         Logger.recordOutput(LogKey + "/Triggers/AtUpperLimit", atUpperLimit());
+
         Logger.recordOutput(
                 LogKey + "/PeriodicIOPeriodMs",
                 Units.secondsToMilliseconds(Timer.getFPGATimestamp() - turretPeriodicUpdateStart)
@@ -141,11 +142,11 @@ public class Turret extends SubsystemBase {
                 && MathUtil.isNear(robotAngularVelocitySupplier.getAsDouble(), inputs.turretVelocityRotsPerSec, VelocityToleranceRotsPerSec);
     }
 
-    private boolean atLowerLimit() {
-        return inputs.turretPositionRots <= constants.reverseLimitRots();
-    }
-
     private boolean atUpperLimit() {
         return inputs.turretPositionRots >= constants.forwardLimitRots();
+    }
+
+    private boolean atLowerLimit() {
+        return inputs.turretPositionRots <= constants.reverseLimitRots();
     }
 }

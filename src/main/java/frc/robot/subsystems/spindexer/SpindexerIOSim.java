@@ -95,9 +95,7 @@ public class SpindexerIOSim implements SpindexerIO {
     @Override
     public void config() {
         final TalonFXConfiguration wheelConfiguration = new TalonFXConfiguration();
-        wheelConfiguration.Slot0 = new Slot0Configs()
-                .withKS(0.01)
-                .withKP(5);
+        wheelConfiguration.Slot0 = new Slot0Configs();
         wheelConfiguration.CurrentLimits.StatorCurrentLimit = 80;
         wheelConfiguration.CurrentLimits.StatorCurrentLimitEnable = true;
         wheelConfiguration.CurrentLimits.SupplyCurrentLimit = 70;

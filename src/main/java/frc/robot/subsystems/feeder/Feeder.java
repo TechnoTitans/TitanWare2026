@@ -40,7 +40,7 @@ public class Feeder extends SubsystemBase {
         this.inputs = new FeederIOInputsAutoLogged();
 
         feederIO.config();
-        feederIO.toRollerVelocity(desiredGoal.velocitySetpointRotsPerSec);
+        feederIO.toWheelVelocity(desiredGoal.velocitySetpointRotsPerSec);
     }
 
     @Override
@@ -51,7 +51,7 @@ public class Feeder extends SubsystemBase {
         Logger.processInputs(LogKey, inputs);
 
         if (desiredGoal != currentGoal) {
-            feederIO.toRollerVelocity(desiredGoal.velocitySetpointRotsPerSec);
+            feederIO.toWheelVelocity(desiredGoal.velocitySetpointRotsPerSec);
             currentGoal = desiredGoal;
         }
 
@@ -81,6 +81,6 @@ public class Feeder extends SubsystemBase {
 
     private boolean atSetpoint() {
         return currentGoal == desiredGoal
-                && MathUtil.isNear(desiredGoal.velocitySetpointRotsPerSec, inputs.rollerVelocityRotsPerSec, VelocityToleranceRotsPerSec);
+                && MathUtil.isNear(desiredGoal.velocitySetpointRotsPerSec, inputs.wheelVelocityRotsPerSec, VelocityToleranceRotsPerSec);
     }
 }

@@ -31,7 +31,6 @@ public interface Constants {
         String AUTO_SELECTED_SUBSCRIBER = "SelectedAuto";
     }
 
-    //TODO: Update
     interface Vision {
         Vector<N3> VISION_STD_DEV_COEFFS = VecBuilder.fill(0.02, 0.02, 0.02);
         double VISION_CAMERA_DEFAULT_STD_DEV_FACTOR = 1.0;

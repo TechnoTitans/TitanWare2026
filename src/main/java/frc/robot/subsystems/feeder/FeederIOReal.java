@@ -17,91 +17,91 @@ import frc.robot.utils.ctre.RefreshAll;
 public class FeederIOReal implements FeederIO {
     private final HardwareConstants.FeederConstants constants;
 
-    private final TalonFX rollerMotor;
+    private final TalonFX wheelMotor;
 
-    private final StatusSignal<Angle> rollerPosition;
-    private final StatusSignal<AngularVelocity> rollerVelocity;
-    private final StatusSignal<Voltage> rollerVoltage;
-    private final StatusSignal<Current> rollerTorqueCurrent;
-    private final StatusSignal<Temperature> rollerDeviceTemp;
+    private final StatusSignal<Angle> wheelPosition;
+    private final StatusSignal<AngularVelocity> wheelVelocity;
+    private final StatusSignal<Voltage> wheelVoltage;
+    private final StatusSignal<Current> wheelTorqueCurrent;
+    private final StatusSignal<Temperature> wheelDeviceTemp;
 
     private final VelocityTorqueCurrentFOC velocityTorqueCurrentFOC;
 
     public FeederIOReal(final HardwareConstants.FeederConstants constants) {
         this.constants = constants;
 
-        this.rollerMotor = new TalonFX(constants.motorID(), constants.CANBus().toPhoenix6CANBus());
+        this.wheelMotor = new TalonFX(constants.motorID(), constants.CANBus().toPhoenix6CANBus());
 
-        this.rollerPosition = rollerMotor.getPosition(false);
-        this.rollerVelocity = rollerMotor.getVelocity(false);
-        this.rollerVoltage = rollerMotor.getMotorVoltage(false);
-        this.rollerTorqueCurrent = rollerMotor.getTorqueCurrent(false);
-        this.rollerDeviceTemp = rollerMotor.getDeviceTemp(false);
+        this.wheelPosition = wheelMotor.getPosition(false);
+        this.wheelVelocity = wheelMotor.getVelocity(false);
+        this.wheelVoltage = wheelMotor.getMotorVoltage(false);
+        this.wheelTorqueCurrent = wheelMotor.getTorqueCurrent(false);
+        this.wheelDeviceTemp = wheelMotor.getDeviceTemp(false);
 
         this.velocityTorqueCurrentFOC = new VelocityTorqueCurrentFOC(0);
 
         RefreshAll.add(
                 constants.CANBus(),
-                rollerPosition,
-                rollerVelocity,
-                rollerVoltage,
-                rollerTorqueCurrent,
-                rollerDeviceTemp
+                wheelPosition,
+                wheelVelocity,
+                wheelVoltage,
+                wheelTorqueCurrent,
+                wheelDeviceTemp
         );
     }
 
     @Override
     public void config() {
-        final TalonFXConfiguration rollerConfiguration = new TalonFXConfiguration();
-        rollerConfiguration.Slot0 = new Slot0Configs()
+        final TalonFXConfiguration wheelConfiguration = new TalonFXConfiguration();
+        wheelConfiguration.Slot0 = new Slot0Configs()
                 .withKS(6.72)
                 .withKV(0.08)
                 .withKP(6)
                 .withKD(0.09);
-        rollerConfiguration.TorqueCurrent.PeakForwardTorqueCurrent = 80;
-        rollerConfiguration.TorqueCurrent.PeakReverseTorqueCurrent = -80;
-        rollerConfiguration.CurrentLimits.StatorCurrentLimit = 80;
-        rollerConfiguration.CurrentLimits.StatorCurrentLimitEnable = true;
-        rollerConfiguration.CurrentLimits.SupplyCurrentLimit = 70;
-        rollerConfiguration.CurrentLimits.SupplyCurrentLowerLimit = 40;
-        rollerConfiguration.CurrentLimits.SupplyCurrentLowerTime = 1;
-        rollerConfiguration.CurrentLimits.SupplyCurrentLimitEnable = true;
-        rollerConfiguration.MotorOutput.NeutralMode = NeutralModeValue.Brake;
-        rollerConfiguration.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
-        rollerConfiguration.Feedback.FeedbackSensorSource = FeedbackSensorSourceValue.RotorSensor;
-        rollerConfiguration.Feedback.SensorToMechanismRatio = constants.rollerGearing();
-        rollerMotor.getConfigurator().apply(rollerConfiguration);
+        wheelConfiguration.TorqueCurrent.PeakForwardTorqueCurrent = 80;
+        wheelConfiguration.TorqueCurrent.PeakReverseTorqueCurrent = -80;
+        wheelConfiguration.CurrentLimits.StatorCurrentLimit = 80;
+        wheelConfiguration.CurrentLimits.StatorCurrentLimitEnable = true;
+        wheelConfiguration.CurrentLimits.SupplyCurrentLimit = 70;
+        wheelConfiguration.CurrentLimits.SupplyCurrentLowerLimit = 40;
+        wheelConfiguration.CurrentLimits.SupplyCurrentLowerTime = 1;
+        wheelConfiguration.CurrentLimits.SupplyCurrentLimitEnable = true;
+        wheelConfiguration.MotorOutput.NeutralMode = NeutralModeValue.Brake;
+        wheelConfiguration.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
+        wheelConfiguration.Feedback.FeedbackSensorSource = FeedbackSensorSourceValue.RotorSensor;
+        wheelConfiguration.Feedback.SensorToMechanismRatio = constants.wheelGearing();
+        wheelMotor.getConfigurator().apply(wheelConfiguration);
 
         BaseStatusSignal.setUpdateFrequencyForAll(
                 100,
-                rollerPosition,
-                rollerVelocity,
-                rollerVoltage,
-                rollerTorqueCurrent
+                wheelPosition,
+                wheelVelocity,
+                wheelVoltage,
+                wheelTorqueCurrent
         );
 
         BaseStatusSignal.setUpdateFrequencyForAll(
                 4,
-                rollerDeviceTemp
+                wheelDeviceTemp
         );
 
         ParentDevice.optimizeBusUtilizationForAll(
                 4,
-                rollerMotor
+                wheelMotor
         );
     }
 
     @Override
     public void updateInputs(final FeederIOInputs inputs) {
-        inputs.rollerPositionRots = rollerPosition.getValueAsDouble();
-        inputs.rollerVelocityRotsPerSec = rollerVelocity.getValueAsDouble();
-        inputs.rollerVoltage = rollerVoltage.getValueAsDouble();
-        inputs.rollerTorqueCurrentAmps = rollerTorqueCurrent.getValueAsDouble();
-        inputs.rollerTempCelsius = rollerDeviceTemp.getValueAsDouble();
+        inputs.wheelPositionRots = wheelPosition.getValueAsDouble();
+        inputs.wheelVelocityRotsPerSec = wheelVelocity.getValueAsDouble();
+        inputs.wheelVoltage = wheelVoltage.getValueAsDouble();
+        inputs.wheelTorqueCurrentAmps = wheelTorqueCurrent.getValueAsDouble();
+        inputs.wheelTempCelsius = wheelDeviceTemp.getValueAsDouble();
     }
 
     @Override
-    public void toRollerVelocity(final double rollerVelocityRotsPerSec) {
-        rollerMotor.setControl(velocityTorqueCurrentFOC.withVelocity(rollerVelocityRotsPerSec));
+    public void toWheelVelocity(final double velocityRotsPerSec) {
+        wheelMotor.setControl(velocityTorqueCurrentFOC.withVelocity(velocityRotsPerSec));
     }
 }
