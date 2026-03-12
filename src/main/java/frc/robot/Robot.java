@@ -394,6 +394,12 @@ public class Robot extends LoggedRobot {
         autonomousEnabled.whileTrue(Commands.deferredProxy(() -> autoChooser.getSelected().cmd()));
 
         autoChooser.addAutoOption(new AutoOption(
+                "OnlyShootPreload",
+                autos::onlyShootPreload,
+                Constants.CompetitionType.COMPETITION
+        ));
+
+        autoChooser.addAutoOption(new AutoOption(
                     "LeftCenterLineDepot",
                     autos::leftCenterLineDepot,
                     Constants.CompetitionType.COMPETITION

@@ -37,7 +37,8 @@ public class Superstructure extends VirtualSubsystem {
     public enum Goal {
         TRACKING(Turret.Goal.TRACKING, Hood.Goal.STOW, Shooter.Goal.STOP, true),
         STATIC_SHOT_PREP(Turret.Goal.TRACKING, Hood.Goal.STOW, Shooter.Goal.STOP, false),
-        SHOOTING(Turret.Goal.TRACKING, Hood.Goal.SHOOTING, Shooter.Goal.TRACKING, true);
+        SHOOTING(Turret.Goal.TRACKING, Hood.Goal.SHOOTING, Shooter.Goal.TRACKING, true),
+        STATIC_SHOOTING(Turret.Goal.TRACKING, Hood.Goal.STOW, Shooter.Goal.STATIC_SHOT, false);
 
         private final Turret.Goal turretGoal;
         private final Hood.Goal hoodGoal;
@@ -127,6 +128,15 @@ public class Superstructure extends VirtualSubsystem {
     public Translation2d getTurretTranslation(final Pose2d robotPose) {
         return robotPose.plus(getOffsetFromCenter()).getTranslation();
     }
+
+    public void updateStaticShotParameter(
+            final ShotCalculator.ShotCalculation shotCalculation
+    ) {
+        turret.updatePositionSetpoint(shotCalculation.desiredTurretRotation().getRotations());
+        hood.updateShootingDesiredPosition(shotCalculation.desiredHoodRotation().getRotations());
+        shooter.updateVelocitySetpoint(shotCalculation.desiredShooterVelocity());
+    }
+
 
     public Trigger atSetpoint(final Goal goal) {
         return atSetpoint(() -> goal);

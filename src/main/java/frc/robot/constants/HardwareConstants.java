@@ -58,7 +58,7 @@ public class HardwareConstants {
             CANBus.CANIVORE,
             15,
             16,
-            11.111,
+            11.11111,
             3.8,
             0
     );

@@ -26,8 +26,8 @@ import java.util.function.Supplier;
 import static edu.wpi.first.wpilibj2.command.Commands.*;
 
 public class Autos {
-    public static final String LogKey = "Auto";
-    private final LoggedTrigger.Group group = LoggedTrigger.Group.from(LogKey);
+    protected static final String LogKey = "Auto";
+    private static final int SHOOTING_TIME = 4;
 
     private final Swerve swerve;
     private final Superstructure superstructure;
@@ -82,6 +82,7 @@ public class Autos {
 
         this.staticShot = staticParameters();
 
+        LoggedTrigger.Group group = LoggedTrigger.Group.from(LogKey);
         this.robotStopped = group.t("RobotStopped",
                 () -> RobotCommands.linearSpeed(swerve.getFieldRelativeSpeeds()) <= 0.01
         );
@@ -136,15 +137,13 @@ public class Autos {
                                 .onlyWhile(robotStopped
                                         .and(superstructure.atSetpoint))
                                 .finallyDo(timer::stop)
-                ).until(() -> timer.hasElapsed(4)),
+                ).until(() -> timer.hasElapsed(SHOOTING_TIME)),
                 superstructure.toGoal(Superstructure.Goal.SHOOTING)
                         .onlyIf(turretSafe),
                 intakeSlide.toGoal(IntakeSlide.Goal.SHOOTING),
                 swerve.runWheelXCommand(),
                 Commands.run(
-                        () -> {
-                            Logger.recordOutput("RobotStopped", robotStopped);
-                        }
+                        () -> Logger.recordOutput("RobotStopped", robotStopped)
                 ),
                 runOnce(timer::reset)
         ).withName("ShootStatic");
@@ -155,6 +154,18 @@ public class Autos {
 
         routine.active().whileTrue(
                 Commands.waitUntil(RobotModeTriggers.autonomous().negate())
+        );
+
+        return routine;
+    }
+
+    public AutoRoutine onlyShootPreload() {
+        final AutoRoutine routine = autoFactory.newRoutine("OnlyShootPreload");
+
+        routine.active().onTrue(
+                Commands.sequence(
+                        shootStatic()
+                )
         );
 
         return routine;
@@ -173,16 +184,24 @@ public class Autos {
                 shootingToDepot.getFinalPose().orElse(Pose2d.kZero)
         );
 
-        routine.active().onTrue(runStartingTrajectory(startToCenterLineAndBack));
+        routine.active().onTrue(
+                Commands.parallel(
+                        runStartingTrajectory(startToCenterLineAndBack),
+                        intakeRoller.setGoal(IntakeRoller.Goal.INTAKE)
+                ).withName("StartCenterLine")
+        );
 
         startToCenterLineAndBack.done().onTrue(
-                sequence(
-                        shootStatic(),
-                        shootingToDepot.cmd().asProxy()
+                Commands.parallel(
+                        intakeRoller.setGoal(IntakeRoller.Goal.STOP),
+                        sequence(
+                                shootStatic(),
+                                shootingToDepot.cmd().asProxy()
+                        )
                 ).withName("CenterLineShoot")
         );
 
-        shootingToDepot.done().onTrue(shootStatic());
+        shootingToDepot.done().onTrue(shootStatic().withName("ShootFromDepot"));
 
         return routine;
     }
@@ -192,16 +211,30 @@ public class Autos {
         final AutoTrajectory startToCenterLineAndBack = routine.trajectory("RightStartToCenterLineAndBack");
         final AutoTrajectory shootingToOutpost = routine.trajectory("RightShootingToOutput");
 
-        routine.active().onTrue(runStartingTrajectory(startToCenterLineAndBack));
-
-        startToCenterLineAndBack.done().onTrue(
-                sequence(
-                        shootStatic(),
-                        shootingToOutpost.cmd().asProxy()
-                )
+        routine.active().onTrue(
+                Commands.parallel(
+                        runStartingTrajectory(startToCenterLineAndBack),
+                        intakeRoller.setGoal(IntakeRoller.Goal.INTAKE)
+                ).withName("StartCenterLine")
         );
 
-        shootingToOutpost.done().onTrue(shootStatic());
+        startToCenterLineAndBack.done().onTrue(
+                Commands.parallel(
+                        intakeRoller.setGoal(IntakeRoller.Goal.STOP),
+                        sequence(
+                                shootStatic(),
+                                shootingToOutpost.cmd().asProxy()
+                        )
+                ).withName("CenterLineShoot")
+
+        );
+
+        shootingToOutpost.done().onTrue(
+                Commands.sequence(
+                        Commands.waitSeconds(1),
+                        shootStatic()
+                ).withName("ShootFromOutpost")
+        );
 
 
         return routine;
