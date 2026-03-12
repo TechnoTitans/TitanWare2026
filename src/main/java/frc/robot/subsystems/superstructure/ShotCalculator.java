@@ -199,6 +199,37 @@ public class ShotCalculator {
         };
     }
 
+    public static ShotCalculation getShotCalculationFromPose(
+            final Pose2d pose
+    ) {
+        final Pose2d turretPose = pose.transformBy(PoseConstants.Turret.ROBOT_TO_TURRET_TRANSFORM_2D);
+
+        final Target target =
+                turretPose.getX()
+                        > FerryXBoundary ? Target.FERRYING : Target.HUB;
+
+        final Translation2d targetTranslation =
+                switch (target) {
+                    case HUB -> FieldConstants.getHubTarget();
+                    case FERRYING -> FieldConstants.getFerryingTarget(turretPose.getY());
+                };
+
+        final double turretToTargetDistance = targetTranslation.getDistance(turretPose.getTranslation());
+
+        final Rotation2d desiredTurretAngle = targetTranslation.minus(turretPose.getTranslation()).getAngle().minus(
+                turretPose.getRotation()
+        );
+
+        final HoodShooterCalculation hoodShooterCalculation = shotDataMap.get(turretToTargetDistance);
+
+        return new ShotCalculation(
+                wrapTurret(desiredTurretAngle),
+                hoodShooterCalculation.hoodRotation,
+                hoodShooterCalculation.flywheelVelocity(),
+                target
+        );
+    }
+
     private static ShotCalculation getShotCalculation(
             final Pose2d swervePose,
             final ChassisSpeeds swerveSpeeds

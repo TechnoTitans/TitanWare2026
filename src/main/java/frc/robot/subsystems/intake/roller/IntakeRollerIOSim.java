@@ -53,7 +53,7 @@ public class IntakeRollerIOSim implements IntakeRollerIO {
                         1 / (2 * Math.PI),
                         0.1 / (2 * Math.PI)
                 ),
-                DCMotor.getKrakenX44Foc(1)
+                DCMotor.getKrakenX60Foc(1)
         );
 
         this.velocityTorqueCurrentFOC = new VelocityTorqueCurrentFOC(0);
@@ -127,7 +127,7 @@ public class IntakeRollerIOSim implements IntakeRollerIO {
         );
 
         rollerMotor.getSimState().Orientation = ChassisReference.CounterClockwise_Positive;
-        rollerMotor.getSimState().setMotorType(TalonFXSimState.MotorType.KrakenX44);
+        rollerMotor.getSimState().setMotorType(TalonFXSimState.MotorType.KrakenX60);
     }
 
     @Override

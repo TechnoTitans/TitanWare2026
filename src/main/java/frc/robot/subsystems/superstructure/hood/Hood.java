@@ -13,7 +13,7 @@ import org.littletonrobotics.junction.Logger;
 public class Hood extends SubsystemBase {
     protected static final String LogKey = "Hood";
     private static final double PositionToleranceRots = 0.005;
-    private static final double VelocityToleranceRotsPerSec = 0.01;
+    private static final double VelocityToleranceRotsPerSec = 0.1;
 
     private final HardwareConstants.HoodConstants constants;
 
@@ -102,8 +102,10 @@ public class Hood extends SubsystemBase {
 
     private boolean atSetpoint() {
         return currentGoal == desiredGoal
-                && MathUtil.isNear(desiredGoal.positionSetpointRots, inputs.hoodPositionRots, PositionToleranceRots)
-                && MathUtil.isNear(0, inputs.hoodVelocityRotsPerSec, VelocityToleranceRotsPerSec);
+                && MathUtil.isNear(desiredGoal.positionSetpointRots, inputs.hoodPositionRots, PositionToleranceRots);
+
+        //TODO: Check if velocity is needed to be checked for at setpoint
+//                && MathUtil.isNear(0, inputs.hoodVelocityRotsPerSec, VelocityToleranceRotsPerSec);
     }
 
     private boolean atUpperLimit() {

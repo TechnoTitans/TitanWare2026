@@ -11,7 +11,7 @@ public interface SimConstants {
         double ConfigTimeoutSeconds = 0.2;
     }
     interface Shooter {
-        double MOMENT_OF_INERTIA = 0.2;
+        double MOMENT_OF_INERTIA = 0.01;
     }
 
     interface Turret {

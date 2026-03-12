@@ -165,6 +165,14 @@ public class Autos {
         final AutoTrajectory startToCenterLineAndBack = routine.trajectory("LeftStartToCenterLineAndBack");
         final AutoTrajectory shootingToDepot = routine.trajectory("LeftShootingToDepot");
 
+        final ShotCalculator.ShotCalculation firstShotCalculation = ShotCalculator.getShotCalculationFromPose(
+                startToCenterLineAndBack.getFinalPose().orElse(Pose2d.kZero)
+        );
+
+        final ShotCalculator.ShotCalculation secondShotCalculation = ShotCalculator.getShotCalculationFromPose(
+                shootingToDepot.getFinalPose().orElse(Pose2d.kZero)
+        );
+
         routine.active().onTrue(runStartingTrajectory(startToCenterLineAndBack));
 
         startToCenterLineAndBack.done().onTrue(

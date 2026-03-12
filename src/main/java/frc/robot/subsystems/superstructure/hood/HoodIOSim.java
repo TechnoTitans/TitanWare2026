@@ -8,9 +8,10 @@ import com.ctre.phoenix6.controls.PositionVoltage;
 import com.ctre.phoenix6.hardware.ParentDevice;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.FeedbackSensorSourceValue;
-import com.ctre.phoenix6.signals.GravityTypeValue;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
+import com.ctre.phoenix6.signals.StaticFeedforwardSignValue;
+import com.ctre.phoenix6.sim.ChassisReference;
 import com.ctre.phoenix6.sim.TalonFXSimState;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.system.plant.LinearSystemId;
@@ -31,21 +32,22 @@ public class HoodIOSim implements HoodIO {
     private final DeltaTime deltaTime;
     private final HardwareConstants.HoodConstants constants;
 
-    private final TalonFX hoodMotor;
-    private final TalonFXSim hoodTalonFXSim;
-    private final TalonFXConfiguration motorConfig;
-
-    private final StatusSignal<Angle> hoodPosition;
-    private final StatusSignal<AngularVelocity> hoodVelocity;
-    private final StatusSignal<Voltage> hoodVoltage;
-    private final StatusSignal<Current> hoodTorqueCurrent;
-    private final StatusSignal<Temperature> hoodDeviceTemp;
+    private final TalonFX motor;
+    private final TalonFXSim motorSim;
 
     private final PositionVoltage positionVoltage;
+
+    private final StatusSignal<Angle> motorPosition;
+    private final StatusSignal<AngularVelocity> motorVelocity;
+    private final StatusSignal<Voltage> motorVoltage;
+    private final StatusSignal<Current> motorTorqueCurrent;
+    private final StatusSignal<Temperature> motorDeviceTemp;
 
     public HoodIOSim(final HardwareConstants.HoodConstants constants) {
         this.deltaTime = new DeltaTime(true);
         this.constants = constants;
+
+        this.motor = new TalonFX(constants.motorID(), constants.CANBus().toPhoenix6CANBus());
 
         final DCMotor dcMotor = DCMotor.getKrakenX44Foc(1);
         final SingleJointedArmSim armSim = new SingleJointedArmSim(
@@ -53,17 +55,16 @@ public class HoodIOSim implements HoodIO {
                 dcMotor,
                 constants.gearing(),
                 Units.inchesToMeters(8),
-                Units.rotationsToRadians(constants.lowerLimitRots()),
-                Units.rotationsToRadians(constants.upperLimitRots()),
+//                Units.rotationsToRadians(constants.lowerLimitRots()),
+                0,
+//                Units.rotationsToRadians(constants.upperLimitRots()),
+                Units.degreesToRadians(90),
                 false,
                 0
         );
 
-        this.hoodMotor = new TalonFX(constants.motorID(), constants.CANBus().toPhoenix6CANBus());
-        this.motorConfig = new TalonFXConfiguration();
-
-        this.hoodTalonFXSim = new TalonFXSim(
-                hoodMotor,
+        this.motorSim = new TalonFXSim(
+                motor,
                 constants.gearing(),
                 armSim::update,
                 armSim::setInputVoltage,
@@ -71,90 +72,91 @@ public class HoodIOSim implements HoodIO {
                 armSim::getVelocityRadPerSec
         );
 
-        this.hoodPosition = hoodMotor.getPosition(false);
-        this.hoodVelocity = hoodMotor.getVelocity(false);
-        this.hoodVoltage = hoodMotor.getMotorVoltage(false);
-        this.hoodTorqueCurrent = hoodMotor.getTorqueCurrent(false);
-        this.hoodDeviceTemp = hoodMotor.getDeviceTemp(false);
+        this.positionVoltage = new PositionVoltage(0);
 
-        this.positionVoltage = new PositionVoltage(0).withSlot(0);
+        this.motorPosition = motor.getPosition(false);
+        this.motorVelocity = motor.getVelocity(false);
+        this.motorVoltage = motor.getMotorVoltage(false);
+        this.motorTorqueCurrent = motor.getTorqueCurrent(false);
+        this.motorDeviceTemp = motor.getDeviceTemp(false);
 
         RefreshAll.add(
                 constants.CANBus(),
-                hoodPosition,
-                hoodVelocity,
-                hoodVoltage,
-                hoodTorqueCurrent,
-                hoodDeviceTemp
+                motorPosition,
+                motorVelocity,
+                motorVoltage,
+                motorTorqueCurrent,
+                motorDeviceTemp
         );
 
         final Notifier simUpdateNotifier = new Notifier(() -> {
             final double dt = deltaTime.get();
-            hoodTalonFXSim.update(dt);
+            motorSim.update(dt);
         });
         ToClose.add(simUpdateNotifier);
         simUpdateNotifier.setName(String.format(
                 "SimUpdate(%d)",
-                hoodMotor.getDeviceID()
+                motor.getDeviceID()
         ));
         simUpdateNotifier.startPeriodic(SIM_UPDATE_PERIOD_SEC);
     }
 
     @Override
+    public void updateInputs(final HoodIO.HoodIOInputs inputs) {
+        inputs.hoodPositionRots = motorPosition.getValueAsDouble();
+        inputs.hoodVelocityRotsPerSec = motorVelocity.getValueAsDouble();
+        inputs.hoodVoltage = motorVoltage.getValueAsDouble();
+        inputs.hoodTorqueCurrentAmps = motorTorqueCurrent.getValueAsDouble();
+        inputs.hoodTempCelsius = motorDeviceTemp.getValueAsDouble();
+    }
+
+    @Override
     public void config() {
-        motorConfig.Slot0 = new Slot0Configs()
-                .withKS(0.35)
-                .withKG(0.03)
-                .withGravityType(GravityTypeValue.Arm_Cosine)
-                .withKP(200)
+        final TalonFXConfiguration motorConfiguration = new TalonFXConfiguration();
+        motorConfiguration.Slot0 = new Slot0Configs()
+                .withKS(1)
+                .withStaticFeedforwardSign(StaticFeedforwardSignValue.UseClosedLoopSign)
+                .withKP(450)
                 .withKD(0);
-        motorConfig.CurrentLimits.StatorCurrentLimit = 60;
-        motorConfig.CurrentLimits.StatorCurrentLimitEnable = true;
-        motorConfig.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
-        motorConfig.MotorOutput.NeutralMode = NeutralModeValue.Brake;
-        motorConfig.Feedback.FeedbackSensorSource = FeedbackSensorSourceValue.RotorSensor;
-        motorConfig.Feedback.SensorToMechanismRatio = constants.gearing();
-        motorConfig.SoftwareLimitSwitch.ForwardSoftLimitThreshold = constants.upperLimitRots();
-        motorConfig.SoftwareLimitSwitch.ForwardSoftLimitEnable = true;
-        motorConfig.SoftwareLimitSwitch.ReverseSoftLimitThreshold = constants.lowerLimitRots();
-        motorConfig.SoftwareLimitSwitch.ReverseSoftLimitEnable = true;
-        hoodMotor.getConfigurator().apply(motorConfig);
+        motorConfiguration.TorqueCurrent.PeakForwardTorqueCurrent = 60;
+        motorConfiguration.TorqueCurrent.PeakReverseTorqueCurrent = -60;
+        motorConfiguration.CurrentLimits.StatorCurrentLimit = 60;
+        motorConfiguration.CurrentLimits.StatorCurrentLimitEnable = true;
+        motorConfiguration.Feedback.FeedbackSensorSource = FeedbackSensorSourceValue.RotorSensor;
+        motorConfiguration.Feedback.SensorToMechanismRatio = constants.gearing();
+        motorConfiguration.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
+        motorConfiguration.MotorOutput.NeutralMode = NeutralModeValue.Brake;
+        motorConfiguration.SoftwareLimitSwitch.ForwardSoftLimitThreshold = constants.upperLimitRots();
+        motorConfiguration.SoftwareLimitSwitch.ForwardSoftLimitEnable = true;
+        motorConfiguration.SoftwareLimitSwitch.ReverseSoftLimitThreshold = constants.lowerLimitRots();
+        motorConfiguration.SoftwareLimitSwitch.ReverseSoftLimitEnable = true;
+        Phoenix6Utils.tryUntilOk(motor, () -> motor.getConfigurator().apply(motorConfiguration));
 
         BaseStatusSignal.setUpdateFrequencyForAll(
                 100,
-                hoodPosition,
-                hoodVelocity,
-                hoodVoltage,
-                hoodTorqueCurrent
+                motorPosition,
+                motorVelocity,
+                motorVoltage,
+                motorTorqueCurrent
         );
+
         BaseStatusSignal.setUpdateFrequencyForAll(
                 4,
-                hoodDeviceTemp
+                motorDeviceTemp
         );
+
         ParentDevice.optimizeBusUtilizationForAll(
                 4,
-                hoodMotor
+                motor
         );
 
-        hoodMotor.getSimState().setMotorType(TalonFXSimState.MotorType.KrakenX44);
+        final TalonFXSimState motorSimState = motor.getSimState();
+        motorSimState.Orientation = ChassisReference.Clockwise_Positive;
+        motorSimState.setMotorType(TalonFXSimState.MotorType.KrakenX44);
     }
 
     @Override
-    public void updateInputs(final HoodIOInputs inputs) {
-        inputs.hoodPositionRots = hoodPosition.getValueAsDouble();
-        inputs.hoodVelocityRotsPerSec = hoodVelocity.getValueAsDouble();
-        inputs.hoodVoltage = hoodVoltage.getValueAsDouble();
-        inputs.hoodTorqueCurrentAmps = hoodTorqueCurrent.getValueAsDouble();
-        inputs.hoodTempCelsius = hoodDeviceTemp.getValueAsDouble();
-    }
-
-    @Override
-    public void toHoodPosition(final double positionRots) {
-        hoodMotor.setControl(positionVoltage.withPosition(positionRots));
-    }
-
-    @Override
-    public void zeroMotor() {
-        Phoenix6Utils.reportIfNotOk(hoodMotor, hoodMotor.setPosition(0));
+    public void toHoodPosition(final double hoodPositionRots) {
+        motor.setControl(positionVoltage.withPosition(hoodPositionRots));
     }
 }
