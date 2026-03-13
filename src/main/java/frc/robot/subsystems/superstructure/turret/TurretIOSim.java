@@ -117,8 +117,8 @@ public class TurretIOSim implements TurretIO {
         motorConfig.Slot0 = new Slot0Configs()
                 .withKS(0.366)
                 .withStaticFeedforwardSign(StaticFeedforwardSignValue.UseVelocitySign)
-                .withKV(5)
-                .withKP(30)
+                .withKV(3.5)
+                .withKP(45)
                 .withKD(0);
         motorConfig.CurrentLimits.StatorCurrentLimit = 70;
         motorConfig.CurrentLimits.StatorCurrentLimitEnable = true;

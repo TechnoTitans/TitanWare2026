@@ -115,13 +115,13 @@ public class Autos {
         );
     }
 
-    private Supplier<ShotCalculator.ShotCalculation> staticParametersFromPose(final Pose2d pose) {
-        return staticParameters();
+    private Supplier<ShotCalculator.ShotCalculation> getStaticParameters(final Pose2d pose2d) {
+        return () -> ShotCalculator.getShotCalculationFromPose(pose2d);
     }
 
     private Supplier<ShotCalculator.ShotCalculation> staticParametersFromFinalPose(final AutoTrajectory trajectory) {
         return trajectory.getFinalPose()
-                .map(this::staticParametersFromPose)
+                .map(this::getStaticParameters)
                 .orElse(staticShot);
     }
 
@@ -177,13 +177,11 @@ public class Autos {
         final AutoTrajectory startToCenterLineAndBack = routine.trajectory("LeftStartToCenterLineAndBack");
         final AutoTrajectory shootingToDepot = routine.trajectory("LeftShootingToDepot");
 
-        final ShotCalculator.ShotCalculation firstShotCalculation = ShotCalculator.getShotCalculationFromPose(
-                startToCenterLineAndBack.getFinalPose().orElse(Pose2d.kZero)
-        );
+        final Supplier<ShotCalculator.ShotCalculation> firstShotCalculation =
+                staticParametersFromFinalPose(startToCenterLineAndBack);
+        final Supplier<ShotCalculator.ShotCalculation> secondShotCalculation =
+                staticParametersFromFinalPose(shootingToDepot);
 
-        final ShotCalculator.ShotCalculation secondShotCalculation = ShotCalculator.getShotCalculationFromPose(
-                shootingToDepot.getFinalPose().orElse(Pose2d.kZero)
-        );
 
         routine.active().onTrue(
                 Commands.parallel(
@@ -191,7 +189,9 @@ public class Autos {
                         intakeRoller.setGoal(IntakeRoller.Goal.INTAKE),
                         Commands.sequence(
                                 superstructure.setGoalCommand(Superstructure.Goal.STATIC_SHOT_PREP),
-                                Commands.runOnce(() -> superstructure.updateStaticShotParameter(firstShotCalculation))
+                                Commands.runOnce(() ->
+                                        superstructure.updateStaticShotParameter(firstShotCalculation.get())
+                                )
                         )
                 ).withName("StartCenterLine")
         );
@@ -202,8 +202,10 @@ public class Autos {
                         sequence(
                                 shootStatic(),
                                 superstructure.setGoalCommand(Superstructure.Goal.STATIC_SHOT_PREP),
-                                Commands.runOnce(() -> superstructure.updateStaticShotParameter(secondShotCalculation)),
-                                shootingToDepot.cmd()
+                                Commands.runOnce(() ->
+                                        superstructure.updateStaticShotParameter(secondShotCalculation.get())
+                                ),
+                                shootingToDepot.cmd().asProxy()
                         )
                 ).withName("CenterLineShoot")
         );
@@ -218,13 +220,10 @@ public class Autos {
         final AutoTrajectory startToCenterLineAndBack = routine.trajectory("RightStartToCenterLineAndBack");
         final AutoTrajectory shootingToOutpost = routine.trajectory("RightShootingToOutput");
 
-        final ShotCalculator.ShotCalculation firstShotCalculation = ShotCalculator.getShotCalculationFromPose(
-                startToCenterLineAndBack.getFinalPose().orElse(Pose2d.kZero)
-        );
-
-        final ShotCalculator.ShotCalculation secondShotCalculation = ShotCalculator.getShotCalculationFromPose(
-                shootingToOutpost.getFinalPose().orElse(Pose2d.kZero)
-        );
+        final Supplier<ShotCalculator.ShotCalculation> firstShotCalculation =
+                staticParametersFromFinalPose(startToCenterLineAndBack);
+        final Supplier<ShotCalculator.ShotCalculation> secondShotCalculation =
+                staticParametersFromFinalPose(shootingToOutpost);
 
         routine.active().onTrue(
                 Commands.parallel(
@@ -232,7 +231,9 @@ public class Autos {
                         intakeRoller.setGoal(IntakeRoller.Goal.INTAKE),
                         Commands.sequence(
                                 superstructure.setGoalCommand(Superstructure.Goal.STATIC_SHOT_PREP),
-                                Commands.runOnce(() -> superstructure.updateStaticShotParameter(firstShotCalculation))
+                                Commands.runOnce(
+                                        () -> superstructure.updateStaticShotParameter(firstShotCalculation.get())
+                                )
                         )
                 ).withName("StartCenterLine")
         );
@@ -243,18 +244,17 @@ public class Autos {
                         sequence(
                                 shootStatic(),
                                 superstructure.setGoalCommand(Superstructure.Goal.STATIC_SHOT_PREP),
-                                Commands.runOnce(() -> superstructure.updateStaticShotParameter(secondShotCalculation)),
-                                shootingToOutpost.cmd()
+                                Commands.runOnce(() ->
+                                        superstructure.updateStaticShotParameter(secondShotCalculation.get())
+                                ),
+                                shootingToOutpost.cmd().asProxy()
                         )
                 ).withName("CenterLineShoot")
 
         );
 
         shootingToOutpost.done().onTrue(
-                Commands.sequence(
-                        Commands.waitSeconds(1),
-                        shootStatic()
-                ).withName("ShootFromOutpost")
+                shootStatic()
         );
 
 
