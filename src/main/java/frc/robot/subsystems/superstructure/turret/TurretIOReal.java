@@ -81,8 +81,8 @@ public class TurretIOReal implements TurretIO {
         motorConfig.Slot1 = new Slot1Configs()
                 .withKS(1.9)
                 .withStaticFeedforwardSign(StaticFeedforwardSignValue.UseClosedLoopSign)
-                .withKP(200)
-                .withKD(10);
+                .withKP(100)
+                .withKD(8);
         motorConfig.MotionMagic.MotionMagicCruiseVelocity = 0;
         motorConfig.MotionMagic.MotionMagicExpo_kV = 0.12;
         motorConfig.MotionMagic.MotionMagicExpo_kA = 0.1;
@@ -158,19 +158,19 @@ public class TurretIOReal implements TurretIO {
 
     @Override
     public void seedTurretPosition(final Rotation2d turretPosition) {
-        final double turretPositionRots = turretPosition.getRotations();
-        final double primaryGearing = constants.primaryEncoderTooth();
-        final double primaryAbsolutePosition = primaryEncoder.getAbsolutePosition().getValueAsDouble() * primaryGearing;
-
-        if (!MathUtil.isNear(primaryAbsolutePosition, turretPositionRots, 1e-6, 0, 1)) {
-            DriverStation.reportError(String.format(
-                    "Failed to seed turret position! Expected integer increment in position from: %.3f to %.3f",
-                    Math.min(primaryAbsolutePosition, turretPositionRots),
-                    Math.max(primaryAbsolutePosition, turretPositionRots)
-            ), true);
-            return;
-        }
-
-        Phoenix6Utils.reportIfNotOk(turretMotor, turretMotor.setPosition(turretPositionRots / primaryGearing));
+//        final double turretPositionRots = turretPosition.getRotations();
+//        final double primaryGearing = constants.primaryEncoderTooth();
+//        final double primaryAbsolutePosition = primaryEncoder.getAbsolutePosition().getValueAsDouble() * primaryGearing;
+//
+//        if (!MathUtil.isNear(primaryAbsolutePosition, turretPositionRots, 1e-6, 0, 1)) {
+//            DriverStation.reportError(String.format(
+//                    "Failed to seed turret position! Expected integer increment in position from: %.3f to %.3f",
+//                    Math.min(primaryAbsolutePosition, turretPositionRots),
+//                    Math.max(primaryAbsolutePosition, turretPositionRots)
+//            ), true);
+//            return;
+//        }
+//
+        Phoenix6Utils.reportIfNotOk(turretMotor, turretMotor.setPosition(turretPosition.getRotations()));
     }
 }

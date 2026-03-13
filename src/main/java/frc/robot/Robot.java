@@ -1,7 +1,3 @@
-// Copyright (c) FIRST and other WPILib contributors.
-// Open Source Software; you can modify and/or share it under the terms of
-// the WPILib BSD license file in the root directory of this project.
-
 package frc.robot;
 
 import com.ctre.phoenix6.SignalLogger;
@@ -14,8 +10,6 @@ import edu.wpi.first.wpilibj.simulation.DriverStationSim;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
-import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
-import edu.wpi.first.wpilibj2.command.button.Trigger;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.auto.AutoChooser;
 import frc.robot.auto.AutoOption;
@@ -36,6 +30,8 @@ import frc.robot.subsystems.superstructure.shooter.Shooter;
 import frc.robot.subsystems.superstructure.turret.Turret;
 import frc.robot.subsystems.vision.PhotonVision;
 import frc.robot.utils.closeables.ToClose;
+import frc.robot.utils.commands.LoggedTrigger;
+import frc.robot.utils.commands.RobotModeLoggedTriggers;
 import frc.robot.utils.ctre.RefreshAll;
 import frc.robot.utils.logging.CommandLogger;
 import frc.robot.utils.subsystems.VirtualSubsystem;
@@ -57,6 +53,7 @@ import java.util.function.BooleanSupplier;
 import java.util.function.Supplier;
 
 public class Robot extends LoggedRobot {
+    private static final String LogKey = "Robot";
     private static final String AKitLogPath = "/U/logs";
     private static final String HootLogPath = "/U/logs";
 
@@ -66,7 +63,7 @@ public class Robot extends LoggedRobot {
     };
 
     public final PowerDistribution powerDistribution = new PowerDistribution(
-            RobotMap.PowerDistributionHub, PowerDistribution.ModuleType.kRev
+            HardwareConstants.PowerDistributionHub, PowerDistribution.ModuleType.kRev
     );
 
     public final Swerve swerve = new Swerve(
@@ -85,7 +82,7 @@ public class Robot extends LoggedRobot {
     );
 
     public final PhotonVision photonVision = new PhotonVision(
-            Constants.RobotMode.DISABLED,
+            Constants.CURRENT_MODE,
             swerve
     );
 
@@ -189,18 +186,15 @@ public class Robot extends LoggedRobot {
     private final EventLoop teleopEventLoop = new EventLoop();
     private final EventLoop testEventLoop = new EventLoop();
 
-    private final Trigger disabled = RobotModeTriggers.disabled();
-    public final Trigger autonomousEnabled = RobotModeTriggers.autonomous();
-    public final Trigger teleopEnabled = RobotModeTriggers.teleop();
-    private final Trigger endgameTrigger = new Trigger(() -> DriverStation.getMatchTime() <= 30)
-            .and(DriverStation::isFMSAttached)
-            .and(RobotModeTriggers.teleop());
+    private final LoggedTrigger.Group group = LoggedTrigger.Group.from(LogKey);
 
-    private final Timer shiftTimer = new Timer();
-    private final Trigger firstShiftStartTrigger = new Trigger(() -> DriverStation.getMatchTime() == 130);
-    private final Trigger shiftRumbleTrigger = new Trigger(() -> shiftTimer.hasElapsed(23.5));
-    private final Trigger shiftChangeTrigger = new Trigger(() -> shiftTimer.hasElapsed(25));
+    private final LoggedTrigger disabled = RobotModeLoggedTriggers.disabled(group);
+    private final LoggedTrigger teleopEnabled = RobotModeLoggedTriggers.teleop(group);
+    private final LoggedTrigger autonomousEnabled = RobotModeLoggedTriggers.autonomous(group);
+    private final LoggedTrigger enabled = RobotModeLoggedTriggers.enabled(group);
 
+    private final LoggedTrigger hubActive =
+            group.t("HubActive", () -> AllianceShift.get().hubStatus() == AllianceShift.HubStatus.ACTIVE);
 
     @Override
     public void robotInit() {
@@ -295,7 +289,6 @@ public class Robot extends LoggedRobot {
         Logger.start();
 
         Logger.recordOutput("EmptyPose", Pose3d.kZero);
-        shiftTimer.start();
 
         final Pose3d[] emptyPoseArray = new Pose3d[6];
         Arrays.fill(emptyPoseArray, Pose3d.kZero);
@@ -363,32 +356,20 @@ public class Robot extends LoggedRobot {
     }
 
     public void configureStateTriggers() {
-        autonomousEnabled.or(teleopEnabled).onTrue(
+        enabled.onTrue(
                Commands.parallel(
                        intakeSlide.setGoalCommand(IntakeSlide.Goal.EXTEND),
                        superstructure.setGoalCommand(Superstructure.Goal.TRACKING)
                )
         );
 
-        firstShiftStartTrigger.onTrue(Commands.runOnce(shiftTimer::start));
-
-        shiftRumbleTrigger.onTrue(ControllerUtils.rumbleForDurationCommand(
+        hubActive.onTrue(ControllerUtils.rumbleForDurationCommand(
                 driverController.getHID(), GenericHID.RumbleType.kBothRumble, 0.5, 1
         ));
 
-        shiftChangeTrigger.onTrue(Commands.runOnce(shiftTimer::reset));
         disabled.onTrue(ControllerUtils.rumbleForDurationCommand(
-                driverController.getHID(), GenericHID.RumbleType.kBothRumble, 0, 1
+                driverController.getHID(), GenericHID.RumbleType.kBothRumble, 0, 0.5
         ));
-
-        endgameTrigger.onTrue(
-                Commands.parallel(
-                        Commands.runOnce(shiftTimer::stop),
-                        ControllerUtils.rumbleForDurationCommand(
-                                driverController.getHID(), GenericHID.RumbleType.kBothRumble, 0.5, 1
-                        )
-                )
-        );
 
         disabled.onTrue(swerve.stopCommand());
     }
@@ -434,7 +415,8 @@ public class Robot extends LoggedRobot {
                 intakeRoller.toGoal(IntakeRoller.Goal.INTAKE)
         );
 
-        driverController.rightTrigger(0.5, teleopEventLoop).whileTrue(robotCommands.shootWhileMoving());
+        driverController.rightTrigger(0.5, teleopEventLoop)
+                .whileTrue(robotCommands.shootWhileMoving());
 
         coController.leftTrigger(0.5, teleopEventLoop).whileTrue(
                 intakeRoller.toGoal(IntakeRoller.Goal.INTAKE)

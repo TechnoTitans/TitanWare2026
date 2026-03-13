@@ -72,16 +72,16 @@ public class Turret extends SubsystemBase {
 
         this.robotAngularVelocitySupplier = robotAngularVelocitySupplier;
 
-        final Rotation2d absolutePosition = ChineseRemainder.findAbsolutePosition(
-                constants.turretTooth(),
-                inputs.primaryEncoderPositionRots,
-                constants.primaryEncoderTooth(),
-                inputs.secondaryEncoderPositionRots,
-                constants.secondaryEncoderTooth()
-        );
-        turretIO.seedTurretPosition(absolutePosition);
+//        final Rotation2d absolutePosition = ChineseRemainder.findAbsolutePosition(
+//                constants.turretTooth(),
+//                inputs.primaryEncoderPositionRots,
+//                constants.primaryEncoderTooth(),
+//                inputs.secondaryEncoderPositionRots,
+//                constants.secondaryEncoderTooth()
+//        );
+        turretIO.seedTurretPosition(Rotation2d.kZero);
 
-        Logger.recordOutput(LogKey + "/CRTResult", absolutePosition);
+//        Logger.recordOutput(LogKey + "/CRTResult", absolutePosition);
     }
 
     @Override

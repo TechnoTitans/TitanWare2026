@@ -63,9 +63,9 @@ public class IntakeRoller extends SubsystemBase {
     }
 
     public Command toGoal(final Goal goal) {
-        return runEnd(
-                () -> setGoal(goal),
-                () -> setGoal(Goal.STOP)
+        return startEnd(
+                () -> setDesiredGoal(goal),
+                () -> setDesiredGoal(Goal.STOP)
         ).withName("ToGoal: " + goal.toString());
     }
 

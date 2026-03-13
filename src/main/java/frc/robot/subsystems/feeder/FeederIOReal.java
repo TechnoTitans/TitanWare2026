@@ -10,6 +10,7 @@ import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.FeedbackSensorSourceValue;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
+import com.ctre.phoenix6.signals.StaticFeedforwardSignValue;
 import edu.wpi.first.units.measure.*;
 import frc.robot.constants.HardwareConstants;
 import frc.robot.utils.ctre.RefreshAll;
@@ -62,7 +63,7 @@ public class FeederIOReal implements FeederIO {
         wheelConfiguration.TorqueCurrent.PeakReverseTorqueCurrent = -80;
         wheelConfiguration.CurrentLimits.StatorCurrentLimit = 80;
         wheelConfiguration.CurrentLimits.StatorCurrentLimitEnable = true;
-        wheelConfiguration.MotorOutput.NeutralMode = NeutralModeValue.Brake;
+        wheelConfiguration.MotorOutput.NeutralMode = NeutralModeValue.Coast;
         wheelConfiguration.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
         wheelConfiguration.Feedback.FeedbackSensorSource = FeedbackSensorSourceValue.RotorSensor;
         wheelConfiguration.Feedback.SensorToMechanismRatio = constants.wheelGearing();

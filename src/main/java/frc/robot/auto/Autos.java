@@ -138,7 +138,7 @@ public class Autos {
                                         .and(superstructure.atSetpoint))
                                 .finallyDo(timer::stop)
                 ).until(() -> timer.hasElapsed(SHOOTING_TIME)),
-                superstructure.setGoal(Superstructure.Goal.STATIC_SHOOTING)
+                superstructure.setGoalCommand(Superstructure.Goal.STATIC_SHOOTING)
                         .onlyIf(turretSafe),
                 intakeSlide.toGoal(IntakeSlide.Goal.SHOOTING),
                 swerve.runWheelXCommand(),
@@ -190,7 +190,7 @@ public class Autos {
                         runStartingTrajectory(startToCenterLineAndBack),
                         intakeRoller.setGoal(IntakeRoller.Goal.INTAKE),
                         Commands.sequence(
-                                superstructure.setGoal(Superstructure.Goal.STATIC_SHOT_PREP),
+                                superstructure.setGoalCommand(Superstructure.Goal.STATIC_SHOT_PREP),
                                 Commands.runOnce(() -> superstructure.updateStaticShotParameter(firstShotCalculation))
                         )
                 ).withName("StartCenterLine")
@@ -201,7 +201,7 @@ public class Autos {
                         intakeRoller.setGoal(IntakeRoller.Goal.STOP),
                         sequence(
                                 shootStatic(),
-                                superstructure.setGoal(Superstructure.Goal.STATIC_SHOT_PREP),
+                                superstructure.setGoalCommand(Superstructure.Goal.STATIC_SHOT_PREP),
                                 Commands.runOnce(() -> superstructure.updateStaticShotParameter(secondShotCalculation)),
                                 shootingToDepot.cmd()
                         )
@@ -231,7 +231,7 @@ public class Autos {
                         runStartingTrajectory(startToCenterLineAndBack),
                         intakeRoller.setGoal(IntakeRoller.Goal.INTAKE),
                         Commands.sequence(
-                                superstructure.setGoal(Superstructure.Goal.STATIC_SHOT_PREP),
+                                superstructure.setGoalCommand(Superstructure.Goal.STATIC_SHOT_PREP),
                                 Commands.runOnce(() -> superstructure.updateStaticShotParameter(firstShotCalculation))
                         )
                 ).withName("StartCenterLine")
@@ -242,7 +242,7 @@ public class Autos {
                         intakeRoller.setGoal(IntakeRoller.Goal.STOP),
                         sequence(
                                 shootStatic(),
-                                superstructure.setGoal(Superstructure.Goal.STATIC_SHOT_PREP),
+                                superstructure.setGoalCommand(Superstructure.Goal.STATIC_SHOT_PREP),
                                 shootStatic(),
                                 shootingToOutpost.cmd().asProxy()
                         )
