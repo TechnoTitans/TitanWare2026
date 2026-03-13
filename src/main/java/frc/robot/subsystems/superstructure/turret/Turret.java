@@ -10,7 +10,6 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.constants.Constants;
 import frc.robot.constants.HardwareConstants;
-import frc.robot.utils.position.ChineseRemainder;
 import org.littletonrobotics.junction.Logger;
 
 import java.util.function.DoubleSupplier;
@@ -20,7 +19,6 @@ public class Turret extends SubsystemBase {
 
     private static final double PositionToleranceRots = 0.02;
     private static final double VelocityToleranceRotsPerSec = 0.02;
-    public static final double WRAP_THRESHOLD = 0.3;
 
     private final HardwareConstants.TurretConstants constants;
     private final DoubleSupplier robotAngularVelocitySupplier;
@@ -34,8 +32,7 @@ public class Turret extends SubsystemBase {
     public final Trigger atSetpoint = new Trigger(this::atSetpoint);
 
     public enum Goal {
-        TRACKING(0, true),
-        THING(0.1, true);
+        TRACKING(0, true);
 
         private double positionSetpointRots;
         private final boolean isDynamic;
@@ -64,24 +61,12 @@ public class Turret extends SubsystemBase {
             case REPLAY, DISABLED -> new TurretIO() {};
         };
 
-        this.inputs = new TurretIOInputsAutoLogged();
-
-        this.turretIO.config();
-        this.turretIO.updateInputs(inputs);
-        Logger.processInputs(LogKey, inputs);
-
         this.robotAngularVelocitySupplier = robotAngularVelocitySupplier;
 
-//        final Rotation2d absolutePosition = ChineseRemainder.findAbsolutePosition(
-//                constants.turretTooth(),
-//                inputs.primaryEncoderPositionRots,
-//                constants.primaryEncoderTooth(),
-//                inputs.secondaryEncoderPositionRots,
-//                constants.secondaryEncoderTooth()
-//        );
-        turretIO.seedTurretPosition(Rotation2d.kZero);
+        this.inputs = new TurretIOInputsAutoLogged();
+        this.turretIO.config();
 
-//        Logger.recordOutput(LogKey + "/CRTResult", absolutePosition);
+        turretIO.setPosition(0);
     }
 
     @Override
@@ -91,20 +76,18 @@ public class Turret extends SubsystemBase {
         turretIO.updateInputs(inputs);
         Logger.processInputs(LogKey, inputs);
 
-//        if (desiredGoal.isDynamic) {
-//            if (Math.abs(inputs.turretPositionRots - desiredGoal.positionSetpointRots) > WRAP_THRESHOLD) {
-//                turretIO.toTurretPosition(desiredGoal.positionSetpointRots);
-//            } else {
-//                turretIO.toTurretContinuousPosition(desiredGoal.positionSetpointRots,
-//                        Units.radiansToRotations(-robotAngularVelocitySupplier.getAsDouble())
-//                );
-//            }
-//        }
-//
-//        if (desiredGoal != currentGoal) {
+        if (desiredGoal != currentGoal) {
+            currentGoal = desiredGoal;
+        }
+
+        if (desiredGoal.isDynamic) {
+            turretIO.toTurretContinuousPosition(
+                    desiredGoal.positionSetpointRots,
+                    -Units.radiansToRotations(robotAngularVelocitySupplier.getAsDouble())
+            );
+        } else {
             turretIO.toTurretContinuousPosition(desiredGoal.positionSetpointRots, 0);
-//            currentGoal = desiredGoal;
-//        }
+        }
 
         Logger.recordOutput(LogKey + "/CurrentGoal", currentGoal.toString());
         Logger.recordOutput(LogKey + "/DesiredGoal", desiredGoal.toString());
@@ -135,7 +118,7 @@ public class Turret extends SubsystemBase {
     }
 
     public void updatePositionSetpoint(final double desiredTurretPosition) {
-        desiredGoal.changeTurretPositionRots(desiredTurretPosition);
+        desiredGoal.changeTurretPositionRots(optimizeWrap(desiredTurretPosition));
     }
 
     public Rotation2d getTurretPosition() {
@@ -154,5 +137,42 @@ public class Turret extends SubsystemBase {
 
     private boolean atLowerLimit() {
         return inputs.turretPositionRots <= constants.reverseLimitRots();
+    }
+
+    private double optimizeWrap(final double targetPositionRots) {
+        final double forwardLimitRots = constants.forwardLimitRots();
+        final double reverseLimitRots = constants.reverseLimitRots();
+        final double currentPositionRots = inputs.turretPositionRots;
+
+        final double wrappedPositionRots = currentPositionRots + MathUtil.inputModulus(
+                targetPositionRots - currentPositionRots,
+                -0.5,
+                0.5
+        );
+
+        if (wrappedPositionRots >= reverseLimitRots && wrappedPositionRots <= forwardLimitRots) {
+            return wrappedPositionRots;
+        }
+
+        final double fullRotationForward = wrappedPositionRots + 1.0;
+        final double fullRotationBackward = wrappedPositionRots - 1.0;
+
+        final boolean isForwardWithinBound = fullRotationForward >= reverseLimitRots
+                && fullRotationForward <= forwardLimitRots;
+        final boolean isBackwardWithinBound = fullRotationBackward >= reverseLimitRots
+                && fullRotationBackward <= forwardLimitRots;
+
+        if (isForwardWithinBound && isBackwardWithinBound) {
+            final double forwardTravelRots = Math.abs(fullRotationForward - currentPositionRots);
+            final double backwardTravelRots = Math.abs(fullRotationBackward - currentPositionRots);
+
+            return forwardTravelRots <= backwardTravelRots ? fullRotationForward : fullRotationBackward;
+        } else if (isForwardWithinBound) {
+            return fullRotationForward;
+        } else if (isBackwardWithinBound) {
+            return fullRotationBackward;
+        }
+
+        return MathUtil.clamp(wrappedPositionRots, reverseLimitRots, forwardLimitRots);
     }
 }

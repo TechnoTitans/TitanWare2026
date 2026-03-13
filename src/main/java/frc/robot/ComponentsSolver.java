@@ -42,23 +42,19 @@ public class ComponentsSolver {
     private Pose3d[] getSuperstructurePoses() {
         final Pose3d turretPose = new Pose3d(
                 PoseConstants.Turret.ORIGIN,
-                new Rotation3d(turretRotationSupplier.get()).plus(PoseConstants.Turret.TURRET_ZERO_OFFSET)
+                new Rotation3d(turretRotationSupplier.get())
         );
 
-        final Pose3d hoodPose = turretPose.transformBy(
-                new Transform3d(
+        final Pose3d hoodPose = turretPose
+                .plus(new Transform3d(
                         PoseConstants.Hood.TURRET_TO_HOOD_TRANSLATION,
-                        new Rotation3d(
-                                hoodRotationSupplier.get()
-                                        .unaryMinus()
-                                        .plus(PoseConstants.Hood.ZEROED_POSITION_TO_HORIZONTAL).getRadians(),
-                                0,
-                                0
-                        )
-                )
-        );
+                        new Rotation3d(0, hoodRotationSupplier.get().getRadians(), 0)
+                ));
 
-        return new Pose3d[]{turretPose, hoodPose};
+        return new Pose3d[] {
+                turretPose,
+                hoodPose
+        };
     }
 
     private Pose3d[] getIntakeHopperPoses() {

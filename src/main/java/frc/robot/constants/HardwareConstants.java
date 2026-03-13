@@ -117,8 +117,8 @@ public class HardwareConstants {
             17,
             -0.448486,
             -0.059082,
-            0.5,
-            -0.5,
+            0.25,
+            -0.75,
             new Transform2d(-0.127, 0, Rotation2d.kZero)
     );
     public record HoodConstants(
