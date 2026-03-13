@@ -107,14 +107,14 @@ public class Turret extends SubsystemBase {
         return constants.offsetFromCenter();
     }
 
+    public Command setGoalCommand(final Goal goal) {
+        return runOnce(() -> setGoal(goal));
+    }
+
     public void setGoal(final Goal goal) {
         desiredGoal = goal;
         Logger.recordOutput(LogKey + "/CurrentGoal", currentGoal);
         Logger.recordOutput(LogKey + "/DesiredGoal", goal);
-    }
-
-    public Command setGoalCommand(final Goal goal) {
-        return runOnce(() -> setGoal(goal));
     }
 
     public void updatePositionSetpoint(final double desiredTurretPosition) {

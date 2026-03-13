@@ -87,14 +87,14 @@ public class Hood extends SubsystemBase {
         );
     }
 
+    public Command setGoalCommand(final Goal goal) {
+        return runOnce(() -> setGoal(goal));
+    }
+
     public void setGoal(final Goal goal) {
         desiredGoal = goal;
         Logger.recordOutput(LogKey + "/CurrentGoal", currentGoal.toString());
         Logger.recordOutput(LogKey + "/DesiredGoal", desiredGoal.toString());
-    }
-
-    public Command setGoalCommand(final Goal goal) {
-        return runOnce(() -> setGoal(goal));
     }
 
     public void updateShootingDesiredPosition(final double position) {

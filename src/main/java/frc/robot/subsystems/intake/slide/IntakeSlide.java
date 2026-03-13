@@ -142,6 +142,11 @@ public class IntakeSlide extends SubsystemBase {
         return Rotation2d.fromRotations(inputs.averagePositionRots);
     }
 
+    public boolean atGoal(final Goal goal) {
+        return currentGoal == desiredGoal
+                && atSetpoint();
+    }
+
     private void setDesiredGoal(final Goal goal) {
         desiredGoal = goal;
         Logger.recordOutput(LogKey + "/CurrentGoal", currentGoal.toString());

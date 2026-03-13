@@ -81,14 +81,14 @@ public class Shooter extends SubsystemBase {
         );
     }
 
+    public Command setGoalCommand(final Goal goal) {
+        return Commands.runOnce(() -> setGoal(goal));
+    }
+
     public void setGoal(final Goal goal) {
         desiredGoal = goal;
         Logger.recordOutput(LogKey + "/CurrentGoal", currentGoal.toString());
         Logger.recordOutput(LogKey + "/DesiredGoal", goal.toString());
-    }
-
-    public Command setGoalCommand(final Goal goal) {
-        return Commands.runOnce(() -> setGoal(goal));
     }
 
     public void updateVelocitySetpoint(final double desiredShooterVelocity) {
