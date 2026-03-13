@@ -368,10 +368,10 @@ public class Robot extends LoggedRobot {
 
     public void configureStateTriggers() {
         enabled.onTrue(
-               Commands.parallel(
-                       intakeSlide.setGoalCommand(IntakeSlide.Goal.EXTEND)
-//                       superstructure.setGoalCommand(Superstructure.Goal.TRACKING)
-               )
+                Commands.parallel(
+                        superstructure.setGoalCommand(Superstructure.Goal.TRACKING),
+                        intakeSlide.setGoalCommand(IntakeSlide.Goal.EXTEND)
+                )
         );
 
         hubActive.onTrue(ControllerUtils.rumbleForDurationCommand(
