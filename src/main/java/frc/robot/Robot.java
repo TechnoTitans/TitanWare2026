@@ -109,7 +109,7 @@ public class Robot extends LoggedRobot {
     public final Turret turret = new Turret(
             Constants.CURRENT_MODE,
             HardwareConstants.TURRET,
-            () -> swerve.getFieldRelativeSpeeds().omegaRadiansPerSecond
+            () -> -swerve.getFieldRelativeSpeeds().omegaRadiansPerSecond
     );
 
     public final Shooter shooter = new Shooter(
@@ -122,9 +122,7 @@ public class Robot extends LoggedRobot {
             HardwareConstants.SPINDEXER
     );
 
-    //TODO: Change to Moving when SOTM is implemented
-    private RobotCommands.ScoringMode scoringMode =
-            RobotCommands.ScoringMode.Moving;
+    private RobotCommands.ScoringMode scoringMode = RobotCommands.ScoringMode.Moving;
 
     private final Supplier<ShotCalculator.ShotCalculation> shotCalculationSupplier =
             () -> ShotCalculator.getShotCalculation(
@@ -144,6 +142,15 @@ public class Robot extends LoggedRobot {
             turret::getTurretPosition,
             hood::getHoodPosition,
             intakeSlide::getIntakeSlidePositionRots
+    );
+
+    private final FuelState fuelState = new FuelState(
+            Constants.CURRENT_MODE,
+            swerve,
+            intakeRoller,
+            feeder,
+            superstructure,
+            componentsSolver
     );
 
     private final RobotCommands robotCommands = new RobotCommands(
@@ -421,10 +428,6 @@ public class Robot extends LoggedRobot {
 
         driverController.rightTrigger(0.5, teleopEventLoop)
                 .whileTrue(robotCommands.shootWhileMoving());
-
-        driverController.y(teleopEventLoop).onTrue(robotCommands.deployIntake());
-
-        driverController.a(teleopEventLoop).onTrue(robotCommands.stowIntake());
 
         coController.leftTrigger(0.5, teleopEventLoop).whileTrue(
                 intakeRoller.toGoal(IntakeRoller.Goal.INTAKE)

@@ -85,6 +85,10 @@ public class Shooter extends SubsystemBase {
         return Commands.runOnce(() -> setGoal(goal));
     }
 
+    public double getVelocityRotsPerSec() {
+        return inputs.masterVelocityRotsPerSec;
+    }
+
     public void setGoal(final Goal goal) {
         desiredGoal = goal;
         Logger.recordOutput(LogKey + "/CurrentGoal", currentGoal.toString());

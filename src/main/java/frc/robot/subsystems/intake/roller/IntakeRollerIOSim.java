@@ -2,10 +2,7 @@ package frc.robot.subsystems.intake.roller;
 
 import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.StatusSignal;
-import com.ctre.phoenix6.configs.Slot0Configs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
-import com.ctre.phoenix6.controls.TorqueCurrentFOC;
-import com.ctre.phoenix6.controls.VelocityTorqueCurrentFOC;
 import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.ParentDevice;
 import com.ctre.phoenix6.hardware.TalonFX;
@@ -23,6 +20,8 @@ import frc.robot.constants.HardwareConstants;
 import frc.robot.utils.closeables.ToClose;
 import frc.robot.utils.control.DeltaTime;
 import frc.robot.utils.ctre.RefreshAll;
+import frc.robot.utils.sim.SimUtils;
+import frc.robot.utils.sim.motors.TalonFXSim;
 
 public class IntakeRollerIOSim implements IntakeRollerIO {
     private static final double SIM_UPDATE_PERIOD_SEC = 0.005;
@@ -31,9 +30,8 @@ public class IntakeRollerIOSim implements IntakeRollerIO {
     private final HardwareConstants.IntakeRollerConstants constants;
 
     private final TalonFX rollerMotor;
+    private final TalonFXSim motorSim;
 
-    private final VelocityTorqueCurrentFOC velocityTorqueCurrentFOC;
-    private final TorqueCurrentFOC torqueCurrentFOC;
     private final VoltageOut voltageOut;
 
     private final StatusSignal<Angle> rollerPosition;
@@ -48,16 +46,20 @@ public class IntakeRollerIOSim implements IntakeRollerIO {
 
         this.rollerMotor = new TalonFX(constants.motorID(), constants.CANBus().toPhoenix6CANBus());
 
-        final DCMotorSim rollerMotorSim = new DCMotorSim(
-                LinearSystemId.createDCMotorSystem(
-                        1 / (2 * Math.PI),
-                        0.1 / (2 * Math.PI)
-                ),
-                DCMotor.getKrakenX60Foc(1)
+        final DCMotor dcMotor = DCMotor.getKrakenX60Foc(1);
+        final DCMotorSim dcMotorSim = new DCMotorSim(
+                LinearSystemId.createDCMotorSystem(dcMotor, 0.001, constants.rollerGearing()),
+                dcMotor
+        );
+        this.motorSim = new TalonFXSim(
+                rollerMotor,
+                constants.rollerGearing(),
+                dcMotorSim::update,
+                voltage -> dcMotorSim.setInputVoltage(SimUtils.addMotorFriction(voltage, 0.25)),
+                dcMotorSim::getAngularPositionRad,
+                dcMotorSim::getAngularVelocityRadPerSec
         );
 
-        this.velocityTorqueCurrentFOC = new VelocityTorqueCurrentFOC(0);
-        this.torqueCurrentFOC = new TorqueCurrentFOC(0);
         this.voltageOut = new VoltageOut(0);
 
         this.rollerPosition = rollerMotor.getPosition(false);
@@ -77,7 +79,7 @@ public class IntakeRollerIOSim implements IntakeRollerIO {
 
         final Notifier simUpdateNotifier = new Notifier(() -> {
             final double dt = deltaTime.get();
-            rollerMotorSim.update(dt);
+            motorSim.update(dt);
         });
         ToClose.add(simUpdateNotifier);
         simUpdateNotifier.setName(String.format(
@@ -90,12 +92,6 @@ public class IntakeRollerIOSim implements IntakeRollerIO {
     @Override
     public void config() {
         final TalonFXConfiguration motorConfiguration = new TalonFXConfiguration();
-        motorConfiguration.Slot0 = new Slot0Configs()
-                .withKS(6.3)
-                .withKV(0.265)
-                .withKP(0.55);
-        motorConfiguration.TorqueCurrent.PeakForwardTorqueCurrent = 80;
-        motorConfiguration.TorqueCurrent.PeakForwardTorqueCurrent = -80;
         motorConfiguration.CurrentLimits.StatorCurrentLimit = 60;
         motorConfiguration.CurrentLimits.StatorCurrentLimitEnable = true;
         motorConfiguration.MotorOutput.NeutralMode = NeutralModeValue.Brake;
@@ -122,8 +118,9 @@ public class IntakeRollerIOSim implements IntakeRollerIO {
                 rollerMotor
         );
 
-        rollerMotor.getSimState().Orientation = ChassisReference.CounterClockwise_Positive;
-        rollerMotor.getSimState().setMotorType(TalonFXSimState.MotorType.KrakenX60);
+        final TalonFXSimState rollerSimState = rollerMotor.getSimState();
+        rollerSimState.Orientation = ChassisReference.Clockwise_Positive;
+        rollerSimState.setMotorType(TalonFXSimState.MotorType.KrakenX60);
     }
 
     @Override
@@ -136,17 +133,7 @@ public class IntakeRollerIOSim implements IntakeRollerIO {
     }
 
     @Override
-    public void toRollerVelocity(final double velocityRotsPerSec) {
-        rollerMotor.setControl(velocityTorqueCurrentFOC.withVelocity(velocityRotsPerSec));
-    }
-
-    @Override
     public void toRollerVoltage(final double volts) {
         rollerMotor.setControl(voltageOut.withOutput(volts));
-    }
-
-    @Override
-    public void toRollerTorqueCurrent(final double torqueCurrentAmps) {
-        rollerMotor.setControl(torqueCurrentFOC.withOutput(torqueCurrentAmps));
     }
 }

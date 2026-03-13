@@ -16,9 +16,5 @@ public interface IntakeRollerIO {
 
     default void config() {}
 
-    default void toRollerVelocity(final double velocityRotsPerSec) {}
-
     default void toRollerVoltage(final double volts) {}
-
-    default void toRollerTorqueCurrent(final double torqueCurrentAmps) {}
 }

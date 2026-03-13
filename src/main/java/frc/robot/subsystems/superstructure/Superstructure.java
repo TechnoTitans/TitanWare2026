@@ -129,6 +129,10 @@ public class Superstructure extends VirtualSubsystem {
         return robotPose.plus(getOffsetFromCenter()).getTranslation();
     }
 
+    public double getShooterVelocityRotsPerSec() {
+        return shooter.getVelocityRotsPerSec();
+    }
+
     public void updateStaticShotParameter(
             final ShotCalculator.ShotCalculation shotCalculation
     ) {

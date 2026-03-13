@@ -39,7 +39,7 @@ public class ComponentsSolver {
         );
     }
 
-    private Pose3d[] getSuperstructurePoses() {
+    public Pose3d[] getSuperstructurePoses() {
         final Pose3d turretPose = new Pose3d(
                 PoseConstants.Turret.ORIGIN,
                 new Rotation3d(turretRotationSupplier.get())

@@ -21,7 +21,7 @@ public class Turret extends SubsystemBase {
     private static final double VelocityToleranceRotsPerSec = 0.02;
 
     private final HardwareConstants.TurretConstants constants;
-    private final DoubleSupplier robotAngularVelocitySupplier;
+    private final DoubleSupplier turretVelocitySupplier;
 
     private final TurretIO turretIO;
     private final TurretIOInputsAutoLogged inputs;
@@ -34,8 +34,9 @@ public class Turret extends SubsystemBase {
     public enum Goal {
         TRACKING(0, true);
 
-        private double positionSetpointRots;
         private final boolean isDynamic;
+
+        private double positionSetpointRots;
 
         Goal(final double positionSetpointRots, final boolean isDynamic) {
             this.positionSetpointRots = positionSetpointRots;
@@ -52,7 +53,7 @@ public class Turret extends SubsystemBase {
     public Turret(
             final Constants.RobotMode mode,
             final HardwareConstants.TurretConstants constants,
-            final DoubleSupplier robotAngularVelocitySupplier
+            final DoubleSupplier turretVelocitySupplier
     ) {
         this.constants = constants;
         this.turretIO = switch (mode) {
@@ -61,7 +62,7 @@ public class Turret extends SubsystemBase {
             case REPLAY, DISABLED -> new TurretIO() {};
         };
 
-        this.robotAngularVelocitySupplier = robotAngularVelocitySupplier;
+        this.turretVelocitySupplier = turretVelocitySupplier;
 
         this.inputs = new TurretIOInputsAutoLogged();
         this.turretIO.config();
@@ -78,15 +79,14 @@ public class Turret extends SubsystemBase {
 
         if (desiredGoal != currentGoal) {
             currentGoal = desiredGoal;
+            turretIO.toTurretContinuousPosition(desiredGoal.positionSetpointRots, 0);
         }
 
         if (desiredGoal.isDynamic) {
             turretIO.toTurretContinuousPosition(
                     desiredGoal.positionSetpointRots,
-                    -Units.radiansToRotations(robotAngularVelocitySupplier.getAsDouble())
+                    Units.radiansToRotations(turretVelocitySupplier.getAsDouble())
             );
-        } else {
-            turretIO.toTurretContinuousPosition(desiredGoal.positionSetpointRots, 0);
         }
 
         Logger.recordOutput(LogKey + "/CurrentGoal", currentGoal.toString());
@@ -128,7 +128,7 @@ public class Turret extends SubsystemBase {
     private boolean atSetpoint() {
         return currentGoal == desiredGoal
                 && MathUtil.isNear(desiredGoal.positionSetpointRots, inputs.turretPositionRots, PositionToleranceRots)
-                && MathUtil.isNear(robotAngularVelocitySupplier.getAsDouble(), inputs.turretVelocityRotsPerSec, VelocityToleranceRotsPerSec);
+                && MathUtil.isNear(turretVelocitySupplier.getAsDouble(), inputs.turretVelocityRotsPerSec, VelocityToleranceRotsPerSec);
     }
 
     private boolean atUpperLimit() {

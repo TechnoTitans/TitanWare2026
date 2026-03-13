@@ -2,10 +2,7 @@ package frc.robot.subsystems.intake.roller;
 
 import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.StatusSignal;
-import com.ctre.phoenix6.configs.Slot0Configs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
-import com.ctre.phoenix6.controls.TorqueCurrentFOC;
-import com.ctre.phoenix6.controls.VelocityTorqueCurrentFOC;
 import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.ParentDevice;
 import com.ctre.phoenix6.hardware.TalonFX;
@@ -27,8 +24,6 @@ public class IntakeRollerIOReal implements IntakeRollerIO {
     private final StatusSignal<Current> rollerTorqueCurrent;
     private final StatusSignal<Temperature> rollerDeviceTemp;
 
-    private final VelocityTorqueCurrentFOC velocityTorqueCurrentFOC;
-    private final TorqueCurrentFOC torqueCurrentFOC;
     private final VoltageOut voltageOut;
 
     public IntakeRollerIOReal(final HardwareConstants.IntakeRollerConstants constants) {
@@ -42,8 +37,6 @@ public class IntakeRollerIOReal implements IntakeRollerIO {
         this.rollerTorqueCurrent = rollerMotor.getTorqueCurrent(false);
         this.rollerDeviceTemp = rollerMotor.getDeviceTemp(false);
 
-        this.velocityTorqueCurrentFOC = new VelocityTorqueCurrentFOC(0);
-        this.torqueCurrentFOC = new TorqueCurrentFOC(0);
         this.voltageOut = new VoltageOut(0);
 
         RefreshAll.add(
@@ -59,12 +52,6 @@ public class IntakeRollerIOReal implements IntakeRollerIO {
     @Override
     public void config() {
         final TalonFXConfiguration motorConfiguration = new TalonFXConfiguration();
-        motorConfiguration.Slot0 = new Slot0Configs()
-                .withKS(5.27)
-                .withKV(0.185)
-                .withKP(5.2);
-        motorConfiguration.TorqueCurrent.PeakForwardTorqueCurrent = 80;
-        motorConfiguration.TorqueCurrent.PeakReverseTorqueCurrent = -80;
         motorConfiguration.CurrentLimits.StatorCurrentLimit = 60;
         motorConfiguration.CurrentLimits.StatorCurrentLimitEnable = true;
         motorConfiguration.MotorOutput.NeutralMode = NeutralModeValue.Brake;
@@ -102,17 +89,7 @@ public class IntakeRollerIOReal implements IntakeRollerIO {
     }
 
     @Override
-    public void toRollerVelocity(final double velocityRotsPerSec) {
-        rollerMotor.setControl(velocityTorqueCurrentFOC.withVelocity(velocityRotsPerSec));
-    }
-
-    @Override
     public void toRollerVoltage(final double volts) {
         rollerMotor.setControl(voltageOut.withOutput(volts));
-    }
-
-    @Override
-    public void toRollerTorqueCurrent(final double torqueCurrentAmps) {
-        rollerMotor.setControl(torqueCurrentFOC.withOutput(torqueCurrentAmps));
     }
 }

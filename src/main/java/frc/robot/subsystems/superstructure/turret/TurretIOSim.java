@@ -165,6 +165,7 @@ public class TurretIOSim implements TurretIO {
         final TalonFXSimState motorSimState = turretMotor.getSimState();
         motorSimState.Orientation = ChassisReference.Clockwise_Positive;
         motorSimState.setMotorType(TalonFXSimState.MotorType.KrakenX60);
+
         primaryEncoder.getSimState().Orientation = ChassisReference.CounterClockwise_Positive;
         secondaryEncoder.getSimState().Orientation = ChassisReference.CounterClockwise_Positive;
     }

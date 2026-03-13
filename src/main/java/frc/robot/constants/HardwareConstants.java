@@ -87,7 +87,7 @@ public class HardwareConstants {
     public static final FeederConstants FEEDER = new FeederConstants(
             CANBus.CANIVORE,
             18,
-            1.86667
+            1.8667
     );
 
     public record TurretConstants (

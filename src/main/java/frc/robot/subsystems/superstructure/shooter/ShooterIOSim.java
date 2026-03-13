@@ -24,6 +24,7 @@ import frc.robot.constants.SimConstants;
 import frc.robot.utils.closeables.ToClose;
 import frc.robot.utils.control.DeltaTime;
 import frc.robot.utils.ctre.RefreshAll;
+import frc.robot.utils.sim.SimUtils;
 import frc.robot.utils.sim.motors.TalonFXSim;
 
 import java.util.List;
@@ -58,13 +59,14 @@ public class ShooterIOSim implements ShooterIO {
         this.deltaTime = new DeltaTime(true);
         this.constants = constants;
 
+        final DCMotor dcMotor = DCMotor.getKrakenX60Foc(2);
         final DCMotorSim motorsSim = new DCMotorSim(
                 LinearSystemId.createDCMotorSystem(
-                        DCMotor.getKrakenX60Foc(2),
+                        dcMotor,
                         SimConstants.Shooter.MOMENT_OF_INERTIA,
                         constants.wheelGearing()
                 ),
-                DCMotor.getKrakenX60Foc(2)
+                dcMotor
         );
 
         this.masterMotor = new TalonFX(constants.masterMotorID(), constants.CANBus().toPhoenix6CANBus());
@@ -74,7 +76,7 @@ public class ShooterIOSim implements ShooterIO {
                 List.of(masterMotor, followerMotor),
                 constants.wheelGearing(),
                 motorsSim::update,
-                motorsSim::setInputVoltage,
+                voltage -> motorsSim.setInputVoltage(SimUtils.addMotorFriction(voltage, 0.25)),
                 motorsSim::getAngularPositionRad,
                 motorsSim::getAngularVelocityRadPerSec
         );
@@ -125,18 +127,18 @@ public class ShooterIOSim implements ShooterIO {
     public void config() {
         final TalonFXConfiguration motorConfiguration = new TalonFXConfiguration();
         motorConfiguration.Slot0 = new Slot0Configs()
-                .withKS(0.01)
-                .withKP(200);
-        motorConfiguration.CurrentLimits.StatorCurrentLimit = 70;
+                .withKS(6.75)
+                .withKP(11)
+                .withKD(0);
+        motorConfiguration.TorqueCurrent.PeakForwardTorqueCurrent = 80;
+        motorConfiguration.TorqueCurrent.PeakReverseTorqueCurrent = -80;
+        motorConfiguration.CurrentLimits.StatorCurrentLimit = 80;
         motorConfiguration.CurrentLimits.StatorCurrentLimitEnable = true;
-        motorConfiguration.MotorOutput.NeutralMode = NeutralModeValue.Brake;
+        motorConfiguration.MotorOutput.NeutralMode = NeutralModeValue.Coast;
         motorConfiguration.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
         motorConfiguration.Feedback.FeedbackSensorSource = FeedbackSensorSourceValue.RotorSensor;
         motorConfiguration.Feedback.SensorToMechanismRatio = constants.wheelGearing();
-
         masterMotor.getConfigurator().apply(motorConfiguration);
-        motorConfiguration.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
-        followerMotor.getConfigurator().apply(motorConfiguration);
 
         BaseStatusSignal.setUpdateFrequencyForAll(
                 100,
@@ -162,11 +164,13 @@ public class ShooterIOSim implements ShooterIO {
                 followerMotor
         );
 
-        masterMotor.getSimState().Orientation = ChassisReference.Clockwise_Positive;
-        followerMotor.getSimState().Orientation = ChassisReference.Clockwise_Positive;
+        final TalonFXSimState masterMotorSimState = masterMotor.getSimState();
+        masterMotorSimState.Orientation = ChassisReference.CounterClockwise_Positive;
+        masterMotorSimState.setMotorType(TalonFXSimState.MotorType.KrakenX60);
 
-        masterMotor.getSimState().setMotorType(TalonFXSimState.MotorType.KrakenX60);
-        followerMotor.getSimState().setMotorType(TalonFXSimState.MotorType.KrakenX60);
+        final TalonFXSimState followerMotorSimState = followerMotor.getSimState();
+        followerMotorSimState.Orientation = ChassisReference.Clockwise_Positive;
+        followerMotorSimState.setMotorType(TalonFXSimState.MotorType.KrakenX60);
     }
 
     @Override

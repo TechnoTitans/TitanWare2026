@@ -68,9 +68,10 @@ public class RobotCommands {
     }
 
     public Command deployIntake() {
-        return Commands.parallel(
-                intakeRoller.setGoal(IntakeRoller.Goal.INTAKE),
-                intakeSlide.setGoalCommand(IntakeSlide.Goal.EXTEND)
+        return Commands.sequence(
+                intakeSlide.setGoalCommand(IntakeSlide.Goal.EXTEND),
+                Commands.waitUntil(intakeSlide.atSlideSetpoint),
+                intakeRoller.setGoal(IntakeRoller.Goal.INTAKE)
         ).withName("DeployIntake");
     }
 
@@ -87,7 +88,7 @@ public class RobotCommands {
                 Commands.repeatingSequence(
                         Commands.waitUntil(superstructure.atSetpoint),
                         feeder.toGoal(Feeder.Goal.FEED)
-                                .until(superstructure.atSetpoint.negate())
+                                .onlyWhile(superstructure.atSetpoint)
                 ),
                 intakeSlide.toGoal(IntakeSlide.Goal.SHOOTING),
                 spindexer.toGoal(Spindexer.Goal.FEED),

@@ -21,6 +21,7 @@ import frc.robot.constants.HardwareConstants;
 import frc.robot.utils.closeables.ToClose;
 import frc.robot.utils.control.DeltaTime;
 import frc.robot.utils.ctre.RefreshAll;
+import frc.robot.utils.sim.SimUtils;
 import frc.robot.utils.sim.motors.TalonFXSim;
 
 public class FeederIOSim implements FeederIO {
@@ -44,12 +45,10 @@ public class FeederIOSim implements FeederIO {
         this.deltaTime = new DeltaTime(true);
         this.constants = constants;
 
-        final DCMotorSim wheelSim = new DCMotorSim(
-                LinearSystemId.createDCMotorSystem(
-                        2 / (2 * Math.PI),
-                        1 / (2 * Math.PI)
-                ),
-                DCMotor.getKrakenX60Foc(1)
+        final DCMotor dcMotor = DCMotor.getKrakenX60Foc(1);
+        final DCMotorSim dcMotorSim = new DCMotorSim(
+                LinearSystemId.createDCMotorSystem(dcMotor, 0.0026, constants.wheelGearing()),
+                dcMotor
         );
 
         this.wheelMotor = new TalonFX(constants.motorID(), constants.CANBus().toPhoenix6CANBus());
@@ -57,10 +56,10 @@ public class FeederIOSim implements FeederIO {
         this.wheelTalonFXSim = new TalonFXSim(
                 wheelMotor,
                 constants.wheelGearing(),
-                wheelSim::update,
-                wheelSim::setInputVoltage,
-                wheelSim::getAngularPositionRad,
-                wheelSim::getAngularVelocityRadPerSec
+                dcMotorSim::update,
+                voltage -> dcMotorSim.setInputVoltage(SimUtils.addMotorFriction(voltage, 0.25)),
+                dcMotorSim::getAngularPositionRad,
+                dcMotorSim::getAngularVelocityRadPerSec
         );
 
         this.wheelPosition = wheelMotor.getPosition(false);
@@ -96,14 +95,14 @@ public class FeederIOSim implements FeederIO {
     public void config() {
         final TalonFXConfiguration wheelConfiguration = new TalonFXConfiguration();
         wheelConfiguration.Slot0 = new Slot0Configs()
-                .withKS(0.01)
-                .withKP(3.5);
-        wheelConfiguration.TorqueCurrent.PeakForwardTorqueCurrent = 80;
-        wheelConfiguration.TorqueCurrent.PeakReverseTorqueCurrent = -80;
+                .withKS(6.72)
+                .withKV(0.08)
+                .withKP(6)
+                .withKD(0.09);
         wheelConfiguration.CurrentLimits.StatorCurrentLimit = 80;
         wheelConfiguration.CurrentLimits.StatorCurrentLimitEnable = true;
         wheelConfiguration.MotorOutput.NeutralMode = NeutralModeValue.Brake;
-        wheelConfiguration.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
+        wheelConfiguration.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
         wheelConfiguration.Feedback.FeedbackSensorSource = FeedbackSensorSourceValue.RotorSensor;
         wheelConfiguration.Feedback.SensorToMechanismRatio = constants.wheelGearing();
         wheelMotor.getConfigurator().apply(wheelConfiguration);

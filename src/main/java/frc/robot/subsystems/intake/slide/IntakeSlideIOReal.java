@@ -183,8 +183,6 @@ public class IntakeSlideIOReal implements IntakeSlideIO {
 
     @Override
     public void zeroMotors() {
-        diffMechanism.getLeader().setPosition(0);
-        diffMechanism.getFollower().setPosition(0);
         diffMechanism.setPosition(0);
     }
 }
