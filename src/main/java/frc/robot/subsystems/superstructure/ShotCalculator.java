@@ -91,10 +91,8 @@ public class ShotCalculator {
         };
     }
 
-    public static ShotCalculation getShotCalculationFromPose(
-            final Pose2d pose
-    ) {
-        final Pose2d turretPose = pose.transformBy(PoseConstants.Turret.ROBOT_TO_TURRET_TRANSFORM_2D);
+    public static ShotCalculation getShotCalculationFromPose(final Pose2d robotPose) {
+        final Pose2d turretPose = robotPose.transformBy(PoseConstants.Turret.ROBOT_TO_TURRET_TRANSFORM_2D);
 
         final Target target = turretPose.getX() > FerryXBoundary
                 ? Target.FERRYING
@@ -109,7 +107,7 @@ public class ShotCalculator {
 
         final Rotation2d desiredTurretAngle = targetTranslation.minus(turretPose.getTranslation())
                 .getAngle()
-                .minus(turretPose.getRotation());
+                .minus(robotPose.getRotation());
 
         final ShotCalc shotCalc = ShotMap.get(turretToTargetDistance);
         return new ShotCalculation(
@@ -121,10 +119,10 @@ public class ShotCalculator {
     }
 
     private static ShotCalculation getShotCalculation(
-            final Pose2d swervePose,
+            final Pose2d robotPose,
             final ChassisSpeeds swerveSpeeds
     ) {
-        final Pose2d turretPose = swervePose.transformBy(PoseConstants.Turret.ROBOT_TO_TURRET_TRANSFORM_2D)
+        final Pose2d turretPose = robotPose.transformBy(PoseConstants.Turret.ROBOT_TO_TURRET_TRANSFORM_2D)
                 .exp(new Twist2d(
                         swerveSpeeds.vxMetersPerSecond * DelayTimeSec,
                         swerveSpeeds.vyMetersPerSecond * DelayTimeSec,
@@ -148,7 +146,7 @@ public class ShotCalculator {
 
         final Rotation2d desiredTurretAngle = targetTranslation.minus(turretPose.getTranslation())
                 .getAngle()
-                .minus(turretPose.getRotation());
+                .minus(robotPose.getRotation());
 
         final ShotCalc shotCalc = ShotMap.get(turretToTargetDistance);
         return new ShotCalculation(
@@ -195,7 +193,7 @@ public class ShotCalculator {
         final ChassisSpeeds turretFieldVelocity = getTurretFieldSpeeds(lookaheadRobotPose, turretOffset, fieldSpeeds);
 
         double timeOfFlight;
-        Pose2d futureTurretPose;
+        Pose2d futureTurretPose = turretPose;
         double futureDistance = turretToTargetDistance;
         for (int i = 0; i < 20; i++) {
             timeOfFlight = TOFMap.get(futureDistance);
@@ -213,9 +211,10 @@ public class ShotCalculator {
                     .getDistance(targetTranslation);
         }
 
-        final Rotation2d desiredTurretAngle = targetTranslation.minus(turretPose.getTranslation())
+        final Pose2d futureRobotPose = futureTurretPose.transformBy(turretOffset.inverse());
+        final Rotation2d desiredTurretAngle = targetTranslation.minus(futureTurretPose.getTranslation())
                 .getAngle()
-                .minus(turretPose.getRotation());
+                .minus(futureRobotPose.getRotation());
 
         final ShotCalc shotCalc = ShotMap.get(turretToTargetDistance);
         return new ShotCalculation(
