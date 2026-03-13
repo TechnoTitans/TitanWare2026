@@ -35,8 +35,8 @@ public class Superstructure extends VirtualSubsystem {
     private final Supplier<ShotCalculator.ShotCalculation> shotCalculationSupplier;
 
     public enum Goal {
-        TRACKING(Turret.Goal.TRACKING, Hood.Goal.STOW, Shooter.Goal.STOP, true),
-        STATIC_SHOT_PREP(Turret.Goal.TRACKING, Hood.Goal.STOW, Shooter.Goal.STOP, false),
+        TRACKING(Turret.Goal.TRACKING, Hood.Goal.STOW, Shooter.Goal.IDLE, true),
+        STATIC_SHOT_PREP(Turret.Goal.TRACKING, Hood.Goal.STOW, Shooter.Goal.IDLE, false),
         SHOOTING(Turret.Goal.TRACKING, Hood.Goal.SHOOTING, Shooter.Goal.TRACKING, true),
         STATIC_SHOOTING(Turret.Goal.TRACKING, Hood.Goal.SHOOTING, Shooter.Goal.TRACKING, false);
 
@@ -143,28 +143,25 @@ public class Superstructure extends VirtualSubsystem {
     }
 
     public Command setGoalCommand(final Goal goal) {
-        return Commands.runOnce(
-                () -> setDesiredGoal(goal)
-        ).withName("SetGoal: " + goal.toString());
+        return Commands.runOnce(() -> setDesiredGoal(goal)).withName("SetGoal: " + goal.toString());
     }
 
     public Command toGoal(final Supplier<Goal> goal) {
-        return runEnd(
+        return Commands.startEnd(
                 () -> setDesiredGoal(goal.get()),
                 () -> setDesiredGoal(Goal.TRACKING)
         ).withName("ToGoalSupplier");
     }
 
     public Command toGoal(final Goal goal) {
-        return runEnd(
+        return Commands.startEnd(
                 () -> setDesiredGoal(goal),
                 () -> setDesiredGoal(Goal.TRACKING)
         ).withName("ToGoal: " + goal.toString());
     }
 
     public Command runGoal(final Supplier<Goal> goalSupplier) {
-        return run(() -> setDesiredGoal(goalSupplier.get()))
-                .withName("RunGoalSupplier");
+        return run(() -> setDesiredGoal(goalSupplier.get())).withName("RunGoalSupplier");
     }
 
     public Trigger atSetpoint(final Supplier<Goal> goalSupplier) {

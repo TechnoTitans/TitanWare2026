@@ -25,6 +25,7 @@ public class Shooter extends SubsystemBase {
 
     public enum Goal {
         STOP(0, false),
+        IDLE(20, false),
         TRACKING(0, true);
 
         private double velocitySetpointRotsPerSec;
@@ -62,13 +63,11 @@ public class Shooter extends SubsystemBase {
         shooterIO.updateInputs(inputs);
         Logger.processInputs(LogKey, inputs);
 
-        if (desiredGoal.isDynamic) {
-            shooterIO.toVelocity(desiredGoal.velocitySetpointRotsPerSec);
-        }
-
         if (desiredGoal != currentGoal) {
-            shooterIO.toVelocity(desiredGoal.velocitySetpointRotsPerSec);
             currentGoal = desiredGoal;
+            shooterIO.toVelocity(desiredGoal.velocitySetpointRotsPerSec);
+        } else if (desiredGoal.isDynamic) {
+            shooterIO.toVelocity(desiredGoal.velocitySetpointRotsPerSec);
         }
 
         Logger.recordOutput(LogKey + "/DesiredGoal", desiredGoal.toString());

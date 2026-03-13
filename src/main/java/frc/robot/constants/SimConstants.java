@@ -15,7 +15,7 @@ public interface SimConstants {
     }
 
     interface Turret {
-        double MOMENT_OF_INERTIA = 0.1068;
+        double MOMENT_OF_INERTIA = 0.09973;
     }
 
     interface IntakeSlide {

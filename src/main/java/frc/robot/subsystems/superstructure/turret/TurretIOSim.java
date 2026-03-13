@@ -115,13 +115,12 @@ public class TurretIOSim implements TurretIO {
     public void config() {
         final TalonFXConfiguration motorConfig = new TalonFXConfiguration();
         motorConfig.Slot0 = new Slot0Configs()
-                .withKS(1.9)
-                .withStaticFeedforwardSign(StaticFeedforwardSignValue.UseClosedLoopSign)
-                .withKP(200)
-                .withKD(10);
-        motorConfig.TorqueCurrent.PeakForwardTorqueCurrent = 60;
-        motorConfig.TorqueCurrent.PeakReverseTorqueCurrent = -60;
-        motorConfig.CurrentLimits.StatorCurrentLimit = 60;
+                .withKS(0.366)
+                .withStaticFeedforwardSign(StaticFeedforwardSignValue.UseVelocitySign)
+                .withKV(5)
+                .withKP(30)
+                .withKD(0);
+        motorConfig.CurrentLimits.StatorCurrentLimit = 70;
         motorConfig.CurrentLimits.StatorCurrentLimitEnable = true;
         motorConfig.Feedback.FeedbackSensorSource = FeedbackSensorSourceValue.RotorSensor;
         motorConfig.Feedback.SensorToMechanismRatio = constants.motorToTurretGearing();

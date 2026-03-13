@@ -44,15 +44,15 @@ public class ShotCalculator {
     public static final InterpolatingTreeMap<Double, ShotCalc> ShotMap =
             new InterpolatingTreeMap<>(InverseInterpolator.forDouble(), ShotCalc::interpolate);
     static {
-        ShotMap.put(1.77, new ShotCalc(0, 30));
-        ShotMap.put(2.45, new ShotCalc(0.0056, 30.55));
-        ShotMap.put(2.92, new ShotCalc(0.0056, 35));
-        ShotMap.put(3.45, new ShotCalc(0.0264, 35));
-        ShotMap.put(3.66, new ShotCalc(0.0444, 35));
-        ShotMap.put(3.70, new ShotCalc(0.0537, 35));
-        ShotMap.put(3.97, new ShotCalc(0.0500, 35));
-        ShotMap.put(4.97, new ShotCalc(0.0583, 40));
-        ShotMap.put(5.43, new ShotCalc(0.0583, 40));
+        ShotMap.put(1.77, new ShotCalc(30, 0));
+        ShotMap.put(2.45, new ShotCalc(30.55, 0.0056));
+        ShotMap.put(2.92, new ShotCalc(35, 0.0056));
+        ShotMap.put(3.45, new ShotCalc(35, 0.0264));
+        ShotMap.put(3.66, new ShotCalc(35, 0.0444));
+        ShotMap.put(3.70, new ShotCalc(35, 0.0537));
+        ShotMap.put(3.97, new ShotCalc(35, 0.0500));
+        ShotMap.put(4.97, new ShotCalc(40, 0.0583));
+        ShotMap.put(5.43, new ShotCalc(40, 0.0583));
     }
 
     private static final InterpolatingDoubleTreeMap TOFMap = new InterpolatingDoubleTreeMap();
@@ -197,7 +197,7 @@ public class ShotCalculator {
         final ChassisSpeeds turretFieldVelocity = getTurretFieldSpeeds(lookaheadRobotPose, turretOffset, fieldSpeeds);
 
         double timeOfFlight;
-        Pose2d futureTurretPose = turretPose;
+        Pose2d futureTurretPose;
         double futureDistance = turretToTargetDistance;
 
         for (int i = 0; i < 20; i++) {
