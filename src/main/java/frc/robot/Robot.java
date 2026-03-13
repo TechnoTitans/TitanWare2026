@@ -418,6 +418,10 @@ public class Robot extends LoggedRobot {
         driverController.rightTrigger(0.5, teleopEventLoop)
                 .whileTrue(robotCommands.shootWhileMoving());
 
+        driverController.y(teleopEventLoop).onTrue(robotCommands.deployIntake());
+
+        driverController.a(teleopEventLoop).onTrue(robotCommands.stowIntake());
+
         coController.leftTrigger(0.5, teleopEventLoop).whileTrue(
                 intakeRoller.toGoal(IntakeRoller.Goal.INTAKE)
         );

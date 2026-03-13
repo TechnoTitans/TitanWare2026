@@ -21,7 +21,7 @@ public class Feeder extends SubsystemBase {
 
     public enum Goal {
         STOP(0),
-        FEED(32);
+        FEED(80);
 
         private final double velocitySetpointRotsPerSec;
 

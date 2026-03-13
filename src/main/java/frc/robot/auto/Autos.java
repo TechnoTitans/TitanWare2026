@@ -243,8 +243,8 @@ public class Autos {
                         sequence(
                                 shootStatic(),
                                 superstructure.setGoalCommand(Superstructure.Goal.STATIC_SHOT_PREP),
-                                shootStatic(),
-                                shootingToOutpost.cmd().asProxy()
+                                Commands.runOnce(() -> superstructure.updateStaticShotParameter(secondShotCalculation)),
+                                shootingToOutpost.cmd()
                         )
                 ).withName("CenterLineShoot")
 
