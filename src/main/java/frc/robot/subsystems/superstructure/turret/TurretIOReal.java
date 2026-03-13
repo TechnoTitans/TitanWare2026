@@ -35,7 +35,6 @@ public class TurretIOReal implements TurretIO {
     private final StatusSignal<Angle> primaryEncoderPosition;
     private final StatusSignal<Angle> secondaryEncoderPosition;
 
-    private final MotionMagicExpoVoltage motionMagicExpoVoltage;
     private final PositionVoltage positionVoltage;
 
     public TurretIOReal(HardwareConstants.TurretConstants constants) {
@@ -54,7 +53,6 @@ public class TurretIOReal implements TurretIO {
         this.secondaryEncoderPosition = secondaryEncoder.getPosition(true);
         this.primaryEncoderPosition = primaryEncoder.getPosition(true);
 
-        this.motionMagicExpoVoltage = new MotionMagicExpoVoltage(0);
         this.positionVoltage = new PositionVoltage(0);
 
         RefreshAll.add(
