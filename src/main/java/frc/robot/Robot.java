@@ -92,7 +92,7 @@ public class Robot extends LoggedRobot {
     );
 
     public final IntakeSlide intakeSlide = new IntakeSlide(
-            Constants.CURRENT_MODE,
+            Constants.RobotMode.DISABLED,
             HardwareConstants.INTAKE_SLIDE
     );
 
