@@ -138,8 +138,6 @@ public class Autos {
                                         .and(superstructure.atSetpoint))
                                 .finallyDo(timer::stop)
                 ).until(() -> timer.hasElapsed(SHOOTING_TIME)),
-                superstructure.setGoalCommand(Superstructure.Goal.STATIC_SHOOTING)
-                        .onlyIf(turretSafe),
                 intakeSlide.toGoal(IntakeSlide.Goal.SHOOTING),
                 swerve.runWheelXCommand(),
                 Commands.run(
