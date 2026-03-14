@@ -19,6 +19,8 @@ public enum AllianceShift {
         UNKNOWN
     }
 
+    public static final String AllianceShiftLogKey = "AllianceShift/";
+
     public HubStatus hubStatus() {
         if (this == AUTO || this == TRANSITION || this == ENDGAME) {
             return HubStatus.ACTIVE;
@@ -54,15 +56,15 @@ public enum AllianceShift {
         };
     }
 
-    public static AllianceShift get() {
+    public static AllianceShift get(final double matchTimeOffset) {
         if (DriverStation.isAutonomousEnabled()) {
             return AUTO;
         } else if (DriverStation.isDisabled()) {
             return UNKNOWN;
         }
 
-        final double matchTime = DriverStation.getMatchTime();
         if (DriverStation.isFMSAttached()) {
+            final double matchTime = DriverStation.getMatchTime() - matchTimeOffset;
             if (matchTime > 130) {
                 return TRANSITION;
             } else if (matchTime > 105) {
@@ -77,6 +79,7 @@ public enum AllianceShift {
                 return ENDGAME;
             }
         } else {
+            final double matchTime = DriverStation.getMatchTime() + matchTimeOffset;
             if (matchTime > 110) {
                 return ENDGAME;
             } else if (matchTime > 85) {

@@ -92,7 +92,6 @@ public class Turret extends SubsystemBase {
                 Seconds.of(6)
         );
 
-
         turretIO.setPosition(0);
     }
 

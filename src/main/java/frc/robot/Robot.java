@@ -52,6 +52,8 @@ import java.util.Optional;
 import java.util.function.BooleanSupplier;
 import java.util.function.Supplier;
 
+import static frc.robot.AllianceShift.AllianceShiftLogKey;
+
 public class Robot extends LoggedRobot {
     private static final String LogKey = "Robot";
     private static final String AKitLogPath = "/U/logs";
@@ -82,7 +84,7 @@ public class Robot extends LoggedRobot {
     );
 
     public final PhotonVision photonVision = new PhotonVision(
-            Constants.CURRENT_MODE,
+            Constants.RobotMode.DISABLED,
             swerve
     );
 
@@ -200,8 +202,9 @@ public class Robot extends LoggedRobot {
     private final LoggedTrigger autonomousEnabled = RobotModeLoggedTriggers.autonomous(group);
     private final LoggedTrigger enabled = RobotModeLoggedTriggers.enabled(group);
 
+    private static final double MatchTimeOffsetSeconds = 2;
     private final LoggedTrigger hubActive =
-            group.t("HubActive", () -> AllianceShift.get().hubStatus() == AllianceShift.HubStatus.ACTIVE);
+            group.t("HubActive", () -> AllianceShift.get(MatchTimeOffsetSeconds).hubStatus() == AllianceShift.HubStatus.ACTIVE);
 
     @Override
     public void robotInit() {
@@ -318,9 +321,12 @@ public class Robot extends LoggedRobot {
 
         componentsSolver.periodic();
 
-        final AllianceShift allianceShift = AllianceShift.get();
-        Logger.recordOutput("AllianceShift", allianceShift);
-        Logger.recordOutput("HubStatus", allianceShift.hubStatus());
+        final AllianceShift allianceShift = AllianceShift.get(0);
+        final AllianceShift offsetAllianceShift = AllianceShift.get(MatchTimeOffsetSeconds);
+        Logger.recordOutput(AllianceShiftLogKey + "Normal", allianceShift);
+        Logger.recordOutput(AllianceShiftLogKey + "Offset", offsetAllianceShift);
+        Logger.recordOutput(AllianceShiftLogKey + "NormalHubStatus", allianceShift.hubStatus());
+        Logger.recordOutput(AllianceShiftLogKey + "OffsetHubStatus", offsetAllianceShift.hubStatus());
     }
 
     @Override
