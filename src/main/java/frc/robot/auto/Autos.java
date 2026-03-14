@@ -138,6 +138,7 @@ public class Autos {
                                         .and(superstructure.atSetpoint))
                                 .finallyDo(timer::stop)
                 ).until(() -> timer.hasElapsed(SHOOTING_TIME)),
+                superstructure.toGoal(Superstructure.Goal.SHOOTING),
                 intakeSlide.toGoal(IntakeSlide.Goal.SHOOTING),
                 swerve.runWheelXCommand(),
                 Commands.run(

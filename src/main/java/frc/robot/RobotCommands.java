@@ -84,6 +84,7 @@ public class RobotCommands {
 
     public Command shootWhileMoving() {
         return Commands.parallel(
+                superstructure.toGoal(Superstructure.Goal.SHOOTING),
                 Commands.repeatingSequence(
                         Commands.waitUntil(superstructure.atSetpoint),
                         feeder.toGoal(Feeder.Goal.FEED)
@@ -102,6 +103,7 @@ public class RobotCommands {
 
     public Command shootStationary() {
         return Commands.parallel(
+                superstructure.toGoal(Superstructure.Goal.SHOOTING),
                 Commands.sequence(
                         Commands.waitUntil(ableToShoot),
                         Commands.parallel(
