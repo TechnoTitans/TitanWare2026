@@ -6,6 +6,8 @@ import com.ctre.phoenix6.configs.CANcoderConfiguration;
 import com.ctre.phoenix6.configs.Slot0Configs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.PositionVoltage;
+import com.ctre.phoenix6.controls.TorqueCurrentFOC;
+import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.CANcoder;
 import com.ctre.phoenix6.hardware.ParentDevice;
 import com.ctre.phoenix6.hardware.TalonFX;
@@ -50,6 +52,8 @@ public class TurretIOSim implements TurretIO {
     private final StatusSignal<Angle> secondaryEncoderPosition;
 
     private final PositionVoltage positionVoltage;
+    private final VoltageOut voltageOut;
+    private final TorqueCurrentFOC torqueCurrentFOC;
 
     public TurretIOSim(final HardwareConstants.TurretConstants constants) {
         this.deltaTime = new DeltaTime(true);
@@ -89,6 +93,8 @@ public class TurretIOSim implements TurretIO {
         this.secondaryEncoderPosition = secondaryEncoder.getPosition(true);
 
         this.positionVoltage = new PositionVoltage(0);
+        this.voltageOut = new VoltageOut(0);
+        this.torqueCurrentFOC = new TorqueCurrentFOC(0);
 
         RefreshAll.add(
                 constants.CANBus(),
@@ -180,6 +186,16 @@ public class TurretIOSim implements TurretIO {
 
         inputs.primaryEncoderPositionRots = primaryEncoderPosition.getValueAsDouble();
         inputs.secondaryEncoderPositionRots = secondaryEncoderPosition.getValueAsDouble();
+    }
+
+    @Override
+    public void toTurretVoltage(final double volts) {
+        turretMotor.setControl(voltageOut.withOutput(volts));
+    }
+
+    @Override
+    public void toTurretTorqueCurrent(final double torqueCurrentAmps) {
+        turretMotor.setControl(torqueCurrentFOC.withOutput(torqueCurrentAmps));
     }
 
     @Override
