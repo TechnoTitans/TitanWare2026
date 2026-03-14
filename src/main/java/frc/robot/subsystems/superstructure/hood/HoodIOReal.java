@@ -40,7 +40,7 @@ public class HoodIOReal implements HoodIO {
         this.hoodTorqueCurrent = hoodMotor.getTorqueCurrent(false);
         this.hoodDeviceTemp = hoodMotor.getDeviceTemp(false);
 
-        this.positionVoltage = new PositionVoltage(0).withSlot(0);
+        this.positionVoltage = new PositionVoltage(0);
 
         RefreshAll.add(
                 constants.CANBus(),
@@ -54,23 +54,23 @@ public class HoodIOReal implements HoodIO {
 
     @Override
     public void config() {
-        final TalonFXConfiguration motorConfig = new TalonFXConfiguration();
-        motorConfig.Slot0 = new Slot0Configs()
+        final TalonFXConfiguration talonFXConfiguration = new TalonFXConfiguration();
+        talonFXConfiguration.Slot0 = new Slot0Configs()
                 .withKS(0.3)
                 .withStaticFeedforwardSign(StaticFeedforwardSignValue.UseClosedLoopSign)
                 .withKP(300)
                 .withKD(0.1);
-        motorConfig.CurrentLimits.StatorCurrentLimit = 60;
-        motorConfig.CurrentLimits.StatorCurrentLimitEnable = true;
-        motorConfig.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
-        motorConfig.MotorOutput.NeutralMode = NeutralModeValue.Brake;
-        motorConfig.Feedback.FeedbackSensorSource = FeedbackSensorSourceValue.RotorSensor;
-        motorConfig.Feedback.SensorToMechanismRatio = constants.gearing();
-        motorConfig.SoftwareLimitSwitch.ForwardSoftLimitThreshold = constants.upperLimitRots();
-        motorConfig.SoftwareLimitSwitch.ForwardSoftLimitEnable = true;
-        motorConfig.SoftwareLimitSwitch.ReverseSoftLimitThreshold = constants.lowerLimitRots();
-        motorConfig.SoftwareLimitSwitch.ReverseSoftLimitEnable = true;
-        Phoenix6Utils.tryUntilOk(hoodMotor, () -> hoodMotor.getConfigurator().apply(motorConfig));
+        talonFXConfiguration.CurrentLimits.StatorCurrentLimit = 60;
+        talonFXConfiguration.CurrentLimits.StatorCurrentLimitEnable = true;
+        talonFXConfiguration.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
+        talonFXConfiguration.MotorOutput.NeutralMode = NeutralModeValue.Brake;
+        talonFXConfiguration.Feedback.FeedbackSensorSource = FeedbackSensorSourceValue.RotorSensor;
+        talonFXConfiguration.Feedback.SensorToMechanismRatio = constants.gearing();
+        talonFXConfiguration.SoftwareLimitSwitch.ForwardSoftLimitThreshold = constants.upperLimitRots();
+        talonFXConfiguration.SoftwareLimitSwitch.ForwardSoftLimitEnable = true;
+        talonFXConfiguration.SoftwareLimitSwitch.ReverseSoftLimitThreshold = constants.lowerLimitRots();
+        talonFXConfiguration.SoftwareLimitSwitch.ReverseSoftLimitEnable = true;
+        Phoenix6Utils.tryUntilOk(hoodMotor, () -> hoodMotor.getConfigurator().apply(talonFXConfiguration));
 
         BaseStatusSignal.setUpdateFrequencyForAll(
                 100,
@@ -105,6 +105,6 @@ public class HoodIOReal implements HoodIO {
 
     @Override
     public void zeroMotor() {
-        Phoenix6Utils.reportIfNotOk(hoodMotor, hoodMotor.setPosition(0));
+        Phoenix6Utils.tryUntilOk(hoodMotor, () -> hoodMotor.setPosition(0));
     }
 }

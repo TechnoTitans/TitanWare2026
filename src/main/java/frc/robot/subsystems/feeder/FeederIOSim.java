@@ -20,6 +20,7 @@ import edu.wpi.first.wpilibj.simulation.DCMotorSim;
 import frc.robot.constants.HardwareConstants;
 import frc.robot.utils.closeables.ToClose;
 import frc.robot.utils.control.DeltaTime;
+import frc.robot.utils.ctre.Phoenix6Utils;
 import frc.robot.utils.ctre.RefreshAll;
 import frc.robot.utils.sim.SimUtils;
 import frc.robot.utils.sim.motors.TalonFXSim;
@@ -93,19 +94,21 @@ public class FeederIOSim implements FeederIO {
 
     @Override
     public void config() {
-        final TalonFXConfiguration wheelConfiguration = new TalonFXConfiguration();
-        wheelConfiguration.Slot0 = new Slot0Configs()
+        final TalonFXConfiguration talonFXConfiguration = new TalonFXConfiguration();
+        talonFXConfiguration.Slot0 = new Slot0Configs()
                 .withKS(6.72)
                 .withKV(0.08)
                 .withKP(6)
                 .withKD(0.09);
-        wheelConfiguration.CurrentLimits.StatorCurrentLimit = 80;
-        wheelConfiguration.CurrentLimits.StatorCurrentLimitEnable = true;
-        wheelConfiguration.MotorOutput.NeutralMode = NeutralModeValue.Brake;
-        wheelConfiguration.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
-        wheelConfiguration.Feedback.FeedbackSensorSource = FeedbackSensorSourceValue.RotorSensor;
-        wheelConfiguration.Feedback.SensorToMechanismRatio = constants.wheelGearing();
-        wheelMotor.getConfigurator().apply(wheelConfiguration);
+        talonFXConfiguration.TorqueCurrent.PeakForwardTorqueCurrent = 80;
+        talonFXConfiguration.TorqueCurrent.PeakReverseTorqueCurrent = -80;
+        talonFXConfiguration.CurrentLimits.StatorCurrentLimit = 80;
+        talonFXConfiguration.CurrentLimits.StatorCurrentLimitEnable = true;
+        talonFXConfiguration.MotorOutput.NeutralMode = NeutralModeValue.Brake;
+        talonFXConfiguration.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
+        talonFXConfiguration.Feedback.FeedbackSensorSource = FeedbackSensorSourceValue.RotorSensor;
+        talonFXConfiguration.Feedback.SensorToMechanismRatio = constants.wheelGearing();
+        Phoenix6Utils.tryUntilOk(wheelMotor, () -> wheelMotor.getConfigurator().apply(talonFXConfiguration));
 
         BaseStatusSignal.setUpdateFrequencyForAll(
                 100,
@@ -125,8 +128,9 @@ public class FeederIOSim implements FeederIO {
                 wheelMotor
         );
 
-        wheelMotor.getSimState().Orientation = ChassisReference.Clockwise_Positive;
-        wheelMotor.getSimState().setMotorType(TalonFXSimState.MotorType.KrakenX60);
+        final TalonFXSimState wheelMotorSimState = wheelMotor.getSimState();
+        wheelMotorSimState.Orientation = ChassisReference.Clockwise_Positive;
+        wheelMotorSimState.setMotorType(TalonFXSimState.MotorType.KrakenX60);
     }
 
     @Override

@@ -11,6 +11,7 @@ import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 import edu.wpi.first.units.measure.*;
 import frc.robot.constants.HardwareConstants;
+import frc.robot.utils.ctre.Phoenix6Utils;
 import frc.robot.utils.ctre.RefreshAll;
 
 public class IntakeRollerIOReal implements IntakeRollerIO {
@@ -51,14 +52,14 @@ public class IntakeRollerIOReal implements IntakeRollerIO {
 
     @Override
     public void config() {
-        final TalonFXConfiguration motorConfiguration = new TalonFXConfiguration();
-        motorConfiguration.CurrentLimits.StatorCurrentLimit = 60;
-        motorConfiguration.CurrentLimits.StatorCurrentLimitEnable = true;
-        motorConfiguration.MotorOutput.NeutralMode = NeutralModeValue.Brake;
-        motorConfiguration.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
-        motorConfiguration.Feedback.FeedbackSensorSource = FeedbackSensorSourceValue.RotorSensor;
-        motorConfiguration.Feedback.SensorToMechanismRatio = constants.rollerGearing();
-        rollerMotor.getConfigurator().apply(motorConfiguration);
+        final TalonFXConfiguration talonFXConfiguration = new TalonFXConfiguration();
+        talonFXConfiguration.CurrentLimits.StatorCurrentLimit = 60;
+        talonFXConfiguration.CurrentLimits.StatorCurrentLimitEnable = true;
+        talonFXConfiguration.MotorOutput.NeutralMode = NeutralModeValue.Brake;
+        talonFXConfiguration.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
+        talonFXConfiguration.Feedback.FeedbackSensorSource = FeedbackSensorSourceValue.RotorSensor;
+        talonFXConfiguration.Feedback.SensorToMechanismRatio = constants.rollerGearing();
+        Phoenix6Utils.tryUntilOk(rollerMotor, () -> rollerMotor.getConfigurator().apply(talonFXConfiguration));
 
         BaseStatusSignal.setUpdateFrequencyForAll(
                 100,

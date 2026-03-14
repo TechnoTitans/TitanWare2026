@@ -13,6 +13,7 @@ import com.ctre.phoenix6.mechanisms.DifferentialMotorConstants;
 import com.ctre.phoenix6.signals.*;
 import edu.wpi.first.units.measure.*;
 import frc.robot.constants.HardwareConstants;
+import frc.robot.utils.ctre.Phoenix6Utils;
 import frc.robot.utils.ctre.RefreshAll;
 
 public class IntakeSlideIOReal implements IntakeSlideIO {
@@ -159,16 +160,24 @@ public class IntakeSlideIOReal implements IntakeSlideIO {
     @Override
     public void toSlidePosition(final double positionRots) {
         diffMechanism.setControl(
-                averageMotionMagicExpoTorqueCurrent.withPosition(positionRots).withSlot(0),
-                differentialPositionTorqueCurrentFOC.withPosition(0).withSlot(2)
+                averageMotionMagicExpoTorqueCurrent
+                        .withPosition(positionRots)
+                        .withSlot(0),
+                differentialPositionTorqueCurrentFOC
+                        .withPosition(0)
+                        .withSlot(2)
         );
     }
 
     @Override
     public void holdSlidePosition(final double positionRots) {
         diffMechanism.setControl(
-                averagePositionTorqueCurrentFOC.withPosition(positionRots).withSlot(2),
-                differentialPositionTorqueCurrentFOC.withPosition(0).withSlot(2)
+                averagePositionTorqueCurrentFOC
+                        .withPosition(positionRots)
+                        .withSlot(2),
+                differentialPositionTorqueCurrentFOC
+                        .withPosition(0)
+                        .withSlot(2)
         );
     }
 
@@ -176,13 +185,17 @@ public class IntakeSlideIOReal implements IntakeSlideIO {
     public void toSlidePositionUnprofiled(final double positionRots, final double velocityRotsPerSec) {
         diffMechanism.setControl(
                 averagePositionTorqueCurrentFOC
-                        .withPosition(positionRots).withVelocity(velocityRotsPerSec).withSlot(0),
-                differentialPositionTorqueCurrentFOC.withPosition(0).withSlot(2)
+                        .withPosition(positionRots)
+                        .withVelocity(velocityRotsPerSec)
+                        .withSlot(0),
+                differentialPositionTorqueCurrentFOC
+                        .withPosition(0)
+                        .withSlot(2)
         );
     }
 
     @Override
     public void zeroMotors() {
-        diffMechanism.setPosition(0);
+        Phoenix6Utils.tryUntilOk(diffMechanism.getLeader(), () -> diffMechanism.setPosition(0));
     }
 }

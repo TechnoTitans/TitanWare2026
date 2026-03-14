@@ -2,7 +2,6 @@ package frc.robot.subsystems.spindexer;
 
 import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.StatusSignal;
-import com.ctre.phoenix6.configs.Slot0Configs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.ParentDevice;
@@ -20,6 +19,7 @@ import edu.wpi.first.wpilibj.simulation.DCMotorSim;
 import frc.robot.constants.HardwareConstants;
 import frc.robot.utils.closeables.ToClose;
 import frc.robot.utils.control.DeltaTime;
+import frc.robot.utils.ctre.Phoenix6Utils;
 import frc.robot.utils.ctre.RefreshAll;
 import frc.robot.utils.sim.motors.TalonFXSim;
 
@@ -94,15 +94,14 @@ public class SpindexerIOSim implements SpindexerIO {
 
     @Override
     public void config() {
-        final TalonFXConfiguration wheelConfiguration = new TalonFXConfiguration();
-        wheelConfiguration.Slot0 = new Slot0Configs();
-        wheelConfiguration.CurrentLimits.StatorCurrentLimit = 80;
-        wheelConfiguration.CurrentLimits.StatorCurrentLimitEnable = true;
-        wheelConfiguration.MotorOutput.NeutralMode = NeutralModeValue.Brake;
-        wheelConfiguration.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
-        wheelConfiguration.Feedback.FeedbackSensorSource = FeedbackSensorSourceValue.RotorSensor;
-        wheelConfiguration.Feedback.SensorToMechanismRatio = constants.wheelGearing();
-        wheelMotor.getConfigurator().apply(wheelConfiguration);
+        final TalonFXConfiguration talonFXConfiguration = new TalonFXConfiguration();
+        talonFXConfiguration.CurrentLimits.StatorCurrentLimit = 80;
+        talonFXConfiguration.CurrentLimits.StatorCurrentLimitEnable = true;
+        talonFXConfiguration.MotorOutput.NeutralMode = NeutralModeValue.Brake;
+        talonFXConfiguration.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
+        talonFXConfiguration.Feedback.FeedbackSensorSource = FeedbackSensorSourceValue.RotorSensor;
+        talonFXConfiguration.Feedback.SensorToMechanismRatio = constants.wheelGearing();
+        Phoenix6Utils.tryUntilOk(wheelMotor, () -> wheelMotor.getConfigurator().apply(talonFXConfiguration));
 
         BaseStatusSignal.setUpdateFrequencyForAll(
                 100,
@@ -127,7 +126,7 @@ public class SpindexerIOSim implements SpindexerIO {
     }
 
     @Override
-    public void updateInputs(SpindexerIOInputs inputs) {
+    public void updateInputs(final SpindexerIOInputs inputs) {
         inputs.wheelPositionRots = wheelPosition.getValueAsDouble();
         inputs.wheelVelocityRotsPerSec = wheelVelocity.getValueAsDouble();
         inputs.wheelVoltage = wheelVoltage.getValueAsDouble();

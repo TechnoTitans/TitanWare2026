@@ -5,7 +5,9 @@ import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.Slot0Configs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.Follower;
+import com.ctre.phoenix6.controls.TorqueCurrentFOC;
 import com.ctre.phoenix6.controls.VelocityTorqueCurrentFOC;
+import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.ParentDevice;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.FeedbackSensorSourceValue;
@@ -23,6 +25,7 @@ import frc.robot.constants.HardwareConstants;
 import frc.robot.constants.SimConstants;
 import frc.robot.utils.closeables.ToClose;
 import frc.robot.utils.control.DeltaTime;
+import frc.robot.utils.ctre.Phoenix6Utils;
 import frc.robot.utils.ctre.RefreshAll;
 import frc.robot.utils.sim.SimUtils;
 import frc.robot.utils.sim.motors.TalonFXSim;
@@ -40,6 +43,11 @@ public class ShooterIOSimBangBang implements ShooterIO {
 
     private final TalonFXSim motorsSim;
 
+    private final VelocityTorqueCurrentFOC velocityTorqueCurrentFOC;
+    private final TorqueCurrentFOC torqueCurrentFOC;
+    private final VoltageOut voltageOut;
+    private final Follower follower;
+
     private final StatusSignal<Angle> masterPosition;
     private final StatusSignal<AngularVelocity> masterVelocity;
     private final StatusSignal<Voltage> masterVoltage;
@@ -51,9 +59,6 @@ public class ShooterIOSimBangBang implements ShooterIO {
     private final StatusSignal<Voltage> followerVoltage;
     private final StatusSignal<Current> followerTorqueCurrent;
     private final StatusSignal<Temperature> followerDeviceTemp;
-
-    private final VelocityTorqueCurrentFOC velocityTorqueCurrentFOC;
-    private final Follower follower;
 
     public ShooterIOSimBangBang(final HardwareConstants.ShooterConstants constants) {
         this.deltaTime = new DeltaTime(true);
@@ -81,6 +86,11 @@ public class ShooterIOSimBangBang implements ShooterIO {
                 motorsSim::getAngularVelocityRadPerSec
         );
 
+        this.velocityTorqueCurrentFOC = new VelocityTorqueCurrentFOC(0);
+        this.torqueCurrentFOC = new TorqueCurrentFOC(0);
+        this.voltageOut = new VoltageOut(0);
+        this.follower = new Follower(masterMotor.getDeviceID(), MotorAlignmentValue.Aligned);
+
         this.masterPosition = masterMotor.getPosition(false);
         this.masterVelocity = masterMotor.getVelocity(false);
         this.masterVoltage = masterMotor.getMotorVoltage(false);
@@ -92,9 +102,6 @@ public class ShooterIOSimBangBang implements ShooterIO {
         this.followerVoltage = followerMotor.getMotorVoltage(false);
         this.followerTorqueCurrent = followerMotor.getTorqueCurrent(false);
         this.followerDeviceTemp = followerMotor.getDeviceTemp(false);
-
-        this.velocityTorqueCurrentFOC = new VelocityTorqueCurrentFOC(0);
-        this.follower = new Follower(masterMotor.getDeviceID(), MotorAlignmentValue.Aligned);
 
         RefreshAll.add(
                 constants.CANBus(),
@@ -125,22 +132,25 @@ public class ShooterIOSimBangBang implements ShooterIO {
 
     @Override
     public void config() {
-        final TalonFXConfiguration motorConfiguration = new TalonFXConfiguration();
-        motorConfiguration.Slot0 = new Slot0Configs()
+        final TalonFXConfiguration talonFXConfiguration = new TalonFXConfiguration();
+        talonFXConfiguration.Slot0 = new Slot0Configs()
                 .withKS(6.75)
                 .withKV(0)
                 .withKA(0)
                 .withKP(9999)
                 .withKD(0);
-        motorConfiguration.TorqueCurrent.PeakForwardTorqueCurrent = 80;
-        motorConfiguration.TorqueCurrent.PeakReverseTorqueCurrent = 0;
-        motorConfiguration.CurrentLimits.StatorCurrentLimit = 80;
-        motorConfiguration.CurrentLimits.StatorCurrentLimitEnable = true;
-        motorConfiguration.MotorOutput.NeutralMode = NeutralModeValue.Coast;
-        motorConfiguration.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
-        motorConfiguration.Feedback.FeedbackSensorSource = FeedbackSensorSourceValue.RotorSensor;
-        motorConfiguration.Feedback.SensorToMechanismRatio = constants.wheelGearing();
-        masterMotor.getConfigurator().apply(motorConfiguration);
+        talonFXConfiguration.TorqueCurrent.PeakForwardTorqueCurrent = 80;
+        talonFXConfiguration.TorqueCurrent.PeakReverseTorqueCurrent = 0;
+        talonFXConfiguration.CurrentLimits.StatorCurrentLimit = 80;
+        talonFXConfiguration.CurrentLimits.StatorCurrentLimitEnable = true;
+        talonFXConfiguration.MotorOutput.NeutralMode = NeutralModeValue.Coast;
+        talonFXConfiguration.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
+        talonFXConfiguration.Feedback.FeedbackSensorSource = FeedbackSensorSourceValue.RotorSensor;
+        talonFXConfiguration.Feedback.SensorToMechanismRatio = constants.wheelGearing();
+        Phoenix6Utils.tryUntilOk(masterMotor, () -> masterMotor.getConfigurator().apply(talonFXConfiguration));
+
+        talonFXConfiguration.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
+        Phoenix6Utils.tryUntilOk(followerMotor, () -> followerMotor.getConfigurator().apply(talonFXConfiguration));
 
         BaseStatusSignal.setUpdateFrequencyForAll(
                 100,
@@ -191,8 +201,20 @@ public class ShooterIOSimBangBang implements ShooterIO {
     }
 
     @Override
-    public void toVelocity(final double velocityRotsPerSec) {
+    public void toFlywheelVelocity(final double velocityRotsPerSec) {
         masterMotor.setControl(velocityTorqueCurrentFOC.withVelocity(velocityRotsPerSec));
+        followerMotor.setControl(follower);
+    }
+
+    @Override
+    public void toFlywheelVoltage(final double volts) {
+        masterMotor.setControl(voltageOut.withOutput(volts));
+        followerMotor.setControl(follower);
+    }
+
+    @Override
+    public void toFlywheelTorqueCurrent(final double torqueCurrentAmps) {
+        masterMotor.setControl(torqueCurrentFOC.withOutput(torqueCurrentAmps));
         followerMotor.setControl(follower);
     }
 }

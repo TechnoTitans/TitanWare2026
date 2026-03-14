@@ -16,6 +16,7 @@ import com.ctre.phoenix6.signals.MotorAlignmentValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 import edu.wpi.first.units.measure.*;
 import frc.robot.constants.HardwareConstants;
+import frc.robot.utils.ctre.Phoenix6Utils;
 import frc.robot.utils.ctre.RefreshAll;
 
 public class ShooterIOReal implements ShooterIO {
@@ -37,8 +38,8 @@ public class ShooterIOReal implements ShooterIO {
     private final StatusSignal<Temperature> followerDeviceTemp;
 
     private final VelocityTorqueCurrentFOC velocityTorqueCurrentFOC;
-    private final VoltageOut voltageOut;
     private final TorqueCurrentFOC torqueCurrentFOC;
+    private final VoltageOut voltageOut;
 
     private final Follower follower;
 
@@ -61,9 +62,8 @@ public class ShooterIOReal implements ShooterIO {
         this.followerDeviceTemp = followerMotor.getDeviceTemp(false);
 
         this.velocityTorqueCurrentFOC = new VelocityTorqueCurrentFOC(0);
-        this.voltageOut = new VoltageOut(0);
         this.torqueCurrentFOC = new TorqueCurrentFOC(0);
-
+        this.voltageOut = new VoltageOut(0);
         this.follower = new Follower(masterMotor.getDeviceID(), MotorAlignmentValue.Opposed);
 
         RefreshAll.add(
@@ -83,20 +83,23 @@ public class ShooterIOReal implements ShooterIO {
 
     @Override
     public void config() {
-        final TalonFXConfiguration motorConfiguration = new TalonFXConfiguration();
-        motorConfiguration.Slot0 = new Slot0Configs()
+        final TalonFXConfiguration talonFXConfiguration = new TalonFXConfiguration();
+        talonFXConfiguration.Slot0 = new Slot0Configs()
                 .withKS(6.75)
                 .withKP(11)
                 .withKD(0);
-        motorConfiguration.TorqueCurrent.PeakForwardTorqueCurrent = 80;
-        motorConfiguration.TorqueCurrent.PeakReverseTorqueCurrent = -80;
-        motorConfiguration.CurrentLimits.StatorCurrentLimit = 80;
-        motorConfiguration.CurrentLimits.StatorCurrentLimitEnable = true;
-        motorConfiguration.MotorOutput.NeutralMode = NeutralModeValue.Coast;
-        motorConfiguration.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
-        motorConfiguration.Feedback.FeedbackSensorSource = FeedbackSensorSourceValue.RotorSensor;
-        motorConfiguration.Feedback.SensorToMechanismRatio = constants.wheelGearing();
-        masterMotor.getConfigurator().apply(motorConfiguration);
+        talonFXConfiguration.TorqueCurrent.PeakForwardTorqueCurrent = 80;
+        talonFXConfiguration.TorqueCurrent.PeakReverseTorqueCurrent = -80;
+        talonFXConfiguration.CurrentLimits.StatorCurrentLimit = 80;
+        talonFXConfiguration.CurrentLimits.StatorCurrentLimitEnable = true;
+        talonFXConfiguration.MotorOutput.NeutralMode = NeutralModeValue.Coast;
+        talonFXConfiguration.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
+        talonFXConfiguration.Feedback.FeedbackSensorSource = FeedbackSensorSourceValue.RotorSensor;
+        talonFXConfiguration.Feedback.SensorToMechanismRatio = constants.wheelGearing();
+        Phoenix6Utils.tryUntilOk(masterMotor, () -> masterMotor.getConfigurator().apply(talonFXConfiguration));
+
+        talonFXConfiguration.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
+        Phoenix6Utils.tryUntilOk(followerMotor, () -> followerMotor.getConfigurator().apply(talonFXConfiguration));
 
         BaseStatusSignal.setUpdateFrequencyForAll(
                 100,

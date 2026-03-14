@@ -57,12 +57,7 @@ public class Feeder extends SubsystemBase {
         Logger.processInputs(LogKey, inputs);
 
         if (desiredGoal != currentGoal) {
-            if (desiredGoal == Goal.FEED) {
-                feeding = true;
-            } else {
-                feeding = false;
-            }
-
+            feeding = desiredGoal == Goal.FEED;
             feederIO.toWheelVelocity(desiredGoal.velocitySetpointRotsPerSec);
             currentGoal = desiredGoal;
         }

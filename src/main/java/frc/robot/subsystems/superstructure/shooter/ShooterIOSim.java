@@ -25,6 +25,7 @@ import frc.robot.constants.HardwareConstants;
 import frc.robot.constants.SimConstants;
 import frc.robot.utils.closeables.ToClose;
 import frc.robot.utils.control.DeltaTime;
+import frc.robot.utils.ctre.Phoenix6Utils;
 import frc.robot.utils.ctre.RefreshAll;
 import frc.robot.utils.sim.SimUtils;
 import frc.robot.utils.sim.motors.TalonFXSim;
@@ -133,20 +134,23 @@ public class ShooterIOSim implements ShooterIO {
 
     @Override
     public void config() {
-        final TalonFXConfiguration motorConfiguration = new TalonFXConfiguration();
-        motorConfiguration.Slot0 = new Slot0Configs()
+        final TalonFXConfiguration talonFXConfiguration = new TalonFXConfiguration();
+        talonFXConfiguration.Slot0 = new Slot0Configs()
                 .withKS(6.75)
                 .withKP(11)
                 .withKD(0);
-        motorConfiguration.TorqueCurrent.PeakForwardTorqueCurrent = 80;
-        motorConfiguration.TorqueCurrent.PeakReverseTorqueCurrent = -80;
-        motorConfiguration.CurrentLimits.StatorCurrentLimit = 80;
-        motorConfiguration.CurrentLimits.StatorCurrentLimitEnable = true;
-        motorConfiguration.MotorOutput.NeutralMode = NeutralModeValue.Coast;
-        motorConfiguration.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
-        motorConfiguration.Feedback.FeedbackSensorSource = FeedbackSensorSourceValue.RotorSensor;
-        motorConfiguration.Feedback.SensorToMechanismRatio = constants.wheelGearing();
-        masterMotor.getConfigurator().apply(motorConfiguration);
+        talonFXConfiguration.TorqueCurrent.PeakForwardTorqueCurrent = 80;
+        talonFXConfiguration.TorqueCurrent.PeakReverseTorqueCurrent = -80;
+        talonFXConfiguration.CurrentLimits.StatorCurrentLimit = 80;
+        talonFXConfiguration.CurrentLimits.StatorCurrentLimitEnable = true;
+        talonFXConfiguration.MotorOutput.NeutralMode = NeutralModeValue.Coast;
+        talonFXConfiguration.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
+        talonFXConfiguration.Feedback.FeedbackSensorSource = FeedbackSensorSourceValue.RotorSensor;
+        talonFXConfiguration.Feedback.SensorToMechanismRatio = constants.wheelGearing();
+        Phoenix6Utils.tryUntilOk(masterMotor, () -> masterMotor.getConfigurator().apply(talonFXConfiguration));
+
+        talonFXConfiguration.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
+        Phoenix6Utils.tryUntilOk(followerMotor, () -> followerMotor.getConfigurator().apply(talonFXConfiguration));
 
         BaseStatusSignal.setUpdateFrequencyForAll(
                 100,

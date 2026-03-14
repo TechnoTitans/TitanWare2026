@@ -16,6 +16,7 @@ import com.ctre.phoenix6.signals.MotorAlignmentValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 import edu.wpi.first.units.measure.*;
 import frc.robot.constants.HardwareConstants;
+import frc.robot.utils.ctre.Phoenix6Utils;
 import frc.robot.utils.ctre.RefreshAll;
 
 public class ShooterIORealBangBang implements ShooterIO {
@@ -25,6 +26,8 @@ public class ShooterIORealBangBang implements ShooterIO {
     private final TalonFX followerMotor;
 
     private final VelocityTorqueCurrentFOC velocityTorqueCurrentFOC;
+    private final TorqueCurrentFOC torqueCurrentFOC;
+    private final VoltageOut voltageOut;
     private final Follower follower;
 
     private final StatusSignal<Angle> masterPosition;
@@ -46,6 +49,8 @@ public class ShooterIORealBangBang implements ShooterIO {
         this.followerMotor = new TalonFX(constants.followerMotorID(), constants.CANBus().toPhoenix6CANBus());
 
         this.velocityTorqueCurrentFOC = new VelocityTorqueCurrentFOC(0);
+        this.torqueCurrentFOC = new TorqueCurrentFOC(0);
+        this.voltageOut = new VoltageOut(0);
         this.follower = new Follower(masterMotor.getDeviceID(), MotorAlignmentValue.Opposed);
 
         this.masterPosition = masterMotor.getPosition(false);
@@ -77,22 +82,25 @@ public class ShooterIORealBangBang implements ShooterIO {
 
     @Override
     public void config() {
-        final TalonFXConfiguration motorConfiguration = new TalonFXConfiguration();
-        motorConfiguration.Slot0 = new Slot0Configs()
+        final TalonFXConfiguration talonFXConfiguration = new TalonFXConfiguration();
+        talonFXConfiguration.Slot0 = new Slot0Configs()
                 .withKS(6.75)
                 .withKV(0)
                 .withKA(0)
                 .withKP(9999)
                 .withKD(0);
-        motorConfiguration.TorqueCurrent.PeakForwardTorqueCurrent = 80;
-        motorConfiguration.TorqueCurrent.PeakReverseTorqueCurrent = 0;
-        motorConfiguration.CurrentLimits.StatorCurrentLimit = 80;
-        motorConfiguration.CurrentLimits.StatorCurrentLimitEnable = true;
-        motorConfiguration.MotorOutput.NeutralMode = NeutralModeValue.Coast;
-        motorConfiguration.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
-        motorConfiguration.Feedback.FeedbackSensorSource = FeedbackSensorSourceValue.RotorSensor;
-        motorConfiguration.Feedback.SensorToMechanismRatio = constants.wheelGearing();
-        masterMotor.getConfigurator().apply(motorConfiguration);
+        talonFXConfiguration.TorqueCurrent.PeakForwardTorqueCurrent = 80;
+        talonFXConfiguration.TorqueCurrent.PeakReverseTorqueCurrent = 0;
+        talonFXConfiguration.CurrentLimits.StatorCurrentLimit = 80;
+        talonFXConfiguration.CurrentLimits.StatorCurrentLimitEnable = true;
+        talonFXConfiguration.MotorOutput.NeutralMode = NeutralModeValue.Coast;
+        talonFXConfiguration.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
+        talonFXConfiguration.Feedback.FeedbackSensorSource = FeedbackSensorSourceValue.RotorSensor;
+        talonFXConfiguration.Feedback.SensorToMechanismRatio = constants.wheelGearing();
+        Phoenix6Utils.tryUntilOk(masterMotor, () -> masterMotor.getConfigurator().apply(talonFXConfiguration));
+
+        talonFXConfiguration.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
+        Phoenix6Utils.tryUntilOk(followerMotor, () -> followerMotor.getConfigurator().apply(talonFXConfiguration));
 
         BaseStatusSignal.setUpdateFrequencyForAll(
                 100,
@@ -135,8 +143,20 @@ public class ShooterIORealBangBang implements ShooterIO {
     }
 
     @Override
-    public void toVelocity(final double velocityRotsPerSec) {
+    public void toFlywheelVelocity(final double velocityRotsPerSec) {
         masterMotor.setControl(velocityTorqueCurrentFOC.withVelocity(velocityRotsPerSec));
+        followerMotor.setControl(follower);
+    }
+
+    @Override
+    public void toFlywheelVoltage(final double volts) {
+        masterMotor.setControl(voltageOut.withOutput(volts));
+        followerMotor.setControl(follower);
+    }
+
+    @Override
+    public void toFlywheelTorqueCurrent(final double torqueCurrentAmps) {
+        masterMotor.setControl(torqueCurrentFOC.withOutput(torqueCurrentAmps));
         followerMotor.setControl(follower);
     }
 }

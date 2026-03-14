@@ -71,34 +71,36 @@ public class TurretIOReal implements TurretIO {
 
     @Override
     public void config() {
-        final TalonFXConfiguration motorConfig = new TalonFXConfiguration();
-        motorConfig.Slot0 = new Slot0Configs()
+        final TalonFXConfiguration talonFXConfiguration = new TalonFXConfiguration();
+        talonFXConfiguration.Slot0 = new Slot0Configs()
                 .withKS(0.366)
                 .withStaticFeedforwardSign(StaticFeedforwardSignValue.UseVelocitySign)
                 .withKV(5)
                 .withKP(30)
                 .withKD(0);
-        motorConfig.CurrentLimits.StatorCurrentLimit = 70;
-        motorConfig.CurrentLimits.StatorCurrentLimitEnable = true;
-        motorConfig.Feedback.FeedbackSensorSource = FeedbackSensorSourceValue.RotorSensor;
-        motorConfig.Feedback.SensorToMechanismRatio = constants.motorToTurretGearing();
-        motorConfig.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
-        motorConfig.MotorOutput.NeutralMode = NeutralModeValue.Brake;
-        motorConfig.SoftwareLimitSwitch.ForwardSoftLimitThreshold = constants.forwardLimitRots();
-        motorConfig.SoftwareLimitSwitch.ForwardSoftLimitEnable = true;
-        motorConfig.SoftwareLimitSwitch.ReverseSoftLimitThreshold = constants.reverseLimitRots();
-        motorConfig.SoftwareLimitSwitch.ReverseSoftLimitEnable = true;
-        turretMotor.getConfigurator().apply(motorConfig);
+        talonFXConfiguration.CurrentLimits.StatorCurrentLimit = 70;
+        talonFXConfiguration.CurrentLimits.StatorCurrentLimitEnable = true;
+        talonFXConfiguration.Feedback.FeedbackSensorSource = FeedbackSensorSourceValue.RotorSensor;
+        talonFXConfiguration.Feedback.SensorToMechanismRatio = constants.motorToTurretGearing();
+        talonFXConfiguration.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
+        talonFXConfiguration.MotorOutput.NeutralMode = NeutralModeValue.Brake;
+        talonFXConfiguration.SoftwareLimitSwitch.ForwardSoftLimitThreshold = constants.forwardLimitRots();
+        talonFXConfiguration.SoftwareLimitSwitch.ForwardSoftLimitEnable = true;
+        talonFXConfiguration.SoftwareLimitSwitch.ReverseSoftLimitThreshold = constants.reverseLimitRots();
+        talonFXConfiguration.SoftwareLimitSwitch.ReverseSoftLimitEnable = true;
+        Phoenix6Utils.tryUntilOk(turretMotor, () -> turretMotor.getConfigurator().apply(talonFXConfiguration));
 
         final CANcoderConfiguration primaryEncoderConfig = new CANcoderConfiguration();
         primaryEncoderConfig.MagnetSensor.MagnetOffset = constants.primaryEncoderOffset();
         primaryEncoderConfig.MagnetSensor.SensorDirection = SensorDirectionValue.Clockwise_Positive;
-        primaryEncoder.getConfigurator().apply(primaryEncoderConfig);
+        Phoenix6Utils.tryUntilOk(primaryEncoder,
+                () -> primaryEncoder.getConfigurator().apply(primaryEncoderConfig));
 
         final CANcoderConfiguration secondaryEncoderConfig = new CANcoderConfiguration();
         secondaryEncoderConfig.MagnetSensor.MagnetOffset = constants.secondaryEncoderOffset();
         secondaryEncoderConfig.MagnetSensor.SensorDirection = SensorDirectionValue.CounterClockwise_Positive;
-        secondaryEncoder.getConfigurator().apply(secondaryEncoderConfig);
+        Phoenix6Utils.tryUntilOk(secondaryEncoder,
+                () -> secondaryEncoder.getConfigurator().apply(secondaryEncoderConfig));
 
         BaseStatusSignal.setUpdateFrequencyForAll(
                 100,
@@ -106,8 +108,8 @@ public class TurretIOReal implements TurretIO {
                 turretVelocity,
                 turretVoltage,
                 turretTorqueCurrent,
-                secondaryEncoderPosition,
-                primaryEncoderPosition
+                primaryEncoderPosition,
+                secondaryEncoderPosition
         );
         BaseStatusSignal.setUpdateFrequencyForAll(
                 4,
@@ -116,8 +118,8 @@ public class TurretIOReal implements TurretIO {
         ParentDevice.optimizeBusUtilizationForAll(
                 4,
                 turretMotor,
-                secondaryEncoder,
-                primaryEncoder
+                primaryEncoder,
+                secondaryEncoder
         );
     }
 
@@ -136,9 +138,11 @@ public class TurretIOReal implements TurretIO {
     @Override
     public void toTurretContinuousPosition(final double positionRots, final double velocityRotsPerSec) {
         turretMotor.setControl(
-                positionVoltage.withPosition(positionRots)
+                positionVoltage
+                        .withPosition(positionRots)
                         .withVelocity(velocityRotsPerSec)
-                        .withSlot(0));
+                        .withSlot(0)
+        );
     }
 
     @Override
@@ -153,6 +157,6 @@ public class TurretIOReal implements TurretIO {
 
     @Override
     public void setPosition(final double turretPositionRots) {
-        Phoenix6Utils.reportIfNotOk(turretMotor, turretMotor.setPosition(turretPositionRots));
+        Phoenix6Utils.tryUntilOk(turretMotor, () -> turretMotor.setPosition(turretPositionRots));
     }
 }
