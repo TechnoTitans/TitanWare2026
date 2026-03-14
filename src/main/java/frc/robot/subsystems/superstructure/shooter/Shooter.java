@@ -180,13 +180,16 @@ public class Shooter extends SubsystemBase {
 
     private Command makeFlywheelSysIdCommand(final SysIdRoutine sysIdRoutine) {
         return Commands.sequence(
-                sysIdRoutine.quasistatic(SysIdRoutine.Direction.kForward),
+                sysIdRoutine.quasistatic(SysIdRoutine.Direction.kForward).withTimeout(5),
+                Commands.waitUntil(() -> Math.abs(inputs.masterVelocityRotsPerSec) < 0.5),
                 Commands.waitSeconds(1),
-                sysIdRoutine.quasistatic(SysIdRoutine.Direction.kReverse),
+                sysIdRoutine.quasistatic(SysIdRoutine.Direction.kReverse).withTimeout(5),
+                Commands.waitUntil(() -> Math.abs(inputs.masterVelocityRotsPerSec) < 0.5),
                 Commands.waitSeconds(1),
-                sysIdRoutine.dynamic(SysIdRoutine.Direction.kForward),
+                sysIdRoutine.dynamic(SysIdRoutine.Direction.kForward).withTimeout(5),
+                Commands.waitUntil(() -> Math.abs(inputs.masterVelocityRotsPerSec) < 0.5),
                 Commands.waitSeconds(1),
-                sysIdRoutine.dynamic(SysIdRoutine.Direction.kReverse)
+                sysIdRoutine.dynamic(SysIdRoutine.Direction.kReverse).withTimeout(5)
         );
     }
 
