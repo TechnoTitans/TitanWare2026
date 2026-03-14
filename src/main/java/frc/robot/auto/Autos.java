@@ -28,7 +28,7 @@ import static edu.wpi.first.wpilibj2.command.Commands.*;
 
 public class Autos {
     public static final String LogKey = "Auto";
-    private static final int SHOOTING_TIME = 4;
+    private static final int SHOOTING_TIME = 6;
 
     private final Swerve swerve;
     private final Superstructure superstructure;

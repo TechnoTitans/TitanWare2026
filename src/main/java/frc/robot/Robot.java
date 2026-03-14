@@ -468,5 +468,9 @@ public class Robot extends LoggedRobot {
                         robotCommands.shootStationary()
                 ).finallyDo(() -> scoringMode = RobotCommands.ScoringMode.Moving)
         );
+
+        coController.x(teleopEventLoop).whileTrue(
+                robotCommands.shootNoCheck()
+        );
     }
 }

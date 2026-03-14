@@ -97,15 +97,21 @@ public class RobotCommands {
                         Commands.parallel(
                                 Commands.waitUntil(superstructure.atHoodSetpoint),
                                 Commands.waitUntil(superstructure.atTurretSetpoint),
-                                Commands.waitUntil(superstructure.atShooterSetpoint
+                                Commands.waitUntil(
+                                        superstructure.atShooterSetpoint
                                                 .debounce(0.1, Debouncer.DebounceType.kFalling))
                                         .withTimeout(1.5)
                         ),
                         feeder.toGoal(Feeder.Goal.FEED)
-                                .onlyWhile(superstructure.atHoodSetpoint.and(superstructure.atTurretSetpoint))
+                                .onlyWhile(
+                                        superstructure.atHoodSetpoint
+                                                .and(superstructure.atTurretSetpoint)
+                                                .and(superstructure.atShooterSetpoint
+                                                        .debounce(0.5, Debouncer.DebounceType.kFalling))
+                                )
                 ),
-                intakeSlide.toGoal(IntakeSlide.Goal.SHOOTING)
-                        .onlyIf(() -> targetSupplier.get() != ShotCalculator.Target.FERRYING),
+                Commands.deferredProxy(() -> intakeSlide.toGoal(IntakeSlide.Goal.SHOOTING))
+                        .unless(() -> targetSupplier.get() == ShotCalculator.Target.FERRYING),
                 spindexer.toGoal(Spindexer.Goal.FEED),
                 Commands.runOnce(() -> SwerveSpeed.setSwerveSpeed(SwerveSpeed.Speeds.SHOOTING))
         )
@@ -136,5 +142,21 @@ public class RobotCommands {
         )
                 .finallyDo(() -> intakeSlide.setGoalCommand(IntakeSlide.Goal.EXTEND))
                 .withName("ShootStationary");
+    }
+
+    public Command shootNoCheck() {
+        return Commands.parallel(
+                        superstructure.toGoal(Superstructure.Goal.SHOOTING),
+                        feeder.toGoal(Feeder.Goal.FEED),
+                        intakeSlide.toGoal(IntakeSlide.Goal.SHOOTING)
+                                .onlyIf(() -> targetSupplier.get() != ShotCalculator.Target.FERRYING),
+                        spindexer.toGoal(Spindexer.Goal.FEED),
+                        Commands.runOnce(() -> SwerveSpeed.setSwerveSpeed(SwerveSpeed.Speeds.SHOOTING))
+                )
+                .finallyDo(() -> {
+                    SwerveSpeed.setSwerveSpeed(SwerveSpeed.Speeds.NORMAL);
+                    intakeSlide.setGoalCommand(IntakeSlide.Goal.EXTEND);
+                })
+                .withName("ShootWhileMoving");
     }
 }
