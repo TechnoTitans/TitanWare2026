@@ -82,7 +82,7 @@ public class Robot extends LoggedRobot {
     );
 
     public final PhotonVision photonVision = new PhotonVision(
-            Constants.RobotMode.DISABLED,
+            Constants.CURRENT_MODE,
             swerve
     );
 
@@ -355,7 +355,7 @@ public class Robot extends LoggedRobot {
 //                .whileTrue(swerve.linearTorqueCurrentSysIdDynamicCommand(SysIdRoutine.Direction.kReverse));
 
         driverController.y(testEventLoop).whileTrue(
-                turret.torqueCurrentSysIdCommand()
+                turret.voltageSysIdCommand()
                         .withInterruptBehavior(Command.InterruptionBehavior.kCancelIncoming)
         );
 
