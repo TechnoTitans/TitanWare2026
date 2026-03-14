@@ -53,12 +53,7 @@ public class IntakeRoller extends SubsystemBase {
         Logger.processInputs(LogKey, inputs);
 
         if (desiredGoal != currentGoal) {
-            if (desiredGoal == Goal.INTAKE) {
-                intaking = true;
-            } else {
-                intaking = false;
-            }
-
+            intaking = desiredGoal == Goal.INTAKE;
             currentGoal = desiredGoal;
             intakeRollerIO.toRollerVoltage(desiredGoal.voltageSetpoint);
         }
