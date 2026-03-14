@@ -55,6 +55,10 @@ public class IntakeRollerIOReal implements IntakeRollerIO {
         final TalonFXConfiguration talonFXConfiguration = new TalonFXConfiguration();
         talonFXConfiguration.CurrentLimits.StatorCurrentLimit = 60;
         talonFXConfiguration.CurrentLimits.StatorCurrentLimitEnable = true;
+        talonFXConfiguration.CurrentLimits.SupplyCurrentLimit = 60;
+        talonFXConfiguration.CurrentLimits.SupplyCurrentLowerLimit = 40;
+        talonFXConfiguration.CurrentLimits.SupplyCurrentLowerTime = 2.5;
+        talonFXConfiguration.CurrentLimits.SupplyCurrentLimitEnable = true;
         talonFXConfiguration.MotorOutput.NeutralMode = NeutralModeValue.Brake;
         talonFXConfiguration.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
         talonFXConfiguration.Feedback.FeedbackSensorSource = FeedbackSensorSourceValue.RotorSensor;

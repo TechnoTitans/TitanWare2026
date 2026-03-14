@@ -93,6 +93,10 @@ public class ShooterIORealBangBang implements ShooterIO {
         talonFXConfiguration.TorqueCurrent.PeakReverseTorqueCurrent = 0;
         talonFXConfiguration.CurrentLimits.StatorCurrentLimit = 80;
         talonFXConfiguration.CurrentLimits.StatorCurrentLimitEnable = true;
+        talonFXConfiguration.CurrentLimits.SupplyCurrentLimit = 75;
+        talonFXConfiguration.CurrentLimits.SupplyCurrentLowerLimit = 60;
+        talonFXConfiguration.CurrentLimits.SupplyCurrentLowerTime = 2.5;
+        talonFXConfiguration.CurrentLimits.SupplyCurrentLimitEnable = true;
         talonFXConfiguration.MotorOutput.NeutralMode = NeutralModeValue.Coast;
         talonFXConfiguration.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
         talonFXConfiguration.Feedback.FeedbackSensorSource = FeedbackSensorSourceValue.RotorSensor;

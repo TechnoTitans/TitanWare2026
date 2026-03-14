@@ -68,6 +68,10 @@ public class IntakeSlideIOReal implements IntakeSlideIO {
         masterConfiguration.TorqueCurrent.PeakReverseTorqueCurrent = -60;
         masterConfiguration.CurrentLimits.StatorCurrentLimit = 60;
         masterConfiguration.CurrentLimits.StatorCurrentLimitEnable = true;
+        masterConfiguration.CurrentLimits.SupplyCurrentLimit = 60;
+        masterConfiguration.CurrentLimits.SupplyCurrentLowerLimit = 40;
+        masterConfiguration.CurrentLimits.SupplyCurrentLowerTime = 2.0;
+        masterConfiguration.CurrentLimits.SupplyCurrentLimitEnable = true;
         masterConfiguration.Feedback.FeedbackSensorSource = FeedbackSensorSourceValue.RotorSensor;
         masterConfiguration.Feedback.SensorToMechanismRatio = constants.slideGearing();
         masterConfiguration.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
@@ -78,10 +82,6 @@ public class IntakeSlideIOReal implements IntakeSlideIO {
         masterConfiguration.SoftwareLimitSwitch.ReverseSoftLimitEnable = true;
 
         final TalonFXConfiguration followerConfiguration = new TalonFXConfiguration();
-        followerConfiguration.TorqueCurrent.PeakForwardTorqueCurrent = 60;
-        followerConfiguration.TorqueCurrent.PeakReverseTorqueCurrent = -60;
-        followerConfiguration.CurrentLimits.StatorCurrentLimit = 60;
-        followerConfiguration.CurrentLimits.StatorCurrentLimitEnable = true;
         followerConfiguration.Feedback.FeedbackSensorSource = FeedbackSensorSourceValue.RotorSensor;
         followerConfiguration.Feedback.SensorToMechanismRatio = constants.slideGearing();
 

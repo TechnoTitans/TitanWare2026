@@ -60,8 +60,12 @@ public class HoodIOReal implements HoodIO {
                 .withStaticFeedforwardSign(StaticFeedforwardSignValue.UseClosedLoopSign)
                 .withKP(300)
                 .withKD(0.1);
-        talonFXConfiguration.CurrentLimits.StatorCurrentLimit = 60;
+        talonFXConfiguration.CurrentLimits.StatorCurrentLimit = 40;
         talonFXConfiguration.CurrentLimits.StatorCurrentLimitEnable = true;
+        talonFXConfiguration.CurrentLimits.SupplyCurrentLimit = 45;
+        talonFXConfiguration.CurrentLimits.SupplyCurrentLowerLimit = 40;
+        talonFXConfiguration.CurrentLimits.SupplyCurrentLowerTime = 1.0;
+        talonFXConfiguration.CurrentLimits.SupplyCurrentLimitEnable = true;
         talonFXConfiguration.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
         talonFXConfiguration.MotorOutput.NeutralMode = NeutralModeValue.Brake;
         talonFXConfiguration.Feedback.FeedbackSensorSource = FeedbackSensorSourceValue.RotorSensor;

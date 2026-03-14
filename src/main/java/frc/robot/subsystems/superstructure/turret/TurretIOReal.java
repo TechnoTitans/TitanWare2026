@@ -78,8 +78,12 @@ public class TurretIOReal implements TurretIO {
                 .withKV(5)
                 .withKP(30)
                 .withKD(0);
-        talonFXConfiguration.CurrentLimits.StatorCurrentLimit = 70;
+        talonFXConfiguration.CurrentLimits.StatorCurrentLimit = 60;
         talonFXConfiguration.CurrentLimits.StatorCurrentLimitEnable = true;
+        talonFXConfiguration.CurrentLimits.SupplyCurrentLimit = 55;
+        talonFXConfiguration.CurrentLimits.SupplyCurrentLowerLimit = 40;
+        talonFXConfiguration.CurrentLimits.SupplyCurrentLowerTime = 2.0;
+        talonFXConfiguration.CurrentLimits.SupplyCurrentLimitEnable = true;
         talonFXConfiguration.Feedback.FeedbackSensorSource = FeedbackSensorSourceValue.RotorSensor;
         talonFXConfiguration.Feedback.SensorToMechanismRatio = constants.motorToTurretGearing();
         talonFXConfiguration.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;

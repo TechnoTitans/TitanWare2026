@@ -104,6 +104,10 @@ public class FeederIOSim implements FeederIO {
         talonFXConfiguration.TorqueCurrent.PeakReverseTorqueCurrent = -80;
         talonFXConfiguration.CurrentLimits.StatorCurrentLimit = 80;
         talonFXConfiguration.CurrentLimits.StatorCurrentLimitEnable = true;
+        talonFXConfiguration.CurrentLimits.SupplyCurrentLimit = 80;
+        talonFXConfiguration.CurrentLimits.SupplyCurrentLowerLimit = 55;
+        talonFXConfiguration.CurrentLimits.SupplyCurrentLowerTime = 1.0;
+        talonFXConfiguration.CurrentLimits.SupplyCurrentLimitEnable = true;
         talonFXConfiguration.MotorOutput.NeutralMode = NeutralModeValue.Brake;
         talonFXConfiguration.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
         talonFXConfiguration.Feedback.FeedbackSensorSource = FeedbackSensorSourceValue.RotorSensor;

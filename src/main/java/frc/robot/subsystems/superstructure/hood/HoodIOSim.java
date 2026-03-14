@@ -120,6 +120,10 @@ public class HoodIOSim implements HoodIO {
                 .withKD(0);
         talonFXConfiguration.CurrentLimits.StatorCurrentLimit = 60;
         talonFXConfiguration.CurrentLimits.StatorCurrentLimitEnable = true;
+        talonFXConfiguration.CurrentLimits.SupplyCurrentLimit = 45;
+        talonFXConfiguration.CurrentLimits.SupplyCurrentLowerLimit = 40;
+        talonFXConfiguration.CurrentLimits.SupplyCurrentLowerTime = 1.0;
+        talonFXConfiguration.CurrentLimits.SupplyCurrentLimitEnable = true;
         talonFXConfiguration.Feedback.FeedbackSensorSource = FeedbackSensorSourceValue.RotorSensor;
         talonFXConfiguration.Feedback.SensorToMechanismRatio = constants.gearing();
         talonFXConfiguration.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
