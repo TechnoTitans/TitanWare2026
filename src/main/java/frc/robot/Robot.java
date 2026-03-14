@@ -146,6 +146,7 @@ public class Robot extends LoggedRobot {
             intakeSlide::getIntakeSlidePositionRots
     );
 
+    @SuppressWarnings("unused")
     private final FuelState fuelState = new FuelState(
             Constants.CURRENT_MODE,
             swerve,
@@ -198,7 +199,6 @@ public class Robot extends LoggedRobot {
     private final LoggedTrigger.Group group = LoggedTrigger.Group.from(LogKey);
 
     private final LoggedTrigger disabled = RobotModeLoggedTriggers.disabled(group);
-    private final LoggedTrigger teleopEnabled = RobotModeLoggedTriggers.teleop(group);
     private final LoggedTrigger autonomousEnabled = RobotModeLoggedTriggers.autonomous(group);
     private final LoggedTrigger enabled = RobotModeLoggedTriggers.enabled(group);
 

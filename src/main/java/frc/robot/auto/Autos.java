@@ -248,12 +248,7 @@ public class Autos {
 
         );
 
-        shootingToOutpost.done().onTrue(
-                Commands.sequence(
-                        shootStatic()
-                ).withName("ShootFromOutpost")
-        );
-
+        shootingToOutpost.done().onTrue(shootStatic().withName("ShootFromOutpost"));
 
         return routine;
     }
