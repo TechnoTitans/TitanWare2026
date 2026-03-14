@@ -10,6 +10,7 @@ import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.FeedbackSensorSourceValue;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
+import com.ctre.phoenix6.signals.StaticFeedforwardSignValue;
 import edu.wpi.first.units.measure.*;
 import frc.robot.constants.HardwareConstants;
 import frc.robot.utils.ctre.Phoenix6Utils;
@@ -55,10 +56,11 @@ public class FeederIOReal implements FeederIO {
     public void config() {
         final TalonFXConfiguration talonFXConfiguration = new TalonFXConfiguration();
         talonFXConfiguration.Slot0 = new Slot0Configs()
-                .withKS(6.72)
-                .withKV(0.08)
-                .withKP(6)
-                .withKD(0.09);
+                .withKS(14)
+                .withStaticFeedforwardSign(StaticFeedforwardSignValue.UseVelocitySign)
+                .withKV(0)
+                .withKP(10)
+                .withKD(0);
         talonFXConfiguration.TorqueCurrent.PeakForwardTorqueCurrent = 80;
         talonFXConfiguration.TorqueCurrent.PeakReverseTorqueCurrent = -80;
         talonFXConfiguration.CurrentLimits.StatorCurrentLimit = 80;

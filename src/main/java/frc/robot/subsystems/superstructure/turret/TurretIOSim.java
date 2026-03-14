@@ -121,11 +121,12 @@ public class TurretIOSim implements TurretIO {
     public void config() {
         final TalonFXConfiguration talonFXConfiguration = new TalonFXConfiguration();
         talonFXConfiguration.Slot0 = new Slot0Configs()
-                .withKS(0.366)
-                .withStaticFeedforwardSign(StaticFeedforwardSignValue.UseVelocitySign)
-                .withKV(3.5)
-                .withKP(45)
-                .withKD(0);
+                .withKS(0.24265)
+                .withStaticFeedforwardSign(StaticFeedforwardSignValue.UseClosedLoopSign)
+                .withKV(3.067)
+                .withKA(0.14961)
+                .withKP(50)
+                .withKD(4);
         talonFXConfiguration.CurrentLimits.StatorCurrentLimit = 60;
         talonFXConfiguration.CurrentLimits.StatorCurrentLimitEnable = true;
         talonFXConfiguration.CurrentLimits.SupplyCurrentLimit = 55;

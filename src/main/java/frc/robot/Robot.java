@@ -322,12 +322,6 @@ public class Robot extends LoggedRobot {
 
         componentsSolver.periodic();
 
-        Logger.recordOutput("TurretPose", swerve.getPose()
-                .transformBy(PoseConstants.Turret.ROBOT_TO_TURRET_TRANSFORM_2D));
-
-        Logger.recordOutput("HubPose", new Pose2d(FieldConstants.getHubTarget(), Rotation2d.kZero));
-
-        Logger.recordOutput("DistanceToHub", swerve.getPose());
         Logger.recordOutput("DistanceToHub", swerve.getPose()
                 .transformBy(PoseConstants.Turret.ROBOT_TO_TURRET_TRANSFORM_2D)
                 .getTranslation()
@@ -397,8 +391,8 @@ public class Robot extends LoggedRobot {
     public void configureStateTriggers() {
         enabled.onTrue(
                 Commands.parallel(
-//                        superstructure.setGoalCommand(Superstructure.Goal.TRACKING),
-//                        intakeSlide.setGoalCommand(IntakeSlide.Goal.EXTEND)
+                        superstructure.setGoalCommand(Superstructure.Goal.TRACKING),
+                        intakeSlide.setGoalCommand(IntakeSlide.Goal.EXTEND)
                 )
         );
 
