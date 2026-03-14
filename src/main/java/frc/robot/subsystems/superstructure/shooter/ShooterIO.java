@@ -22,5 +22,9 @@ public interface ShooterIO {
 
     default void config() {}
 
-    default void toVelocity(final double velocityRotsPerSec) {}
+    default void toFlywheelVelocity(final double velocityRotsPerSec) {}
+
+    default void toFlywheelVoltage(final double volts) {}
+
+    default void toFlywheelTorqueCurrent(final double torqueCurrentAmps) {}
 }
