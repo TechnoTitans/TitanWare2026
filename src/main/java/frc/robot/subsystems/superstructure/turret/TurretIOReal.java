@@ -34,8 +34,8 @@ public class TurretIOReal implements TurretIO {
     private final StatusSignal<Angle> secondaryEncoderPosition;
 
     private final PositionVoltage positionVoltage;
-    private final VoltageOut voltageOut;
     private final TorqueCurrentFOC torqueCurrentFOC;
+    private final VoltageOut voltageOut;
 
     public TurretIOReal(HardwareConstants.TurretConstants constants) {
         this.constants = constants;
@@ -54,8 +54,8 @@ public class TurretIOReal implements TurretIO {
         this.primaryEncoderPosition = primaryEncoder.getPosition(true);
 
         this.positionVoltage = new PositionVoltage(0);
-        this.voltageOut = new VoltageOut(0);
         this.torqueCurrentFOC = new TorqueCurrentFOC(0);
+        this.voltageOut = new VoltageOut(0);
 
         RefreshAll.add(
                 constants.CANBus(),
