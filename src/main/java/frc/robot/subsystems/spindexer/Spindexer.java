@@ -21,7 +21,7 @@ public class Spindexer extends SubsystemBase {
     public enum Goal {
         STOP(0),
         AGITATE(4),
-        FEED(11);
+        FEED(10);
 
         private final double voltageSetpoint;
 

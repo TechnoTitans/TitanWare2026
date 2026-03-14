@@ -41,7 +41,8 @@ public class Superstructure extends VirtualSubsystem {
     public enum Goal {
         TRACKING(Turret.Goal.TRACKING, Hood.Goal.STOW, Shooter.Goal.TRACKING, true),
         STATIC_SHOT_PREP(Turret.Goal.TRACKING, Hood.Goal.STOW, Shooter.Goal.TRACKING, false),
-        SHOOTING(Turret.Goal.TRACKING, Hood.Goal.SHOOTING, Shooter.Goal.TRACKING, true);
+        SHOOTING(Turret.Goal.TRACKING, Hood.Goal.SHOOTING, Shooter.Goal.TRACKING, true),
+        SHOOTING_STOW(Turret.Goal.STOW, Hood.Goal.STOW, Shooter.Goal.BASIC, false);
 
         private final Turret.Goal turretGoal;
         private final Hood.Goal hoodGoal;

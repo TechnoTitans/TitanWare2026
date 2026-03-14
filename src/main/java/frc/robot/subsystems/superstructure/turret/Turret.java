@@ -46,6 +46,7 @@ public class Turret extends SubsystemBase {
     public final Trigger atSetpoint = new Trigger(this::atSetpoint);
 
     public enum Goal {
+        STOW(0, false),
         TRACKING(0, true);
 
         private final boolean isDynamic;

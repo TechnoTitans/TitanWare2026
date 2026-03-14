@@ -472,5 +472,9 @@ public class Robot extends LoggedRobot {
         coController.x(teleopEventLoop).whileTrue(
                 robotCommands.shootNoCheck()
         );
+
+        coController.leftBumper(teleopEventLoop).whileTrue(
+                robotCommands.shootSuperstructureZero()
+        );
     }
 }

@@ -114,6 +114,7 @@ public class RobotCommands {
                         .unless(() -> targetSupplier.get() == ShotCalculator.Target.FERRYING),
                 spindexer.toGoal(Spindexer.Goal.FEED),
                 Commands.runOnce(() -> SwerveSpeed.setSwerveSpeed(SwerveSpeed.Speeds.SHOOTING))
+                        .unless(() -> targetSupplier.get() == ShotCalculator.Target.FERRYING)
         )
             .finallyDo(() -> {
                 SwerveSpeed.setSwerveSpeed(SwerveSpeed.Speeds.NORMAL);
@@ -150,6 +151,21 @@ public class RobotCommands {
                         feeder.toGoal(Feeder.Goal.FEED),
                         intakeSlide.toGoal(IntakeSlide.Goal.SHOOTING)
                                 .onlyIf(() -> targetSupplier.get() != ShotCalculator.Target.FERRYING),
+                        spindexer.toGoal(Spindexer.Goal.FEED),
+                        Commands.runOnce(() -> SwerveSpeed.setSwerveSpeed(SwerveSpeed.Speeds.SHOOTING))
+                )
+                .finallyDo(() -> {
+                    SwerveSpeed.setSwerveSpeed(SwerveSpeed.Speeds.NORMAL);
+                    intakeSlide.setGoalCommand(IntakeSlide.Goal.EXTEND);
+                })
+                .withName("ShootWhileMoving");
+    }
+
+    public Command shootSuperstructureZero() {
+        return Commands.parallel(
+                        superstructure.toGoal(Superstructure.Goal.SHOOTING_STOW),
+                        feeder.toGoal(Feeder.Goal.FEED),
+                        intakeSlide.toGoal(IntakeSlide.Goal.SHOOTING),
                         spindexer.toGoal(Spindexer.Goal.FEED),
                         Commands.runOnce(() -> SwerveSpeed.setSwerveSpeed(SwerveSpeed.Speeds.SHOOTING))
                 )

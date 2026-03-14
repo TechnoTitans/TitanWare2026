@@ -40,7 +40,8 @@ public class Shooter extends SubsystemBase {
 
     public enum Goal {
         IDLE(20, false),
-        TRACKING(0, true);
+        TRACKING(0, true),
+        BASIC(35, false);
 
         private double velocitySetpointRotsPerSec;
         private final boolean isDynamic;

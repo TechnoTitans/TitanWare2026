@@ -149,8 +149,6 @@ public class PhotonVision extends VirtualSubsystem {
             final VisionResult visionResult,
             final VisionResult lastVisionResult
     ) {
-        if (true) return RejectionReason.DID_NOT_REJECT; //TODO: REMOVE
-
         final Optional<VisionResult.VisionUpdate> maybeVisionUpdate = visionResult.visionUpdate();
         if (maybeVisionUpdate.isEmpty()) {
             return RejectionReason.ALREADY_REJECTED;
