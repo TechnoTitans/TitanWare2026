@@ -32,6 +32,9 @@ public class Superstructure extends VirtualSubsystem {
     private final Trigger desiredGoalChanged;
 
     public final Trigger atSetpoint;
+    public final Trigger atHoodSetpoint;
+    public final Trigger atShooterSetpoint;
+    public final Trigger atTurretSetpoint;
 
     private final Supplier<ShotCalculator.ShotCalculation> shotCalculationSupplier;
 
@@ -73,9 +76,14 @@ public class Superstructure extends VirtualSubsystem {
 
         this.desiredGoalIsRunningGoal = new Trigger(eventLoop, () -> desiredGoal == runningGoal);
         this.desiredGoalChanged = new Trigger(eventLoop, () -> desiredGoal != runningGoal);
-        this.atSetpoint = (turret.atSetpoint
+
+        this.atTurretSetpoint = turret.atSetpoint;
+        this.atShooterSetpoint = shooter.atSetpoint;
+        this.atHoodSetpoint = hood.atSetpoint;
+
+        this.atSetpoint = turret.atSetpoint
                 .and(hood.atSetpoint)
-                .and(shooter.atSetpoint))
+                .and(shooter.atSetpoint)
                 .debounce(0.1, Debouncer.DebounceType.kFalling);
 
         this.shotCalculationSupplier = shotCalculationSupplier;

@@ -1,5 +1,6 @@
 package frc.robot;
 
+import edu.wpi.first.math.filter.Debouncer;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
@@ -8,9 +9,12 @@ import frc.robot.subsystems.feeder.Feeder;
 import frc.robot.subsystems.intake.roller.IntakeRoller;
 import frc.robot.subsystems.intake.slide.IntakeSlide;
 import frc.robot.subsystems.spindexer.Spindexer;
+import frc.robot.subsystems.superstructure.ShotCalculator;
 import frc.robot.subsystems.superstructure.Superstructure;
 import frc.robot.utils.commands.LoggedTrigger;
 import frc.robot.utils.teleop.SwerveSpeed;
+
+import java.util.function.Supplier;
 
 public class RobotCommands {
     protected static final String LogKey = "RobotCommands";
@@ -22,6 +26,8 @@ public class RobotCommands {
     private final Superstructure superstructure;
     private final Spindexer spindexer;
     private final Feeder feeder;
+
+    private final Supplier<ShotCalculator.Target> targetSupplier;
 
     private final LoggedTrigger ableToShoot;
 
@@ -36,7 +42,8 @@ public class RobotCommands {
             final IntakeSlide intakeSlide,
             final Superstructure superstructure,
             final Spindexer spindexer,
-            final Feeder feeder
+            final Feeder feeder,
+            final Supplier<ShotCalculator.Target> targetSupplier
     ) {
         this.swerve = swerve;
         this.intakeRoller = intakeRoller;
@@ -44,6 +51,7 @@ public class RobotCommands {
         this.superstructure = superstructure;
         this.spindexer = spindexer;
         this.feeder = feeder;
+        this.targetSupplier = targetSupplier;
 
         final LoggedTrigger.Group group = LoggedTrigger.Group.from(LogKey);
 
@@ -86,11 +94,18 @@ public class RobotCommands {
         return Commands.parallel(
                 superstructure.toGoal(Superstructure.Goal.SHOOTING),
                 Commands.repeatingSequence(
-                        Commands.waitUntil(superstructure.atSetpoint),
+                        Commands.parallel(
+                                Commands.waitUntil(superstructure.atHoodSetpoint),
+                                Commands.waitUntil(superstructure.atTurretSetpoint),
+                                Commands.waitUntil(superstructure.atShooterSetpoint
+                                                .debounce(0.1, Debouncer.DebounceType.kFalling))
+                                        .withTimeout(1.5)
+                        ),
                         feeder.toGoal(Feeder.Goal.FEED)
-                                .onlyWhile(superstructure.atSetpoint)
+                                .onlyWhile(superstructure.atHoodSetpoint.and(superstructure.atTurretSetpoint))
                 ),
-                intakeSlide.toGoal(IntakeSlide.Goal.SHOOTING),
+                intakeSlide.toGoal(IntakeSlide.Goal.SHOOTING)
+                        .onlyIf(() -> targetSupplier.get() != ShotCalculator.Target.FERRYING),
                 spindexer.toGoal(Spindexer.Goal.FEED),
                 Commands.runOnce(() -> SwerveSpeed.setSwerveSpeed(SwerveSpeed.Speeds.SHOOTING))
         )
@@ -114,7 +129,8 @@ public class RobotCommands {
                                 )
                         )
                 ),
-                intakeSlide.toGoal(IntakeSlide.Goal.SHOOTING),
+                intakeSlide.toGoal(IntakeSlide.Goal.SHOOTING)
+                        .onlyIf(() -> targetSupplier.get() != ShotCalculator.Target.FERRYING),
                 spindexer.toGoal(Spindexer.Goal.FEED),
                 swerve.runWheelXCommand()
         )

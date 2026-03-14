@@ -15,6 +15,7 @@ import frc.robot.subsystems.drive.Swerve;
 import frc.robot.subsystems.feeder.Feeder;
 import frc.robot.subsystems.intake.roller.IntakeRoller;
 import frc.robot.subsystems.intake.slide.IntakeSlide;
+import frc.robot.subsystems.spindexer.Spindexer;
 import frc.robot.subsystems.superstructure.ShotCalculator;
 import frc.robot.subsystems.superstructure.Superstructure;
 import frc.robot.subsystems.vision.PhotonVision;
@@ -32,6 +33,7 @@ public class Autos {
     private final Swerve swerve;
     private final Superstructure superstructure;
     private final Feeder feeder;
+    private final Spindexer spindexer;
     private final IntakeRoller intakeRoller;
     private final IntakeSlide intakeSlide;
 
@@ -46,6 +48,7 @@ public class Autos {
             final Swerve swerve,
             final Superstructure superstructure,
             final Feeder feeder,
+            final Spindexer spindexer,
             final IntakeRoller intakeRoller,
             final IntakeSlide intakeSlide,
             final PhotonVision photonVision
@@ -53,6 +56,7 @@ public class Autos {
         this.swerve = swerve;
         this.superstructure = superstructure;
         this.feeder = feeder;
+        this.spindexer = spindexer;
         this.intakeRoller = intakeRoller;
         this.intakeSlide = intakeSlide;
 
@@ -140,6 +144,7 @@ public class Autos {
                 ).until(() -> timer.hasElapsed(SHOOTING_TIME)),
                 superstructure.toGoal(Superstructure.Goal.SHOOTING),
                 intakeSlide.toGoal(IntakeSlide.Goal.SHOOTING),
+                spindexer.toGoal(Spindexer.Goal.FEED),
                 swerve.runWheelXCommand(),
                 Commands.run(
                         () -> Logger.recordOutput("RobotStopped", robotStopped)

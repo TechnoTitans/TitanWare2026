@@ -160,13 +160,15 @@ public class Robot extends LoggedRobot {
             intakeSlide,
             superstructure,
             spindexer,
-            feeder
+            feeder,
+            () -> shotCalculationSupplier.get().target()
     );
 
     public final Autos autos = new Autos(
             swerve,
             superstructure,
             feeder,
+            spindexer,
             intakeRoller,
             intakeSlide,
             photonVision
@@ -394,7 +396,7 @@ public class Robot extends LoggedRobot {
         );
 
         hubActive.onTrue(ControllerUtils.rumbleForDurationCommand(
-                driverController.getHID(), GenericHID.RumbleType.kBothRumble, 0.5, 1
+                driverController.getHID(), GenericHID.RumbleType.kBothRumble, 1, 1
         ));
 
         disabled.onTrue(ControllerUtils.rumbleForDurationCommand(

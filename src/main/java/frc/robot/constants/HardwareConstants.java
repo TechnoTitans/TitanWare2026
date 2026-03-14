@@ -33,7 +33,7 @@ public class HardwareConstants {
         }
     }
 
-    public static final int PowerDistributionHub = 1;
+    public static final int PowerDistributionHub = 2;
 
     public record IntakeRollerConstants(
             CANBus CANBus,
