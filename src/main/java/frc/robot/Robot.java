@@ -2,7 +2,10 @@ package frc.robot;
 
 import com.ctre.phoenix6.SignalLogger;
 import edu.wpi.first.hal.AllianceStationID;
+import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
+import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.struct.Pose2dStruct;
 import edu.wpi.first.wpilibj.*;
 import edu.wpi.first.wpilibj.event.EventLoop;
 import edu.wpi.first.wpilibj.livewindow.LiveWindow;
@@ -14,9 +17,7 @@ import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import frc.robot.auto.AutoChooser;
 import frc.robot.auto.AutoOption;
 import frc.robot.auto.Autos;
-import frc.robot.constants.Constants;
-import frc.robot.constants.HardwareConstants;
-import frc.robot.constants.RobotMap;
+import frc.robot.constants.*;
 import frc.robot.subsystems.drive.Swerve;
 import frc.robot.subsystems.drive.constants.SwerveConstants;
 import frc.robot.subsystems.feeder.Feeder;
@@ -84,7 +85,7 @@ public class Robot extends LoggedRobot {
     );
 
     public final PhotonVision photonVision = new PhotonVision(
-            Constants.RobotMode.DISABLED,
+            Constants.CURRENT_MODE,
             swerve
     );
 
@@ -321,6 +322,17 @@ public class Robot extends LoggedRobot {
 
         componentsSolver.periodic();
 
+        Logger.recordOutput("TurretPose", swerve.getPose()
+                .transformBy(PoseConstants.Turret.ROBOT_TO_TURRET_TRANSFORM_2D));
+
+        Logger.recordOutput("HubPose", new Pose2d(FieldConstants.getHubTarget(), Rotation2d.kZero));
+
+        Logger.recordOutput("DistanceToHub", swerve.getPose());
+        Logger.recordOutput("DistanceToHub", swerve.getPose()
+                .transformBy(PoseConstants.Turret.ROBOT_TO_TURRET_TRANSFORM_2D)
+                .getTranslation()
+                .getDistance(FieldConstants.getHubTarget()));
+
         final AllianceShift allianceShift = AllianceShift.get(0);
         final AllianceShift offsetAllianceShift = AllianceShift.get(MatchTimeOffsetSeconds);
         Logger.recordOutput(AllianceShiftLogKey + "Normal", allianceShift);
@@ -360,12 +372,12 @@ public class Robot extends LoggedRobot {
 //        driverController.b(testEventLoop)
 //                .whileTrue(swerve.linearTorqueCurrentSysIdDynamicCommand(SysIdRoutine.Direction.kReverse));
 
-        driverController.y(testEventLoop).whileTrue(
+        driverController.x(testEventLoop).whileTrue(
                 turret.voltageSysIdCommand()
                         .withInterruptBehavior(Command.InterruptionBehavior.kCancelIncoming)
         );
 
-        driverController.x(testEventLoop).whileTrue(
+        driverController.y(testEventLoop).whileTrue(
                 shooter.flywheelTorqueCurrentSysIdCommand()
                         .withInterruptBehavior(Command.InterruptionBehavior.kCancelIncoming)
         );
@@ -385,8 +397,8 @@ public class Robot extends LoggedRobot {
     public void configureStateTriggers() {
         enabled.onTrue(
                 Commands.parallel(
-                        superstructure.setGoalCommand(Superstructure.Goal.TRACKING),
-                        intakeSlide.setGoalCommand(IntakeSlide.Goal.EXTEND)
+//                        superstructure.setGoalCommand(Superstructure.Goal.TRACKING),
+//                        intakeSlide.setGoalCommand(IntakeSlide.Goal.EXTEND)
                 )
         );
 

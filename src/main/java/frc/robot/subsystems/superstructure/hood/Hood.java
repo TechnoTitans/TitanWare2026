@@ -13,8 +13,8 @@ import org.littletonrobotics.junction.Logger;
 
 public class Hood extends SubsystemBase {
     protected static final String LogKey = "Hood";
-    private static final double PositionToleranceRots = 0.005;
-    private static final double VelocityToleranceRotsPerSec = 0.1;
+    private static final double PositionToleranceRots = 0.01;
+    private static final double VelocityToleranceRotsPerSec = 0.05;
 
     private final HardwareConstants.HoodConstants constants;
 

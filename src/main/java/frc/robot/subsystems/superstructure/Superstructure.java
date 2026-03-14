@@ -1,5 +1,6 @@
 package frc.robot.subsystems.superstructure;
 
+import edu.wpi.first.math.filter.Debouncer;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.geometry.Translation2d;
@@ -72,9 +73,10 @@ public class Superstructure extends VirtualSubsystem {
 
         this.desiredGoalIsRunningGoal = new Trigger(eventLoop, () -> desiredGoal == runningGoal);
         this.desiredGoalChanged = new Trigger(eventLoop, () -> desiredGoal != runningGoal);
-        this.atSetpoint = turret.atSetpoint
+        this.atSetpoint = (turret.atSetpoint
                 .and(hood.atSetpoint)
-                .and(shooter.atSetpoint);
+                .and(shooter.atSetpoint))
+                .debounce(0.1, Debouncer.DebounceType.kFalling);
 
         this.shotCalculationSupplier = shotCalculationSupplier;
 
