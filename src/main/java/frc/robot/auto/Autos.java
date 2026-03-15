@@ -258,4 +258,45 @@ public class Autos {
 
         return routine;
     }
+
+    public AutoRoutine rightCenterLineTrench() {
+        final AutoRoutine routine = autoFactory.newRoutine("RightCenterLineTrench");
+        final AutoTrajectory startToCenterLineAndBack = routine.trajectory("RightStartToCenterLineAndBack");
+        final AutoTrajectory shootingToTrench = routine.trajectory("RightShootingToTrench");
+
+        final ShotCalculator.ShotCalculation firstShotCalculation = ShotCalculator.getShotCalculationFromPose(
+                startToCenterLineAndBack.getFinalPose().orElse(Pose2d.kZero)
+        );
+
+        final ShotCalculator.ShotCalculation secondShotCalculation = ShotCalculator.getShotCalculationFromPose(
+                shootingToTrench.getFinalPose().orElse(Pose2d.kZero)
+        );
+
+        routine.active().onTrue(
+                Commands.parallel(
+                        runStartingTrajectory(startToCenterLineAndBack),
+                        intakeRoller.setGoal(IntakeRoller.Goal.INTAKE),
+                        Commands.sequence(
+                                superstructure.setGoalCommand(Superstructure.Goal.STATIC_SHOT_PREP),
+                                Commands.runOnce(() -> superstructure.updateStaticShotParameter(firstShotCalculation))
+                        )
+                ).withName("StartCenterLine")
+        );
+
+        startToCenterLineAndBack.done().onTrue(
+                Commands.parallel(
+                        intakeRoller.setGoal(IntakeRoller.Goal.STOP),
+                        sequence(
+                                shootStatic(),
+                                superstructure.setGoalCommand(Superstructure.Goal.STATIC_SHOT_PREP),
+                                Commands.runOnce(() -> superstructure.updateStaticShotParameter(secondShotCalculation)),
+                                shootingToTrench.cmd()
+                        )
+                ).withName("CenterLineShoot")
+        );
+
+        shootingToTrench.done().onTrue(shootStatic().withName("ShootFromTrench"));
+
+        return routine;
+    }
 }
