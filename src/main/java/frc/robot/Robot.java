@@ -175,9 +175,14 @@ public class Robot extends LoggedRobot {
     );
 
     private final AutoChooser autoChooser = new AutoChooser(
+//            new AutoOption(
+//                    "DoNothing",
+//                    autos::doNothing,
+//                    Constants.CompetitionType.COMPETITION
+//            )
             new AutoOption(
-                    "DoNothing",
-                    autos::doNothing,
+                    "RightCenterLineTrench",
+                    autos::rightCenterLineTrench,
                     Constants.CompetitionType.COMPETITION
             )
     );
@@ -416,18 +421,22 @@ public class Robot extends LoggedRobot {
         ));
 
         autoChooser.addAutoOption(new AutoOption(
-                    "LeftCenterLineDepot",
-                    autos::leftCenterLineDepot,
-                    Constants.CompetitionType.COMPETITION
-                )
-        );
+                "LeftCenterLineDepot",
+                autos::leftCenterLineDepot,
+                Constants.CompetitionType.COMPETITION
+        ));
 
         autoChooser.addAutoOption(new AutoOption(
-                    "RightCenterLineOutpost",
-                    autos::rightCenterLineOutpost,
-                    Constants.CompetitionType.COMPETITION
-                )
-        );
+                "RightCenterLineOutpost",
+                autos::rightCenterLineOutpost,
+                Constants.CompetitionType.COMPETITION
+        ));
+
+//        autoChooser.addAutoOption(new AutoOption(
+//                "RightCenterLineTrench",
+//                autos::rightCenterLineTrench,
+//                Constants.CompetitionType.COMPETITION
+//        ));
     }
 
     public void configureButtonBindings(final EventLoop teleopEventLoop) {
