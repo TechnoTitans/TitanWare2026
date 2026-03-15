@@ -102,7 +102,10 @@ public class RobotCommands {
                                                 .debounce(0.1, Debouncer.DebounceType.kFalling))
                                         .withTimeout(1.5)
                         ),
-                        feeder.toGoal(Feeder.Goal.FEED)
+                        Commands.parallel(
+                                feeder.toGoal(Feeder.Goal.FEED),
+                                spindexer.toGoal(Spindexer.Goal.FEED)
+                        )
                                 .onlyWhile(
                                         superstructure.atHoodSetpoint
                                                 .and(superstructure.atTurretSetpoint)
@@ -112,7 +115,6 @@ public class RobotCommands {
                 ),
                 Commands.deferredProxy(() -> intakeSlide.toGoal(IntakeSlide.Goal.SHOOTING))
                         .unless(() -> targetSupplier.get() == ShotCalculator.Target.FERRYING),
-                spindexer.toGoal(Spindexer.Goal.FEED),
                 Commands.runOnce(() -> SwerveSpeed.setSwerveSpeed(SwerveSpeed.Speeds.SHOOTING))
                         .unless(() -> targetSupplier.get() == ShotCalculator.Target.FERRYING)
         )
@@ -131,14 +133,21 @@ public class RobotCommands {
                         Commands.parallel(
                                 Commands.repeatingSequence(
                                         Commands.waitUntil(superstructure.atSetpoint),
-                                        feeder.toGoal(Feeder.Goal.FEED)
-                                                .until(superstructure.atSetpoint.negate())
+                                        Commands.parallel(
+                                                        feeder.toGoal(Feeder.Goal.FEED),
+                                                        spindexer.toGoal(Spindexer.Goal.FEED)
+                                                )
+                                                .onlyWhile(
+                                                        superstructure.atHoodSetpoint
+                                                                .and(superstructure.atTurretSetpoint)
+                                                                .and(superstructure.atShooterSetpoint
+                                                                        .debounce(0.5, Debouncer.DebounceType.kFalling))
+                                                )
                                 )
                         )
                 ),
                 intakeSlide.toGoal(IntakeSlide.Goal.SHOOTING)
                         .onlyIf(() -> targetSupplier.get() != ShotCalculator.Target.FERRYING),
-                spindexer.toGoal(Spindexer.Goal.FEED),
                 swerve.runWheelXCommand()
         )
                 .finallyDo(() -> intakeSlide.setGoalCommand(IntakeSlide.Goal.EXTEND))
