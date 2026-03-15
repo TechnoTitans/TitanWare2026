@@ -480,5 +480,12 @@ public class Robot extends LoggedRobot {
         coController.leftBumper(teleopEventLoop).whileTrue(
                 robotCommands.shootSuperstructureZero()
         );
+
+        coController.b(teleopEventLoop).whileTrue(
+                Commands.parallel(
+                        feeder.toGoal(Feeder.Goal.BACK_OUT),
+                        spindexer.toGoal(Spindexer.Goal.BACK_OUT)
+                )
+        );
     }
 }
