@@ -4,6 +4,7 @@ import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.Slot0Configs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
+import com.ctre.phoenix6.controls.TorqueCurrentFOC;
 import com.ctre.phoenix6.controls.VelocityTorqueCurrentFOC;
 import com.ctre.phoenix6.hardware.ParentDevice;
 import com.ctre.phoenix6.hardware.TalonFX;
@@ -28,6 +29,7 @@ public class FeederIOReal implements FeederIO {
     private final StatusSignal<Temperature> wheelDeviceTemp;
 
     private final VelocityTorqueCurrentFOC velocityTorqueCurrentFOC;
+    private final TorqueCurrentFOC torqueCurrentFOC;
 
     public FeederIOReal(final HardwareConstants.FeederConstants constants) {
         this.constants = constants;
@@ -41,6 +43,7 @@ public class FeederIOReal implements FeederIO {
         this.wheelDeviceTemp = wheelMotor.getDeviceTemp(false);
 
         this.velocityTorqueCurrentFOC = new VelocityTorqueCurrentFOC(0);
+        this.torqueCurrentFOC = new TorqueCurrentFOC(0);
 
         RefreshAll.add(
                 constants.CANBus(),
@@ -106,5 +109,10 @@ public class FeederIOReal implements FeederIO {
     @Override
     public void toWheelVelocity(final double velocityRotsPerSec) {
         wheelMotor.setControl(velocityTorqueCurrentFOC.withVelocity(velocityRotsPerSec));
+    }
+
+    @Override
+    public void toWheelTorqueCurrent(final double torqueCurrentAmps) {
+        wheelMotor.setControl(torqueCurrentFOC.withOutput(torqueCurrentAmps));
     }
 }

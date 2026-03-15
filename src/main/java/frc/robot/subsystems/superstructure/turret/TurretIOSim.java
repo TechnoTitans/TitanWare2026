@@ -15,9 +15,12 @@ import com.ctre.phoenix6.signals.*;
 import com.ctre.phoenix6.sim.CANcoderSimState;
 import com.ctre.phoenix6.sim.ChassisReference;
 import com.ctre.phoenix6.sim.TalonFXSimState;
+import edu.wpi.first.math.MathUtil;
+import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.system.plant.LinearSystemId;
 import edu.wpi.first.units.measure.*;
+import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Notifier;
 import edu.wpi.first.wpilibj.simulation.DCMotorSim;
 import frc.robot.constants.HardwareConstants;
@@ -213,6 +216,24 @@ public class TurretIOSim implements TurretIO {
                         .withVelocity(velocityRotsPerSec)
                         .withSlot(0)
         );
+    }
+
+    @Override
+    public void seedTurretPosition(final Rotation2d turretPosition) {
+        final double turretPositionRots = turretPosition.getRotations();
+        final double primaryGearing = constants.primaryEncoderTooth();
+        final double primaryAbsolutePosition = primaryEncoder.getAbsolutePosition().getValueAsDouble() * primaryGearing;
+
+        if (!MathUtil.isNear(primaryAbsolutePosition, turretPositionRots, 1e-6, 0, 1)) {
+            DriverStation.reportError(String.format(
+                    "Failed to seed turret position! Expected integer increment in position from: %.3f to %.3f",
+                    Math.min(primaryAbsolutePosition, turretPositionRots),
+                    Math.max(primaryAbsolutePosition, turretPositionRots)
+            ), true);
+            return;
+        }
+
+        Phoenix6Utils.tryUntilOk(turretMotor, () -> turretMotor.setPosition(turretPosition.getRotations()));
     }
 
     @Override

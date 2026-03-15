@@ -1,6 +1,7 @@
 package frc.robot.subsystems.feeder;
 
 import edu.wpi.first.math.MathUtil;
+import edu.wpi.first.math.filter.LinearFilter;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -20,6 +21,8 @@ public class Feeder extends SubsystemBase {
     private Goal desiredGoal = Goal.STOP;
     private Goal currentGoal = desiredGoal;
 
+    private final LinearFilter currentFilter;
+
     private final LoggedTrigger.Group group = LoggedTrigger.Group.from(LogKey);
 
     private boolean feeding = false;
@@ -27,12 +30,13 @@ public class Feeder extends SubsystemBase {
 
     public enum Goal {
         STOP(0),
-        FEED(45);
+        BACK_OUT(-60),
+        FEED(60);
 
-        private final double velocitySetpointRotsPerSec;
+        private final double torqueCurrentSetpoint;
 
-        Goal(final double velocitySetpointRotsPerSec) {
-            this.velocitySetpointRotsPerSec = velocitySetpointRotsPerSec;
+        Goal(final double torqueCurrentSetpoint) {
+            this.torqueCurrentSetpoint = torqueCurrentSetpoint;
         }
     }
 
@@ -45,8 +49,10 @@ public class Feeder extends SubsystemBase {
 
         this.inputs = new FeederIOInputsAutoLogged();
 
+        this.currentFilter = LinearFilter.movingAverage(3);
+
         feederIO.config();
-        feederIO.toWheelVelocity(desiredGoal.velocitySetpointRotsPerSec);
+        feederIO.toWheelTorqueCurrent(desiredGoal.torqueCurrentSetpoint);
     }
 
     @Override
@@ -58,19 +64,23 @@ public class Feeder extends SubsystemBase {
 
         if (desiredGoal != currentGoal) {
             feeding = desiredGoal == Goal.FEED;
-            feederIO.toWheelVelocity(desiredGoal.velocitySetpointRotsPerSec);
+            feederIO.toWheelTorqueCurrent(desiredGoal.torqueCurrentSetpoint);
             currentGoal = desiredGoal;
         }
 
         Logger.recordOutput(LogKey + "/CurrentGoal", currentGoal.toString());
         Logger.recordOutput(LogKey + "/DesiredGoal", desiredGoal.toString());
-        Logger.recordOutput(LogKey + "/DesiredGoal/VelocitySetpointRotsPerSec", desiredGoal.velocitySetpointRotsPerSec);
+        Logger.recordOutput(LogKey + "/DesiredGoal/TorqueCurrentSetpointAmps", desiredGoal.torqueCurrentSetpoint);
         Logger.recordOutput(LogKey + "/AtSetpoint", atSetpoint());
 
         Logger.recordOutput(
                 LogKey + "/PeriodicIOPeriodMs",
                 Units.secondsToMilliseconds(Timer.getFPGATimestamp() - feederPeriodicFPGATime)
         );
+    }
+
+    public double getFilteredCurrent() {
+        return currentFilter.calculate(inputs.wheelTorqueCurrentAmps);
     }
 
     public Command toGoal(final Goal goal) {
@@ -88,6 +98,6 @@ public class Feeder extends SubsystemBase {
 
     private boolean atSetpoint() {
         return currentGoal == desiredGoal
-                && MathUtil.isNear(desiredGoal.velocitySetpointRotsPerSec, inputs.wheelVelocityRotsPerSec, VelocityToleranceRotsPerSec);
+                && MathUtil.isNear(desiredGoal.torqueCurrentSetpoint, inputs.wheelVelocityRotsPerSec, VelocityToleranceRotsPerSec);
     }
 }

@@ -115,8 +115,8 @@ public class HardwareConstants {
             80,
             13,
             17,
-            -0.448486,
-            -0.059082,
+            -0.02124,
+            -0.02124,
             0.25,
             -0.75,
             new Transform2d(-0.127, 0, Rotation2d.kZero)

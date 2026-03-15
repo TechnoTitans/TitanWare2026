@@ -30,6 +30,7 @@ public class RobotCommands {
     private final Supplier<ShotCalculator.Target> targetSupplier;
 
     private final LoggedTrigger ableToShoot;
+    private final LoggedTrigger shouldBackOutFeeder;
 
     public enum ScoringMode {
         Stationary,
@@ -66,6 +67,11 @@ public class RobotCommands {
                     ) < AllowableSpeedToShootMetersPerSec;
                 }
         );
+
+        this.shouldBackOutFeeder = group.t(
+                "ShouldBackOutFeeder",
+                () -> feeder.getFilteredCurrent() > 75
+        ).debounce(0.25);
     }
 
     public static double linearSpeed(final ChassisSpeeds speeds) {
@@ -102,16 +108,21 @@ public class RobotCommands {
                                                 .debounce(0.1, Debouncer.DebounceType.kFalling))
                                         .withTimeout(1.5)
                         ),
-                        Commands.parallel(
-                                feeder.toGoal(Feeder.Goal.FEED),
-                                spindexer.toGoal(Spindexer.Goal.FEED)
+                        Commands.repeatingSequence(
+                                Commands.parallel(
+                                        feeder.toGoal(Feeder.Goal.FEED),
+                                        spindexer.toGoal(Spindexer.Goal.FEED)
+                                ).until(shouldBackOutFeeder),
+                                Commands.sequence(
+                                        feeder.toGoal(Feeder.Goal.BACK_OUT),
+                                        spindexer.toGoal(Spindexer.Goal.BACK_OUT)
+                                ).withTimeout(2)
+                        ).onlyWhile(
+                                superstructure.atHoodSetpoint
+                                        .and(superstructure.atTurretSetpoint)
+                                        .and(superstructure.atShooterSetpoint
+                                                .debounce(0.5, Debouncer.DebounceType.kFalling))
                         )
-                                .onlyWhile(
-                                        superstructure.atHoodSetpoint
-                                                .and(superstructure.atTurretSetpoint)
-                                                .and(superstructure.atShooterSetpoint
-                                                        .debounce(0.5, Debouncer.DebounceType.kFalling))
-                                )
                 ),
                 Commands.deferredProxy(() -> intakeSlide.toGoal(IntakeSlide.Goal.SHOOTING))
                         .unless(() -> targetSupplier.get() == ShotCalculator.Target.FERRYING),
@@ -157,10 +168,18 @@ public class RobotCommands {
     public Command shootNoCheck() {
         return Commands.parallel(
                         superstructure.toGoal(Superstructure.Goal.SHOOTING),
-                        feeder.toGoal(Feeder.Goal.FEED),
+                        Commands.repeatingSequence(
+                                Commands.parallel(
+                                        feeder.toGoal(Feeder.Goal.FEED),
+                                        spindexer.toGoal(Spindexer.Goal.FEED)
+                                ).until(shouldBackOutFeeder),
+                                Commands.sequence(
+                                        feeder.toGoal(Feeder.Goal.BACK_OUT),
+                                        spindexer.toGoal(Spindexer.Goal.BACK_OUT)
+                                ).withTimeout(2)
+                        ),
                         intakeSlide.toGoal(IntakeSlide.Goal.SHOOTING)
                                 .onlyIf(() -> targetSupplier.get() != ShotCalculator.Target.FERRYING),
-                        spindexer.toGoal(Spindexer.Goal.FEED),
                         Commands.runOnce(() -> SwerveSpeed.setSwerveSpeed(SwerveSpeed.Speeds.SHOOTING))
                 )
                 .finallyDo(() -> {

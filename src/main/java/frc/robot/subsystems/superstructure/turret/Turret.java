@@ -19,6 +19,7 @@ import edu.wpi.first.wpilibj2.command.button.Trigger;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.constants.Constants;
 import frc.robot.constants.HardwareConstants;
+import frc.robot.utils.position.ChineseRemainder;
 import org.littletonrobotics.junction.Logger;
 
 import java.util.function.DoubleSupplier;
@@ -28,8 +29,8 @@ import static edu.wpi.first.units.Units.*;
 public class Turret extends SubsystemBase {
     protected static final String LogKey = "Turret";
 
-    private static final double PositionToleranceRots = 0.75;
-    private static final double VelocityToleranceRotsPerSec = 0.15;
+    private static final double PositionToleranceRots = 0.125;
+    private static final double VelocityToleranceRotsPerSec = 0.25;
 
     private final HardwareConstants.TurretConstants constants;
     private final DoubleSupplier turretVelocitySupplier;
@@ -93,7 +94,17 @@ public class Turret extends SubsystemBase {
 //                Seconds.of(6)
 //        );
 
+//        final Rotation2d absolutePosition = ChineseRemainder.findAbsolutePosition(
+//                constants.turretTooth(),
+//                inputs.primaryEncoderPositionRots,
+//                constants.primaryEncoderTooth(),
+//                inputs.secondaryEncoderPositionRots,
+//                constants.secondaryEncoderTooth()
+//        );
+//        turretIO.seedTurretPosition(absolutePosition);
         turretIO.setPosition(0);
+//
+//        Logger.recordOutput(LogKey + "/CRTResult", absolutePosition);
     }
 
     @Override
