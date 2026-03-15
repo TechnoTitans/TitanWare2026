@@ -70,7 +70,7 @@ public class RobotCommands {
 
         this.shouldBackOutFeeder = group.t(
                 "ShouldBackOutFeeder",
-                () -> feeder.getFilteredCurrent() > 75
+                () -> feeder.getFilteredCurrent() > 48
         ).debounce(0.25);
     }
 

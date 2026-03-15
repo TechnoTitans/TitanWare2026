@@ -285,7 +285,6 @@ public class Autos {
 
         startToCenterLineAndBack.done().onTrue(
                 Commands.parallel(
-                        intakeRoller.setGoal(IntakeRoller.Goal.STOP),
                         sequence(
                                 shootStatic(),
                                 superstructure.setGoalCommand(Superstructure.Goal.STATIC_SHOT_PREP),
