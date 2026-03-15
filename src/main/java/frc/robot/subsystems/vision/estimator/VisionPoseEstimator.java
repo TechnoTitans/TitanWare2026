@@ -7,7 +7,9 @@ import edu.wpi.first.math.geometry.*;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.math.numbers.N8;
+import frc.robot.Robot;
 import frc.robot.constants.Constants;
+import frc.robot.constants.FieldConstants;
 import frc.robot.subsystems.vision.VisionIO;
 import org.photonvision.PhotonPoseEstimator;
 import org.photonvision.estimation.TargetModel;
@@ -15,6 +17,7 @@ import org.photonvision.estimation.VisionEstimation;
 import org.photonvision.targeting.*;
 
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.Function;
 
 public class VisionPoseEstimator {
@@ -173,13 +176,12 @@ public class VisionPoseEstimator {
             return VisionResult.invalid(VisionResult.Result.SINGLE_TARGET_INVALID_TAG);
         }
 
-        //TODO: Do you need?
-//        final Set<Integer> oppositeReefTagIds = Robot.IsRedAlliance.getAsBoolean()
-//                ? FieldConstants.BLUE_APRILTAG_IDS
-//                : FieldConstants.RED_APRILTAG_IDS;
-//        if (oppositeReefTagIds.contains(target.getFiducialId())) {
-//            return VisionResult.invalid(VisionResult.Result.SINGLE_TARGET_OPPOSITE_SIDE);
-//        }
+        final Set<Integer> oppositeReefTagIds = Robot.IsRedAlliance.getAsBoolean()
+                ? FieldConstants.BLUE_APRILTAG_IDS
+                : FieldConstants.RED_APRILTAG_IDS;
+        if (oppositeReefTagIds.contains(target.getFiducialId())) {
+            return VisionResult.invalid(VisionResult.Result.SINGLE_TARGET_OPPOSITE_SIDE);
+        }
 
         for (final TargetCorner targetCorner : target.detectedCorners) {
             final double x = targetCorner.x;

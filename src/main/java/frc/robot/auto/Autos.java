@@ -259,17 +259,17 @@ public class Autos {
         return routine;
     }
 
-    public AutoRoutine rightCenterLineTrench() {
-        final AutoRoutine routine = autoFactory.newRoutine("RightCenterLineTrench");
+    public AutoRoutine rightDoubleSweep() {
+        final AutoRoutine routine = autoFactory.newRoutine("RightDoubleSweep");
         final AutoTrajectory startToCenterLineAndBack = routine.trajectory("RightStartToCenterLineAndBack");
-        final AutoTrajectory shootingToTrench = routine.trajectory("RightShootingToTrench");
+        final AutoTrajectory rightSweep = routine.trajectory("RightSweep");
 
         final ShotCalculator.ShotCalculation firstShotCalculation = ShotCalculator.getShotCalculationFromPose(
                 startToCenterLineAndBack.getFinalPose().orElse(Pose2d.kZero)
         );
 
         final ShotCalculator.ShotCalculation secondShotCalculation = ShotCalculator.getShotCalculationFromPose(
-                shootingToTrench.getFinalPose().orElse(Pose2d.kZero)
+                rightSweep.getFinalPose().orElse(Pose2d.kZero)
         );
 
         routine.active().onTrue(
@@ -290,12 +290,12 @@ public class Autos {
                                 shootStatic(),
                                 superstructure.setGoalCommand(Superstructure.Goal.STATIC_SHOT_PREP),
                                 Commands.runOnce(() -> superstructure.updateStaticShotParameter(secondShotCalculation)),
-                                shootingToTrench.cmd()
+                                rightSweep.cmd()
                         )
                 ).withName("CenterLineShoot")
         );
 
-        shootingToTrench.done().onTrue(shootStatic().withName("ShootFromTrench"));
+        rightSweep.done().onTrue(shootStatic().withName("ShootFromTrench"));
 
         return routine;
     }

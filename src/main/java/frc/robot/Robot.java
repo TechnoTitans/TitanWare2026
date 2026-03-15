@@ -175,14 +175,9 @@ public class Robot extends LoggedRobot {
     );
 
     private final AutoChooser autoChooser = new AutoChooser(
-//            new AutoOption(
-//                    "DoNothing",
-//                    autos::doNothing,
-//                    Constants.CompetitionType.COMPETITION
-//            )
             new AutoOption(
-                    "RightCenterLineTrench",
-                    autos::rightCenterLineTrench,
+                    "DoNothing",
+                    autos::doNothing,
                     Constants.CompetitionType.COMPETITION
             )
     );
@@ -432,11 +427,11 @@ public class Robot extends LoggedRobot {
                 Constants.CompetitionType.COMPETITION
         ));
 
-//        autoChooser.addAutoOption(new AutoOption(
-//                "RightCenterLineTrench",
-//                autos::rightCenterLineTrench,
-//                Constants.CompetitionType.COMPETITION
-//        ));
+        autoChooser.addAutoOption(new AutoOption(
+                "RightDoubleSweep",
+                autos::rightDoubleSweep,
+                Constants.CompetitionType.COMPETITION
+        ));
     }
 
     public void configureButtonBindings(final EventLoop teleopEventLoop) {
