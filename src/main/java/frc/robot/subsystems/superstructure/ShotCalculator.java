@@ -44,15 +44,16 @@ public class ShotCalculator {
     public static final InterpolatingTreeMap<Double, ShotCalc> ShotMap =
             new InterpolatingTreeMap<>(InverseInterpolator.forDouble(), ShotCalc::interpolate);
     static {
-        ShotMap.put(1.77, new ShotCalc(30, 0));
-        ShotMap.put(2.45, new ShotCalc(30.55, 0.0056));
-        ShotMap.put(2.92, new ShotCalc(35, 0.0056));
-        ShotMap.put(3.45, new ShotCalc(35, 0.0264));
-        ShotMap.put(3.66, new ShotCalc(35, 0.0444));
-        ShotMap.put(3.70, new ShotCalc(35, 0.0537));
-        ShotMap.put(3.97, new ShotCalc(35, 0.0500));
-        ShotMap.put(4.97, new ShotCalc(40, 0.0583));
-        ShotMap.put(5.43, new ShotCalc(40, 0.0583));
+        ShotMap.put(1.30, new ShotCalc(28, 0));
+        ShotMap.put(2.07, new ShotCalc(32, 0.005));
+        ShotMap.put(2.42, new ShotCalc(32, 0.008));
+        ShotMap.put(2.67, new ShotCalc(33, 0.01));
+        ShotMap.put(3.07, new ShotCalc(35, 0.012));
+        ShotMap.put(3.60, new ShotCalc(36, 0.014));
+        ShotMap.put(4.54, new ShotCalc(40, 0.021));
+        ShotMap.put(5.18, new ShotCalc(43, 0.025));
+        ShotMap.put(5.84, new ShotCalc(44, 0.027));
+        ShotMap.put(6.16, new ShotCalc(44, 0.041));
     }
 
     private static final InterpolatingDoubleTreeMap TOFMap = new InterpolatingDoubleTreeMap();

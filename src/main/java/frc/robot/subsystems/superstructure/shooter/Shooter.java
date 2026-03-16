@@ -25,7 +25,7 @@ import static edu.wpi.first.units.Units.*;
 
 public class Shooter extends SubsystemBase {
     protected static final String LogKey = "Shooter";
-    private static final double VelocityToleranceRotsPerSec = 1.5;
+    private static final double VelocityToleranceRotsPerSec = 2;
 
     private final ShooterIO shooterIO;
     private final ShooterIOInputsAutoLogged inputs;
@@ -40,7 +40,8 @@ public class Shooter extends SubsystemBase {
 
     public enum Goal {
         IDLE(20, false),
-        TRACKING(0, true);
+        TRACKING(0, true),
+        BASIC(35, false);
 
         private double velocitySetpointRotsPerSec;
         private final boolean isDynamic;
@@ -59,7 +60,7 @@ public class Shooter extends SubsystemBase {
 
     public Shooter(final Constants.RobotMode mode, final HardwareConstants.ShooterConstants constants) {
         this.shooterIO = switch (mode) {
-            case REAL -> new ShooterIOReal(constants);
+            case REAL -> new ShooterIORealBangBang(constants);
             case SIM -> new ShooterIOSim(constants);
             case REPLAY, DISABLED -> new ShooterIO() {};
         };

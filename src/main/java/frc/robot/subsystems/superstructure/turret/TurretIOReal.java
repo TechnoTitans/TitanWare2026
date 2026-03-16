@@ -12,7 +12,10 @@ import com.ctre.phoenix6.hardware.CANcoder;
 import com.ctre.phoenix6.hardware.ParentDevice;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.*;
+import edu.wpi.first.math.MathUtil;
+import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.units.measure.*;
+import edu.wpi.first.wpilibj.DriverStation;
 import frc.robot.constants.HardwareConstants;
 import frc.robot.utils.ctre.Phoenix6Utils;
 import frc.robot.utils.ctre.RefreshAll;
@@ -73,11 +76,12 @@ public class TurretIOReal implements TurretIO {
     public void config() {
         final TalonFXConfiguration talonFXConfiguration = new TalonFXConfiguration();
         talonFXConfiguration.Slot0 = new Slot0Configs()
-                .withKS(0.366)
-                .withStaticFeedforwardSign(StaticFeedforwardSignValue.UseVelocitySign)
-                .withKV(5)
-                .withKP(30)
-                .withKD(0);
+                .withKS(0.24265)
+                .withStaticFeedforwardSign(StaticFeedforwardSignValue.UseClosedLoopSign)
+                .withKV(3.067)
+                .withKA(0.14961)
+                .withKP(50)
+                .withKD(4);
         talonFXConfiguration.CurrentLimits.StatorCurrentLimit = 60;
         talonFXConfiguration.CurrentLimits.StatorCurrentLimitEnable = true;
         talonFXConfiguration.CurrentLimits.SupplyCurrentLimit = 55;
@@ -163,4 +167,23 @@ public class TurretIOReal implements TurretIO {
     public void setPosition(final double turretPositionRots) {
         Phoenix6Utils.tryUntilOk(turretMotor, () -> turretMotor.setPosition(turretPositionRots));
     }
+
+    @Override
+    public void seedTurretPosition(final Rotation2d turretPosition) {
+        final double turretPositionRots = turretPosition.getRotations();
+        final double primaryGearing = constants.primaryEncoderTooth();
+        final double primaryAbsolutePosition = primaryEncoder.getAbsolutePosition().getValueAsDouble() * primaryGearing;
+
+        if (!MathUtil.isNear(primaryAbsolutePosition, turretPositionRots, 1e-6, 0, 1)) {
+            DriverStation.reportError(String.format(
+                    "Failed to seed turret position! Expected integer increment in position from: %.3f to %.3f",
+                    Math.min(primaryAbsolutePosition, turretPositionRots),
+                    Math.max(primaryAbsolutePosition, turretPositionRots)
+            ), true);
+            return;
+        }
+
+        Phoenix6Utils.tryUntilOk(turretMotor, () -> turretMotor.setPosition(turretPosition.getRotations()));
+    }
+
 }

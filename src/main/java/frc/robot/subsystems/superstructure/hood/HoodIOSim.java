@@ -114,10 +114,10 @@ public class HoodIOSim implements HoodIO {
     public void config() {
         final TalonFXConfiguration talonFXConfiguration = new TalonFXConfiguration();
         talonFXConfiguration.Slot0 = new Slot0Configs()
-                .withKS(1)
+                .withKS(0.3)
                 .withStaticFeedforwardSign(StaticFeedforwardSignValue.UseClosedLoopSign)
-                .withKP(450)
-                .withKD(0);
+                .withKP(300)
+                .withKD(0.1);
         talonFXConfiguration.CurrentLimits.StatorCurrentLimit = 60;
         talonFXConfiguration.CurrentLimits.StatorCurrentLimitEnable = true;
         talonFXConfiguration.CurrentLimits.SupplyCurrentLimit = 45;

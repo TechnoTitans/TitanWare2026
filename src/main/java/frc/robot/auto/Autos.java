@@ -15,6 +15,7 @@ import frc.robot.subsystems.drive.Swerve;
 import frc.robot.subsystems.feeder.Feeder;
 import frc.robot.subsystems.intake.roller.IntakeRoller;
 import frc.robot.subsystems.intake.slide.IntakeSlide;
+import frc.robot.subsystems.spindexer.Spindexer;
 import frc.robot.subsystems.superstructure.ShotCalculator;
 import frc.robot.subsystems.superstructure.Superstructure;
 import frc.robot.subsystems.vision.PhotonVision;
@@ -27,11 +28,12 @@ import static edu.wpi.first.wpilibj2.command.Commands.*;
 
 public class Autos {
     public static final String LogKey = "Auto";
-    private static final int SHOOTING_TIME = 4;
+    private static final int SHOOTING_TIME = 6;
 
     private final Swerve swerve;
     private final Superstructure superstructure;
     private final Feeder feeder;
+    private final Spindexer spindexer;
     private final IntakeRoller intakeRoller;
     private final IntakeSlide intakeSlide;
 
@@ -46,6 +48,7 @@ public class Autos {
             final Swerve swerve,
             final Superstructure superstructure,
             final Feeder feeder,
+            final Spindexer spindexer,
             final IntakeRoller intakeRoller,
             final IntakeSlide intakeSlide,
             final PhotonVision photonVision
@@ -53,6 +56,7 @@ public class Autos {
         this.swerve = swerve;
         this.superstructure = superstructure;
         this.feeder = feeder;
+        this.spindexer = spindexer;
         this.intakeRoller = intakeRoller;
         this.intakeSlide = intakeSlide;
 
@@ -140,6 +144,7 @@ public class Autos {
                 ).until(() -> timer.hasElapsed(SHOOTING_TIME)),
                 superstructure.toGoal(Superstructure.Goal.SHOOTING),
                 intakeSlide.toGoal(IntakeSlide.Goal.SHOOTING),
+                spindexer.toGoal(Spindexer.Goal.FEED),
                 swerve.runWheelXCommand(),
                 Commands.run(
                         () -> Logger.recordOutput("RobotStopped", robotStopped)
@@ -250,6 +255,46 @@ public class Autos {
         );
 
         shootingToOutpost.done().onTrue(shootStatic().withName("ShootFromOutpost"));
+
+        return routine;
+    }
+
+    public AutoRoutine rightDoubleSweep() {
+        final AutoRoutine routine = autoFactory.newRoutine("RightDoubleSweep");
+        final AutoTrajectory startToCenterLineAndBack = routine.trajectory("RightStartToCenterLineAndBack");
+        final AutoTrajectory rightSweep = routine.trajectory("RightSweep");
+
+        final ShotCalculator.ShotCalculation firstShotCalculation = ShotCalculator.getShotCalculationFromPose(
+                startToCenterLineAndBack.getFinalPose().orElse(Pose2d.kZero)
+        );
+
+        final ShotCalculator.ShotCalculation secondShotCalculation = ShotCalculator.getShotCalculationFromPose(
+                rightSweep.getFinalPose().orElse(Pose2d.kZero)
+        );
+
+        routine.active().onTrue(
+                Commands.parallel(
+                        runStartingTrajectory(startToCenterLineAndBack),
+                        intakeRoller.setGoal(IntakeRoller.Goal.INTAKE),
+                        Commands.sequence(
+                                superstructure.setGoalCommand(Superstructure.Goal.STATIC_SHOT_PREP),
+                                Commands.runOnce(() -> superstructure.updateStaticShotParameter(firstShotCalculation))
+                        )
+                ).withName("StartCenterLine")
+        );
+
+        startToCenterLineAndBack.done().onTrue(
+                Commands.parallel(
+                        sequence(
+                                shootStatic(),
+                                superstructure.setGoalCommand(Superstructure.Goal.STATIC_SHOT_PREP),
+                                Commands.runOnce(() -> superstructure.updateStaticShotParameter(secondShotCalculation)),
+                                rightSweep.cmd()
+                        )
+                ).withName("CenterLineShoot")
+        );
+
+        rightSweep.done().onTrue(shootStatic().withName("ShootFromTrench"));
 
         return routine;
     }

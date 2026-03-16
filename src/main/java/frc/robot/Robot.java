@@ -14,9 +14,7 @@ import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import frc.robot.auto.AutoChooser;
 import frc.robot.auto.AutoOption;
 import frc.robot.auto.Autos;
-import frc.robot.constants.Constants;
-import frc.robot.constants.HardwareConstants;
-import frc.robot.constants.RobotMap;
+import frc.robot.constants.*;
 import frc.robot.subsystems.drive.Swerve;
 import frc.robot.subsystems.drive.constants.SwerveConstants;
 import frc.robot.subsystems.feeder.Feeder;
@@ -84,7 +82,7 @@ public class Robot extends LoggedRobot {
     );
 
     public final PhotonVision photonVision = new PhotonVision(
-            Constants.RobotMode.DISABLED,
+            Constants.CURRENT_MODE,
             swerve
     );
 
@@ -162,13 +160,15 @@ public class Robot extends LoggedRobot {
             intakeSlide,
             superstructure,
             spindexer,
-            feeder
+            feeder,
+            () -> shotCalculationSupplier.get().target()
     );
 
     public final Autos autos = new Autos(
             swerve,
             superstructure,
             feeder,
+            spindexer,
             intakeRoller,
             intakeSlide,
             photonVision
@@ -321,6 +321,11 @@ public class Robot extends LoggedRobot {
 
         componentsSolver.periodic();
 
+        Logger.recordOutput("DistanceToHub", swerve.getPose()
+                .transformBy(PoseConstants.Turret.ROBOT_TO_TURRET_TRANSFORM_2D)
+                .getTranslation()
+                .getDistance(FieldConstants.getHubTarget()));
+
         final AllianceShift allianceShift = AllianceShift.get(0);
         final AllianceShift offsetAllianceShift = AllianceShift.get(MatchTimeOffsetSeconds);
         Logger.recordOutput(AllianceShiftLogKey + "Normal", allianceShift);
@@ -360,12 +365,12 @@ public class Robot extends LoggedRobot {
 //        driverController.b(testEventLoop)
 //                .whileTrue(swerve.linearTorqueCurrentSysIdDynamicCommand(SysIdRoutine.Direction.kReverse));
 
-        driverController.y(testEventLoop).whileTrue(
+        driverController.x(testEventLoop).whileTrue(
                 turret.voltageSysIdCommand()
                         .withInterruptBehavior(Command.InterruptionBehavior.kCancelIncoming)
         );
 
-        driverController.x(testEventLoop).whileTrue(
+        driverController.y(testEventLoop).whileTrue(
                 shooter.flywheelTorqueCurrentSysIdCommand()
                         .withInterruptBehavior(Command.InterruptionBehavior.kCancelIncoming)
         );
@@ -391,7 +396,7 @@ public class Robot extends LoggedRobot {
         );
 
         hubActive.onTrue(ControllerUtils.rumbleForDurationCommand(
-                driverController.getHID(), GenericHID.RumbleType.kBothRumble, 0.5, 1
+                driverController.getHID(), GenericHID.RumbleType.kBothRumble, 1, 1
         ));
 
         disabled.onTrue(ControllerUtils.rumbleForDurationCommand(
@@ -411,18 +416,22 @@ public class Robot extends LoggedRobot {
         ));
 
         autoChooser.addAutoOption(new AutoOption(
-                    "LeftCenterLineDepot",
-                    autos::leftCenterLineDepot,
-                    Constants.CompetitionType.COMPETITION
-                )
-        );
+                "LeftCenterLineDepot",
+                autos::leftCenterLineDepot,
+                Constants.CompetitionType.COMPETITION
+        ));
 
         autoChooser.addAutoOption(new AutoOption(
-                    "RightCenterLineOutpost",
-                    autos::rightCenterLineOutpost,
-                    Constants.CompetitionType.COMPETITION
-                )
-        );
+                "RightCenterLineOutpost",
+                autos::rightCenterLineOutpost,
+                Constants.CompetitionType.COMPETITION
+        ));
+
+        autoChooser.addAutoOption(new AutoOption(
+                "RightDoubleSweep",
+                autos::rightDoubleSweep,
+                Constants.CompetitionType.COMPETITION
+        ));
     }
 
     public void configureButtonBindings(final EventLoop teleopEventLoop) {
@@ -462,6 +471,21 @@ public class Robot extends LoggedRobot {
                         Commands.runOnce(() -> scoringMode = RobotCommands.ScoringMode.Stationary),
                         robotCommands.shootStationary()
                 ).finallyDo(() -> scoringMode = RobotCommands.ScoringMode.Moving)
+        );
+
+        coController.x(teleopEventLoop).whileTrue(
+                robotCommands.shootNoCheck()
+        );
+
+        coController.leftBumper(teleopEventLoop).whileTrue(
+                robotCommands.shootSuperstructureZero()
+        );
+
+        coController.b(teleopEventLoop).whileTrue(
+                Commands.parallel(
+                        feeder.toGoal(Feeder.Goal.BACK_OUT),
+                        spindexer.toGoal(Spindexer.Goal.BACK_OUT)
+                )
         );
     }
 }

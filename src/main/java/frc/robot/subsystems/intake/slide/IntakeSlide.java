@@ -30,7 +30,7 @@ public class IntakeSlide extends SubsystemBase {
 
     private final DeltaTime deltaTime = new DeltaTime();
     private final TrapezoidProfile profile =
-            new TrapezoidProfile(new TrapezoidProfile.Constraints(1.2, 0.75));
+            new TrapezoidProfile(new TrapezoidProfile.Constraints(0.4, 0.3));
     private final TrapezoidProfile.State profileGoal = new TrapezoidProfile.State(0,0);
     private TrapezoidProfile.State profileSetpoint = new TrapezoidProfile.State(0,0);
 

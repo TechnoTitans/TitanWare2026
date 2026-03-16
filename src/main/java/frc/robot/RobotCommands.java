@@ -1,5 +1,6 @@
 package frc.robot;
 
+import edu.wpi.first.math.filter.Debouncer;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
@@ -8,9 +9,12 @@ import frc.robot.subsystems.feeder.Feeder;
 import frc.robot.subsystems.intake.roller.IntakeRoller;
 import frc.robot.subsystems.intake.slide.IntakeSlide;
 import frc.robot.subsystems.spindexer.Spindexer;
+import frc.robot.subsystems.superstructure.ShotCalculator;
 import frc.robot.subsystems.superstructure.Superstructure;
 import frc.robot.utils.commands.LoggedTrigger;
 import frc.robot.utils.teleop.SwerveSpeed;
+
+import java.util.function.Supplier;
 
 public class RobotCommands {
     protected static final String LogKey = "RobotCommands";
@@ -23,7 +27,10 @@ public class RobotCommands {
     private final Spindexer spindexer;
     private final Feeder feeder;
 
+    private final Supplier<ShotCalculator.Target> targetSupplier;
+
     private final LoggedTrigger ableToShoot;
+    private final LoggedTrigger shouldBackOutFeeder;
 
     public enum ScoringMode {
         Stationary,
@@ -36,7 +43,8 @@ public class RobotCommands {
             final IntakeSlide intakeSlide,
             final Superstructure superstructure,
             final Spindexer spindexer,
-            final Feeder feeder
+            final Feeder feeder,
+            final Supplier<ShotCalculator.Target> targetSupplier
     ) {
         this.swerve = swerve;
         this.intakeRoller = intakeRoller;
@@ -44,6 +52,7 @@ public class RobotCommands {
         this.superstructure = superstructure;
         this.spindexer = spindexer;
         this.feeder = feeder;
+        this.targetSupplier = targetSupplier;
 
         final LoggedTrigger.Group group = LoggedTrigger.Group.from(LogKey);
 
@@ -58,6 +67,11 @@ public class RobotCommands {
                     ) < AllowableSpeedToShootMetersPerSec;
                 }
         );
+
+        this.shouldBackOutFeeder = group.t(
+                "ShouldBackOutFeeder",
+                () -> feeder.getFilteredCurrent() > 48
+        ).debounce(0.25);
     }
 
     public static double linearSpeed(final ChassisSpeeds speeds) {
@@ -86,13 +100,34 @@ public class RobotCommands {
         return Commands.parallel(
                 superstructure.toGoal(Superstructure.Goal.SHOOTING),
                 Commands.repeatingSequence(
-                        Commands.waitUntil(superstructure.atSetpoint),
-                        feeder.toGoal(Feeder.Goal.FEED)
-                                .onlyWhile(superstructure.atSetpoint)
+                        Commands.parallel(
+                                Commands.waitUntil(superstructure.atHoodSetpoint),
+                                Commands.waitUntil(superstructure.atTurretSetpoint),
+                                Commands.waitUntil(
+                                        superstructure.atShooterSetpoint
+                                                .debounce(0.1, Debouncer.DebounceType.kFalling))
+                                        .withTimeout(1.5)
+                        ),
+                        Commands.repeatingSequence(
+                                Commands.parallel(
+                                        feeder.toGoal(Feeder.Goal.FEED),
+                                        spindexer.toGoal(Spindexer.Goal.FEED)
+                                ).until(shouldBackOutFeeder),
+                                Commands.sequence(
+                                        feeder.toGoal(Feeder.Goal.BACK_OUT),
+                                        spindexer.toGoal(Spindexer.Goal.BACK_OUT)
+                                ).withTimeout(2)
+                        ).onlyWhile(
+                                superstructure.atHoodSetpoint
+                                        .and(superstructure.atTurretSetpoint)
+                                        .and(superstructure.atShooterSetpoint
+                                                .debounce(0.5, Debouncer.DebounceType.kFalling))
+                        )
                 ),
-                intakeSlide.toGoal(IntakeSlide.Goal.SHOOTING),
-                spindexer.toGoal(Spindexer.Goal.FEED),
+                Commands.deferredProxy(() -> intakeSlide.toGoal(IntakeSlide.Goal.SHOOTING))
+                        .unless(() -> targetSupplier.get() == ShotCalculator.Target.FERRYING),
                 Commands.runOnce(() -> SwerveSpeed.setSwerveSpeed(SwerveSpeed.Speeds.SHOOTING))
+                        .unless(() -> targetSupplier.get() == ShotCalculator.Target.FERRYING)
         )
             .finallyDo(() -> {
                 SwerveSpeed.setSwerveSpeed(SwerveSpeed.Speeds.NORMAL);
@@ -109,16 +144,63 @@ public class RobotCommands {
                         Commands.parallel(
                                 Commands.repeatingSequence(
                                         Commands.waitUntil(superstructure.atSetpoint),
-                                        feeder.toGoal(Feeder.Goal.FEED)
-                                                .until(superstructure.atSetpoint.negate())
+                                        Commands.parallel(
+                                                        feeder.toGoal(Feeder.Goal.FEED),
+                                                        spindexer.toGoal(Spindexer.Goal.FEED)
+                                                )
+                                                .onlyWhile(
+                                                        superstructure.atHoodSetpoint
+                                                                .and(superstructure.atTurretSetpoint)
+                                                                .and(superstructure.atShooterSetpoint
+                                                                        .debounce(0.5, Debouncer.DebounceType.kFalling))
+                                                )
                                 )
                         )
                 ),
-                intakeSlide.toGoal(IntakeSlide.Goal.SHOOTING),
-                spindexer.toGoal(Spindexer.Goal.FEED),
+                intakeSlide.toGoal(IntakeSlide.Goal.SHOOTING)
+                        .onlyIf(() -> targetSupplier.get() != ShotCalculator.Target.FERRYING),
                 swerve.runWheelXCommand()
         )
                 .finallyDo(() -> intakeSlide.setGoalCommand(IntakeSlide.Goal.EXTEND))
                 .withName("ShootStationary");
+    }
+
+    public Command shootNoCheck() {
+        return Commands.parallel(
+                        superstructure.toGoal(Superstructure.Goal.SHOOTING),
+                        Commands.repeatingSequence(
+                                Commands.parallel(
+                                        feeder.toGoal(Feeder.Goal.FEED),
+                                        spindexer.toGoal(Spindexer.Goal.FEED)
+                                ).until(shouldBackOutFeeder),
+                                Commands.sequence(
+                                        feeder.toGoal(Feeder.Goal.BACK_OUT),
+                                        spindexer.toGoal(Spindexer.Goal.BACK_OUT)
+                                ).withTimeout(2)
+                        ),
+                        intakeSlide.toGoal(IntakeSlide.Goal.SHOOTING)
+                                .onlyIf(() -> targetSupplier.get() != ShotCalculator.Target.FERRYING),
+                        Commands.runOnce(() -> SwerveSpeed.setSwerveSpeed(SwerveSpeed.Speeds.SHOOTING))
+                )
+                .finallyDo(() -> {
+                    SwerveSpeed.setSwerveSpeed(SwerveSpeed.Speeds.NORMAL);
+                    intakeSlide.setGoalCommand(IntakeSlide.Goal.EXTEND);
+                })
+                .withName("ShootWhileMoving");
+    }
+
+    public Command shootSuperstructureZero() {
+        return Commands.parallel(
+                        superstructure.toGoal(Superstructure.Goal.SHOOTING_STOW),
+                        feeder.toGoal(Feeder.Goal.FEED),
+                        intakeSlide.toGoal(IntakeSlide.Goal.SHOOTING),
+                        spindexer.toGoal(Spindexer.Goal.FEED),
+                        Commands.runOnce(() -> SwerveSpeed.setSwerveSpeed(SwerveSpeed.Speeds.SHOOTING))
+                )
+                .finallyDo(() -> {
+                    SwerveSpeed.setSwerveSpeed(SwerveSpeed.Speeds.NORMAL);
+                    intakeSlide.setGoalCommand(IntakeSlide.Goal.EXTEND);
+                })
+                .withName("ShootWhileMoving");
     }
 }

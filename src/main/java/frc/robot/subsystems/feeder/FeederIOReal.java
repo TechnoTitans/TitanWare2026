@@ -4,12 +4,14 @@ import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.Slot0Configs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
+import com.ctre.phoenix6.controls.TorqueCurrentFOC;
 import com.ctre.phoenix6.controls.VelocityTorqueCurrentFOC;
 import com.ctre.phoenix6.hardware.ParentDevice;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.FeedbackSensorSourceValue;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
+import com.ctre.phoenix6.signals.StaticFeedforwardSignValue;
 import edu.wpi.first.units.measure.*;
 import frc.robot.constants.HardwareConstants;
 import frc.robot.utils.ctre.Phoenix6Utils;
@@ -27,6 +29,7 @@ public class FeederIOReal implements FeederIO {
     private final StatusSignal<Temperature> wheelDeviceTemp;
 
     private final VelocityTorqueCurrentFOC velocityTorqueCurrentFOC;
+    private final TorqueCurrentFOC torqueCurrentFOC;
 
     public FeederIOReal(final HardwareConstants.FeederConstants constants) {
         this.constants = constants;
@@ -40,6 +43,7 @@ public class FeederIOReal implements FeederIO {
         this.wheelDeviceTemp = wheelMotor.getDeviceTemp(false);
 
         this.velocityTorqueCurrentFOC = new VelocityTorqueCurrentFOC(0);
+        this.torqueCurrentFOC = new TorqueCurrentFOC(0);
 
         RefreshAll.add(
                 constants.CANBus(),
@@ -55,10 +59,11 @@ public class FeederIOReal implements FeederIO {
     public void config() {
         final TalonFXConfiguration talonFXConfiguration = new TalonFXConfiguration();
         talonFXConfiguration.Slot0 = new Slot0Configs()
-                .withKS(6.72)
-                .withKV(0.08)
-                .withKP(6)
-                .withKD(0.09);
+                .withKS(14)
+                .withStaticFeedforwardSign(StaticFeedforwardSignValue.UseVelocitySign)
+                .withKV(0)
+                .withKP(10)
+                .withKD(0);
         talonFXConfiguration.TorqueCurrent.PeakForwardTorqueCurrent = 80;
         talonFXConfiguration.TorqueCurrent.PeakReverseTorqueCurrent = -80;
         talonFXConfiguration.CurrentLimits.StatorCurrentLimit = 80;
@@ -104,5 +109,10 @@ public class FeederIOReal implements FeederIO {
     @Override
     public void toWheelVelocity(final double velocityRotsPerSec) {
         wheelMotor.setControl(velocityTorqueCurrentFOC.withVelocity(velocityRotsPerSec));
+    }
+
+    @Override
+    public void toWheelTorqueCurrent(final double torqueCurrentAmps) {
+        wheelMotor.setControl(torqueCurrentFOC.withOutput(torqueCurrentAmps));
     }
 }

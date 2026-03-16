@@ -1,5 +1,6 @@
 package frc.robot.subsystems.superstructure;
 
+import edu.wpi.first.math.filter.Debouncer;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.geometry.Translation2d;
@@ -31,13 +32,17 @@ public class Superstructure extends VirtualSubsystem {
     private final Trigger desiredGoalChanged;
 
     public final Trigger atSetpoint;
+    public final Trigger atHoodSetpoint;
+    public final Trigger atShooterSetpoint;
+    public final Trigger atTurretSetpoint;
 
     private final Supplier<ShotCalculator.ShotCalculation> shotCalculationSupplier;
 
     public enum Goal {
         TRACKING(Turret.Goal.TRACKING, Hood.Goal.STOW, Shooter.Goal.TRACKING, true),
         STATIC_SHOT_PREP(Turret.Goal.TRACKING, Hood.Goal.STOW, Shooter.Goal.TRACKING, false),
-        SHOOTING(Turret.Goal.TRACKING, Hood.Goal.SHOOTING, Shooter.Goal.TRACKING, true);
+        SHOOTING(Turret.Goal.TRACKING, Hood.Goal.SHOOTING, Shooter.Goal.TRACKING, true),
+        SHOOTING_STOW(Turret.Goal.STOW, Hood.Goal.STOW, Shooter.Goal.BASIC, false);
 
         private final Turret.Goal turretGoal;
         private final Hood.Goal hoodGoal;
@@ -72,9 +77,15 @@ public class Superstructure extends VirtualSubsystem {
 
         this.desiredGoalIsRunningGoal = new Trigger(eventLoop, () -> desiredGoal == runningGoal);
         this.desiredGoalChanged = new Trigger(eventLoop, () -> desiredGoal != runningGoal);
+
+        this.atTurretSetpoint = turret.atSetpoint;
+        this.atShooterSetpoint = shooter.atSetpoint;
+        this.atHoodSetpoint = hood.atSetpoint;
+
         this.atSetpoint = turret.atSetpoint
                 .and(hood.atSetpoint)
-                .and(shooter.atSetpoint);
+                .and(shooter.atSetpoint)
+                .debounce(0.1, Debouncer.DebounceType.kFalling);
 
         this.shotCalculationSupplier = shotCalculationSupplier;
 

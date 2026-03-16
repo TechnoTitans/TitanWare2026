@@ -19,6 +19,7 @@ import edu.wpi.first.wpilibj2.command.button.Trigger;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.constants.Constants;
 import frc.robot.constants.HardwareConstants;
+import frc.robot.utils.position.ChineseRemainder;
 import org.littletonrobotics.junction.Logger;
 
 import java.util.function.DoubleSupplier;
@@ -28,8 +29,8 @@ import static edu.wpi.first.units.Units.*;
 public class Turret extends SubsystemBase {
     protected static final String LogKey = "Turret";
 
-    private static final double PositionToleranceRots = 0.02;
-    private static final double VelocityToleranceRotsPerSec = 0.02;
+    private static final double PositionToleranceRots = 0.125;
+    private static final double VelocityToleranceRotsPerSec = 0.25;
 
     private final HardwareConstants.TurretConstants constants;
     private final DoubleSupplier turretVelocitySupplier;
@@ -38,7 +39,7 @@ public class Turret extends SubsystemBase {
     private final TurretIOInputsAutoLogged inputs;
 
     private final SysIdRoutine voltageSysIdRoutine;
-    private final SysIdRoutine torqueCurrentSysIdRoutine;
+//    private final SysIdRoutine torqueCurrentSysIdRoutine;
 
     private Goal desiredGoal = Goal.TRACKING;
     private Goal currentGoal = desiredGoal;
@@ -46,6 +47,7 @@ public class Turret extends SubsystemBase {
     public final Trigger atSetpoint = new Trigger(this::atSetpoint);
 
     public enum Goal {
+        STOW(0, false),
         TRACKING(0, true);
 
         private final boolean isDynamic;
@@ -82,17 +84,27 @@ public class Turret extends SubsystemBase {
         this.turretIO.config();
 
         this.voltageSysIdRoutine = makeVoltageSysIdRoutine(
-                Volts.of(2).per(Second),
-                Volts.of(3),
+                Volts.of(0.5).per(Second),
+                Volts.of(2),
                 Seconds.of(6)
         );
-        this.torqueCurrentSysIdRoutine = makeTorqueCurrentSysIdRoutine(
-                Amps.of(2).per(Second),
-                Amps.of(8),
-                Seconds.of(6)
-        );
+//        this.torqueCurrentSysIdRoutine = makeTorqueCurrentSysIdRoutine(
+//                Amps.of(2).per(Second),
+//                Amps.of(8),
+//                Seconds.of(6)
+//        );
 
+//        final Rotation2d absolutePosition = ChineseRemainder.findAbsolutePosition(
+//                constants.turretTooth(),
+//                inputs.primaryEncoderPositionRots,
+//                constants.primaryEncoderTooth(),
+//                inputs.secondaryEncoderPositionRots,
+//                constants.secondaryEncoderTooth()
+//        );
+//        turretIO.seedTurretPosition(absolutePosition);
         turretIO.setPosition(0);
+//
+//        Logger.recordOutput(LogKey + "/CRTResult", absolutePosition);
     }
 
     @Override
@@ -261,7 +273,7 @@ public class Turret extends SubsystemBase {
         return makeSysIdCommand(voltageSysIdRoutine);
     }
 
-    public Command torqueCurrentSysIdCommand() {
-        return makeSysIdCommand(torqueCurrentSysIdRoutine);
-    }
+//    public Command torqueCurrentSysIdCommand() {
+//        return makeSysIdCommand(torqueCurrentSysIdRoutine);
+//    }
 }

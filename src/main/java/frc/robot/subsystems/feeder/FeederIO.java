@@ -17,4 +17,6 @@ public interface FeederIO {
     default void config() {}
 
     default void toWheelVelocity(final double velocityRotsPerSec) {}
+
+    default void toWheelTorqueCurrent(final double torqueCurrentAmps) {}
 }

@@ -86,6 +86,8 @@ public class ShooterIOReal implements ShooterIO {
         final TalonFXConfiguration talonFXConfiguration = new TalonFXConfiguration();
         talonFXConfiguration.Slot0 = new Slot0Configs()
                 .withKS(6.75)
+                .withKV(0.13)
+                .withKA(0.21318)
                 .withKP(11)
                 .withKD(0);
         talonFXConfiguration.TorqueCurrent.PeakForwardTorqueCurrent = 80;

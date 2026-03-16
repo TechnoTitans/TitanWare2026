@@ -33,7 +33,7 @@ public class HardwareConstants {
         }
     }
 
-    public static final int PowerDistributionHub = 1;
+    public static final int PowerDistributionHub = 2;
 
     public record IntakeRollerConstants(
             CANBus CANBus,
@@ -42,7 +42,7 @@ public class HardwareConstants {
     ) {}
 
     public static final IntakeRollerConstants INTAKE_ROLLER = new IntakeRollerConstants(
-            CANBus.RIO,
+            CANBus.CANIVORE,
             14,
             5.0 / 3
     );
@@ -115,8 +115,8 @@ public class HardwareConstants {
             80,
             13,
             17,
-            -0.448486,
-            -0.059082,
+            -0.02124,
+            -0.02124,
             0.25,
             -0.75,
             new Transform2d(-0.127, 0, Rotation2d.kZero)
