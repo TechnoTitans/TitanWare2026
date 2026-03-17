@@ -20,7 +20,7 @@ import frc.robot.utils.ctre.RefreshAll;
 public class FeederIOReal implements FeederIO {
     private final HardwareConstants.FeederConstants constants;
 
-    private final TalonFX wheelMotor;
+    private final TalonFX motor;
 
     private final StatusSignal<Angle> wheelPosition;
     private final StatusSignal<AngularVelocity> wheelVelocity;
@@ -34,13 +34,13 @@ public class FeederIOReal implements FeederIO {
     public FeederIOReal(final HardwareConstants.FeederConstants constants) {
         this.constants = constants;
 
-        this.wheelMotor = new TalonFX(constants.motorID(), constants.CANBus().toPhoenix6CANBus());
+        this.motor = new TalonFX(constants.motorID(), constants.CANBus().toPhoenix6CANBus());
 
-        this.wheelPosition = wheelMotor.getPosition(false);
-        this.wheelVelocity = wheelMotor.getVelocity(false);
-        this.wheelVoltage = wheelMotor.getMotorVoltage(false);
-        this.wheelTorqueCurrent = wheelMotor.getTorqueCurrent(false);
-        this.wheelDeviceTemp = wheelMotor.getDeviceTemp(false);
+        this.wheelPosition = motor.getPosition(false);
+        this.wheelVelocity = motor.getVelocity(false);
+        this.wheelVoltage = motor.getMotorVoltage(false);
+        this.wheelTorqueCurrent = motor.getTorqueCurrent(false);
+        this.wheelDeviceTemp = motor.getDeviceTemp(false);
 
         this.velocityTorqueCurrentFOC = new VelocityTorqueCurrentFOC(0);
         this.torqueCurrentFOC = new TorqueCurrentFOC(0);
@@ -57,26 +57,26 @@ public class FeederIOReal implements FeederIO {
 
     @Override
     public void config() {
-        final TalonFXConfiguration talonFXConfiguration = new TalonFXConfiguration();
-        talonFXConfiguration.Slot0 = new Slot0Configs()
+        final TalonFXConfiguration motorConfig = new TalonFXConfiguration();
+        motorConfig.Slot0 = new Slot0Configs()
                 .withKS(14)
                 .withStaticFeedforwardSign(StaticFeedforwardSignValue.UseVelocitySign)
                 .withKV(0)
                 .withKP(10)
                 .withKD(0);
-        talonFXConfiguration.TorqueCurrent.PeakForwardTorqueCurrent = 80;
-        talonFXConfiguration.TorqueCurrent.PeakReverseTorqueCurrent = -80;
-        talonFXConfiguration.CurrentLimits.StatorCurrentLimit = 80;
-        talonFXConfiguration.CurrentLimits.StatorCurrentLimitEnable = true;
-        talonFXConfiguration.CurrentLimits.SupplyCurrentLimit = 80;
-        talonFXConfiguration.CurrentLimits.SupplyCurrentLowerLimit = 55;
-        talonFXConfiguration.CurrentLimits.SupplyCurrentLowerTime = 1.0;
-        talonFXConfiguration.CurrentLimits.SupplyCurrentLimitEnable = true;
-        talonFXConfiguration.MotorOutput.NeutralMode = NeutralModeValue.Coast;
-        talonFXConfiguration.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
-        talonFXConfiguration.Feedback.FeedbackSensorSource = FeedbackSensorSourceValue.RotorSensor;
-        talonFXConfiguration.Feedback.SensorToMechanismRatio = constants.wheelGearing();
-        Phoenix6Utils.tryUntilOk(wheelMotor, () -> wheelMotor.getConfigurator().apply(talonFXConfiguration));
+        motorConfig.TorqueCurrent.PeakForwardTorqueCurrent = 80;
+        motorConfig.TorqueCurrent.PeakReverseTorqueCurrent = -80;
+        motorConfig.CurrentLimits.StatorCurrentLimit = 80;
+        motorConfig.CurrentLimits.StatorCurrentLimitEnable = true;
+        motorConfig.CurrentLimits.SupplyCurrentLimit = 80;
+        motorConfig.CurrentLimits.SupplyCurrentLowerLimit = 55;
+        motorConfig.CurrentLimits.SupplyCurrentLowerTime = 1.0;
+        motorConfig.CurrentLimits.SupplyCurrentLimitEnable = true;
+        motorConfig.MotorOutput.NeutralMode = NeutralModeValue.Coast;
+        motorConfig.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
+        motorConfig.Feedback.FeedbackSensorSource = FeedbackSensorSourceValue.RotorSensor;
+        motorConfig.Feedback.SensorToMechanismRatio = constants.gearing();
+        Phoenix6Utils.tryUntilOk(motor, () -> motor.getConfigurator().apply(motorConfig));
 
         BaseStatusSignal.setUpdateFrequencyForAll(
                 100,
@@ -93,7 +93,7 @@ public class FeederIOReal implements FeederIO {
 
         ParentDevice.optimizeBusUtilizationForAll(
                 4,
-                wheelMotor
+                motor
         );
     }
 
@@ -107,12 +107,7 @@ public class FeederIOReal implements FeederIO {
     }
 
     @Override
-    public void toWheelVelocity(final double velocityRotsPerSec) {
-        wheelMotor.setControl(velocityTorqueCurrentFOC.withVelocity(velocityRotsPerSec));
-    }
-
-    @Override
     public void toWheelTorqueCurrent(final double torqueCurrentAmps) {
-        wheelMotor.setControl(torqueCurrentFOC.withOutput(torqueCurrentAmps));
+        motor.setControl(torqueCurrentFOC.withOutput(torqueCurrentAmps));
     }
 }

@@ -7,14 +7,14 @@ import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
-import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.constants.Constants;
 import frc.robot.constants.HardwareConstants;
+import frc.robot.utils.commands.SubsystemExt;
 import frc.robot.utils.control.DeltaTime;
 import org.littletonrobotics.junction.Logger;
 
-public class IntakeSlide extends SubsystemBase {
+public class IntakeSlide extends SubsystemExt {
     protected static final String LogKey = "IntakeSlide";
     private static final double PositionToleranceRots = 0.1;
     private static final double VelocityToleranceRotsPerSec = 0.02;

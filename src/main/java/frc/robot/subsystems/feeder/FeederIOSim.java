@@ -4,6 +4,7 @@ import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.Slot0Configs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
+import com.ctre.phoenix6.controls.TorqueCurrentFOC;
 import com.ctre.phoenix6.controls.VelocityTorqueCurrentFOC;
 import com.ctre.phoenix6.hardware.ParentDevice;
 import com.ctre.phoenix6.hardware.TalonFX;
@@ -19,6 +20,7 @@ import edu.wpi.first.units.measure.*;
 import edu.wpi.first.wpilibj.Notifier;
 import edu.wpi.first.wpilibj.simulation.DCMotorSim;
 import frc.robot.constants.HardwareConstants;
+import frc.robot.constants.SimConstants;
 import frc.robot.utils.closeables.ToClose;
 import frc.robot.utils.control.DeltaTime;
 import frc.robot.utils.ctre.Phoenix6Utils;
@@ -32,8 +34,8 @@ public class FeederIOSim implements FeederIO {
     private final DeltaTime deltaTime;
     private final HardwareConstants.FeederConstants constants;
 
-    private final TalonFX wheelMotor;
-    private final TalonFXSim wheelTalonFXSim;
+    private final TalonFX motor;
+    private final TalonFXSim motorTalonFXSim;
 
     private final StatusSignal<Angle> wheelPosition;
     private final StatusSignal<AngularVelocity> wheelVelocity;
@@ -42,35 +44,37 @@ public class FeederIOSim implements FeederIO {
     private final StatusSignal<Temperature> wheelDeviceTemp;
 
     private final VelocityTorqueCurrentFOC velocityTorqueCurrentFOC;
+    private final TorqueCurrentFOC torqueCurrentFOC;
 
     public FeederIOSim(final HardwareConstants.FeederConstants constants) {
         this.deltaTime = new DeltaTime(true);
         this.constants = constants;
 
+        this.motor = new TalonFX(constants.motorID(), constants.CANBus().toPhoenix6CANBus());
+
         final DCMotor dcMotor = DCMotor.getKrakenX60Foc(1);
         final DCMotorSim dcMotorSim = new DCMotorSim(
-                LinearSystemId.createDCMotorSystem(dcMotor, 0.0026, constants.wheelGearing()),
+                LinearSystemId.createDCMotorSystem(dcMotor, SimConstants.Feeder.MOMENT_OF_INERTIA, constants.gearing()),
                 dcMotor
         );
 
-        this.wheelMotor = new TalonFX(constants.motorID(), constants.CANBus().toPhoenix6CANBus());
-
-        this.wheelTalonFXSim = new TalonFXSim(
-                wheelMotor,
-                constants.wheelGearing(),
+        this.motorTalonFXSim = new TalonFXSim(
+                motor,
+                constants.gearing(),
                 dcMotorSim::update,
                 voltage -> dcMotorSim.setInputVoltage(SimUtils.addMotorFriction(voltage, 0.25)),
                 dcMotorSim::getAngularPositionRad,
                 dcMotorSim::getAngularVelocityRadPerSec
         );
 
-        this.wheelPosition = wheelMotor.getPosition(false);
-        this.wheelVelocity = wheelMotor.getVelocity(false);
-        this.wheelVoltage = wheelMotor.getMotorVoltage(false);
-        this.wheelTorqueCurrent = wheelMotor.getTorqueCurrent(false);
-        this.wheelDeviceTemp = wheelMotor.getDeviceTemp(false);
+        this.wheelPosition = motor.getPosition(false);
+        this.wheelVelocity = motor.getVelocity(false);
+        this.wheelVoltage = motor.getMotorVoltage(false);
+        this.wheelTorqueCurrent = motor.getTorqueCurrent(false);
+        this.wheelDeviceTemp = motor.getDeviceTemp(false);
 
         this.velocityTorqueCurrentFOC = new VelocityTorqueCurrentFOC(0);
+        this.torqueCurrentFOC = new TorqueCurrentFOC(0);
 
         RefreshAll.add(
                 constants.CANBus(),
@@ -83,38 +87,38 @@ public class FeederIOSim implements FeederIO {
 
         final Notifier simUpdateNotifier = new Notifier(() -> {
             final double dt = deltaTime.get();
-            wheelTalonFXSim.update(dt);
+            motorTalonFXSim.update(dt);
         });
         ToClose.add(simUpdateNotifier);
         simUpdateNotifier.setName(String.format(
                 "SimUpdate(%d)",
-                wheelMotor.getDeviceID()
+                motor.getDeviceID()
         ));
         simUpdateNotifier.startPeriodic(SIM_UPDATE_PERIOD_SEC);
     }
 
     @Override
     public void config() {
-        final TalonFXConfiguration talonFXConfiguration = new TalonFXConfiguration();
-        talonFXConfiguration.Slot0 = new Slot0Configs()
+        final TalonFXConfiguration motorConfig = new TalonFXConfiguration();
+        motorConfig.Slot0 = new Slot0Configs()
                 .withKS(14)
                 .withStaticFeedforwardSign(StaticFeedforwardSignValue.UseVelocitySign)
                 .withKV(0)
                 .withKP(10)
                 .withKD(0);
-        talonFXConfiguration.TorqueCurrent.PeakForwardTorqueCurrent = 80;
-        talonFXConfiguration.TorqueCurrent.PeakReverseTorqueCurrent = -80;
-        talonFXConfiguration.CurrentLimits.StatorCurrentLimit = 80;
-        talonFXConfiguration.CurrentLimits.StatorCurrentLimitEnable = true;
-        talonFXConfiguration.CurrentLimits.SupplyCurrentLimit = 80;
-        talonFXConfiguration.CurrentLimits.SupplyCurrentLowerLimit = 55;
-        talonFXConfiguration.CurrentLimits.SupplyCurrentLowerTime = 1.0;
-        talonFXConfiguration.CurrentLimits.SupplyCurrentLimitEnable = true;
-        talonFXConfiguration.MotorOutput.NeutralMode = NeutralModeValue.Brake;
-        talonFXConfiguration.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
-        talonFXConfiguration.Feedback.FeedbackSensorSource = FeedbackSensorSourceValue.RotorSensor;
-        talonFXConfiguration.Feedback.SensorToMechanismRatio = constants.wheelGearing();
-        Phoenix6Utils.tryUntilOk(wheelMotor, () -> wheelMotor.getConfigurator().apply(talonFXConfiguration));
+        motorConfig.TorqueCurrent.PeakForwardTorqueCurrent = 80;
+        motorConfig.TorqueCurrent.PeakReverseTorqueCurrent = -80;
+        motorConfig.CurrentLimits.StatorCurrentLimit = 80;
+        motorConfig.CurrentLimits.StatorCurrentLimitEnable = true;
+        motorConfig.CurrentLimits.SupplyCurrentLimit = 80;
+        motorConfig.CurrentLimits.SupplyCurrentLowerLimit = 55;
+        motorConfig.CurrentLimits.SupplyCurrentLowerTime = 1.0;
+        motorConfig.CurrentLimits.SupplyCurrentLimitEnable = true;
+        motorConfig.MotorOutput.NeutralMode = NeutralModeValue.Coast;
+        motorConfig.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
+        motorConfig.Feedback.FeedbackSensorSource = FeedbackSensorSourceValue.RotorSensor;
+        motorConfig.Feedback.SensorToMechanismRatio = constants.gearing();
+        Phoenix6Utils.tryUntilOk(motor, () -> motor.getConfigurator().apply(motorConfig));
 
         BaseStatusSignal.setUpdateFrequencyForAll(
                 100,
@@ -131,10 +135,10 @@ public class FeederIOSim implements FeederIO {
 
         ParentDevice.optimizeBusUtilizationForAll(
                 4,
-                wheelMotor
+                motor
         );
 
-        final TalonFXSimState wheelMotorSimState = wheelMotor.getSimState();
+        final TalonFXSimState wheelMotorSimState = motor.getSimState();
         wheelMotorSimState.Orientation = ChassisReference.Clockwise_Positive;
         wheelMotorSimState.setMotorType(TalonFXSimState.MotorType.KrakenX60);
     }
@@ -149,7 +153,7 @@ public class FeederIOSim implements FeederIO {
     }
 
     @Override
-    public void toWheelVelocity(final double velocityRotsPerSec) {
-        wheelMotor.setControl(velocityTorqueCurrentFOC.withVelocity(velocityRotsPerSec));
+    public void toWheelTorqueCurrent(final double torqueCurrentAmps) {
+        motor.setControl(torqueCurrentFOC.withOutput(torqueCurrentAmps));
     }
 }

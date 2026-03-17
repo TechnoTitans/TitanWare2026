@@ -1,12 +1,14 @@
 package frc.robot;
 
 import edu.wpi.first.math.filter.Debouncer;
+import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
+import frc.robot.constants.FieldConstants;
 import frc.robot.subsystems.drive.Swerve;
 import frc.robot.subsystems.feeder.Feeder;
-import frc.robot.subsystems.intake.roller.IntakeRoller;
+import frc.robot.subsystems.intake.rollers.IntakeRollers;
 import frc.robot.subsystems.intake.slide.IntakeSlide;
 import frc.robot.subsystems.spindexer.Spindexer;
 import frc.robot.subsystems.superstructure.ShotCalculator;
@@ -20,8 +22,14 @@ public class RobotCommands {
     protected static final String LogKey = "RobotCommands";
     protected static final double AllowableSpeedToShootMetersPerSec = 0.1;
 
+    public enum Target {
+        HUB,
+        FERRY,
+        FERRY_BLOCKED;
+    }
+
     private final Swerve swerve;
-    private final IntakeRoller intakeRoller;
+    private final IntakeRollers intakeRollers;
     private final IntakeSlide intakeSlide;
     private final Superstructure superstructure;
     private final Spindexer spindexer;
@@ -39,7 +47,7 @@ public class RobotCommands {
 
     public RobotCommands(
             final Swerve swerve,
-            final IntakeRoller intakeRoller,
+            final IntakeRollers intakeRollers,
             final IntakeSlide intakeSlide,
             final Superstructure superstructure,
             final Spindexer spindexer,
@@ -47,7 +55,7 @@ public class RobotCommands {
             final Supplier<ShotCalculator.Target> targetSupplier
     ) {
         this.swerve = swerve;
-        this.intakeRoller = intakeRoller;
+        this.intakeRollers = intakeRollers;
         this.intakeSlide = intakeSlide;
         this.superstructure = superstructure;
         this.spindexer = spindexer;
@@ -85,14 +93,14 @@ public class RobotCommands {
         return Commands.sequence(
                 intakeSlide.setGoalCommand(IntakeSlide.Goal.EXTEND),
                 Commands.waitUntil(intakeSlide.atSlideSetpoint),
-                intakeRoller.setGoal(IntakeRoller.Goal.INTAKE)
+                intakeRollers.setGoal(IntakeRollers.Goal.INTAKE)
         ).withName("DeployIntake");
     }
 
     public Command stowIntake() {
         return Commands.parallel(
                 intakeSlide.setGoalCommand(IntakeSlide.Goal.STOW),
-                intakeRoller.setGoal(IntakeRoller.Goal.STOP)
+                intakeRollers.setGoal(IntakeRollers.Goal.OFF)
         ).withName("StowIntake");
     }
 
@@ -131,7 +139,6 @@ public class RobotCommands {
         )
             .finallyDo(() -> {
                 SwerveSpeed.setSwerveSpeed(SwerveSpeed.Speeds.NORMAL);
-                intakeSlide.setGoalCommand(IntakeSlide.Goal.EXTEND);
             })
             .withName("ShootWhileMoving");
     }
@@ -161,7 +168,6 @@ public class RobotCommands {
                         .onlyIf(() -> targetSupplier.get() != ShotCalculator.Target.FERRYING),
                 swerve.runWheelXCommand()
         )
-                .finallyDo(() -> intakeSlide.setGoalCommand(IntakeSlide.Goal.EXTEND))
                 .withName("ShootStationary");
     }
 
@@ -184,7 +190,6 @@ public class RobotCommands {
                 )
                 .finallyDo(() -> {
                     SwerveSpeed.setSwerveSpeed(SwerveSpeed.Speeds.NORMAL);
-                    intakeSlide.setGoalCommand(IntakeSlide.Goal.EXTEND);
                 })
                 .withName("ShootWhileMoving");
     }
@@ -199,8 +204,56 @@ public class RobotCommands {
                 )
                 .finallyDo(() -> {
                     SwerveSpeed.setSwerveSpeed(SwerveSpeed.Speeds.NORMAL);
-                    intakeSlide.setGoalCommand(IntakeSlide.Goal.EXTEND);
                 })
                 .withName("ShootWhileMoving");
+    }
+
+    public Command trackTarget() {
+        final Supplier<Pose2d> targetPoseSupplier = getTargetPoseSupplier();
+        final Supplier<ShotCalculator.ShotCalculation> staticCalculationSupplier =
+                () -> ShotCalculator.getShotCalculation(
+                        swerve::getPose,
+                        swerve::getFieldRelativeSpeeds
+                );
+    }
+
+    public static Target getTarget(final Pose2d turretPose) {
+        final double turretX = turretPose.getX();
+        final double turretY = turretPose.getY();
+
+        final double ferryXBoundary = FieldConstants.getFerryXBoundary();
+        final boolean isRed = Robot.IsRedAlliance.getAsBoolean();
+        final boolean canFerryX = isRed
+                ? turretX <= ferryXBoundary
+                : turretX >= ferryXBoundary;
+
+        final double ferryLeftBoundary = FieldConstants.getFerryLeftYBoundary();
+        final double ferryRightBoundary = FieldConstants.getFerryRightYBoundary();
+        final boolean canFerryY = isRed
+                ? (turretY >= ferryLeftBoundary || turretY <= ferryRightBoundary)
+                : (turretY <= ferryLeftBoundary || turretY >= ferryRightBoundary);
+
+        return canFerryX
+                ? (canFerryY ? Target.FERRY : Target.FERRY_BLOCKED)
+                : Target.HUB;
+    }
+
+    private Supplier<Pose2d> getTargetPoseSupplier() {
+        return () -> {
+            final Pose2d robotPose = swerve.getPose();
+            final Target target = getTarget(robotPose);
+            return switch (target) {
+                case HUB -> FieldConstants.getHubPose();
+                case FERRY, FERRY_BLOCKED -> {
+                    final boolean isRed = Robot.IsRedAlliance.getAsBoolean();
+                    final Pose2d ferryLeft = FieldConstants.getFerryLeft();
+                    final Pose2d ferryRight = FieldConstants.getFerryRight();
+
+                    yield robotPose.getY() <= FieldConstants.getFerryLeftYBoundary()
+                            ? (isRed ? ferryRight : ferryLeft)
+                            : (isRed ? ferryLeft : ferryRight);
+                }
+            };
+        };
     }
 }

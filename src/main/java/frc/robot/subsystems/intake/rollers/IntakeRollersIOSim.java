@@ -1,4 +1,4 @@
-package frc.robot.subsystems.intake.roller;
+package frc.robot.subsystems.intake.rollers;
 
 import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.StatusSignal;
@@ -24,16 +24,14 @@ import frc.robot.utils.ctre.RefreshAll;
 import frc.robot.utils.sim.SimUtils;
 import frc.robot.utils.sim.motors.TalonFXSim;
 
-public class IntakeRollerIOSim implements IntakeRollerIO {
+public class IntakeRollersIOSim implements IntakeRollersIO {
     private static final double SIM_UPDATE_PERIOD_SEC = 0.005;
 
     private final DeltaTime deltaTime;
     private final HardwareConstants.IntakeRollerConstants constants;
 
-    private final TalonFX rollerMotor;
+    private final TalonFX motor;
     private final TalonFXSim motorSim;
-
-    private final VoltageOut voltageOut;
 
     private final StatusSignal<Angle> rollerPosition;
     private final StatusSignal<AngularVelocity> rollerVelocity;
@@ -41,33 +39,35 @@ public class IntakeRollerIOSim implements IntakeRollerIO {
     private final StatusSignal<Current> rollerTorqueCurrent;
     private final StatusSignal<Temperature> rollerDeviceTemp;
 
-    public IntakeRollerIOSim(final HardwareConstants.IntakeRollerConstants constants) {
+    private final VoltageOut voltageOut;
+
+    public IntakeRollersIOSim(final HardwareConstants.IntakeRollerConstants constants) {
         this.deltaTime = new DeltaTime(true);
         this.constants = constants;
 
-        this.rollerMotor = new TalonFX(constants.motorID(), constants.CANBus().toPhoenix6CANBus());
+        this.motor = new TalonFX(constants.motorID(), constants.CANBus().toPhoenix6CANBus());
 
         final DCMotor dcMotor = DCMotor.getKrakenX60Foc(1);
         final DCMotorSim dcMotorSim = new DCMotorSim(
-                LinearSystemId.createDCMotorSystem(dcMotor, 0.001, constants.rollerGearing()),
+                LinearSystemId.createDCMotorSystem(dcMotor, 0.001, constants.gearing()),
                 dcMotor
         );
         this.motorSim = new TalonFXSim(
-                rollerMotor,
-                constants.rollerGearing(),
+                motor,
+                constants.gearing(),
                 dcMotorSim::update,
                 voltage -> dcMotorSim.setInputVoltage(SimUtils.addMotorFriction(voltage, 0.25)),
                 dcMotorSim::getAngularPositionRad,
                 dcMotorSim::getAngularVelocityRadPerSec
         );
 
-        this.voltageOut = new VoltageOut(0);
+        this.rollerPosition = motor.getPosition(false);
+        this.rollerVelocity = motor.getVelocity(false);
+        this.rollerVoltage = motor.getMotorVoltage(false);
+        this.rollerTorqueCurrent = motor.getTorqueCurrent(false);
+        this.rollerDeviceTemp = motor.getDeviceTemp(false);
 
-        this.rollerPosition = rollerMotor.getPosition(false);
-        this.rollerVelocity = rollerMotor.getVelocity(false);
-        this.rollerVoltage = rollerMotor.getMotorVoltage(false);
-        this.rollerTorqueCurrent = rollerMotor.getTorqueCurrent(false);
-        this.rollerDeviceTemp = rollerMotor.getDeviceTemp(false);
+        this.voltageOut = new VoltageOut(0);
 
         RefreshAll.add(
                 constants.CANBus(),
@@ -85,25 +85,25 @@ public class IntakeRollerIOSim implements IntakeRollerIO {
         ToClose.add(simUpdateNotifier);
         simUpdateNotifier.setName(String.format(
                 "SimUpdate(%d)",
-                rollerMotor.getDeviceID()
+                motor.getDeviceID()
         ));
         simUpdateNotifier.startPeriodic(SIM_UPDATE_PERIOD_SEC);
     }
 
     @Override
     public void config() {
-        final TalonFXConfiguration talonFXConfiguration = new TalonFXConfiguration();
-        talonFXConfiguration.CurrentLimits.StatorCurrentLimit = 60;
-        talonFXConfiguration.CurrentLimits.StatorCurrentLimitEnable = true;
-        talonFXConfiguration.CurrentLimits.SupplyCurrentLimit = 60;
-        talonFXConfiguration.CurrentLimits.SupplyCurrentLowerLimit = 40;
-        talonFXConfiguration.CurrentLimits.SupplyCurrentLowerTime = 2.5;
-        talonFXConfiguration.CurrentLimits.SupplyCurrentLimitEnable = true;
-        talonFXConfiguration.MotorOutput.NeutralMode = NeutralModeValue.Brake;
-        talonFXConfiguration.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
-        talonFXConfiguration.Feedback.FeedbackSensorSource = FeedbackSensorSourceValue.RotorSensor;
-        talonFXConfiguration.Feedback.SensorToMechanismRatio = constants.rollerGearing();
-        Phoenix6Utils.tryUntilOk(rollerMotor, () -> rollerMotor.getConfigurator().apply(talonFXConfiguration));
+        final TalonFXConfiguration motorConfig = new TalonFXConfiguration();
+        motorConfig.CurrentLimits.StatorCurrentLimit = 60;
+        motorConfig.CurrentLimits.StatorCurrentLimitEnable = true;
+        motorConfig.CurrentLimits.SupplyCurrentLimit = 60;
+        motorConfig.CurrentLimits.SupplyCurrentLowerLimit = 40;
+        motorConfig.CurrentLimits.SupplyCurrentLowerTime = 2.5;
+        motorConfig.CurrentLimits.SupplyCurrentLimitEnable = true;
+        motorConfig.MotorOutput.NeutralMode = NeutralModeValue.Brake;
+        motorConfig.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
+        motorConfig.Feedback.FeedbackSensorSource = FeedbackSensorSourceValue.RotorSensor;
+        motorConfig.Feedback.SensorToMechanismRatio = constants.gearing();
+        Phoenix6Utils.tryUntilOk(motor, () -> motor.getConfigurator().apply(motorConfig));
 
         BaseStatusSignal.setUpdateFrequencyForAll(
                 100,
@@ -120,25 +120,25 @@ public class IntakeRollerIOSim implements IntakeRollerIO {
 
         ParentDevice.optimizeBusUtilizationForAll(
                 4,
-                rollerMotor
+                motor
         );
 
-        final TalonFXSimState rollerSimState = rollerMotor.getSimState();
+        final TalonFXSimState rollerSimState = motor.getSimState();
         rollerSimState.Orientation = ChassisReference.Clockwise_Positive;
         rollerSimState.setMotorType(TalonFXSimState.MotorType.KrakenX60);
     }
 
     @Override
     public void updateInputs(IntakeRollerIOInputs inputs) {
-        inputs.rollerPositionRots = rollerPosition.getValueAsDouble();
-        inputs.rollerVelocityRotsPerSec = rollerVelocity.getValueAsDouble();
-        inputs.rollerVoltage = rollerVoltage.getValueAsDouble();
-        inputs.rollerTorqueCurrentAmps = rollerTorqueCurrent.getValueAsDouble();
-        inputs.rollerTempCelsius = rollerDeviceTemp.getValueAsDouble();
+        inputs.rollersPositionRots = rollerPosition.getValueAsDouble();
+        inputs.rollersVelocityRotsPerSec = rollerVelocity.getValueAsDouble();
+        inputs.rollersVoltage = rollerVoltage.getValueAsDouble();
+        inputs.rollersTorqueCurrentAmps = rollerTorqueCurrent.getValueAsDouble();
+        inputs.rollersTempCelsius = rollerDeviceTemp.getValueAsDouble();
     }
 
     @Override
-    public void toRollerVoltage(final double volts) {
-        rollerMotor.setControl(voltageOut.withOutput(volts));
+    public void toRollersVoltage(final double volts) {
+        motor.setControl(voltageOut.withOutput(volts));
     }
 }

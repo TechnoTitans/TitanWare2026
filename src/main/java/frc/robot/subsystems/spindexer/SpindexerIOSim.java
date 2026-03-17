@@ -21,6 +21,7 @@ import frc.robot.utils.closeables.ToClose;
 import frc.robot.utils.control.DeltaTime;
 import frc.robot.utils.ctre.Phoenix6Utils;
 import frc.robot.utils.ctre.RefreshAll;
+import frc.robot.utils.sim.SimUtils;
 import frc.robot.utils.sim.motors.TalonFXSim;
 
 public class SpindexerIOSim implements SpindexerIO {
@@ -29,7 +30,7 @@ public class SpindexerIOSim implements SpindexerIO {
     private final DeltaTime deltaTime;
     private final HardwareConstants.SpindexerConstants constants;
 
-    private final TalonFX wheelMotor;
+    private final TalonFX motor;
     private final TalonFXSim wheelTalonFXSim;
 
     private final StatusSignal<Angle> wheelPosition;
@@ -44,7 +45,9 @@ public class SpindexerIOSim implements SpindexerIO {
         this.deltaTime = new DeltaTime(true);
         this.constants = constants;
 
-        final DCMotorSim wheelSim = new DCMotorSim(
+        this.motor = new TalonFX(constants.motorID(), constants.CANBus().toPhoenix6CANBus());
+
+        final DCMotorSim dcMotorSim = new DCMotorSim(
                 LinearSystemId.createDCMotorSystem(
                         1 / (2 * Math.PI),
                         0.1 / (2 * Math.PI)
@@ -52,22 +55,20 @@ public class SpindexerIOSim implements SpindexerIO {
                 DCMotor.getKrakenX44Foc(1)
         );
 
-        this.wheelMotor = new TalonFX(constants.motorID(), constants.CANBus().toPhoenix6CANBus());
-
         this.wheelTalonFXSim = new TalonFXSim(
-                wheelMotor,
-                constants.wheelGearing(),
-                wheelSim::update,
-                wheelSim::setInputVoltage,
-                wheelSim::getAngularPositionRad,
-                wheelSim::getAngularVelocityRadPerSec
+                motor,
+                constants.gearing(),
+                dcMotorSim::update,
+                voltage -> dcMotorSim.setInputVoltage(SimUtils.addMotorFriction(voltage, 0.25)),
+                dcMotorSim::getAngularPositionRad,
+                dcMotorSim::getAngularVelocityRadPerSec
         );
 
-        this.wheelPosition = wheelMotor.getPosition(false);
-        this.wheelVelocity = wheelMotor.getVelocity(false);
-        this.wheelVoltage = wheelMotor.getMotorVoltage(false);
-        this.wheelTorqueCurrent = wheelMotor.getTorqueCurrent(false);
-        this.wheelTemperature = wheelMotor.getDeviceTemp(false);
+        this.wheelPosition = motor.getPosition(false);
+        this.wheelVelocity = motor.getVelocity(false);
+        this.wheelVoltage = motor.getMotorVoltage(false);
+        this.wheelTorqueCurrent = motor.getTorqueCurrent(false);
+        this.wheelTemperature = motor.getDeviceTemp(false);
 
         this.voltageOut = new VoltageOut(0);
 
@@ -87,25 +88,25 @@ public class SpindexerIOSim implements SpindexerIO {
         ToClose.add(simUpdateNotifier);
         simUpdateNotifier.setName(String.format(
                 "SimUpdate(%d)",
-                wheelMotor.getDeviceID()
+                motor.getDeviceID()
         ));
         simUpdateNotifier.startPeriodic(SIM_UPDATE_PERIOD_SEC);
     }
 
     @Override
     public void config() {
-        final TalonFXConfiguration talonFXConfiguration = new TalonFXConfiguration();
-        talonFXConfiguration.CurrentLimits.StatorCurrentLimit = 80;
-        talonFXConfiguration.CurrentLimits.StatorCurrentLimitEnable = true;
-        talonFXConfiguration.CurrentLimits.SupplyCurrentLimit = 75;
-        talonFXConfiguration.CurrentLimits.SupplyCurrentLowerLimit = 65;
-        talonFXConfiguration.CurrentLimits.SupplyCurrentLowerTime = 1.5;
-        talonFXConfiguration.CurrentLimits.SupplyCurrentLimitEnable = true;
-        talonFXConfiguration.MotorOutput.NeutralMode = NeutralModeValue.Brake;
-        talonFXConfiguration.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
-        talonFXConfiguration.Feedback.FeedbackSensorSource = FeedbackSensorSourceValue.RotorSensor;
-        talonFXConfiguration.Feedback.SensorToMechanismRatio = constants.wheelGearing();
-        Phoenix6Utils.tryUntilOk(wheelMotor, () -> wheelMotor.getConfigurator().apply(talonFXConfiguration));
+        final TalonFXConfiguration motorConfig = new TalonFXConfiguration();
+        motorConfig.CurrentLimits.StatorCurrentLimit = 80;
+        motorConfig.CurrentLimits.StatorCurrentLimitEnable = true;
+        motorConfig.CurrentLimits.SupplyCurrentLimit = 75;
+        motorConfig.CurrentLimits.SupplyCurrentLowerLimit = 65;
+        motorConfig.CurrentLimits.SupplyCurrentLowerTime = 1.5;
+        motorConfig.CurrentLimits.SupplyCurrentLimitEnable = true;
+        motorConfig.MotorOutput.NeutralMode = NeutralModeValue.Brake;
+        motorConfig.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
+        motorConfig.Feedback.FeedbackSensorSource = FeedbackSensorSourceValue.RotorSensor;
+        motorConfig.Feedback.SensorToMechanismRatio = constants.gearing();
+        Phoenix6Utils.tryUntilOk(motor, () -> motor.getConfigurator().apply(motorConfig));
 
         BaseStatusSignal.setUpdateFrequencyForAll(
                 100,
@@ -122,11 +123,12 @@ public class SpindexerIOSim implements SpindexerIO {
 
         ParentDevice.optimizeBusUtilizationForAll(
                 4,
-                wheelMotor
+                motor
         );
 
-        wheelMotor.getSimState().Orientation = ChassisReference.Clockwise_Positive;
-        wheelMotor.getSimState().setMotorType(TalonFXSimState.MotorType.KrakenX44);
+        final TalonFXSimState motorSimState = motor.getSimState();
+        motorSimState.Orientation = ChassisReference.Clockwise_Positive;
+        motorSimState.setMotorType(TalonFXSimState.MotorType.KrakenX44);
     }
 
     @Override
@@ -140,6 +142,6 @@ public class SpindexerIOSim implements SpindexerIO {
 
     @Override
     public void toWheelVoltage(final double volts) {
-        wheelMotor.setControl(voltageOut.withOutput(volts));
+        motor.setControl(voltageOut.withOutput(volts));
     }
 }

@@ -16,10 +16,6 @@ import frc.robot.constants.PoseConstants;
 import java.util.function.Supplier;
 
 public class ShotCalculator {
-    public enum Target {
-        HUB,
-        FERRYING;
-    }
     public record ShotCalc(
             double shooterVelocityRotsPerSec,
             double hoodPositionRots
@@ -100,7 +96,7 @@ public class ShotCalculator {
                 : Target.HUB;
 
         final Translation2d targetTranslation = switch (target) {
-            case HUB -> FieldConstants.getHubTarget();
+            case HUB -> FieldConstants.getHubPose();
             case FERRYING -> FieldConstants.getFerryingTarget(turretPose.getY());
         };
 
@@ -139,7 +135,7 @@ public class ShotCalculator {
                 : Target.HUB;
 
         final Translation2d targetTranslation = switch (target) {
-            case HUB -> FieldConstants.getHubTarget();
+            case HUB -> FieldConstants.getHubPose();
             case FERRYING -> FieldConstants.getFerryingTarget(calculationPose.getY());
         };
 
@@ -172,7 +168,7 @@ public class ShotCalculator {
                 ? Target.FERRYING : Target.HUB;
 
         final Translation2d targetTranslation = switch (target) {
-            case HUB -> FieldConstants.getHubTarget();
+            case HUB -> FieldConstants.getHubPose();
             case FERRYING -> FieldConstants.getFerryingTarget(calculationPose.getY());
         };
 

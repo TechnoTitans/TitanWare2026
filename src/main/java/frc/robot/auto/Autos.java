@@ -13,7 +13,7 @@ import frc.robot.RobotCommands;
 import frc.robot.constants.FieldConstants;
 import frc.robot.subsystems.drive.Swerve;
 import frc.robot.subsystems.feeder.Feeder;
-import frc.robot.subsystems.intake.roller.IntakeRoller;
+import frc.robot.subsystems.intake.rollers.IntakeRollers;
 import frc.robot.subsystems.intake.slide.IntakeSlide;
 import frc.robot.subsystems.spindexer.Spindexer;
 import frc.robot.subsystems.superstructure.ShotCalculator;
@@ -34,7 +34,7 @@ public class Autos {
     private final Superstructure superstructure;
     private final Feeder feeder;
     private final Spindexer spindexer;
-    private final IntakeRoller intakeRoller;
+    private final IntakeRollers intakeRollers;
     private final IntakeSlide intakeSlide;
 
     private final AutoFactory autoFactory;
@@ -49,7 +49,7 @@ public class Autos {
             final Superstructure superstructure,
             final Feeder feeder,
             final Spindexer spindexer,
-            final IntakeRoller intakeRoller,
+            final IntakeRollers intakeRollers,
             final IntakeSlide intakeSlide,
             final PhotonVision photonVision
     ) {
@@ -57,7 +57,7 @@ public class Autos {
         this.superstructure = superstructure;
         this.feeder = feeder;
         this.spindexer = spindexer;
-        this.intakeRoller = intakeRoller;
+        this.intakeRollers = intakeRollers;
         this.intakeSlide = intakeSlide;
 
         this.autoFactory = new AutoFactory(
@@ -192,9 +192,9 @@ public class Autos {
         routine.active().onTrue(
                 Commands.parallel(
                         runStartingTrajectory(startToCenterLineAndBack),
-                        intakeRoller.setGoal(IntakeRoller.Goal.INTAKE),
+                        intakeRollers.setGoal(IntakeRollers.Goal.INTAKE),
                         Commands.sequence(
-                                superstructure.setGoalCommand(Superstructure.Goal.STATIC_SHOT_PREP),
+                                superstructure.setGoal(Superstructure.Goal.STATIC_SHOT_PREP),
                                 Commands.runOnce(() -> superstructure.updateStaticShotParameter(firstShotCalculation))
                         )
                 ).withName("StartCenterLine")
@@ -202,10 +202,10 @@ public class Autos {
 
         startToCenterLineAndBack.done().onTrue(
                 Commands.parallel(
-                        intakeRoller.setGoal(IntakeRoller.Goal.STOP),
+                        intakeRollers.setGoal(IntakeRollers.Goal.OFF),
                         sequence(
                                 shootStatic(),
-                                superstructure.setGoalCommand(Superstructure.Goal.STATIC_SHOT_PREP),
+                                superstructure.setGoal(Superstructure.Goal.STATIC_SHOT_PREP),
                                 Commands.runOnce(() -> superstructure.updateStaticShotParameter(secondShotCalculation)),
                                 shootingToDepot.cmd()
                         )
@@ -233,9 +233,9 @@ public class Autos {
         routine.active().onTrue(
                 Commands.parallel(
                         runStartingTrajectory(startToCenterLineAndBack),
-                        intakeRoller.setGoal(IntakeRoller.Goal.INTAKE),
+                        intakeRollers.setGoal(IntakeRollers.Goal.INTAKE),
                         Commands.sequence(
-                                superstructure.setGoalCommand(Superstructure.Goal.STATIC_SHOT_PREP),
+                                superstructure.setGoal(Superstructure.Goal.STATIC_SHOT_PREP),
                                 Commands.runOnce(() -> superstructure.updateStaticShotParameter(firstShotCalculation))
                         )
                 ).withName("StartCenterLine")
@@ -243,10 +243,10 @@ public class Autos {
 
         startToCenterLineAndBack.done().onTrue(
                 Commands.parallel(
-                        intakeRoller.setGoal(IntakeRoller.Goal.STOP),
+                        intakeRollers.setGoal(IntakeRollers.Goal.OFF),
                         sequence(
                                 shootStatic(),
-                                superstructure.setGoalCommand(Superstructure.Goal.STATIC_SHOT_PREP),
+                                superstructure.setGoal(Superstructure.Goal.STATIC_SHOT_PREP),
                                 Commands.runOnce(() -> superstructure.updateStaticShotParameter(secondShotCalculation)),
                                 shootingToOutpost.cmd()
                         )
@@ -275,9 +275,9 @@ public class Autos {
         routine.active().onTrue(
                 Commands.parallel(
                         runStartingTrajectory(startToCenterLineAndBack),
-                        intakeRoller.setGoal(IntakeRoller.Goal.INTAKE),
+                        intakeRollers.setGoal(IntakeRollers.Goal.INTAKE),
                         Commands.sequence(
-                                superstructure.setGoalCommand(Superstructure.Goal.STATIC_SHOT_PREP),
+                                superstructure.setGoal(Superstructure.Goal.STATIC_SHOT_PREP),
                                 Commands.runOnce(() -> superstructure.updateStaticShotParameter(firstShotCalculation))
                         )
                 ).withName("StartCenterLine")
@@ -287,7 +287,7 @@ public class Autos {
                 Commands.parallel(
                         sequence(
                                 shootStatic(),
-                                superstructure.setGoalCommand(Superstructure.Goal.STATIC_SHOT_PREP),
+                                superstructure.setGoal(Superstructure.Goal.STATIC_SHOT_PREP),
                                 Commands.runOnce(() -> superstructure.updateStaticShotParameter(secondShotCalculation)),
                                 rightSweep.cmd()
                         )

@@ -4,9 +4,10 @@ import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.CANcoderConfiguration;
 import com.ctre.phoenix6.configs.Slot0Configs;
+import com.ctre.phoenix6.configs.Slot1Configs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
+import com.ctre.phoenix6.controls.MotionMagicExpoVoltage;
 import com.ctre.phoenix6.controls.PositionVoltage;
-import com.ctre.phoenix6.controls.TorqueCurrentFOC;
 import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.CANcoder;
 import com.ctre.phoenix6.hardware.ParentDevice;
@@ -54,8 +55,8 @@ public class TurretIOSim implements TurretIO {
     private final StatusSignal<Angle> primaryEncoderPosition;
     private final StatusSignal<Angle> secondaryEncoderPosition;
 
+    private final MotionMagicExpoVoltage motionMagicExpoVoltage;
     private final PositionVoltage positionVoltage;
-    private final TorqueCurrentFOC torqueCurrentFOC;
     private final VoltageOut voltageOut;
 
     public TurretIOSim(final HardwareConstants.TurretConstants constants) {
@@ -95,8 +96,8 @@ public class TurretIOSim implements TurretIO {
         this.primaryEncoderPosition = primaryEncoder.getPosition(true);
         this.secondaryEncoderPosition = secondaryEncoder.getPosition(true);
 
+        this.motionMagicExpoVoltage = new MotionMagicExpoVoltage(0);
         this.positionVoltage = new PositionVoltage(0);
-        this.torqueCurrentFOC = new TorqueCurrentFOC(0);
         this.voltageOut = new VoltageOut(0);
 
         RefreshAll.add(
@@ -122,29 +123,36 @@ public class TurretIOSim implements TurretIO {
 
     @Override
     public void config() {
-        final TalonFXConfiguration talonFXConfiguration = new TalonFXConfiguration();
-        talonFXConfiguration.Slot0 = new Slot0Configs()
+        final TalonFXConfiguration motorConfig = new TalonFXConfiguration();
+        motorConfig.Slot0 = new Slot0Configs()
                 .withKS(0.24265)
                 .withStaticFeedforwardSign(StaticFeedforwardSignValue.UseClosedLoopSign)
                 .withKV(3.067)
                 .withKA(0.14961)
                 .withKP(50)
                 .withKD(4);
-        talonFXConfiguration.CurrentLimits.StatorCurrentLimit = 60;
-        talonFXConfiguration.CurrentLimits.StatorCurrentLimitEnable = true;
-        talonFXConfiguration.CurrentLimits.SupplyCurrentLimit = 55;
-        talonFXConfiguration.CurrentLimits.SupplyCurrentLowerLimit = 40;
-        talonFXConfiguration.CurrentLimits.SupplyCurrentLowerTime = 2.0;
-        talonFXConfiguration.CurrentLimits.SupplyCurrentLimitEnable = true;
-        talonFXConfiguration.Feedback.FeedbackSensorSource = FeedbackSensorSourceValue.RotorSensor;
-        talonFXConfiguration.Feedback.SensorToMechanismRatio = constants.motorToTurretGearing();
-        talonFXConfiguration.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
-        talonFXConfiguration.MotorOutput.NeutralMode = NeutralModeValue.Brake;
-        talonFXConfiguration.SoftwareLimitSwitch.ForwardSoftLimitThreshold = constants.forwardLimitRots();
-        talonFXConfiguration.SoftwareLimitSwitch.ForwardSoftLimitEnable = true;
-        talonFXConfiguration.SoftwareLimitSwitch.ReverseSoftLimitThreshold = constants.reverseLimitRots();
-        talonFXConfiguration.SoftwareLimitSwitch.ReverseSoftLimitEnable = true;
-        Phoenix6Utils.tryUntilOk(turretMotor, () -> turretMotor.getConfigurator().apply(talonFXConfiguration));
+        motorConfig.Slot1 = new Slot1Configs()
+                .withKS(0.24265)
+                .withStaticFeedforwardSign(StaticFeedforwardSignValue.UseClosedLoopSign)
+                .withKV(3.067)
+                .withKA(0.14961)
+                .withKP(50)
+                .withKD(4);
+        motorConfig.CurrentLimits.StatorCurrentLimit = 60;
+        motorConfig.CurrentLimits.StatorCurrentLimitEnable = true;
+        motorConfig.CurrentLimits.SupplyCurrentLimit = 55;
+        motorConfig.CurrentLimits.SupplyCurrentLowerLimit = 40;
+        motorConfig.CurrentLimits.SupplyCurrentLowerTime = 2.0;
+        motorConfig.CurrentLimits.SupplyCurrentLimitEnable = true;
+        motorConfig.Feedback.FeedbackSensorSource = FeedbackSensorSourceValue.RotorSensor;
+        motorConfig.Feedback.SensorToMechanismRatio = constants.motorToTurretGearing();
+        motorConfig.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
+        motorConfig.MotorOutput.NeutralMode = NeutralModeValue.Brake;
+        motorConfig.SoftwareLimitSwitch.ForwardSoftLimitThreshold = constants.forwardLimitRots();
+        motorConfig.SoftwareLimitSwitch.ForwardSoftLimitEnable = true;
+        motorConfig.SoftwareLimitSwitch.ReverseSoftLimitThreshold = constants.reverseLimitRots();
+        motorConfig.SoftwareLimitSwitch.ReverseSoftLimitEnable = true;
+        Phoenix6Utils.tryUntilOk(turretMotor, () -> turretMotor.getConfigurator().apply(motorConfig));
 
         final CANcoderConfiguration primaryEncoderConfig = new CANcoderConfiguration();
         primaryEncoderConfig.MagnetSensor.MagnetOffset = constants.primaryEncoderOffset();
@@ -167,10 +175,12 @@ public class TurretIOSim implements TurretIO {
                 primaryEncoderPosition,
                 secondaryEncoderPosition
         );
+
         BaseStatusSignal.setUpdateFrequencyForAll(
                 4,
                 turretDeviceTemp
         );
+
         ParentDevice.optimizeBusUtilizationForAll(
                 4,
                 turretMotor,
@@ -199,13 +209,12 @@ public class TurretIOSim implements TurretIO {
     }
 
     @Override
-    public void toTurretVoltage(final double volts) {
-        turretMotor.setControl(voltageOut.withOutput(volts));
-    }
-
-    @Override
-    public void toTurretTorqueCurrent(final double torqueCurrentAmps) {
-        turretMotor.setControl(torqueCurrentFOC.withOutput(torqueCurrentAmps));
+    public void toTurretPosition(final double positionRots) {
+        turretMotor.setControl(
+                motionMagicExpoVoltage
+                        .withPosition(0)
+                        .withSlot(0)
+        );
     }
 
     @Override
@@ -216,6 +225,11 @@ public class TurretIOSim implements TurretIO {
                         .withVelocity(velocityRotsPerSec)
                         .withSlot(0)
         );
+    }
+
+    @Override
+    public void toTurretVoltage(final double volts) {
+        turretMotor.setControl(voltageOut.withOutput(volts));
     }
 
     @Override

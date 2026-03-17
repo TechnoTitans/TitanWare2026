@@ -21,4 +21,12 @@ public interface SimConstants {
     interface IntakeSlide {
         double MOMENT_OF_INERTIA = 0.0058;
     }
+
+    interface Feeder {
+        double MOMENT_OF_INERTIA = 0.0026;
+    }
+
+    interface Hood {
+        double MOMENT_OF_INERTIA = 0.04;
+    }
 }

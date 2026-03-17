@@ -18,7 +18,7 @@ import frc.robot.constants.*;
 import frc.robot.subsystems.drive.Swerve;
 import frc.robot.subsystems.drive.constants.SwerveConstants;
 import frc.robot.subsystems.feeder.Feeder;
-import frc.robot.subsystems.intake.roller.IntakeRoller;
+import frc.robot.subsystems.intake.rollers.IntakeRollers;
 import frc.robot.subsystems.intake.slide.IntakeSlide;
 import frc.robot.subsystems.spindexer.Spindexer;
 import frc.robot.subsystems.superstructure.ShotCalculator;
@@ -86,7 +86,7 @@ public class Robot extends LoggedRobot {
             swerve
     );
 
-    public final IntakeRoller intakeRoller = new IntakeRoller(
+    public final IntakeRollers intakeRollers = new IntakeRollers(
             Constants.CURRENT_MODE,
             HardwareConstants.INTAKE_ROLLER
     );
@@ -108,8 +108,7 @@ public class Robot extends LoggedRobot {
 
     public final Turret turret = new Turret(
             Constants.CURRENT_MODE,
-            HardwareConstants.TURRET,
-            () -> -swerve.getFieldRelativeSpeeds().omegaRadiansPerSecond
+            HardwareConstants.TURRET
     );
 
     public final Shooter shooter = new Shooter(
@@ -134,8 +133,7 @@ public class Robot extends LoggedRobot {
     public final Superstructure superstructure = new Superstructure(
             turret,
             hood,
-            shooter,
-            shotCalculationSupplier
+            shooter
     );
 
     private final ComponentsSolver componentsSolver = new ComponentsSolver(
@@ -148,7 +146,7 @@ public class Robot extends LoggedRobot {
     private final FuelState fuelState = new FuelState(
             Constants.CURRENT_MODE,
             swerve,
-            intakeRoller,
+            intakeRollers,
             feeder,
             superstructure,
             componentsSolver
@@ -156,7 +154,7 @@ public class Robot extends LoggedRobot {
 
     private final RobotCommands robotCommands = new RobotCommands(
             swerve,
-            intakeRoller,
+            intakeRollers,
             intakeSlide,
             superstructure,
             spindexer,
@@ -169,7 +167,7 @@ public class Robot extends LoggedRobot {
             superstructure,
             feeder,
             spindexer,
-            intakeRoller,
+            intakeRollers,
             intakeSlide,
             photonVision
     );
@@ -324,7 +322,7 @@ public class Robot extends LoggedRobot {
         Logger.recordOutput("DistanceToHub", swerve.getPose()
                 .transformBy(PoseConstants.Turret.ROBOT_TO_TURRET_TRANSFORM_2D)
                 .getTranslation()
-                .getDistance(FieldConstants.getHubTarget()));
+                .getDistance(FieldConstants.getHubPose()));
 
         final AllianceShift allianceShift = AllianceShift.get(0);
         final AllianceShift offsetAllianceShift = AllianceShift.get(MatchTimeOffsetSeconds);
@@ -390,7 +388,7 @@ public class Robot extends LoggedRobot {
     public void configureStateTriggers() {
         enabled.onTrue(
                 Commands.parallel(
-                        superstructure.setGoalCommand(Superstructure.Goal.TRACKING),
+                        superstructure.setGoal(Superstructure.Goal.TRACKING),
                         intakeSlide.setGoalCommand(IntakeSlide.Goal.EXTEND)
                 )
         );
@@ -449,7 +447,7 @@ public class Robot extends LoggedRobot {
 
         driverController.leftTrigger(0.5, teleopEventLoop).whileTrue(
                 Commands.parallel(
-                        intakeRoller.toGoal(IntakeRoller.Goal.INTAKE),
+                        intakeRollers.toGoal(IntakeRollers.Goal.INTAKE),
                         intakeSlide.toGoal(IntakeSlide.Goal.EXTEND)
                                 .onlyIf(() -> intakeSlide.atGoal(IntakeSlide.Goal.EXTEND))
                 )
@@ -459,7 +457,7 @@ public class Robot extends LoggedRobot {
                 .whileTrue(robotCommands.shootWhileMoving());
 
         coController.leftTrigger(0.5, teleopEventLoop).whileTrue(
-                intakeRoller.toGoal(IntakeRoller.Goal.INTAKE)
+                intakeRollers.toGoal(IntakeRollers.Goal.INTAKE)
         );
 
         coController.y(teleopEventLoop).onTrue(robotCommands.deployIntake());

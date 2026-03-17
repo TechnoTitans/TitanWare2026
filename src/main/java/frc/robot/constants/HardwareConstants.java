@@ -38,7 +38,7 @@ public class HardwareConstants {
     public record IntakeRollerConstants(
             CANBus CANBus,
             int motorID,
-            double rollerGearing
+            double gearing
     ) {}
 
     public static final IntakeRollerConstants INTAKE_ROLLER = new IntakeRollerConstants(
@@ -51,7 +51,7 @@ public class HardwareConstants {
             CANBus CANBus,
             int masterMotorID,
             int followerMotorID,
-            double slideGearing,
+            double gearing,
             double forwardLimitRots,
             double reverseLimitRots
     ) {}
@@ -68,7 +68,7 @@ public class HardwareConstants {
     public record SpindexerConstants(
             CANBus CANBus,
             int motorID,
-            double wheelGearing
+            double gearing
     ) {}
 
     public static final SpindexerConstants SPINDEXER = new SpindexerConstants(
@@ -80,7 +80,7 @@ public class HardwareConstants {
     public record FeederConstants(
             CANBus CANBus,
             int motorID,
-            double wheelGearing
+            double gearing
     ) {}
 
 
@@ -141,7 +141,7 @@ public class HardwareConstants {
             CANBus CANBus,
             int masterMotorID,
             int followerMotorID,
-            double wheelGearing
+            double gearing
     ) {}
 
     public static final ShooterConstants SHOOTER = new ShooterConstants(

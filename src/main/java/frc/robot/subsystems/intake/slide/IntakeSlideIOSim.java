@@ -93,7 +93,7 @@ public class IntakeSlideIOSim implements IntakeSlideIO {
         masterMotorConfig.CurrentLimits.SupplyCurrentLowerTime = 2.0;
         masterMotorConfig.CurrentLimits.SupplyCurrentLimitEnable = true;
         masterMotorConfig.Feedback.RotorToSensorRatio = 1;
-        masterMotorConfig.Feedback.SensorToMechanismRatio = constants.slideGearing();
+        masterMotorConfig.Feedback.SensorToMechanismRatio = constants.gearing();
         masterMotorConfig.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
         masterMotorConfig.MotorOutput.NeutralMode = NeutralModeValue.Brake;
         masterMotorConfig.SoftwareLimitSwitch.ForwardSoftLimitThreshold = constants.forwardLimitRots();
@@ -105,7 +105,7 @@ public class IntakeSlideIOSim implements IntakeSlideIO {
 
         followerConfig.Feedback.FeedbackSensorSource = FeedbackSensorSourceValue.RotorSensor;
         followerConfig.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
-        followerConfig.Feedback.SensorToMechanismRatio = constants.slideGearing();
+        followerConfig.Feedback.SensorToMechanismRatio = constants.gearing();
 
         final DifferentialMotorConstants<TalonFXConfiguration> diffConstants =
                 new DifferentialMotorConstants<TalonFXConfiguration>()
@@ -133,7 +133,7 @@ public class IntakeSlideIOSim implements IntakeSlideIO {
                 LinearSystemId.createDCMotorSystem(
                         motor,
                         SimConstants.IntakeSlide.MOMENT_OF_INERTIA,
-                        constants.slideGearing()
+                        constants.gearing()
                 ),
                 motor
         );
@@ -142,14 +142,14 @@ public class IntakeSlideIOSim implements IntakeSlideIO {
                 LinearSystemId.createDCMotorSystem(
                         motor,
                         SimConstants.IntakeSlide.MOMENT_OF_INERTIA,
-                        constants.slideGearing()
+                        constants.gearing()
                 ),
                 motor
         );
 
         this.masterSim = new TalonFXSim(
                 masterMotor,
-                constants.slideGearing(),
+                constants.gearing(),
                 masterMotorSim::update,
                 voltage -> masterMotorSim.setInputVoltage(SimUtils.addMotorFriction(voltage, 0.5)),
                 masterMotorSim::getAngularPositionRad,
@@ -158,7 +158,7 @@ public class IntakeSlideIOSim implements IntakeSlideIO {
 
         this.followerSim = new TalonFXSim(
                 followerMotor,
-                constants.slideGearing(),
+                constants.gearing(),
                 followerMotorSim::update,
                 voltage -> followerMotorSim.setInputVoltage(SimUtils.addMotorFriction(voltage, 0.5)),
                 followerMotorSim::getAngularPositionRad,
