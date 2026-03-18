@@ -183,7 +183,7 @@ public class ShotCalculator {
         );
     }
 
-    private static ChassisSpeeds getTurretFieldSpeeds(
+    public static ChassisSpeeds getTurretFieldSpeeds(
             final Pose2d robotPose,
             final Translation2d turretTranslation,
             final ChassisSpeeds fieldRelativeSpeeds

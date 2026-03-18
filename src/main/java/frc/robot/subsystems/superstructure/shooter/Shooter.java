@@ -34,7 +34,7 @@ public class Shooter extends SubsystemExt {
         IDLE(20),
         NO_VISION(30);
 
-        private double velocityRotsPerSec;
+        private final double velocityRotsPerSec;
 
         Goal(final double velocityRotsPerSec) {
             this.velocityRotsPerSec = velocityRotsPerSec;
@@ -78,7 +78,7 @@ public class Shooter extends SubsystemExt {
     private InternalGoal desiredGoal = InternalGoal.TRACKING;
     private InternalGoal currentGoal = InternalGoal.NONE;
 
-    private double velocitySetpointRotsPerSec = desiredGoal.goal.velocityRotsPerSec;
+    private double velocitySetpointRotsPerSec;
 
     private final LoggedTrigger.Group group = LoggedTrigger.Group.from(LogKey);
     public final LoggedTrigger atSetpoint = group.t("AtSetpoint", this::atSetpoint);
@@ -206,7 +206,7 @@ public class Shooter extends SubsystemExt {
             final Time timeout,
             final Consumer<Double> torqueCurrentConsumer
     ) {
-        SysIdRoutine sysIdRoutine = new SysIdRoutine(
+        return new SysIdRoutine(
                 new SysIdRoutine.Config(
                         Volts.per(Second).of(currentRampRate.baseUnitMagnitude()),
                         Volts.of(stepCurrent.baseUnitMagnitude()),
@@ -219,7 +219,6 @@ public class Shooter extends SubsystemExt {
                         this
                 )
         );
-        return sysIdRoutine;
     }
 
     private Command makeFlywheelSysIdCommand(final SysIdRoutine sysIdRoutine) {

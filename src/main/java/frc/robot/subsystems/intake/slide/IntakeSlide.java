@@ -211,7 +211,7 @@ public class IntakeSlide extends SubsystemExt {
     }
 
     public boolean atGoal(final Goal goal) {
-        return currentGoal == goal;
+        return currentGoal == InternalGoal.fromGoal(goal);
     }
 
     private void setDesiredGoal(final Goal goal) {

@@ -1,63 +1,54 @@
 package frc.robot;
 
-import edu.wpi.first.math.filter.Debouncer;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.constants.FieldConstants;
 import frc.robot.subsystems.drive.Swerve;
-import frc.robot.subsystems.indexer.feeder.Feeder;
-import frc.robot.subsystems.intake.rollers.IntakeRollers;
-import frc.robot.subsystems.intake.slide.IntakeSlide;
-import frc.robot.subsystems.indexer.spindexer.Spindexer;
+import frc.robot.subsystems.indexer.Indexer;
+import frc.robot.subsystems.intake.Intake;
 import frc.robot.subsystems.superstructure.ShotCalculator;
 import frc.robot.subsystems.superstructure.Superstructure;
 import frc.robot.utils.commands.LoggedTrigger;
+import frc.robot.utils.subsystems.VirtualSubsystem;
 import frc.robot.utils.teleop.SwerveSpeed;
+import org.littletonrobotics.junction.Logger;
 
 import java.util.function.Supplier;
 
-public class ShootCommands extends  {
+public class ShootCommands extends VirtualSubsystem {
     protected static final String LogKey = "RobotCommands";
     protected static final double AllowableSpeedToShootMetersPerSec = 0.1;
+    public static final int BackOutCurrentThreshold = 48;
 
     public enum Target {
         HUB,
         FERRY,
-        FERRY_BLOCKED;
+        FERRY_BLOCKED
     }
 
     private final Swerve swerve;
-    private final IntakeSlide intakeSlide;
     private final Superstructure superstructure;
-    private final Spindexer spindexer;
-    private final Feeder feeder;
+    private final Intake intake;
+    private final Indexer indexer;
 
+    private final LoggedTrigger.Group group;
     private final LoggedTrigger ableToShoot;
     private final LoggedTrigger shouldBackOutFeeder;
 
-    public enum ScoringMode {
-        Stationary,
-        Moving
-    }
-
     public ShootCommands(
             final Swerve swerve,
-            final IntakeRollers intakeRollers,
-            final IntakeSlide intakeSlide,
             final Superstructure superstructure,
-            final Spindexer spindexer,
-            final Feeder feeder
+            final Intake intake,
+            final Indexer indexer
     ) {
         this.swerve = swerve;
-        this.intakeRollers = intakeRollers;
-        this.intakeSlide = intakeSlide;
         this.superstructure = superstructure;
-        this.spindexer = spindexer;
-        this.feeder = feeder;
+        this.intake = intake;
+        this.indexer = indexer;
 
-        final LoggedTrigger.Group group = LoggedTrigger.Group.from(LogKey);
+        group = LoggedTrigger.Group.from(LogKey);
 
         this.ableToShoot = group.t(
                 "AbleToShoot",
@@ -73,8 +64,13 @@ public class ShootCommands extends  {
 
         this.shouldBackOutFeeder = group.t(
                 "ShouldBackOutFeeder",
-                () -> feeder.getFilteredCurrent() > 48
+                () -> indexer.getFeederFilteredCurrent() > BackOutCurrentThreshold
         ).debounce(0.25);
+    }
+
+    @Override
+    public void periodic() {
+        Logger.recordOutput("Target", getTargetPoseSupplier().get());
     }
 
     public static double linearSpeed(final ChassisSpeeds speeds) {
@@ -82,110 +78,6 @@ public class ShootCommands extends  {
                 speeds.vxMetersPerSecond,
                 speeds.vyMetersPerSecond
         );
-    }
-
-    public Command shootWhileMoving() {
-        return Commands.parallel(
-                superstructure.toGoal(Superstructure.Goal.SHOOTING),
-                Commands.repeatingSequence(
-                        Commands.parallel(
-                                Commands.waitUntil(superstructure.atHoodSetpoint),
-                                Commands.waitUntil(superstructure.atTurretSetpoint),
-                                Commands.waitUntil(
-                                        superstructure.atShooterSetpoint
-                                                .debounce(0.1, Debouncer.DebounceType.kFalling))
-                                        .withTimeout(1.5)
-                        ),
-                        Commands.repeatingSequence(
-                                Commands.parallel(
-                                        feeder.toGoal(Feeder.Goal.FEED),
-                                        spindexer.toGoal(Spindexer.Goal.FEED)
-                                ).until(shouldBackOutFeeder),
-                                Commands.sequence(
-                                        feeder.toGoal(Feeder.Goal.BACK_OUT),
-                                        spindexer.toGoal(Spindexer.Goal.BACK_OUT)
-                                ).withTimeout(2)
-                        ).onlyWhile(
-                                superstructure.atHoodSetpoint
-                                        .and(superstructure.atTurretSetpoint)
-                                        .and(superstructure.atShooterSetpoint
-                                                .debounce(0.5, Debouncer.DebounceType.kFalling))
-                        )
-                ),
-                Commands.deferredProxy(() -> intakeSlide.toGoal(IntakeSlide.Goal.SHOOTING))
-                        .unless(() -> targetSupplier.get() == ShotCalculator.Target.FERRYING),
-                Commands.runOnce(() -> SwerveSpeed.setSwerveSpeed(SwerveSpeed.Speeds.SHOOTING))
-                        .unless(() -> targetSupplier.get() == ShotCalculator.Target.FERRYING)
-        )
-            .finallyDo(() -> {
-                SwerveSpeed.setSwerveSpeed(SwerveSpeed.Speeds.NORMAL);
-            })
-            .withName("ShootWhileMoving");
-    }
-
-    public Command shootStationary() {
-        return Commands.parallel(
-                superstructure.toGoal(Superstructure.Goal.SHOOTING),
-                Commands.sequence(
-                        Commands.waitUntil(ableToShoot),
-                        Commands.parallel(
-                                Commands.repeatingSequence(
-                                        Commands.waitUntil(superstructure.atSetpoint),
-                                        Commands.parallel(
-                                                        feeder.toGoal(Feeder.Goal.FEED),
-                                                        spindexer.toGoal(Spindexer.Goal.FEED)
-                                                )
-                                                .onlyWhile(
-                                                        superstructure.atHoodSetpoint
-                                                                .and(superstructure.atTurretSetpoint)
-                                                                .and(superstructure.atShooterSetpoint
-                                                                        .debounce(0.5, Debouncer.DebounceType.kFalling))
-                                                )
-                                )
-                        )
-                ),
-                intakeSlide.toGoal(IntakeSlide.Goal.SHOOTING)
-                        .onlyIf(() -> targetSupplier.get() != ShotCalculator.Target.FERRYING),
-                swerve.runWheelXCommand()
-        )
-                .withName("ShootStationary");
-    }
-
-    public Command shootNoCheck() {
-        return Commands.parallel(
-                        superstructure.toGoal(Superstructure.Goal.SHOOTING),
-                        Commands.repeatingSequence(
-                                Commands.parallel(
-                                        feeder.toGoal(Feeder.Goal.FEED),
-                                        spindexer.toGoal(Spindexer.Goal.FEED)
-                                ).until(shouldBackOutFeeder),
-                                Commands.sequence(
-                                        feeder.toGoal(Feeder.Goal.BACK_OUT),
-                                        spindexer.toGoal(Spindexer.Goal.BACK_OUT)
-                                ).withTimeout(2)
-                        ),
-                        intakeSlide.toGoal(IntakeSlide.Goal.SHOOTING)
-                                .onlyIf(() -> targetSupplier.get() != ShotCalculator.Target.FERRYING),
-                        Commands.runOnce(() -> SwerveSpeed.setSwerveSpeed(SwerveSpeed.Speeds.SHOOTING))
-                )
-                .finallyDo(() -> {
-                    SwerveSpeed.setSwerveSpeed(SwerveSpeed.Speeds.NORMAL);
-                })
-                .withName("ShootWhileMoving");
-    }
-
-    public Command shootSuperstructureZero() {
-        return Commands.parallel(
-                        superstructure.toGoal(Superstructure.Goal.SHOOTING_STOW),
-                        feeder.toGoal(Feeder.Goal.FEED),
-                        intakeSlide.toGoal(IntakeSlide.Goal.SHOOTING),
-                        spindexer.toGoal(Spindexer.Goal.FEED),
-                        Commands.runOnce(() -> SwerveSpeed.setSwerveSpeed(SwerveSpeed.Speeds.SHOOTING))
-                )
-                .finallyDo(() -> {
-                    SwerveSpeed.setSwerveSpeed(SwerveSpeed.Speeds.NORMAL);
-                })
-                .withName("ShootWhileMoving");
     }
 
     public Command trackTarget() {
@@ -198,8 +90,40 @@ public class ShootCommands extends  {
                 );
 
         return superstructure.runParametersWithHoodStowed(
-                movingCalculationSupplier.get()
+                movingCalculationSupplier
         ).withName("TrackTarget");
+    }
+
+    public Command shoot() {
+        final LoggedTrigger targetValid = group.t(
+                "TargetValid",
+                () -> switch (getTarget(swerve.getPose())) {
+                    case HUB, FERRY -> true;
+                    case FERRY_BLOCKED -> false;
+                }
+        );
+
+        final LoggedTrigger swerveReady = group.t(
+                "SwerveReady",
+                () -> linearSpeed(swerve.getFieldRelativeSpeeds())
+                        <= SwerveSpeed.Speeds.SHOOTING.getTranslationSpeed()
+        );
+
+        return Commands.deadline(
+                Commands.repeatingSequence(
+                        Commands.waitUntil(targetValid
+                                .and(swerveReady)
+                                .and(superstructure.atSetpoint)),
+                        Commands.deadline(
+                                indexer.feed()
+                                        .onlyWhile(targetValid
+                                                .and(swerveReady)
+                                                .and(superstructure.atSetpoint)),
+                                intake.stowFeed().asProxy()
+                        )
+                ),
+                SwerveSpeed.toSwerveSpeed(SwerveSpeed.Speeds.SHOOTING)
+        ).withName("Shoot");
     }
 
     public static Target getTarget(final Pose2d turretPose) {

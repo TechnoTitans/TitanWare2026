@@ -75,9 +75,7 @@ public class Superstructure extends VirtualSubsystem {
     private InternalGoal currentGoal = InternalGoal.NONE;
 
     public final LoggedTrigger atSetpoint;
-    public final LoggedTrigger atHoodSetpoint;
-    public final LoggedTrigger atShooterSetpoint;
-    public final LoggedTrigger atTurretSetpoint;
+    public final LoggedTrigger safeForTrench;
 
     public Superstructure(
             final Turret turret,
@@ -88,14 +86,11 @@ public class Superstructure extends VirtualSubsystem {
         this.hood = hood;
         this.shooter = shooter;
 
-        this.atTurretSetpoint = turret.atSetpoint;
-        this.atShooterSetpoint = shooter.atSetpoint;
-        this.atHoodSetpoint = hood.atSetpoint;
-
         this.atSetpoint = turret.atSetpoint
                 .and(hood.atSetpoint)
                 .and(shooter.atSetpoint)
                 .debounce(0.1, Debouncer.DebounceType.kFalling);
+        this.safeForTrench = hood.safeForTrench;
     }
 
     @Override

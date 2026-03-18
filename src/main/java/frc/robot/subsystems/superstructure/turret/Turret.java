@@ -113,9 +113,10 @@ public class Turret extends SubsystemExt {
                 inputs.secondaryEncoderPositionRots,
                 constants.secondaryEncoderTooth()
         );
-        this.turretIO.seedTurretPosition(absolutePosition);
+//        this.turretIO.seedTurretPosition(absolutePosition);
 
-        Logger.start();
+        turretIO.setPosition(0);
+        //TODO: Won't log since Logger hasn't started yet
         Logger.recordOutput(LogKey + "/CRTResult", absolutePosition);
     }
 

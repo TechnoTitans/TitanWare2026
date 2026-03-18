@@ -72,6 +72,7 @@ public class Hood extends SubsystemExt {
 
     private final LoggedTrigger.Group group = LoggedTrigger.Group.from(LogKey);
     public final LoggedTrigger atSetpoint = group.t("AtSetpoint", this::atSetpoint);
+    public final LoggedTrigger safeForTrench = group.t("SafeForTrench", () -> atGoal(Goal.STOW));
     private final LoggedTrigger atUpperLimit = group.t("AtUpperLimit", this::atUpperLimit);
     private final LoggedTrigger atLowerLimit = group.t("AtLowerLimit", this::atLowerLimit);
 
@@ -169,5 +170,9 @@ public class Hood extends SubsystemExt {
 
     private boolean atLowerLimit() {
         return inputs.hoodPositionRots <= constants.lowerLimitRots();
+    }
+
+    private boolean atGoal(final Goal goal) {
+        return currentGoal == InternalGoal.fromGoal(goal);
     }
 }

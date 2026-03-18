@@ -19,16 +19,17 @@ import frc.robot.subsystems.drive.Swerve;
 import frc.robot.subsystems.drive.constants.SwerveConstants;
 import frc.robot.subsystems.indexer.Indexer;
 import frc.robot.subsystems.indexer.feeder.Feeder;
+import frc.robot.subsystems.indexer.spindexer.Spindexer;
 import frc.robot.subsystems.intake.Intake;
 import frc.robot.subsystems.intake.rollers.IntakeRollers;
 import frc.robot.subsystems.intake.slide.IntakeSlide;
-import frc.robot.subsystems.indexer.spindexer.Spindexer;
 import frc.robot.subsystems.superstructure.Superstructure;
 import frc.robot.subsystems.superstructure.hood.Hood;
 import frc.robot.subsystems.superstructure.shooter.Shooter;
 import frc.robot.subsystems.superstructure.turret.Turret;
 import frc.robot.subsystems.vision.PhotonVision;
 import frc.robot.utils.closeables.ToClose;
+import frc.robot.utils.commands.CommandsExt;
 import frc.robot.utils.commands.LoggedTrigger;
 import frc.robot.utils.commands.RobotModeLoggedTriggers;
 import frc.robot.utils.ctre.RefreshAll;
@@ -137,6 +138,13 @@ public class Robot extends LoggedRobot {
             intakeRollers
     );
 
+    private final ShootCommands shootCommands = new ShootCommands(
+            swerve,
+            superstructure,
+            intake,
+            indexer
+    );
+
     private final ComponentsSolver componentsSolver = new ComponentsSolver(
             turret::getTurretPosition,
             hood::getHoodPosition,
@@ -147,28 +155,18 @@ public class Robot extends LoggedRobot {
     private final FuelState fuelState = new FuelState(
             Constants.CURRENT_MODE,
             swerve,
-            intakeRollers,
-            feeder,
+            intake,
+            indexer,
             superstructure,
             componentsSolver
     );
 
-    private final ShootCommands shootCommands = new ShootCommands(
-            swerve,
-            intakeRollers,
-            intakeSlide,
-            superstructure,
-            spindexer,
-            feeder
-    );
 
     public final Autos autos = new Autos(
             swerve,
+            intake,
+            indexer,
             superstructure,
-            feeder,
-            spindexer,
-            intakeRollers,
-            intakeSlide,
             photonVision
     );
 
@@ -196,8 +194,9 @@ public class Robot extends LoggedRobot {
 
     private final LoggedTrigger.Group group = LoggedTrigger.Group.from(LogKey);
 
-    private final LoggedTrigger disabled = RobotModeLoggedTriggers.disabled(group);
+        private final LoggedTrigger disabled = RobotModeLoggedTriggers.disabled(group);
     private final LoggedTrigger autonomousEnabled = RobotModeLoggedTriggers.autonomous(group);
+    private final LoggedTrigger teleopEnabled = RobotModeLoggedTriggers.teleop(group);
     private final LoggedTrigger enabled = RobotModeLoggedTriggers.enabled(group);
 
     private static final double MatchTimeOffsetSeconds = 2;
@@ -289,6 +288,9 @@ public class Robot extends LoggedRobot {
         configureButtonBindings(teleopEventLoop);
 
         CommandLogger.init(CommandScheduler.getInstance());
+        CommandLogger.periodic();
+
+        VirtualSubsystem.run();
 
         SignalLogger.enableAutoLogging(true);
         SignalLogger.start();
@@ -384,22 +386,25 @@ public class Robot extends LoggedRobot {
     }
 
     public void configureStateTriggers() {
-        enabled.onTrue(
-                Commands.parallel(
-                        superstructure.setGoal(Superstructure.Goal.TRACKING),
-                        intakeSlide.setGoalCommand(IntakeSlide.Goal.EXTEND)
-                )
-        );
+        teleopEnabled.whileTrue(CommandsExt.defaultCommand(shootCommands.trackTarget()));
+
+        enabled
+                .onTrue(Commands.parallel(
+                        intake.deploy(),
+                        shooter.setGoal(Shooter.Goal.IDLE)
+                ));
 
         hubActive.onTrue(ControllerUtils.rumbleForDurationCommand(
                 driverController.getHID(), GenericHID.RumbleType.kBothRumble, 1, 1
         ));
 
-        disabled.onTrue(ControllerUtils.rumbleForDurationCommand(
-                driverController.getHID(), GenericHID.RumbleType.kBothRumble, 0, 0.5
+        disabled.onTrue(
+                Commands.parallel(
+                        ControllerUtils.rumbleForDurationCommand(
+                                driverController.getHID(), GenericHID.RumbleType.kBothRumble, 0, 0.5
+                        ),
+                        swerve.stopCommand()
         ));
-
-        disabled.onTrue(swerve.stopCommand());
     }
 
     public void configureAutos() {
@@ -432,15 +437,15 @@ public class Robot extends LoggedRobot {
 
     public void configureButtonBindings(final EventLoop teleopEventLoop) {
         driverController.rightBumper(teleopEventLoop)
-                .whileTrue(Commands.startEnd(
-                        () -> SwerveSpeed.setSwerveSpeed(SwerveSpeed.Speeds.FAST),
-                        () -> SwerveSpeed.setSwerveSpeed(SwerveSpeed.Speeds.NORMAL)
+                .whileTrue(SwerveSpeed.toSwerveSpeed(
+                        SwerveSpeed.Speeds.FAST,
+                        SwerveSpeed.Speeds.NORMAL
                 ).withName("SwerveSpeedFast"));
 
         driverController.leftBumper(teleopEventLoop)
-                .whileTrue(Commands.startEnd(
-                        () -> SwerveSpeed.setSwerveSpeed(SwerveSpeed.Speeds.SLOW),
-                        () -> SwerveSpeed.setSwerveSpeed(SwerveSpeed.Speeds.NORMAL)
+                .whileTrue(SwerveSpeed.toSwerveSpeed(
+                        SwerveSpeed.Speeds.SLOW,
+                        SwerveSpeed.Speeds.NORMAL
                 ).withName("SwerveSpeedSlow"));
 
         driverController.leftTrigger(0.5, teleopEventLoop).whileTrue(
@@ -452,30 +457,18 @@ public class Robot extends LoggedRobot {
         );
 
         driverController.rightTrigger(0.5, teleopEventLoop)
-                .whileTrue(shootCommands.shootWhileMoving());
+                .whileTrue(shootCommands.shoot())
+                .onFalse(intake.deploy());
 
-        coController.leftTrigger(0.5, teleopEventLoop).whileTrue(
-                intakeRollers.toGoal(IntakeRollers.Goal.INTAKE)
-        );
+        coController.leftTrigger(0.5, teleopEventLoop).whileTrue(intake.intake());
 
-        coController.y(teleopEventLoop).onTrue(shootCommands.deployIntake());
+        coController.y(teleopEventLoop).onTrue(intake.deploy());
 
-        coController.a(teleopEventLoop).onTrue(shootCommands.stowIntake());
+        coController.a(teleopEventLoop).onTrue(intake.stow());
 
-        coController.rightTrigger(0.5, teleopEventLoop).whileTrue(
-                Commands.parallel(
-                        Commands.runOnce(() -> scoringMode = ShootCommands.ScoringMode.Stationary),
-                        shootCommands.shootStationary()
-                ).finallyDo(() -> scoringMode = ShootCommands.ScoringMode.Moving)
-        );
-
-        coController.x(teleopEventLoop).whileTrue(
-                shootCommands.shootNoCheck()
-        );
-
-        coController.leftBumper(teleopEventLoop).whileTrue(
-                shootCommands.shootSuperstructureZero()
-        );
+        coController.rightTrigger(0.5, teleopEventLoop)
+                .whileTrue(shootCommands.shoot())
+                .onFalse(intake.deploy());
 
         coController.b(teleopEventLoop).whileTrue(
                 Commands.parallel(

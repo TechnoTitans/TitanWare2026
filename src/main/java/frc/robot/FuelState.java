@@ -17,8 +17,8 @@ import frc.robot.constants.Constants;
 import frc.robot.constants.FieldConstants;
 import frc.robot.constants.PoseConstants;
 import frc.robot.subsystems.drive.Swerve;
-import frc.robot.subsystems.indexer.feeder.Feeder;
-import frc.robot.subsystems.intake.rollers.IntakeRollers;
+import frc.robot.subsystems.indexer.Indexer;
+import frc.robot.subsystems.intake.Intake;
 import frc.robot.subsystems.superstructure.ShotCalculator;
 import frc.robot.subsystems.superstructure.Superstructure;
 import frc.robot.utils.Container;
@@ -41,8 +41,8 @@ public class FuelState extends VirtualSubsystem {
     private final Constants.RobotMode mode;
 
     private final Swerve swerve;
-    private final IntakeRollers intake;
-    private final Feeder indexer;
+    private final Intake intake;
+    private final Indexer indexer;
     private final Superstructure superstructure;
     private final ComponentsSolver componentsSolver;
 
@@ -58,8 +58,8 @@ public class FuelState extends VirtualSubsystem {
     public FuelState(
             final Constants.RobotMode mode,
             final Swerve swerve,
-            final IntakeRollers intake,
-            final Feeder indexer,
+            final Intake intake,
+            final Indexer indexer,
             final Superstructure superstructure,
             final ComponentsSolver componentsSolver
     ) {
@@ -80,7 +80,7 @@ public class FuelState extends VirtualSubsystem {
         switch (mode) {
             case SIM, REPLAY -> {
                 this.fuelCache = new FuelCache(50, fuel -> {
-                    final Pose2d hubPose = new Pose2d(FieldConstants.getHubPose(), Rotation2d.kZero);
+                    final Pose2d hubPose = new Pose2d(FieldConstants.getHubPose().getTranslation(), Rotation2d.kZero);
                     if (isInsideHub(hubPose, fuel)) {
                         simScoredFuelCount++;
                         simTimeOfFlight = fuel.getTimeOfFlightSeconds();
@@ -127,7 +127,7 @@ public class FuelState extends VirtualSubsystem {
 
     private void configureStateTriggers() {
         intake.isIntaking.and(hasFuel.negate())
-                .whileTrue(CommandsExt.defaultCommand(indexer.toGoal(Feeder.Goal.FEED)));
+                .whileTrue(CommandsExt.defaultCommand(indexer.feed()));
     }
 
     private void configureSimTriggers() {
@@ -138,8 +138,8 @@ public class FuelState extends VirtualSubsystem {
         final double fuelIntakePerSecond = 10;
         intake.isIntaking.whileTrue(setInterval(1 / fuelIntakePerSecond, () -> simFuelCount++));
 
-        final double fuelFedPerSecond = 18;
-        indexer.isFeeding
+        final double fuelFedPerSecond = 6;
+        indexer.isIndexing
                 .and(hasFuel)
                 .and(hasSimFuel)
                 .whileTrue(setInterval(
@@ -277,7 +277,7 @@ public class FuelState extends VirtualSubsystem {
         private static class Fuel {
             private static final Translation3d ForwardAxis = new Translation3d(1, 0, 0);
             private static final Vector<N3> ForwardAxisVec = ForwardAxis.toVector();
-            private static final double GravityMetersPerSecSquared = 9.81;
+            private static final double GravityMetersPerSecSquared = 13;
 
             private boolean active = false;
             private double activeStartTime = 0;

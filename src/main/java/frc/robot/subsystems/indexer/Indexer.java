@@ -34,4 +34,8 @@ public class Indexer {
                 feeder.toGoal(Feeder.Goal.FEED)
         ).withName("Feed");
     }
+
+    public double getFeederFilteredCurrent() {
+        return feeder.getFilteredCurrent();
+    }
 }
