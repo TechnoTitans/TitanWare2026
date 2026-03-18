@@ -35,6 +35,13 @@ public class Indexer {
         ).withName("Feed");
     }
 
+    public Command backOut() {
+        return Commands.parallel(
+                spindexer.toGoal(Spindexer.Goal.BACK_OUT),
+                feeder.toGoal(Feeder.Goal.BACK_OUT)
+        ).withName("BackOut");
+    }
+
     public double getFeederFilteredCurrent() {
         return feeder.getFilteredCurrent();
     }

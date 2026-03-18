@@ -35,7 +35,7 @@ public class Turret extends SubsystemExt {
         STOW(0),
         NO_VISION(0.5);
 
-        private double positionSetpointRots;
+        private final double positionSetpointRots;
 
         Goal(final double positionSetpointRots) {
             this.positionSetpointRots = positionSetpointRots;

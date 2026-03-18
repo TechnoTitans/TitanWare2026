@@ -3,7 +3,6 @@ package frc.robot;
 import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.Vector;
-import edu.wpi.first.math.filter.Debouncer;
 import edu.wpi.first.math.geometry.*;
 import edu.wpi.first.math.interpolation.InterpolatingDoubleTreeMap;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
@@ -46,14 +45,12 @@ public class FuelState extends VirtualSubsystem {
     private final Superstructure superstructure;
     private final ComponentsSolver componentsSolver;
 
-    private int simFuelCount = 100;
+    private int simFuelCount = 0;
     private final FuelCache fuelCache;
     private final LoggedTrigger hasSimFuel;
 
     private int simScoredFuelCount = 0;
     private double simTimeOfFlight;
-
-    public final LoggedTrigger hasFuel;
 
     public FuelState(
             final Constants.RobotMode mode,
@@ -73,14 +70,12 @@ public class FuelState extends VirtualSubsystem {
         this.componentsSolver = componentsSolver;
 
         this.hasSimFuel = group.t("hasSimFuel", () -> simFuelCount > 0);
-        this.hasFuel = group.t("hasFuel", () -> true)
-                .debounce(0.5, Debouncer.DebounceType.kFalling);
 
         configureStateTriggers();
         switch (mode) {
             case SIM, REPLAY -> {
                 this.fuelCache = new FuelCache(50, fuel -> {
-                    final Pose2d hubPose = new Pose2d(FieldConstants.getHubPose().getTranslation(), Rotation2d.kZero);
+                    final Pose2d hubPose = FieldConstants.getHubPose();
                     if (isInsideHub(hubPose, fuel)) {
                         simScoredFuelCount++;
                         simTimeOfFlight = fuel.getTimeOfFlightSeconds();
@@ -100,8 +95,6 @@ public class FuelState extends VirtualSubsystem {
 
     @Override
     public void periodic() {
-        Logger.recordOutput(LogKey + "/HasFuel", hasFuel);
-
         switch (mode) {
             case SIM, REPLAY -> {
                 fuelCache.periodic(deltaTime.get());
@@ -117,7 +110,9 @@ public class FuelState extends VirtualSubsystem {
 
     public void setSimFuelCount(final int simFuelCount) {
         switch (mode) {
-            case SIM, REPLAY -> this.simFuelCount = simFuelCount;
+            case SIM, REPLAY -> {
+                this.simFuelCount = simFuelCount;
+            }
         }
     }
 
@@ -126,7 +121,7 @@ public class FuelState extends VirtualSubsystem {
     }
 
     private void configureStateTriggers() {
-        intake.isIntaking.and(hasFuel.negate())
+        intake.isIntaking
                 .whileTrue(CommandsExt.defaultCommand(indexer.feed()));
     }
 
@@ -135,13 +130,11 @@ public class FuelState extends VirtualSubsystem {
 
         teleopEnabled.onTrue(Commands.runOnce(() -> setSimFuelCount(500)));
 
-        final double fuelIntakePerSecond = 10;
+        final double fuelIntakePerSecond = 5;
         intake.isIntaking.whileTrue(setInterval(1 / fuelIntakePerSecond, () -> simFuelCount++));
 
         final double fuelFedPerSecond = 6;
         indexer.isIndexing
-                .and(hasFuel)
-                .and(hasSimFuel)
                 .whileTrue(setInterval(
                         1 / fuelFedPerSecond,
                         () -> {
@@ -162,22 +155,12 @@ public class FuelState extends VirtualSubsystem {
 
                             fuelCache.spawn(
                                     hoodPose,
-                                    ShooterOmegaToBallVelocity
-                                            .get(superstructure.getShooterVelocityRotsPerSec()),
+                                    ShooterOmegaToBallVelocity.get(superstructure.getShooterVelocityRotsPerSec()),
                                     turretFieldSpeeds
                             );
                             simFuelCount = Math.max(simFuelCount - 1, 0);
                         }
                 ));
-    }
-
-    @SuppressWarnings("SameParameterValue")
-    private static Command waitRand(
-            final ThreadLocalRandom random,
-            final double lowerInclusiveSeconds,
-            final double upperExclusiveSeconds
-    ) {
-        return Commands.waitSeconds(random.nextDouble(lowerInclusiveSeconds, upperExclusiveSeconds));
     }
 
     private static Command setInterval(final double intervalSeconds, final Runnable callback) {
@@ -277,7 +260,7 @@ public class FuelState extends VirtualSubsystem {
         private static class Fuel {
             private static final Translation3d ForwardAxis = new Translation3d(1, 0, 0);
             private static final Vector<N3> ForwardAxisVec = ForwardAxis.toVector();
-            private static final double GravityMetersPerSecSquared = 13;
+            private static final double GravityMetersPerSecSquared = 9.81;
 
             private boolean active = false;
             private double activeStartTime = 0;

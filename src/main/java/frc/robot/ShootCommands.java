@@ -18,8 +18,7 @@ import org.littletonrobotics.junction.Logger;
 import java.util.function.Supplier;
 
 public class ShootCommands extends VirtualSubsystem {
-    protected static final String LogKey = "RobotCommands";
-    protected static final double AllowableSpeedToShootMetersPerSec = 0.1;
+    protected static final String LogKey = "ShootCommands";
     public static final int BackOutCurrentThreshold = 48;
 
     public enum Target {
@@ -34,7 +33,6 @@ public class ShootCommands extends VirtualSubsystem {
     private final Indexer indexer;
 
     private final LoggedTrigger.Group group;
-    private final LoggedTrigger ableToShoot;
     private final LoggedTrigger shouldBackOutFeeder;
 
     public ShootCommands(
@@ -49,18 +47,6 @@ public class ShootCommands extends VirtualSubsystem {
         this.indexer = indexer;
 
         group = LoggedTrigger.Group.from(LogKey);
-
-        this.ableToShoot = group.t(
-                "AbleToShoot",
-                () -> {
-                    final ChassisSpeeds swerveChassisSpeed = swerve.getRobotRelativeSpeeds();
-
-                    return Math.hypot(
-                            swerveChassisSpeed.vxMetersPerSecond,
-                            swerveChassisSpeed.vyMetersPerSecond
-                    ) < AllowableSpeedToShootMetersPerSec;
-                }
-        );
 
         this.shouldBackOutFeeder = group.t(
                 "ShouldBackOutFeeder",
@@ -121,6 +107,7 @@ public class ShootCommands extends VirtualSubsystem {
                                                 .and(superstructure.atSetpoint)),
                                 intake.stowFeed().asProxy()
                         )
+//                        indexer.backOut()
                 ),
                 SwerveSpeed.toSwerveSpeed(SwerveSpeed.Speeds.SHOOTING)
         ).withName("Shoot");

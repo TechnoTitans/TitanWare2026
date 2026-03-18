@@ -31,9 +31,6 @@ public class IntakeRollers extends SubsystemBase {
 
     private final LoggedTrigger.Group group = LoggedTrigger.Group.from(LogKey);
 
-    private boolean intaking = false;
-    public final LoggedTrigger isIntaking = group.t("IsIntaking", () -> intaking);
-
     public IntakeRollers(final Constants.RobotMode mode, final HardwareConstants.IntakeRollerConstants constants) {
         this.intakeRollersIO = switch (mode) {
             case REAL -> new IntakeRollersIOReal(constants);

@@ -120,7 +120,6 @@ public class IntakeSlide extends SubsystemExt {
     private HoldMode holdMode = HoldMode.HARD;
 
     private final LoggedTrigger.Group group = LoggedTrigger.Group.from(LogKey);
-    private final LoggedTrigger softModeTrigger = group.t("SoftMode", this::atSetpoint).debounce(0.1);
     public final LoggedTrigger atSetpoint = group.t("AtSetpoint", this::atSetpoint);
     private final LoggedTrigger atUpperLimit = group.t("AtUpperLimit", this::atUpperLimit);
     private final LoggedTrigger atLowerLimit = group.t("AtLowerLimit", this::atLowerLimit);
@@ -136,6 +135,7 @@ public class IntakeSlide extends SubsystemExt {
 
         intakeSlideIO.zeroMotors();
 
+        LoggedTrigger softModeTrigger = group.t("SoftMode", this::atSetpoint).debounce(0.1);
         softModeTrigger.onTrue(Commands.runOnce(() -> {
             holdMode = HoldMode.SOFT;
             setDesiredPosition(positionSetpointRots);

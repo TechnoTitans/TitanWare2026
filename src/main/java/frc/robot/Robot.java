@@ -288,9 +288,6 @@ public class Robot extends LoggedRobot {
         configureButtonBindings(teleopEventLoop);
 
         CommandLogger.init(CommandScheduler.getInstance());
-        CommandLogger.periodic();
-
-        VirtualSubsystem.run();
 
         SignalLogger.enableAutoLogging(true);
         SignalLogger.start();
@@ -470,11 +467,6 @@ public class Robot extends LoggedRobot {
                 .whileTrue(shootCommands.shoot())
                 .onFalse(intake.deploy());
 
-        coController.b(teleopEventLoop).whileTrue(
-                Commands.parallel(
-                        feeder.toGoal(Feeder.Goal.BACK_OUT),
-                        spindexer.toGoal(Spindexer.Goal.BACK_OUT)
-                )
-        );
+        coController.b(teleopEventLoop).whileTrue(indexer.backOut());
     }
 }

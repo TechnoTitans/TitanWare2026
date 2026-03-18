@@ -73,7 +73,7 @@ public class Shooter extends SubsystemExt {
     private final ShooterIO shooterIO;
     private final ShooterIOInputsAutoLogged inputs;
 
-    private SysIdRoutine flywheelTorqueCurrentSysIdRoutine;
+    private final SysIdRoutine flywheelTorqueCurrentSysIdRoutine;
 
     private InternalGoal desiredGoal = InternalGoal.TRACKING;
     private InternalGoal currentGoal = InternalGoal.NONE;
@@ -123,7 +123,6 @@ public class Shooter extends SubsystemExt {
         Logger.recordOutput(LogKey + "/DesiredGoal", desiredGoal.toString());
         Logger.recordOutput(LogKey + "/CurrentGoal", currentGoal.toString());
         Logger.recordOutput(LogKey + "/VelocitySetpointRotsPerSec", velocitySetpointRotsPerSec);
-        Logger.recordOutput(LogKey + "/Triggers/AtSetpoint", atSetpoint());
 
         Logger.recordOutput(
                 LogKey + "/PeriodicIOPeriodMs",

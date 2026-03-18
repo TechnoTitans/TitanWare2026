@@ -28,7 +28,6 @@ public class FeederIOReal implements FeederIO {
     private final StatusSignal<Current> wheelTorqueCurrent;
     private final StatusSignal<Temperature> wheelDeviceTemp;
 
-    private final VelocityTorqueCurrentFOC velocityTorqueCurrentFOC;
     private final TorqueCurrentFOC torqueCurrentFOC;
 
     public FeederIOReal(final HardwareConstants.FeederConstants constants) {
@@ -42,7 +41,6 @@ public class FeederIOReal implements FeederIO {
         this.wheelTorqueCurrent = motor.getTorqueCurrent(false);
         this.wheelDeviceTemp = motor.getDeviceTemp(false);
 
-        this.velocityTorqueCurrentFOC = new VelocityTorqueCurrentFOC(0);
         this.torqueCurrentFOC = new TorqueCurrentFOC(0);
 
         RefreshAll.add(
