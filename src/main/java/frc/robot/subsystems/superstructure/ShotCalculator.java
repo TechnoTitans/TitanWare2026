@@ -8,8 +8,6 @@ import edu.wpi.first.math.interpolation.InterpolatingTreeMap;
 import edu.wpi.first.math.interpolation.InverseInterpolator;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.util.Units;
-import frc.robot.Robot;
-import frc.robot.constants.FieldConstants;
 import frc.robot.constants.PoseConstants;
 
 import java.util.function.Supplier;
@@ -126,10 +124,6 @@ public class ShotCalculator {
             final Pose2d targetPose
     ) {
         final Pose2d turretPose = swervePose.transformBy(PoseConstants.Turret.ROBOT_TO_TURRET_TRANSFORM_2D);
-
-        final Pose2d calculationPose = Robot.IsRedAlliance.getAsBoolean()
-                ? turretPose.relativeTo(FieldConstants.RED_ORIGIN)
-                : turretPose;
 
         final Translation2d targetTranslation = targetPose.getTranslation();
 

@@ -121,8 +121,8 @@ public class FuelState extends VirtualSubsystem {
     }
 
     private void configureStateTriggers() {
-        intake.isIntaking
-                .whileTrue(CommandsExt.defaultCommand(indexer.feed()));
+//        intake.isIntaking
+//                .whileTrue(CommandsExt.defaultCommand(indexer.feed()));
     }
 
     private void configureSimTriggers() {

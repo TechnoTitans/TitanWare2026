@@ -446,11 +446,7 @@ public class Robot extends LoggedRobot {
                 ).withName("SwerveSpeedSlow"));
 
         driverController.leftTrigger(0.5, teleopEventLoop).whileTrue(
-                Commands.parallel(
-                        intakeRollers.toGoal(IntakeRollers.Goal.INTAKE),
-                        intakeSlide.toGoal(IntakeSlide.Goal.EXTEND)
-                                .onlyIf(() -> intakeSlide.atGoal(IntakeSlide.Goal.EXTEND))
-                )
+                intake.intake()
         );
 
         driverController.rightTrigger(0.5, teleopEventLoop)

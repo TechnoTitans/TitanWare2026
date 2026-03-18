@@ -111,6 +111,7 @@ public class ShootCommands extends VirtualSubsystem {
                                                 .and(swerveReady)
                                                 .and(superstructure.atSetpoint)),
                                 intake.stowFeed().asProxy()
+                                        .unless(intake.isIntaking)
                         )
 //                        indexer.backOut()
                 ),

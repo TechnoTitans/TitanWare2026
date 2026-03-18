@@ -53,7 +53,7 @@ public class Intake {
     public Command stowFeed() {
         return Commands.parallel(
                 slide.toGoalHold(IntakeSlide.Goal.SHOOTING),
-                rollers.toGoal(IntakeRollers.Goal.INTAKE)
+                rollers.toGoal(IntakeRollers.Goal.OFF)
         ).withName("StowFeedIntake");
     }
 }
