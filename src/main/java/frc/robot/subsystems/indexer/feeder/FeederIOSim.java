@@ -1,4 +1,4 @@
-package frc.robot.subsystems.feeder;
+package frc.robot.subsystems.indexer.feeder;
 
 import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.StatusSignal;
@@ -12,15 +12,30 @@ import com.ctre.phoenix6.signals.FeedbackSensorSourceValue;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 import com.ctre.phoenix6.signals.StaticFeedforwardSignValue;
+import com.ctre.phoenix6.sim.ChassisReference;
+import com.ctre.phoenix6.sim.TalonFXSimState;
+import edu.wpi.first.math.system.plant.DCMotor;
+import edu.wpi.first.math.system.plant.LinearSystemId;
 import edu.wpi.first.units.measure.*;
+import edu.wpi.first.wpilibj.Notifier;
+import edu.wpi.first.wpilibj.simulation.DCMotorSim;
 import frc.robot.constants.HardwareConstants;
+import frc.robot.constants.SimConstants;
+import frc.robot.utils.closeables.ToClose;
+import frc.robot.utils.control.DeltaTime;
 import frc.robot.utils.ctre.Phoenix6Utils;
 import frc.robot.utils.ctre.RefreshAll;
+import frc.robot.utils.sim.SimUtils;
+import frc.robot.utils.sim.motors.TalonFXSim;
 
-public class FeederIOReal implements FeederIO {
+public class FeederIOSim implements FeederIO {
+    private static final double SIM_UPDATE_PERIOD_SEC = 0.005;
+
+    private final DeltaTime deltaTime;
     private final HardwareConstants.FeederConstants constants;
 
     private final TalonFX motor;
+    private final TalonFXSim motorTalonFXSim;
 
     private final StatusSignal<Angle> wheelPosition;
     private final StatusSignal<AngularVelocity> wheelVelocity;
@@ -31,10 +46,26 @@ public class FeederIOReal implements FeederIO {
     private final VelocityTorqueCurrentFOC velocityTorqueCurrentFOC;
     private final TorqueCurrentFOC torqueCurrentFOC;
 
-    public FeederIOReal(final HardwareConstants.FeederConstants constants) {
+    public FeederIOSim(final HardwareConstants.FeederConstants constants) {
+        this.deltaTime = new DeltaTime(true);
         this.constants = constants;
 
         this.motor = new TalonFX(constants.motorID(), constants.CANBus().toPhoenix6CANBus());
+
+        final DCMotor dcMotor = DCMotor.getKrakenX60Foc(1);
+        final DCMotorSim dcMotorSim = new DCMotorSim(
+                LinearSystemId.createDCMotorSystem(dcMotor, SimConstants.Feeder.MOMENT_OF_INERTIA, constants.gearing()),
+                dcMotor
+        );
+
+        this.motorTalonFXSim = new TalonFXSim(
+                motor,
+                constants.gearing(),
+                dcMotorSim::update,
+                voltage -> dcMotorSim.setInputVoltage(SimUtils.addMotorFriction(voltage, 0.25)),
+                dcMotorSim::getAngularPositionRad,
+                dcMotorSim::getAngularVelocityRadPerSec
+        );
 
         this.wheelPosition = motor.getPosition(false);
         this.wheelVelocity = motor.getVelocity(false);
@@ -53,6 +84,17 @@ public class FeederIOReal implements FeederIO {
                 wheelTorqueCurrent,
                 wheelDeviceTemp
         );
+
+        final Notifier simUpdateNotifier = new Notifier(() -> {
+            final double dt = deltaTime.get();
+            motorTalonFXSim.update(dt);
+        });
+        ToClose.add(simUpdateNotifier);
+        simUpdateNotifier.setName(String.format(
+                "SimUpdate(%d)",
+                motor.getDeviceID()
+        ));
+        simUpdateNotifier.startPeriodic(SIM_UPDATE_PERIOD_SEC);
     }
 
     @Override
@@ -95,10 +137,14 @@ public class FeederIOReal implements FeederIO {
                 4,
                 motor
         );
+
+        final TalonFXSimState wheelMotorSimState = motor.getSimState();
+        wheelMotorSimState.Orientation = ChassisReference.Clockwise_Positive;
+        wheelMotorSimState.setMotorType(TalonFXSimState.MotorType.KrakenX60);
     }
 
     @Override
-    public void updateInputs(final FeederIOInputs inputs) {
+    public void updateInputs(FeederIO.FeederIOInputs inputs) {
         inputs.wheelPositionRots = wheelPosition.getValueAsDouble();
         inputs.wheelVelocityRotsPerSec = wheelVelocity.getValueAsDouble();
         inputs.wheelVoltage = wheelVoltage.getValueAsDouble();

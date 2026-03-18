@@ -1,10 +1,10 @@
-package frc.robot.subsystems.feeder;
+package frc.robot.subsystems.indexer.spindexer;
 
 import org.littletonrobotics.junction.AutoLog;
 
-public interface FeederIO {
+public interface SpindexerIO {
     @AutoLog
-    class FeederIOInputs {
+    class SpindexerIOInputs {
         public double wheelPositionRots = 0.0;
         public double wheelVelocityRotsPerSec = 0.0;
         public double wheelVoltage = 0.0;
@@ -12,9 +12,9 @@ public interface FeederIO {
         public double wheelTempCelsius = 0.0;
     }
 
-    default void updateInputs(final FeederIOInputs inputs) {}
+    default void updateInputs(final SpindexerIOInputs inputs) {}
 
     default void config() {}
 
-    default void toWheelTorqueCurrent(final double torqueCurrentAmps) {}
+    default void toWheelVoltage(final double volts) {}
 }

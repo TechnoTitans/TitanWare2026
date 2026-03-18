@@ -22,6 +22,7 @@ import org.littletonrobotics.junction.Logger;
 
 import java.util.HashMap;
 import java.util.Objects;
+import java.util.function.DoubleSupplier;
 
 import static edu.wpi.first.units.Units.*;
 
@@ -173,10 +174,10 @@ public class Turret extends SubsystemExt {
         ).withName("RunGoal");
     }
 
-    public Command runPositionWithVelocity(final double positionRots, final double velocityRotsPerSec) {
+    public Command runPositionWithVelocity(final DoubleSupplier positionRots, final DoubleSupplier velocityRotsPerSec) {
         return instantRun(
                 () -> desiredGoal = InternalGoal.TRACKING,
-                () -> setPositionWithVelocity(positionRots, velocityRotsPerSec)
+                () -> setPositionWithVelocity(positionRots.getAsDouble(), velocityRotsPerSec.getAsDouble())
         ).withName("RunPositionWithVelocity");
     }
 

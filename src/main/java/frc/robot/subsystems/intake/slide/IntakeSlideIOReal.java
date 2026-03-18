@@ -182,7 +182,7 @@ public class IntakeSlideIOReal implements IntakeSlideIO {
     }
 
     @Override
-    public void toSlidePositionUnprofiled(final double positionRots, final double velocityRotsPerSec) {
+    public void toSlidePositionWithVelocity(final double positionRots, final double velocityRotsPerSec) {
         diffMechanism.setControl(
                 averagePositionTorqueCurrentFOC
                         .withPosition(positionRots)

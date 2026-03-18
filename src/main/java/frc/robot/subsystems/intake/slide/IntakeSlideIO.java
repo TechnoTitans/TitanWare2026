@@ -29,11 +29,9 @@ public interface IntakeSlideIO {
 
     default void toSlidePosition(final double positionRots) {}
 
-    default void toSlidePositionUnprofiled(final double positionRots, final double velocityRotsPerSec) {}
+    default void toSlidePositionWithVelocity(final double positionRots, final double velocityRotsPerSec) {}
 
     default void holdSlidePosition(final double positionRots) {}
 
     default void zeroMotors() {}
-
-    default void testIntakeSim() {}
 }

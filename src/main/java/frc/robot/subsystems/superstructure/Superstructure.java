@@ -136,7 +136,7 @@ public class Superstructure extends VirtualSubsystem {
     public Command runParameters(final Supplier<ShotCalculator.ShotCalculation> shotCalculationSupplier) {
         return runParametersWithHood(
                 shotCalculationSupplier,
-                cached -> hood.runPosition(() -> cached.get().desiredHoodRotationRots())
+                cached -> hood.runPosition(() -> cached.get().hoodRotationRots())
         ).withName("RunParametersWithHoodStowed");
     }
 
@@ -173,11 +173,11 @@ public class Superstructure extends VirtualSubsystem {
         return Commands.parallel(
                 setInternalGoal(InternalGoal.TRACKING),
                 turret.runPositionWithVelocity(
-                        () -> cached.get().desiredTurretRotation().getRotations(),
-                        () -> cached.get().turretVelocityRotsPerSec()
+                        () -> cached.get().turretRotationRots(),
+                        () -> cached.get().turretSpeedRotsPerSec()
                 ),
                 hoodCommand.apply(cached),
-                shooter.runVelocity(() -> cached.get().desiredShooterVelocity()),
+                shooter.runVelocity(() -> cached.get().shooterVelocityRotsPerSec()),
                 Commands.run(calculation::clear)
         ).withName("RunParameters");
     }

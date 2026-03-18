@@ -9,20 +9,19 @@ import edu.wpi.first.math.interpolation.InverseInterpolator;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.util.Units;
 import frc.robot.Robot;
-import frc.robot.RobotCommands;
 import frc.robot.constants.FieldConstants;
 import frc.robot.constants.PoseConstants;
 
 import java.util.function.Supplier;
 
 public class ShotCalculator {
-    public record ShotCalc(
+    private record ShooterCalculation(
             double shooterVelocityRotsPerSec,
             double hoodPositionRots
-    ) implements Interpolatable<ShotCalc> {
+    ) implements Interpolatable<ShooterCalculation> {
         @Override
-        public ShotCalc interpolate(final ShotCalc endValue, final double t) {
-            return new ShotCalc(
+        public ShooterCalculation interpolate(final ShooterCalculation endValue, final double t) {
+            return new ShooterCalculation(
                     MathUtil.interpolate(
                             shooterVelocityRotsPerSec,
                             endValue.shooterVelocityRotsPerSec,
@@ -37,19 +36,19 @@ public class ShotCalculator {
         }
     }
 
-    public static final InterpolatingTreeMap<Double, ShotCalc> ShotMap =
-            new InterpolatingTreeMap<>(InverseInterpolator.forDouble(), ShotCalc::interpolate);
+    public static final InterpolatingTreeMap<Double, ShooterCalculation> ShotMap =
+            new InterpolatingTreeMap<>(InverseInterpolator.forDouble(), ShooterCalculation::interpolate);
     static {
-        ShotMap.put(1.30, new ShotCalc(28, 0));
-        ShotMap.put(2.07, new ShotCalc(32, 0.005));
-        ShotMap.put(2.42, new ShotCalc(32, 0.008));
-        ShotMap.put(2.67, new ShotCalc(33, 0.01));
-        ShotMap.put(3.07, new ShotCalc(35, 0.012));
-        ShotMap.put(3.60, new ShotCalc(36, 0.014));
-        ShotMap.put(4.54, new ShotCalc(40, 0.021));
-        ShotMap.put(5.18, new ShotCalc(43, 0.025));
-        ShotMap.put(5.84, new ShotCalc(44, 0.027));
-        ShotMap.put(6.16, new ShotCalc(44, 0.041));
+        ShotMap.put(1.30, new ShooterCalculation(28, 0));
+        ShotMap.put(2.07, new ShooterCalculation(32, 0.005));
+        ShotMap.put(2.42, new ShooterCalculation(32, 0.008));
+        ShotMap.put(2.67, new ShooterCalculation(33, 0.01));
+        ShotMap.put(3.07, new ShooterCalculation(35, 0.012));
+        ShotMap.put(3.60, new ShooterCalculation(36, 0.014));
+        ShotMap.put(4.54, new ShooterCalculation(40, 0.021));
+        ShotMap.put(5.18, new ShooterCalculation(43, 0.025));
+        ShotMap.put(5.84, new ShooterCalculation(44, 0.027));
+        ShotMap.put(6.16, new ShooterCalculation(44, 0.041));
     }
 
     private static final InterpolatingDoubleTreeMap TOFMap = new InterpolatingDoubleTreeMap();
@@ -65,79 +64,34 @@ public class ShotCalculator {
     }
 
     public record ShotCalculation(
-            Rotation2d desiredTurretRotation,
-            double desiredHoodRotationRots,
-            double desiredShooterVelocity,
-            ShotCalculator.Target target
+            double turretRotationRots,
+            double turretSpeedRotsPerSec,
+            double hoodRotationRots,
+            double shooterVelocityRotsPerSec
     ) {}
 
+    private static final double LookaheadSeconds = 0.025;
 
-    private static final double FerryXBoundary = Units.inchesToMeters(200);
-    private static final double DelayTimeSec = 0.025;
-
-    public static ShotCalculation getShotCalculation(
-            final Supplier<Pose2d> swervePoseSupplier,
-            final Supplier<RobotCommands.ScoringMode> scoringModeSupplier,
-            final Supplier<ChassisSpeeds> fieldRelativeSwerveSpeedsSupplier
+    public static Supplier<ShotCalculation> getStaticShotCalculationSupplier(
+            final Supplier<Pose2d> robotPoseSupplier,
+            final Supplier<ChassisSpeeds> fieldRelativeSwerveSpeedsSupplier,
+            final Supplier<Pose2d> targetPoseSupplier
     ) {
-        final RobotCommands.ScoringMode scoringMode = scoringModeSupplier.get();
-
-        return switch (scoringMode) {
-            case Stationary -> getShotCalculation(swervePoseSupplier.get(), fieldRelativeSwerveSpeedsSupplier.get());
-            case Moving -> getMovingShotCalculation(swervePoseSupplier.get(), fieldRelativeSwerveSpeedsSupplier.get());
-        };
-    }
-
-    public static ShotCalculation getShotCalculationFromPose(final Pose2d robotPose) {
-        final Pose2d turretPose = robotPose.transformBy(PoseConstants.Turret.ROBOT_TO_TURRET_TRANSFORM_2D);
-
-        final Target target = turretPose.getX() > FerryXBoundary
-                ? Target.FERRYING
-                : Target.HUB;
-
-        final Translation2d targetTranslation = switch (target) {
-            case HUB -> FieldConstants.getHubPose();
-            case FERRYING -> FieldConstants.getFerryingTarget(turretPose.getY());
-        };
-
-        final double turretToTargetDistance = targetTranslation.getDistance(turretPose.getTranslation());
-
-        final Rotation2d desiredTurretAngle = targetTranslation.minus(turretPose.getTranslation())
-                .getAngle()
-                .minus(robotPose.getRotation());
-
-        final ShotCalc shotCalc = ShotMap.get(turretToTargetDistance);
-        return new ShotCalculation(
-                desiredTurretAngle,
-                shotCalc.hoodPositionRots(),
-                shotCalc.shooterVelocityRotsPerSec(),
-                target
+        return () -> getStaticShotCalculation(
+                robotPoseSupplier.get(),
+                fieldRelativeSwerveSpeedsSupplier.get(),
+                targetPoseSupplier.get()
         );
     }
 
-    private static ShotCalculation getShotCalculation(
+    public static ShotCalculation getStaticShotCalculation(
             final Pose2d robotPose,
-            final ChassisSpeeds swerveSpeeds
+            final ChassisSpeeds swerveSpeeds,
+            final Pose2d targetPose
     ) {
-        final Pose2d turretPose = robotPose.transformBy(PoseConstants.Turret.ROBOT_TO_TURRET_TRANSFORM_2D)
-                .exp(new Twist2d(
-                        swerveSpeeds.vxMetersPerSecond * DelayTimeSec,
-                        swerveSpeeds.vyMetersPerSecond * DelayTimeSec,
-                        swerveSpeeds.omegaRadiansPerSecond * DelayTimeSec
-                ));
+        final Pose2d turretPose = robotPose.transformBy(PoseConstants.Turret.ROBOT_TO_TURRET_TRANSFORM_2D);
 
-        final Pose2d calculationPose = Robot.IsRedAlliance.getAsBoolean()
-                ? turretPose.relativeTo(FieldConstants.RED_ORIGIN)
-                : turretPose;
-
-        final Target target = calculationPose.getX() > FerryXBoundary
-                ? Target.FERRYING
-                : Target.HUB;
-
-        final Translation2d targetTranslation = switch (target) {
-            case HUB -> FieldConstants.getHubPose();
-            case FERRYING -> FieldConstants.getFerryingTarget(calculationPose.getY());
-        };
+        final Translation2d targetTranslation = targetPose.getTranslation();
 
         final double turretToTargetDistance = targetTranslation.getDistance(turretPose.getTranslation());
 
@@ -145,18 +99,31 @@ public class ShotCalculator {
                 .getAngle()
                 .minus(robotPose.getRotation());
 
-        final ShotCalc shotCalc = ShotMap.get(turretToTargetDistance);
+        final ShooterCalculation shooterCalculation = ShotMap.get(turretToTargetDistance);
         return new ShotCalculation(
-                desiredTurretAngle,
-                shotCalc.hoodPositionRots(),
-                shotCalc.shooterVelocityRotsPerSec(),
-                target
+                desiredTurretAngle.getRadians(),
+                -Units.radiansToRotations(swerveSpeeds.omegaRadiansPerSecond),
+                shooterCalculation.hoodPositionRots,
+                shooterCalculation.shooterVelocityRotsPerSec
+        );
+    }
+
+    public static Supplier<ShotCalculation> getMovingShotCalculationSupplier(
+            final Supplier<Pose2d> robotPoseSupplier,
+            final Supplier<ChassisSpeeds> fieldRelativeSwerveSpeedsSupplier,
+            final Supplier<Pose2d> targetPoseSupplier
+    ) {
+        return () -> getMovingShotCalculation(
+                robotPoseSupplier.get(),
+                fieldRelativeSwerveSpeedsSupplier.get(),
+                targetPoseSupplier.get()
         );
     }
 
     private static ShotCalculation getMovingShotCalculation(
             final Pose2d swervePose,
-            final ChassisSpeeds swerveSpeeds
+            final ChassisSpeeds swerveSpeeds,
+            final Pose2d targetPose
     ) {
         final Pose2d turretPose = swervePose.transformBy(PoseConstants.Turret.ROBOT_TO_TURRET_TRANSFORM_2D);
 
@@ -164,20 +131,14 @@ public class ShotCalculator {
                 ? turretPose.relativeTo(FieldConstants.RED_ORIGIN)
                 : turretPose;
 
-        final Target target = calculationPose.getX() > FerryXBoundary
-                ? Target.FERRYING : Target.HUB;
-
-        final Translation2d targetTranslation = switch (target) {
-            case HUB -> FieldConstants.getHubPose();
-            case FERRYING -> FieldConstants.getFerryingTarget(calculationPose.getY());
-        };
+        final Translation2d targetTranslation = targetPose.getTranslation();
 
         final double turretToTargetDistance = targetTranslation.getDistance(turretPose.getTranslation());
 
         final Pose2d lookaheadRobotPose = swervePose.exp(new Twist2d(
-                swerveSpeeds.vxMetersPerSecond * DelayTimeSec,
-                swerveSpeeds.vyMetersPerSecond * DelayTimeSec,
-                swerveSpeeds.omegaRadiansPerSecond * DelayTimeSec
+                swerveSpeeds.vxMetersPerSecond * LookaheadSeconds,
+                swerveSpeeds.vyMetersPerSecond * LookaheadSeconds,
+                swerveSpeeds.omegaRadiansPerSecond * LookaheadSeconds
         ));
 
         final Rotation2d robotAngle = lookaheadRobotPose.getRotation();
@@ -213,16 +174,16 @@ public class ShotCalculator {
                 .getAngle()
                 .minus(futureRobotPose.getRotation());
 
-        final ShotCalc shotCalc = ShotMap.get(turretToTargetDistance);
+        final ShooterCalculation shotCalculation = ShotMap.get(turretToTargetDistance);
         return new ShotCalculation(
-                desiredTurretAngle,
-                shotCalc.hoodPositionRots(),
-                shotCalc.shooterVelocityRotsPerSec(),
-                target
+                desiredTurretAngle.getRotations(),
+                -Units.radiansToRotations(swerveSpeeds.omegaRadiansPerSecond),
+                shotCalculation.hoodPositionRots(),
+                shotCalculation.shooterVelocityRotsPerSec()
         );
     }
 
-    public static ChassisSpeeds getTurretFieldSpeeds(
+    private static ChassisSpeeds getTurretFieldSpeeds(
             final Pose2d robotPose,
             final Translation2d turretTranslation,
             final ChassisSpeeds fieldRelativeSpeeds

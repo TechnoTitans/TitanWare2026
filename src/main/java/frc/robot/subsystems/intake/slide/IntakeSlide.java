@@ -7,26 +7,104 @@ import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
-import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.constants.Constants;
 import frc.robot.constants.HardwareConstants;
+import frc.robot.utils.commands.LoggedTrigger;
 import frc.robot.utils.commands.SubsystemExt;
 import frc.robot.utils.control.DeltaTime;
 import org.littletonrobotics.junction.Logger;
+
+import java.util.HashMap;
+import java.util.Objects;
 
 public class IntakeSlide extends SubsystemExt {
     protected static final String LogKey = "IntakeSlide";
     private static final double PositionToleranceRots = 0.1;
     private static final double VelocityToleranceRotsPerSec = 0.02;
 
+    public enum Goal {
+        STOW(0, GoalBehavior.expo()),
+        SHOOTING(0, GoalBehavior.withVelocity(0.5, 0.5)),
+        EXTEND(3.4, GoalBehavior.expo());
+
+        private final double positionRots;
+        private final GoalBehavior behavior;
+
+        Goal(final double positionRots, final GoalBehavior behavior) {
+            this.positionRots = positionRots;
+            this.behavior = behavior;
+        }
+    }
+
+    private enum InternalGoal {
+        NONE,
+        STOW(Goal.STOW),
+        EXTEND(Goal.EXTEND),
+        SHOOTING(Goal.SHOOTING),
+        HOLD_POSITION;
+
+        public static final HashMap<Goal, InternalGoal> GoalToInternal = new HashMap<>();
+        static {
+            for (final InternalGoal goal : InternalGoal.values()) {
+                if (goal.goal != null) {
+                    GoalToInternal.put(goal.goal, goal);
+                }
+            }
+        }
+
+        public static InternalGoal fromGoal(final Goal goal) {
+            return Objects.requireNonNull(GoalToInternal.get(goal));
+        }
+
+        public final Goal goal;
+
+        InternalGoal(final Goal goal) {
+            this.goal = goal;
+        }
+
+        InternalGoal() {
+            this(null);
+        }
+    }
+
+    private enum ProfileType {
+        EXPO,
+        WITH_VELOCITY
+    }
+
+    private static class GoalBehavior {
+        public final ProfileType type;
+        public final double maxVelocity;
+        public final double maxAcceleration;
+
+        public final TrapezoidProfile profile;
+
+        public GoalBehavior(final ProfileType type, final double maxVelocity, final double maxAcceleration) {
+            this.type = type;
+            this.maxVelocity = maxVelocity;
+            this.maxAcceleration = maxAcceleration;
+
+            this.profile = new TrapezoidProfile(new TrapezoidProfile.Constraints(maxVelocity, maxAcceleration));
+        }
+
+        public static GoalBehavior expo() {
+            return new GoalBehavior(ProfileType.EXPO, 0, 0);
+        }
+
+        public static GoalBehavior withVelocity(final double maxVelocity, final double maxAcceleration) {
+            return new GoalBehavior(ProfileType.WITH_VELOCITY, maxVelocity, maxAcceleration);
+        }
+    }
+
+    private enum HoldMode {
+        SOFT,
+        HARD
+    }
+
     private final HardwareConstants.IntakeSlideConstants constants;
 
     private final IntakeSlideIO intakeSlideIO;
     private final IntakeSlideIOInputsAutoLogged inputs = new IntakeSlideIOInputsAutoLogged();
-
-    private Goal desiredGoal = Goal.STOW;
-    private Goal currentGoal = desiredGoal;
-
 
     private final DeltaTime deltaTime = new DeltaTime();
     private final TrapezoidProfile profile =
@@ -34,26 +112,18 @@ public class IntakeSlide extends SubsystemExt {
     private final TrapezoidProfile.State profileGoal = new TrapezoidProfile.State(0,0);
     private TrapezoidProfile.State profileSetpoint = new TrapezoidProfile.State(0,0);
 
-    private ControlMode controlMode = ControlMode.HARD;
+    private InternalGoal desiredGoal = InternalGoal.STOW;
+    private InternalGoal currentGoal = InternalGoal.NONE;
 
-    public final Trigger atSlideSetpoint = new Trigger(this::atSetpoint);
+    private double positionSetpointRots = 0.0;
 
-    public enum Goal {
-        STOW(0),
-        EXTEND(3.4),
-        SHOOTING(0);
+    private HoldMode holdMode = HoldMode.HARD;
 
-        private final double positionSetpointRots;
-
-        Goal(final double positionSetpointRots) {
-            this.positionSetpointRots = positionSetpointRots;
-        }
-    }
-
-    public enum ControlMode {
-        SOFT,
-        HARD
-    }
+    private final LoggedTrigger.Group group = LoggedTrigger.Group.from(LogKey);
+    private final LoggedTrigger softModeTrigger = group.t("SoftMode", this::atSetpoint).debounce(0.1);
+    public final LoggedTrigger atSetpoint = group.t("AtSetpoint", this::atSetpoint);
+    private final LoggedTrigger atUpperLimit = group.t("AtUpperLimit", this::atUpperLimit);
+    private final LoggedTrigger atLowerLimit = group.t("AtLowerLimit", this::atLowerLimit);
 
     public IntakeSlide(final Constants.RobotMode mode, final HardwareConstants.IntakeSlideConstants constants) {
         this.constants = constants;
@@ -66,18 +136,10 @@ public class IntakeSlide extends SubsystemExt {
 
         intakeSlideIO.zeroMotors();
 
-        atSlideSetpoint
-                .onTrue(Commands.runOnce(() -> {
-                    if (currentGoal == Goal.EXTEND) {
-                        controlMode = ControlMode.SOFT;
-                        intakeSlideIO.holdSlidePosition(currentGoal.positionSetpointRots);
-                    }
-                }))
-                .onFalse(Commands.runOnce(() -> {
-                    if (desiredGoal != currentGoal) {
-                        controlMode = ControlMode.HARD;
-                    }
-                }));
+        softModeTrigger.onTrue(Commands.runOnce(() -> {
+            holdMode = HoldMode.SOFT;
+            setDesiredPosition(positionSetpointRots);
+        }));
     }
 
     @Override
@@ -87,39 +149,34 @@ public class IntakeSlide extends SubsystemExt {
         intakeSlideIO.updateInputs(inputs);
         Logger.processInputs(LogKey, inputs);
 
-        final double dt = deltaTime.get();
-
-        if (desiredGoal != currentGoal) {
-            if (desiredGoal == Goal.SHOOTING) {
-                profileSetpoint.position = inputs.averagePositionRots;
-                profileSetpoint.velocity = inputs.averageVelocityRotsPerSec;
-
-                profileGoal.position = desiredGoal.positionSetpointRots;
-                profileGoal.velocity = 0;
-            } else {
-                intakeSlideIO.toSlidePosition(desiredGoal.positionSetpointRots);
-            }
-
+        if (MathUtil.isNear(
+                positionSetpointRots,
+                inputs.averagePositionRots,
+                PositionToleranceRots
+        ) && MathUtil.isNear(
+                0,
+                inputs.averageVelocityRotsPerSec,
+                VelocityToleranceRotsPerSec
+        )) {
             currentGoal = desiredGoal;
+        } else {
+            currentGoal = InternalGoal.NONE;
         }
 
-        if (currentGoal == Goal.SHOOTING) {
-            profileSetpoint = profile.calculate(dt, profileSetpoint, profileGoal);
-            intakeSlideIO.toSlidePositionUnprofiled(
-                    profileSetpoint.position,
-                    profileSetpoint.velocity
-            );
+        final double dt = deltaTime.get();
+        final Goal goal = desiredGoal.goal;
+        if (goal != null) {
+            final GoalBehavior goalBehavior = goal.behavior;
+            if (goalBehavior.type == ProfileType.WITH_VELOCITY) {
+                profileSetpoint = goalBehavior.profile.calculate(dt, profileSetpoint, profileGoal);
+                setDesiredPositionWithVelocity(profileSetpoint.position, profileSetpoint.velocity);
+            }
         }
 
         Logger.recordOutput(LogKey + "/CurrentGoal", currentGoal.toString());
         Logger.recordOutput(LogKey + "/DesiredGoal", desiredGoal.toString());
-        Logger.recordOutput(LogKey + "/DesiredGoal/PositionSetpointRots", desiredGoal.positionSetpointRots);
-
-        Logger.recordOutput(LogKey + "/ControlMode", controlMode);
-
-        Logger.recordOutput(LogKey + "/Triggers/AtPositionSetpoint", atSetpoint());
-        Logger.recordOutput(LogKey + "/Triggers/AtSlideLowerLimit", atLowerLimit());
-        Logger.recordOutput(LogKey + "/Triggers/AtSlideUpperLimit", atUpperLimit());
+        Logger.recordOutput(LogKey + "/PositionSetpointRots", positionSetpointRots);
+        Logger.recordOutput(LogKey + "/HoldMode", holdMode);
 
         Logger.recordOutput(
                 LogKey + "/PeriodicIOPeriodMs",
@@ -128,14 +185,25 @@ public class IntakeSlide extends SubsystemExt {
     }
 
     public Command toGoal(final Goal goal) {
-        return runEnd(
+        return startEnd(
                 () -> setDesiredGoal(goal),
-                () -> setDesiredGoal(Goal.EXTEND)
+                () -> setDesiredGoal(Goal.STOW)
         ).withName("ToGoal: " + goal.toString());
     }
 
-    public Command setGoalCommand(final Goal goal) {
-        return runOnce(() -> setDesiredGoal(goal)).withName("ToGoal: " + goal.toString());
+    public Command toGoalHold(final Goal goal) {
+        return startEnd(
+                () -> setDesiredGoal(goal),
+                () -> {
+                    desiredGoal = InternalGoal.HOLD_POSITION;
+                    setDesiredPosition(inputs.averagePositionRots);
+                }
+        ).withName("ToGoalHold: " + goal);
+    }
+
+    public Command setGoal(final Goal goal) {
+        return runOnce(() -> setDesiredGoal(goal))
+                .withName("SetGoal: " + goal.toString());
     }
 
     public Rotation2d getIntakeSlidePositionRots() {
@@ -143,20 +211,42 @@ public class IntakeSlide extends SubsystemExt {
     }
 
     public boolean atGoal(final Goal goal) {
-        return currentGoal == desiredGoal
-                && atSetpoint();
+        return currentGoal == goal;
     }
 
     private void setDesiredGoal(final Goal goal) {
-        desiredGoal = goal;
-        Logger.recordOutput(LogKey + "/CurrentGoal", currentGoal.toString());
-        Logger.recordOutput(LogKey + "/DesiredGoal", desiredGoal.toString());
+        if (desiredGoal.goal != goal || !atSetpoint.getAsBoolean()) {
+            holdMode = HoldMode.HARD;
+        }
+
+        desiredGoal = InternalGoal.fromGoal(goal);
+        switch (goal.behavior.type) {
+            case EXPO -> setDesiredPosition(goal.positionRots);
+            case WITH_VELOCITY -> {
+                profileSetpoint.position = inputs.averagePositionRots;
+                profileSetpoint.velocity = inputs.averageVelocityRotsPerSec;
+
+                profileGoal.position = goal.positionRots;
+                profileGoal.velocity = 0;
+            }
+        }
+    }
+
+    private void setDesiredPosition(final double positionRots) {
+        positionSetpointRots = positionRots;
+        switch (holdMode) {
+            case SOFT -> intakeSlideIO.holdSlidePosition(positionRots);
+            case HARD -> intakeSlideIO.toSlidePosition(positionRots);
+        }
+    }
+
+    private void setDesiredPositionWithVelocity(final double positionRots, final double velocityRotsPerSec) {
+        positionSetpointRots = positionRots;
+        intakeSlideIO.toSlidePositionWithVelocity(positionRots, velocityRotsPerSec);
     }
 
     private boolean atSetpoint() {
-        return currentGoal == desiredGoal
-                && MathUtil.isNear(desiredGoal.positionSetpointRots, inputs.masterPositionRots, PositionToleranceRots)
-                && MathUtil.isNear(0, inputs.masterVelocityRotsPerSec, VelocityToleranceRotsPerSec);
+        return currentGoal == desiredGoal;
     }
 
     private boolean atLowerLimit() {
@@ -165,9 +255,5 @@ public class IntakeSlide extends SubsystemExt {
 
     private boolean atUpperLimit() {
         return inputs.masterPositionRots >= constants.forwardLimitRots();
-    }
-
-    public Command testIntakeSim() {
-        return runOnce(intakeSlideIO::testIntakeSim);
     }
 }

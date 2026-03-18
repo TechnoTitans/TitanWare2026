@@ -9,13 +9,13 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
 import frc.robot.Robot;
-import frc.robot.RobotCommands;
+import frc.robot.ShootCommands;
 import frc.robot.constants.FieldConstants;
 import frc.robot.subsystems.drive.Swerve;
-import frc.robot.subsystems.feeder.Feeder;
+import frc.robot.subsystems.indexer.feeder.Feeder;
 import frc.robot.subsystems.intake.rollers.IntakeRollers;
 import frc.robot.subsystems.intake.slide.IntakeSlide;
-import frc.robot.subsystems.spindexer.Spindexer;
+import frc.robot.subsystems.indexer.spindexer.Spindexer;
 import frc.robot.subsystems.superstructure.ShotCalculator;
 import frc.robot.subsystems.superstructure.Superstructure;
 import frc.robot.subsystems.vision.PhotonVision;
@@ -39,7 +39,7 @@ public class Autos {
 
     private final AutoFactory autoFactory;
 
-    private final Supplier<ShotCalculator.ShotCalculation> staticShot;
+    private final Supplier<ShotCalculator.Shooter> staticShot;
 
     private final LoggedTrigger robotStopped;
     private final LoggedTrigger turretSafe;
@@ -88,7 +88,7 @@ public class Autos {
 
         LoggedTrigger.Group group = LoggedTrigger.Group.from(LogKey);
         this.robotStopped = group.t("RobotStopped",
-                () -> RobotCommands.linearSpeed(swerve.getFieldRelativeSpeeds()) <= 0.01
+                () -> ShootCommands.linearSpeed(swerve.getFieldRelativeSpeeds()) <= 0.01
         );
         this.turretSafe = group.t("TurretSafe",
                 () -> {
@@ -111,19 +111,19 @@ public class Autos {
         ).withName("RunStartingTrajectory");
     }
 
-    private Supplier<ShotCalculator.ShotCalculation> staticParameters() {
-        return () -> ShotCalculator.getShotCalculation(
+    private Supplier<ShotCalculator.Shooter> staticParameters() {
+        return () -> ShotCalculator.getStaticShotCalculation(
                 swerve::getPose,
-                () -> RobotCommands.ScoringMode.Stationary,
+                () -> ShootCommands.ScoringMode.Stationary,
                 swerve::getFieldRelativeSpeeds
         );
     }
 
-    private Supplier<ShotCalculator.ShotCalculation> staticParametersFromPose(final Pose2d pose) {
+    private Supplier<ShotCalculator.Shooter> staticParametersFromPose(final Pose2d pose) {
         return staticParameters();
     }
 
-    private Supplier<ShotCalculator.ShotCalculation> staticParametersFromFinalPose(final AutoTrajectory trajectory) {
+    private Supplier<ShotCalculator.Shooter> staticParametersFromFinalPose(final AutoTrajectory trajectory) {
         return trajectory.getFinalPose()
                 .map(this::staticParametersFromPose)
                 .orElse(staticShot);
@@ -181,11 +181,11 @@ public class Autos {
         final AutoTrajectory startToCenterLineAndBack = routine.trajectory("LeftStartToCenterLineAndBack");
         final AutoTrajectory shootingToDepot = routine.trajectory("LeftShootingToDepot");
 
-        final ShotCalculator.ShotCalculation firstShotCalculation = ShotCalculator.getShotCalculationFromPose(
+        final ShotCalculator.Shooter firstShotCalculation = ShotCalculator.getShotCalculationFromPose(
                 startToCenterLineAndBack.getFinalPose().orElse(Pose2d.kZero)
         );
 
-        final ShotCalculator.ShotCalculation secondShotCalculation = ShotCalculator.getShotCalculationFromPose(
+        final ShotCalculator.Shooter secondShotCalculation = ShotCalculator.getShotCalculationFromPose(
                 shootingToDepot.getFinalPose().orElse(Pose2d.kZero)
         );
 

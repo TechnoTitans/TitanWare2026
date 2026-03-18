@@ -17,11 +17,12 @@ import frc.robot.auto.Autos;
 import frc.robot.constants.*;
 import frc.robot.subsystems.drive.Swerve;
 import frc.robot.subsystems.drive.constants.SwerveConstants;
-import frc.robot.subsystems.feeder.Feeder;
+import frc.robot.subsystems.indexer.Indexer;
+import frc.robot.subsystems.indexer.feeder.Feeder;
+import frc.robot.subsystems.intake.Intake;
 import frc.robot.subsystems.intake.rollers.IntakeRollers;
 import frc.robot.subsystems.intake.slide.IntakeSlide;
-import frc.robot.subsystems.spindexer.Spindexer;
-import frc.robot.subsystems.superstructure.ShotCalculator;
+import frc.robot.subsystems.indexer.spindexer.Spindexer;
 import frc.robot.subsystems.superstructure.Superstructure;
 import frc.robot.subsystems.superstructure.hood.Hood;
 import frc.robot.subsystems.superstructure.shooter.Shooter;
@@ -48,7 +49,6 @@ import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Optional;
 import java.util.function.BooleanSupplier;
-import java.util.function.Supplier;
 
 import static frc.robot.AllianceShift.AllianceShiftLogKey;
 
@@ -96,14 +96,14 @@ public class Robot extends LoggedRobot {
             HardwareConstants.INTAKE_SLIDE
     );
 
+    public final Spindexer spindexer = new Spindexer(
+            Constants.CURRENT_MODE,
+            HardwareConstants.SPINDEXER
+    );
+
     public final Feeder feeder = new Feeder(
             Constants.CURRENT_MODE,
             HardwareConstants.FEEDER
-    );
-
-    public final Hood hood = new Hood(
-            Constants.CURRENT_MODE,
-            HardwareConstants.HOOD
     );
 
     public final Turret turret = new Turret(
@@ -111,29 +111,30 @@ public class Robot extends LoggedRobot {
             HardwareConstants.TURRET
     );
 
+    public final Hood hood = new Hood(
+            Constants.CURRENT_MODE,
+            HardwareConstants.HOOD
+    );
+
     public final Shooter shooter = new Shooter(
             Constants.CURRENT_MODE,
             HardwareConstants.SHOOTER
     );
 
-    public final Spindexer spindexer = new Spindexer(
-            Constants.CURRENT_MODE,
-            HardwareConstants.SPINDEXER
-    );
-
-    private RobotCommands.ScoringMode scoringMode = RobotCommands.ScoringMode.Moving;
-
-    private final Supplier<ShotCalculator.ShotCalculation> shotCalculationSupplier =
-            () -> ShotCalculator.getShotCalculation(
-                    swerve::getPose,
-                    () -> scoringMode,
-                    swerve::getFieldRelativeSpeeds
-            );
-
     public final Superstructure superstructure = new Superstructure(
             turret,
             hood,
             shooter
+    );
+
+    public final Indexer indexer = new Indexer(
+            spindexer,
+            feeder
+    );
+
+    public final Intake intake = new Intake(
+            intakeSlide,
+            intakeRollers
     );
 
     private final ComponentsSolver componentsSolver = new ComponentsSolver(
@@ -152,14 +153,13 @@ public class Robot extends LoggedRobot {
             componentsSolver
     );
 
-    private final RobotCommands robotCommands = new RobotCommands(
+    private final ShootCommands shootCommands = new ShootCommands(
             swerve,
             intakeRollers,
             intakeSlide,
             superstructure,
             spindexer,
-            feeder,
-            () -> shotCalculationSupplier.get().target()
+            feeder
     );
 
     public final Autos autos = new Autos(
@@ -314,15 +314,13 @@ public class Robot extends LoggedRobot {
         coControllerDisconnected.set(!coController.getHID().isConnected());
 
         CommandLogger.periodic();
-        Logger.recordOutput("ShotCalculation", shotCalculationSupplier.get());
-        Logger.recordOutput("ScoringMode", scoringMode);
 
         componentsSolver.periodic();
 
         Logger.recordOutput("DistanceToHub", swerve.getPose()
                 .transformBy(PoseConstants.Turret.ROBOT_TO_TURRET_TRANSFORM_2D)
                 .getTranslation()
-                .getDistance(FieldConstants.getHubPose()));
+                .getDistance(FieldConstants.getHubPose().getTranslation()));
 
         final AllianceShift allianceShift = AllianceShift.get(0);
         final AllianceShift offsetAllianceShift = AllianceShift.get(MatchTimeOffsetSeconds);
@@ -454,29 +452,29 @@ public class Robot extends LoggedRobot {
         );
 
         driverController.rightTrigger(0.5, teleopEventLoop)
-                .whileTrue(robotCommands.shootWhileMoving());
+                .whileTrue(shootCommands.shootWhileMoving());
 
         coController.leftTrigger(0.5, teleopEventLoop).whileTrue(
                 intakeRollers.toGoal(IntakeRollers.Goal.INTAKE)
         );
 
-        coController.y(teleopEventLoop).onTrue(robotCommands.deployIntake());
+        coController.y(teleopEventLoop).onTrue(shootCommands.deployIntake());
 
-        coController.a(teleopEventLoop).onTrue(robotCommands.stowIntake());
+        coController.a(teleopEventLoop).onTrue(shootCommands.stowIntake());
 
         coController.rightTrigger(0.5, teleopEventLoop).whileTrue(
                 Commands.parallel(
-                        Commands.runOnce(() -> scoringMode = RobotCommands.ScoringMode.Stationary),
-                        robotCommands.shootStationary()
-                ).finallyDo(() -> scoringMode = RobotCommands.ScoringMode.Moving)
+                        Commands.runOnce(() -> scoringMode = ShootCommands.ScoringMode.Stationary),
+                        shootCommands.shootStationary()
+                ).finallyDo(() -> scoringMode = ShootCommands.ScoringMode.Moving)
         );
 
         coController.x(teleopEventLoop).whileTrue(
-                robotCommands.shootNoCheck()
+                shootCommands.shootNoCheck()
         );
 
         coController.leftBumper(teleopEventLoop).whileTrue(
-                robotCommands.shootSuperstructureZero()
+                shootCommands.shootSuperstructureZero()
         );
 
         coController.b(teleopEventLoop).whileTrue(

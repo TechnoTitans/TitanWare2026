@@ -7,10 +7,10 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.constants.FieldConstants;
 import frc.robot.subsystems.drive.Swerve;
-import frc.robot.subsystems.feeder.Feeder;
+import frc.robot.subsystems.indexer.feeder.Feeder;
 import frc.robot.subsystems.intake.rollers.IntakeRollers;
 import frc.robot.subsystems.intake.slide.IntakeSlide;
-import frc.robot.subsystems.spindexer.Spindexer;
+import frc.robot.subsystems.indexer.spindexer.Spindexer;
 import frc.robot.subsystems.superstructure.ShotCalculator;
 import frc.robot.subsystems.superstructure.Superstructure;
 import frc.robot.utils.commands.LoggedTrigger;
@@ -18,7 +18,7 @@ import frc.robot.utils.teleop.SwerveSpeed;
 
 import java.util.function.Supplier;
 
-public class RobotCommands {
+public class ShootCommands extends  {
     protected static final String LogKey = "RobotCommands";
     protected static final double AllowableSpeedToShootMetersPerSec = 0.1;
 
@@ -29,13 +29,10 @@ public class RobotCommands {
     }
 
     private final Swerve swerve;
-    private final IntakeRollers intakeRollers;
     private final IntakeSlide intakeSlide;
     private final Superstructure superstructure;
     private final Spindexer spindexer;
     private final Feeder feeder;
-
-    private final Supplier<ShotCalculator.Target> targetSupplier;
 
     private final LoggedTrigger ableToShoot;
     private final LoggedTrigger shouldBackOutFeeder;
@@ -45,14 +42,13 @@ public class RobotCommands {
         Moving
     }
 
-    public RobotCommands(
+    public ShootCommands(
             final Swerve swerve,
             final IntakeRollers intakeRollers,
             final IntakeSlide intakeSlide,
             final Superstructure superstructure,
             final Spindexer spindexer,
-            final Feeder feeder,
-            final Supplier<ShotCalculator.Target> targetSupplier
+            final Feeder feeder
     ) {
         this.swerve = swerve;
         this.intakeRollers = intakeRollers;
@@ -60,7 +56,6 @@ public class RobotCommands {
         this.superstructure = superstructure;
         this.spindexer = spindexer;
         this.feeder = feeder;
-        this.targetSupplier = targetSupplier;
 
         final LoggedTrigger.Group group = LoggedTrigger.Group.from(LogKey);
 
@@ -87,21 +82,6 @@ public class RobotCommands {
                 speeds.vxMetersPerSecond,
                 speeds.vyMetersPerSecond
         );
-    }
-
-    public Command deployIntake() {
-        return Commands.sequence(
-                intakeSlide.setGoalCommand(IntakeSlide.Goal.EXTEND),
-                Commands.waitUntil(intakeSlide.atSlideSetpoint),
-                intakeRollers.setGoal(IntakeRollers.Goal.INTAKE)
-        ).withName("DeployIntake");
-    }
-
-    public Command stowIntake() {
-        return Commands.parallel(
-                intakeSlide.setGoalCommand(IntakeSlide.Goal.STOW),
-                intakeRollers.setGoal(IntakeRollers.Goal.OFF)
-        ).withName("StowIntake");
     }
 
     public Command shootWhileMoving() {
@@ -210,11 +190,16 @@ public class RobotCommands {
 
     public Command trackTarget() {
         final Supplier<Pose2d> targetPoseSupplier = getTargetPoseSupplier();
-        final Supplier<ShotCalculator.ShotCalculation> staticCalculationSupplier =
-                () -> ShotCalculator.getShotCalculation(
+        final Supplier<ShotCalculator.ShotCalculation> movingCalculationSupplier =
+                ShotCalculator.getMovingShotCalculationSupplier(
                         swerve::getPose,
-                        swerve::getFieldRelativeSpeeds
+                        swerve::getFieldRelativeSpeeds,
+                        targetPoseSupplier
                 );
+
+        return superstructure.runParametersWithHoodStowed(
+                movingCalculationSupplier.get()
+        ).withName("TrackTarget");
     }
 
     public static Target getTarget(final Pose2d turretPose) {

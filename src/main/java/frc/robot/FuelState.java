@@ -17,7 +17,7 @@ import frc.robot.constants.Constants;
 import frc.robot.constants.FieldConstants;
 import frc.robot.constants.PoseConstants;
 import frc.robot.subsystems.drive.Swerve;
-import frc.robot.subsystems.feeder.Feeder;
+import frc.robot.subsystems.indexer.feeder.Feeder;
 import frc.robot.subsystems.intake.rollers.IntakeRollers;
 import frc.robot.subsystems.superstructure.ShotCalculator;
 import frc.robot.subsystems.superstructure.Superstructure;
