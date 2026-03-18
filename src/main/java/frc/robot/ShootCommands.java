@@ -5,6 +5,7 @@ import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.constants.FieldConstants;
+import frc.robot.constants.PoseConstants;
 import frc.robot.subsystems.drive.Swerve;
 import frc.robot.subsystems.indexer.Indexer;
 import frc.robot.subsystems.intake.Intake;
@@ -56,7 +57,8 @@ public class ShootCommands extends VirtualSubsystem {
 
     @Override
     public void periodic() {
-        Logger.recordOutput("Target", getTargetPoseSupplier().get());
+        Logger.recordOutput("Target",
+                getTarget(swerve.getPose().transformBy(PoseConstants.Turret.ROBOT_TO_TURRET_TRANSFORM_2D)));
     }
 
     public static double linearSpeed(final ChassisSpeeds speeds) {
@@ -83,7 +85,9 @@ public class ShootCommands extends VirtualSubsystem {
     public Command shoot() {
         final LoggedTrigger targetValid = group.t(
                 "TargetValid",
-                () -> switch (getTarget(swerve.getPose())) {
+                () -> switch (
+                        getTarget(swerve.getPose().transformBy(PoseConstants.Turret.ROBOT_TO_TURRET_TRANSFORM_2D))
+                        ) {
                     case HUB, FERRY -> true;
                     case FERRY_BLOCKED -> false;
                 }
