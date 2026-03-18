@@ -73,7 +73,7 @@ public class ShootCommands extends VirtualSubsystem {
         final Supplier<ShotCalculator.ShotCalculation> movingCalculationSupplier =
                 ShotCalculator.getMovingShotCalculationSupplier(
                         swerve::getPose,
-                        swerve::getFieldRelativeSpeeds,
+                        swerve::getRobotRelativeSpeeds,
                         targetPoseSupplier
                 );
 
@@ -83,6 +83,7 @@ public class ShootCommands extends VirtualSubsystem {
     }
 
     public Command shoot() {
+        final Supplier<Pose2d> targetSupplier = getTargetPoseSupplier();
         final LoggedTrigger targetValid = group.t(
                 "TargetValid",
                 () -> switch (
@@ -113,7 +114,14 @@ public class ShootCommands extends VirtualSubsystem {
                         )
 //                        indexer.backOut()
                 ),
-                SwerveSpeed.toSwerveSpeed(SwerveSpeed.Speeds.SHOOTING)
+                SwerveSpeed.toSwerveSpeed(SwerveSpeed.Speeds.SHOOTING),
+                superstructure.runParameters(
+                        ShotCalculator.getMovingShotCalculationSupplier(
+                                swerve::getPose,
+                                swerve::getRobotRelativeSpeeds,
+                                targetSupplier
+                        )
+                )
         ).withName("Shoot");
     }
 
