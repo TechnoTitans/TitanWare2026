@@ -82,8 +82,7 @@ public class ShootCommands extends VirtualSubsystem {
                         swerve::getPose,
                         () -> {
                             final ChassisSpeeds robotSpeeds = swerve.getRobotRelativeSpeeds();
-                            final double linearSpeed =
-                                    Math.hypot(robotSpeeds.vxMetersPerSecond, robotSpeeds.vyMetersPerSecond);
+                            final double linearSpeed = linearSpeed(robotSpeeds);
                             return robotSpeeds
                                     .div(linearSpeed)
                                     .times(Math.min(linearSpeed, SwerveSpeed.Speeds.SHOOTING.getTranslationSpeed()));

@@ -99,8 +99,8 @@ public class ShotCalculator {
 
         final ShooterCalculation shooterCalculation = ShotMap.get(turretToTargetDistance);
         return new ShotCalculation(
-                desiredTurretAngle.getRadians(),
-                -Units.radiansToRotations(swerveSpeeds.omegaRadiansPerSecond),
+                desiredTurretAngle.getRotations(),
+                Units.radiansToRotations(-swerveSpeeds.omegaRadiansPerSecond),
                 shooterCalculation.hoodPositionRots,
                 shooterCalculation.shooterVelocityRotsPerSec
         );
@@ -171,7 +171,7 @@ public class ShotCalculator {
         final ShooterCalculation shotCalculation = ShotMap.get(turretToTargetDistance);
         return new ShotCalculation(
                 desiredTurretAngle.getRotations(),
-                -Units.radiansToRotations(swerveSpeeds.omegaRadiansPerSecond),
+                Units.radiansToRotations(-swerveSpeeds.omegaRadiansPerSecond),
                 shotCalculation.hoodPositionRots(),
                 shotCalculation.shooterVelocityRotsPerSec()
         );

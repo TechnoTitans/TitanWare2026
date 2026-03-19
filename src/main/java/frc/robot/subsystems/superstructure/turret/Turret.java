@@ -199,13 +199,13 @@ public class Turret extends SubsystemExt {
     private void setPosition(final double positionRots) {
         positionSetpointRots = optimizeWrap(positionRots);
         velocitySetpointRotsPerSec = 0;
-        turretIO.toTurretPosition(positionRots);
+        turretIO.toTurretPosition(positionSetpointRots);
     }
 
     private void setPositionWithVelocity(final double positionRots, final double velocityRotsPerSec) {
-        positionSetpointRots = positionRots;
+        positionSetpointRots = optimizeWrap(positionRots);
         velocitySetpointRotsPerSec = velocityRotsPerSec;
-        turretIO.toTurretContinuousPosition(positionRots, velocityRotsPerSec);
+        turretIO.toTurretContinuousPosition(positionSetpointRots, velocityRotsPerSec);
     }
 
     private boolean atSetpoint() {
