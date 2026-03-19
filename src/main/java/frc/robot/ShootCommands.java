@@ -70,6 +70,13 @@ public class ShootCommands extends VirtualSubsystem {
 
     public Command trackTarget() {
         final Supplier<Pose2d> targetPoseSupplier = getTargetPoseSupplier();
+        final Supplier<ShotCalculator.ShotCalculation> staticCalculationSupplier =
+                ShotCalculator.getStaticShotCalculationSupplier(
+                        swerve::getPose,
+                        swerve::getRobotRelativeSpeeds,
+                        targetPoseSupplier
+                );
+
         final Supplier<ShotCalculator.ShotCalculation> movingCalculationSupplier =
                 ShotCalculator.getMovingShotCalculationSupplier(
                         swerve::getPose,
@@ -85,7 +92,9 @@ public class ShootCommands extends VirtualSubsystem {
                 );
 
         return superstructure.runParametersWithHoodStowed(
-                movingCalculationSupplier
+                () -> linearSpeed(swerve.getFieldRelativeSpeeds()) <= 1e-3
+                        ? staticCalculationSupplier.get()
+                        : movingCalculationSupplier.get()
         ).withName("TrackTarget");
     }
 
@@ -131,6 +140,22 @@ public class ShootCommands extends VirtualSubsystem {
                         )
                 )
         ).withName("Shoot");
+    }
+
+    public Command shootNoVision() {
+        return Commands.deadline(
+                Commands.repeatingSequence(
+                        Commands.waitUntil(superstructure.atSetpoint),
+                        Commands.deadline(
+                                indexer.feed()
+
+                                        .onlyWhile(superstructure.atSetpoint),
+                                intake.stowFeed().asProxy()
+                        )
+                ),
+                swerve.runWheelXCommand(),
+                superstructure.toGoal(Superstructure.Goal.NO_VISION)
+        ).withName("ShootNoVision");
     }
 
     public static Target getTarget(final Pose2d turretPose) {

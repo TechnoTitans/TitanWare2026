@@ -24,7 +24,7 @@ public class Hood extends SubsystemExt {
 
     public enum Goal {
         STOW(0),
-        NO_VISION(0.05);
+        NO_VISION(0.02);
 
         private final double positionRots;
 
@@ -36,6 +36,7 @@ public class Hood extends SubsystemExt {
     private enum InternalGoal {
         NONE,
         STOW(Goal.STOW),
+        NO_VISION(Goal.NO_VISION),
         TRACKING;
 
         public static final HashMap<Goal, InternalGoal> GoalToInternal = new HashMap<>();

@@ -453,6 +453,10 @@ public class Robot extends LoggedRobot {
                 .whileTrue(shootCommands.shoot())
                 .onFalse(intake.deploy());
 
+        driverController.b(teleopEventLoop)
+                .whileTrue(shootCommands.shootNoVision())
+                .onFalse(intake.deploy());
+
         coController.leftTrigger(0.5, teleopEventLoop).whileTrue(intake.intake());
 
         coController.y(teleopEventLoop).onTrue(intake.deploy());

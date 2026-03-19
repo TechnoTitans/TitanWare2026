@@ -44,6 +44,7 @@ public class Shooter extends SubsystemExt {
     private enum InternalGoal {
         NONE,
         IDLE(Goal.IDLE),
+        NO_VISION(Goal.NO_VISION),
         TRACKING;
 
         public static final HashMap<Goal, InternalGoal> GoalToInternal = new HashMap<>();
@@ -86,7 +87,7 @@ public class Shooter extends SubsystemExt {
     public Shooter(final Constants.RobotMode mode, final HardwareConstants.ShooterConstants constants) {
         this.shooterIO = switch (mode) {
             case REAL -> new ShooterIORealBangBang(constants);
-            case SIM -> new ShooterIOSim(constants);
+            case SIM -> new ShooterIOSimBangBang(constants);
             case REPLAY, DISABLED -> new ShooterIO() {};
         };
 

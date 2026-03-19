@@ -45,6 +45,7 @@ public class Turret extends SubsystemExt {
     private enum InternalGoal {
         NONE,
         STOW(Goal.STOW),
+        NO_VISION(Goal.NO_VISION),
         TRACKING;
 
         public static final HashMap<Goal, InternalGoal> GoalToInternal = new HashMap<>();
@@ -196,7 +197,7 @@ public class Turret extends SubsystemExt {
     }
 
     private void setPosition(final double positionRots) {
-        positionSetpointRots = positionRots;
+        positionSetpointRots = optimizeWrap(positionRots);
         velocitySetpointRotsPerSec = 0;
         turretIO.toTurretPosition(positionRots);
     }

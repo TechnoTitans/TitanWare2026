@@ -42,6 +42,7 @@ public class Superstructure extends VirtualSubsystem {
     private enum InternalGoal {
         NONE,
         STOW(Goal.STOW),
+        NO_VISION(Goal.NO_VISION),
         TRACKING;
 
         public static final HashMap<Goal, InternalGoal> GoalToInternal = new HashMap<>();
