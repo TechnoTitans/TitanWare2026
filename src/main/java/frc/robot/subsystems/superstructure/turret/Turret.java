@@ -28,7 +28,7 @@ import static edu.wpi.first.units.Units.*;
 
 public class Turret extends SubsystemExt {
     protected static final String LogKey = "Turret";
-    private static final double PositionToleranceRots = 0.125;
+    private static final double PositionToleranceRots = 0.05;
     private static final double VelocityToleranceRotsPerSec = 0.25;
 
     public enum Goal {

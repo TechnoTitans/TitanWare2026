@@ -83,7 +83,7 @@ public class Autos {
         this.staticShotCalculation = staticParameters(swerve::getPose);
         this.movingShotCalculation = ShotCalculator.getMovingShotCalculationSupplier(
                 swerve::getPose,
-                swerve::getFieldRelativeSpeeds,
+                swerve::getRobotRelativeSpeeds,
                 FieldConstants::getHubPose
         );
 

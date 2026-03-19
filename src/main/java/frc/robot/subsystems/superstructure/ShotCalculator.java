@@ -108,12 +108,12 @@ public class ShotCalculator {
 
     public static Supplier<ShotCalculation> getMovingShotCalculationSupplier(
             final Supplier<Pose2d> robotPoseSupplier,
-            final Supplier<ChassisSpeeds> fieldRelativeSwerveSpeedsSupplier,
+            final Supplier<ChassisSpeeds> robotRelativeSpeedsSupplier,
             final Supplier<Pose2d> targetPoseSupplier
     ) {
         return () -> getMovingShotCalculation(
                 robotPoseSupplier.get(),
-                fieldRelativeSwerveSpeedsSupplier.get(),
+                robotRelativeSpeedsSupplier.get(),
                 targetPoseSupplier.get()
         );
     }

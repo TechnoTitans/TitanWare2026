@@ -73,7 +73,14 @@ public class ShootCommands extends VirtualSubsystem {
         final Supplier<ShotCalculator.ShotCalculation> movingCalculationSupplier =
                 ShotCalculator.getMovingShotCalculationSupplier(
                         swerve::getPose,
-                        swerve::getRobotRelativeSpeeds,
+                        () -> {
+                            final ChassisSpeeds robotSpeeds = swerve.getRobotRelativeSpeeds();
+                            final double linearSpeed =
+                                    Math.hypot(robotSpeeds.vxMetersPerSecond, robotSpeeds.vyMetersPerSecond);
+                            return robotSpeeds
+                                    .div(linearSpeed)
+                                    .times(Math.min(linearSpeed, SwerveSpeed.Speeds.SHOOTING.getTranslationSpeed()));
+                        },
                         targetPoseSupplier
                 );
 
