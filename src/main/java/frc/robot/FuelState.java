@@ -21,7 +21,6 @@ import frc.robot.subsystems.intake.Intake;
 import frc.robot.subsystems.superstructure.ShotCalculator;
 import frc.robot.subsystems.superstructure.Superstructure;
 import frc.robot.utils.Container;
-import frc.robot.utils.commands.CommandsExt;
 import frc.robot.utils.commands.LoggedTrigger;
 import frc.robot.utils.commands.RobotModeLoggedTriggers;
 import frc.robot.utils.control.DeltaTime;
