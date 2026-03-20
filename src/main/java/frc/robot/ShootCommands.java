@@ -127,8 +127,9 @@ public class ShootCommands extends VirtualSubsystem {
                                                 .and(superstructure.atSetpoint)),
                                 intake.stowFeed().asProxy()
                                         .unless(intake.isIntaking)
-                        )
-//                        indexer.backOut()
+                        ),
+                        indexer.backOut()
+                                .asProxy()
                 ),
                 SwerveSpeed.toSwerveSpeed(SwerveSpeed.Speeds.SHOOTING),
                 superstructure.runParameters(

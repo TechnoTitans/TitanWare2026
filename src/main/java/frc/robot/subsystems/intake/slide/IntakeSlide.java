@@ -135,7 +135,7 @@ public class IntakeSlide extends SubsystemExt {
 
         intakeSlideIO.zeroMotors();
 
-        LoggedTrigger softModeTrigger = group.t("SoftMode", this::atSetpoint).debounce(0.1);
+        final LoggedTrigger softModeTrigger = group.t("SoftMode", this::atSetpoint).debounce(0.1);
         softModeTrigger.onTrue(Commands.runOnce(() -> {
             holdMode = HoldMode.SOFT;
             setDesiredPosition(positionSetpointRots);
