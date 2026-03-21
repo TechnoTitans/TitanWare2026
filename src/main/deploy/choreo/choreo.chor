@@ -71,16 +71,16 @@
    },
    "RightShooting":{
     "x":{
-     "exp":"3.7 m",
-     "val":3.7
+     "exp":"4.2 m",
+     "val":4.2
     },
     "y":{
      "exp":"0.60789555311203 m",
      "val":0.60789555311203
     },
     "heading":{
-     "exp":"0 rad",
-     "val":0.0
+     "exp":"180 deg",
+     "val":3.141592653589793
     }
    },
    "RightStarting":{

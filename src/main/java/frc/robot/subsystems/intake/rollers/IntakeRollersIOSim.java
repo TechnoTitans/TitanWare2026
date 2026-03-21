@@ -17,6 +17,7 @@ import edu.wpi.first.units.measure.*;
 import edu.wpi.first.wpilibj.Notifier;
 import edu.wpi.first.wpilibj.simulation.DCMotorSim;
 import frc.robot.constants.HardwareConstants;
+import frc.robot.constants.SimConstants;
 import frc.robot.utils.closeables.ToClose;
 import frc.robot.utils.control.DeltaTime;
 import frc.robot.utils.ctre.Phoenix6Utils;
@@ -25,8 +26,6 @@ import frc.robot.utils.sim.SimUtils;
 import frc.robot.utils.sim.motors.TalonFXSim;
 
 public class IntakeRollersIOSim implements IntakeRollersIO {
-    private static final double SIM_UPDATE_PERIOD_SEC = 0.005;
-
     private final DeltaTime deltaTime;
     private final HardwareConstants.IntakeRollerConstants constants;
 
@@ -87,7 +86,7 @@ public class IntakeRollersIOSim implements IntakeRollersIO {
                 "SimUpdate(%d)",
                 motor.getDeviceID()
         ));
-        simUpdateNotifier.startPeriodic(SIM_UPDATE_PERIOD_SEC);
+        simUpdateNotifier.startPeriodic(SimConstants.SIM_UPDATE_PERIODIC_SEC);
     }
 
     @Override

@@ -28,8 +28,6 @@ import frc.robot.utils.sim.SimUtils;
 import frc.robot.utils.sim.motors.TalonFXSim;
 
 public class FeederIOSim implements FeederIO {
-    private static final double SIM_UPDATE_PERIOD_SEC = 0.005;
-
     private final DeltaTime deltaTime;
     private final HardwareConstants.FeederConstants constants;
 
@@ -91,7 +89,7 @@ public class FeederIOSim implements FeederIO {
                 "SimUpdate(%d)",
                 motor.getDeviceID()
         ));
-        simUpdateNotifier.startPeriodic(SIM_UPDATE_PERIOD_SEC);
+        simUpdateNotifier.startPeriodic(SimConstants.SIM_UPDATE_PERIODIC_SEC);
     }
 
     @Override

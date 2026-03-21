@@ -3,7 +3,6 @@ package frc.robot.subsystems.superstructure.turret;
 import com.ctre.phoenix6.SignalLogger;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.units.VoltageUnit;
 import edu.wpi.first.units.measure.Time;
@@ -87,8 +86,6 @@ public class Turret extends SubsystemExt {
 
     private final LoggedTrigger.Group group = LoggedTrigger.Group.from(LogKey);
     public final LoggedTrigger atSetpoint = group.t("AtSetpoint", this::atSetpoint);
-    private final LoggedTrigger atUpperLimit = group.t("AtUpperLimit", this::atUpperLimit);
-    private final LoggedTrigger atLowerLimit = group.t("AtLowerLimit", this::atLowerLimit);
 
     public Turret(final Constants.RobotMode mode, final HardwareConstants.TurretConstants constants) {
         this.constants = constants;
@@ -151,10 +148,6 @@ public class Turret extends SubsystemExt {
                 LogKey + "/PeriodicIOPeriodMs",
                 Units.secondsToMilliseconds(Timer.getFPGATimestamp() - turretPeriodicUpdateStart)
         );
-    }
-
-    public Transform2d getOffsetFromCenter() {
-        return constants.offsetFromCenter();
     }
 
     public Command toGoal(final Goal goal) {

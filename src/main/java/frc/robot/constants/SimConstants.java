@@ -1,8 +1,7 @@
 package frc.robot.constants;
 
 public interface SimConstants {
-    // TODO: Make constant for sim periodic so that every subsystem uses same
-
+    double SIM_UPDATE_PERIODIC_SEC = 0.005;
 
     // Assume 2mOhm resistance for voltage drop calculation
     double MotorResistance = 0.002;

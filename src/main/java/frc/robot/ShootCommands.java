@@ -34,7 +34,7 @@ public class ShootCommands extends VirtualSubsystem {
     private final Indexer indexer;
 
     private final LoggedTrigger.Group group;
-    private final LoggedTrigger shouldBackOutFeeder;
+    private final LoggedTrigger shouldBackOutIndexer;
 
     public ShootCommands(
             final Swerve swerve,
@@ -49,8 +49,8 @@ public class ShootCommands extends VirtualSubsystem {
 
         group = LoggedTrigger.Group.from(LogKey);
 
-        this.shouldBackOutFeeder = group.t(
-                "ShouldBackOutFeeder",
+        this.shouldBackOutIndexer = group.t(
+                "ShouldBackOutIndexer",
                 () -> indexer.getFeederFilteredCurrent() > BackOutCurrentThreshold
         ).debounce(0.25);
     }
@@ -127,7 +127,8 @@ public class ShootCommands extends VirtualSubsystem {
                                                 .and(superstructure.atSetpoint)),
                                 intake.stowFeed().asProxy()
                                         .unless(intake.isIntaking)
-                        ),
+                        )
+                                .until(shouldBackOutIndexer),
                         indexer.backOut()
                                 .asProxy()
                 ),

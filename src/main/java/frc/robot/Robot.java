@@ -414,14 +414,14 @@ public class Robot extends LoggedRobot {
         ));
 
         autoChooser.addAutoOption(new AutoOption(
-                "LeftCenterLineDepot",
-                autos::leftCenterLineDepot,
+                "LeftSweepDepot",
+                autos::leftSweepDepot,
                 Constants.CompetitionType.COMPETITION
         ));
 
         autoChooser.addAutoOption(new AutoOption(
-                "RightCenterLineOutpost",
-                autos::rightCenterLineOutpost,
+                "RightSweepDepot",
+                autos::rightSweepOutpost,
                 Constants.CompetitionType.COMPETITION
         ));
 

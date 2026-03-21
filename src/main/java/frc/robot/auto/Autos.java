@@ -11,6 +11,7 @@ import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
 import frc.robot.Robot;
 import frc.robot.ShootCommands;
 import frc.robot.constants.FieldConstants;
+import frc.robot.constants.PoseConstants;
 import frc.robot.subsystems.drive.Swerve;
 import frc.robot.subsystems.indexer.Indexer;
 import frc.robot.subsystems.intake.Intake;
@@ -37,8 +38,6 @@ public class Autos {
 
     private final Supplier<ShotCalculator.ShotCalculation> staticShotCalculation;
     private final Supplier<ShotCalculator.ShotCalculation> movingShotCalculation;
-
-    private final LoggedTrigger.Group group = LoggedTrigger.Group.from(LogKey);
 
     private final LoggedTrigger robotStopped;
     private final LoggedTrigger targetIsHub;
@@ -87,6 +86,7 @@ public class Autos {
                 FieldConstants::getHubPose
         );
 
+        final LoggedTrigger.Group group = LoggedTrigger.Group.from(LogKey);
         this.robotStopped = group.t("RobotStopped",
                 () -> ShootCommands.linearSpeed(swerve.getFieldRelativeSpeeds()) <= 0.01
         );
@@ -96,8 +96,7 @@ public class Autos {
                 () -> {
                     final double safeXClose = FieldConstants.getTurretSafeXCloseBoundary();
                     final double safeXFar = FieldConstants.getTurretSafeXFarBoundary();
-                    final double turretX = superstructure
-                            .getTurretTranslation(swerve.getPose())
+                    final double turretX = swerve.getPose().plus(PoseConstants.Turret.ROBOT_TO_TURRET_TRANSFORM_2D)
                             .getX();
                     return Robot.IsRedAlliance.getAsBoolean()
                             ? (turretX >= safeXClose || turretX <= safeXFar)
@@ -216,8 +215,8 @@ public class Autos {
         return routine;
     }
 
-    public AutoRoutine leftCenterLineDepot() {
-        final AutoRoutine routine = autoFactory.newRoutine("LeftCenterLineDepot");
+    public AutoRoutine leftSweepDepot() {
+        final AutoRoutine routine = autoFactory.newRoutine("LeftSweepDepot");
         final AutoTrajectory startToCenterLineAndBack = routine.trajectory("LeftStartToCenterLineAndBack");
         final AutoTrajectory shootingToDepot = routine.trajectory("LeftShootingToDepot");
 
@@ -256,23 +255,23 @@ public class Autos {
         return routine;
     }
 
-    public AutoRoutine rightCenterLineOutpost() {
-        final AutoRoutine routine = autoFactory.newRoutine("RightCenterLineOutpost");
-        final AutoTrajectory startToCenterLineAndBack = routine.trajectory("RightStartToCenterLineAndBack");
+    public AutoRoutine rightSweepOutpost() {
+        final AutoRoutine routine = autoFactory.newRoutine("RightSweepOutpost");
+        final AutoTrajectory firstSweep = routine.trajectory("RightFirstSweep");
         final AutoTrajectory shootingToOutpost = routine.trajectory("RightShootingToOutput");
 
         routine.active().onTrue(
-                runStartingTrajectory(startToCenterLineAndBack)
+                runStartingTrajectory(firstSweep)
         );
 
-        startToCenterLineAndBack.active().whileTrue(
+        firstSweep.active().whileTrue(
                 intakeFromTrench(
-                        staticParametersFromFinalPose(startToCenterLineAndBack),
+                        staticParametersFromFinalPose(firstSweep),
                         staticShotCalculation
                 )
         );
 
-        startToCenterLineAndBack.done().onTrue(
+        firstSweep.done().onTrue(
                 sequence(
                         shootStatic(),
                         deadline(
@@ -298,21 +297,21 @@ public class Autos {
 
     public AutoRoutine rightDoubleSweep() {
         final AutoRoutine routine = autoFactory.newRoutine("RightDoubleSweep");
-        final AutoTrajectory startToCenterLineAndBack = routine.trajectory("RightStartToCenterLineAndBack");
+        final AutoTrajectory firstSweep = routine.trajectory("RightFirstSweep");
         final AutoTrajectory rightSweep = routine.trajectory("RightSweep");
 
         routine.active().onTrue(
-                runStartingTrajectory(startToCenterLineAndBack)
+                runStartingTrajectory(firstSweep)
         );
 
-        startToCenterLineAndBack.active().whileTrue(
+        firstSweep.active().whileTrue(
                 intakeFromTrench(
-                        staticParametersFromFinalPose(startToCenterLineAndBack),
+                        staticParametersFromFinalPose(firstSweep),
                         staticShotCalculation
                 )
         );
 
-        startToCenterLineAndBack.done().onTrue(
+        firstSweep.done().onTrue(
                 sequence(
                         shootStatic(),
                         deadline(
@@ -335,4 +334,10 @@ public class Autos {
 
         return routine;
     }
+//
+//    public AutoRoutine rightSweepFerryClean() {
+//        final AutoRoutine routine = autoFactory.newRoutine("RightSweepFerryClean");
+//        final AutoTrajectory firstSweep = routine.trajectory("RightFirstSweep");
+//        final AutoTrajectory cleanSweep = routine.trajectory("RightCleanSweep");
+//    }
 }

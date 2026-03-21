@@ -35,8 +35,6 @@ import frc.robot.utils.sim.feedback.SimFeedbackSensor;
 import frc.robot.utils.sim.motors.TalonFXSim;
 
 public class TurretIOSim implements TurretIO {
-    private static final double SIM_UPDATE_PERIOD_SEC = 0.005;
-
     private final DeltaTime deltaTime;
     private final HardwareConstants.TurretConstants constants;
 
@@ -118,7 +116,7 @@ public class TurretIOSim implements TurretIO {
                 "SimUpdate(%d)",
                 turretMotor.getDeviceID()
         ));
-        simUpdateNotifier.startPeriodic(SIM_UPDATE_PERIOD_SEC);
+        simUpdateNotifier.startPeriodic(SimConstants.SIM_UPDATE_PERIODIC_SEC);
     }
 
     @Override

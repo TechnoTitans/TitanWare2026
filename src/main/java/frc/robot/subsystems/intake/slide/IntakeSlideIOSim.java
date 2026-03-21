@@ -27,8 +27,6 @@ import frc.robot.utils.sim.SimUtils;
 import frc.robot.utils.sim.motors.TalonFXSim;
 
 public class IntakeSlideIOSim implements IntakeSlideIO {
-    private static final double SIM_UPDATE_PERIOD_SEC = 0.005;
-
     private final DeltaTime deltaTime;
 
     private final DifferentialMechanism<TalonFX> diffMechanism;
@@ -209,7 +207,7 @@ public class IntakeSlideIOSim implements IntakeSlideIO {
                 masterMotor.getDeviceID(),
                 followerMotor.getDeviceID()
         ));
-        simUpdateNotifier.startPeriodic(SIM_UPDATE_PERIOD_SEC);
+        simUpdateNotifier.startPeriodic(SimConstants.SIM_UPDATE_PERIODIC_SEC);
     }
 
     @Override

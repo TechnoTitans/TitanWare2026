@@ -2,7 +2,6 @@ package frc.robot.constants;
 
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.DriverStation;
 
@@ -52,16 +51,6 @@ public class FieldConstants {
             - (TRENCH_WIDTH / 2)
             - TURRET_SAFE_BUFFER;
 
-    public static final Pose2d TOP_FERRYING_BLUE =
-            new Pose2d(new Translation2d(2, FIELD_WIDTH_Y_METERS - 2.0), Rotation2d.kZero);
-
-    public static final Pose2d TOP_FERRYING_RED = TOP_FERRYING_BLUE.relativeTo(RED_ORIGIN);
-
-    public static final Pose2d BOTTOM_FERRYING_BLUE =
-            new Pose2d(new Translation2d(2, 2), Rotation2d.kZero);
-
-    public static final Pose2d BOTTOM_FERRYING_RED = BOTTOM_FERRYING_BLUE.relativeTo(RED_ORIGIN);
-
     public static final Set<Integer> BLUE_APRILTAG_IDS =
             Set.of(17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32);
 
@@ -96,12 +85,6 @@ public class FieldConstants {
 
     public static Pose2d getFerryRight() {
         return getAllianceFlipped(BLUE_FERRY_RIGHT, RED_FERRY_RIGHT);
-    }
-
-    public static Translation2d getFerryingTarget(final double robotYPositionMeters) {
-        return (robotYPositionMeters > FIELD_WIDTH_Y_METERS / 2.0 ?
-                getAllianceFlipped(TOP_FERRYING_BLUE, TOP_FERRYING_RED)
-                : getAllianceFlipped(BOTTOM_FERRYING_BLUE, BOTTOM_FERRYING_RED)).getTranslation();
     }
 
     public static double getTurretSafeXCloseBoundary() {

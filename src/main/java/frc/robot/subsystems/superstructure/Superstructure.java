@@ -1,9 +1,6 @@
 package frc.robot.subsystems.superstructure;
 
 import edu.wpi.first.math.filter.Debouncer;
-import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.geometry.Transform2d;
-import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -143,10 +140,6 @@ public class Superstructure extends VirtualSubsystem {
         ).withName("RunParametersWithHoodStowed");
     }
 
-    public Translation2d getTurretTranslation(final Pose2d robotPose) {
-        return robotPose.plus(getOffsetFromCenter()).getTranslation();
-    }
-
     public double getShooterVelocityRotsPerSec() {
         return shooter.getVelocityRotsPerSec();
     }
@@ -181,18 +174,6 @@ public class Superstructure extends VirtualSubsystem {
     private Command setInternalGoal(final InternalGoal goal) {
         return Commands.runOnce(() -> desiredGoal = goal)
                 .withName("SetInternalGoal");
-    }
-
-    private Command runEnd(final Runnable run, final Runnable end) {
-        return Commands.runEnd(run, end, turret, hood);
-    }
-
-    private Command run(final Runnable run) {
-        return Commands.run(run, turret, hood);
-    }
-
-    private Transform2d getOffsetFromCenter() {
-        return turret.getOffsetFromCenter();
     }
 
     private void setDesiredGoal(final Goal goal) {

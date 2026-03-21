@@ -27,7 +27,6 @@ import frc.robot.utils.control.DeltaTime;
 import frc.robot.utils.subsystems.VirtualSubsystem;
 import org.littletonrobotics.junction.Logger;
 
-import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.Function;
 
 public class FuelState extends VirtualSubsystem {
@@ -70,7 +69,6 @@ public class FuelState extends VirtualSubsystem {
 
         this.hasSimFuel = group.t("hasSimFuel", () -> simFuelCount > 0);
 
-        configureStateTriggers();
         switch (mode) {
             case SIM, REPLAY -> {
                 this.fuelCache = new FuelCache(50, fuel -> {
@@ -109,24 +107,11 @@ public class FuelState extends VirtualSubsystem {
 
     public void setSimFuelCount(final int simFuelCount) {
         switch (mode) {
-            case SIM, REPLAY -> {
-                this.simFuelCount = simFuelCount;
-            }
+            case SIM, REPLAY -> this.simFuelCount = simFuelCount;
         }
     }
 
-    public void setSimFuelPreloaded() {
-        setSimFuelCount(8);
-    }
-
-    private void configureStateTriggers() {
-//        intake.isIntaking
-//                .whileTrue(CommandsExt.defaultCommand(indexer.feed()));
-    }
-
     private void configureSimTriggers() {
-        final ThreadLocalRandom random = ThreadLocalRandom.current();
-
         teleopEnabled.onTrue(Commands.runOnce(() -> setSimFuelCount(500)));
 
         final double fuelIntakePerSecond = 5;
@@ -148,7 +133,7 @@ public class FuelState extends VirtualSubsystem {
 
                             final ChassisSpeeds turretFieldSpeeds = ShotCalculator.getTurretFieldSpeeds(
                                     robotPose,
-                                    superstructure.getTurretTranslation(robotPose),
+                                    robotPose.plus(PoseConstants.Turret.ROBOT_TO_TURRET_TRANSFORM_2D).getTranslation(),
                                     swerve.getFieldRelativeSpeeds()
                             );
 
@@ -210,10 +195,6 @@ public class FuelState extends VirtualSubsystem {
             }
 
             this.shouldDiscard = shouldDiscard;
-        }
-
-        public FuelCache(final int capacity) {
-            this(capacity, null);
         }
 
         public void spawn(
@@ -376,7 +357,7 @@ public class FuelState extends VirtualSubsystem {
 
     private static final InterpolatingDoubleTreeMap ShooterOmegaToBallVelocity = new InterpolatingDoubleTreeMap();
     private static double shooterSurfaceVelocity(final double shooterVelocityRotsPerSec) {
-        return shooterVelocityRotsPerSec * (Units.inchesToMeters(4) * Math.PI);
+        return shooterVelocityRotsPerSec * (Units.inchesToMeters(3.965) * Math.PI);
     }
     static {
         ShooterOmegaToBallVelocity.put(0d, 0d);

@@ -30,8 +30,6 @@ import frc.robot.utils.sim.motors.TalonFXSim;
 import java.util.List;
 
 public class ShooterIOSim implements ShooterIO {
-    private static final double SIM_UPDATE_PERIOD_SEC = 0.005;
-
     private final DeltaTime deltaTime;
     private final HardwareConstants.ShooterConstants constants;
 
@@ -124,7 +122,7 @@ public class ShooterIOSim implements ShooterIO {
                 masterMotor.getDeviceID(),
                 followerMotor.getDeviceID()
         ));
-        simUpdateNotifier.startPeriodic(SIM_UPDATE_PERIOD_SEC);
+        simUpdateNotifier.startPeriodic(SimConstants.SIM_UPDATE_PERIODIC_SEC);
     }
 
     @Override

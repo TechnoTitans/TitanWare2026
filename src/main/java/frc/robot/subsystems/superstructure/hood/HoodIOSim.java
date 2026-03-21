@@ -29,8 +29,6 @@ import frc.robot.utils.sim.SimUtils;
 import frc.robot.utils.sim.motors.TalonFXSim;
 
 public class HoodIOSim implements HoodIO {
-    private static final double SIM_UPDATE_PERIOD_SEC = 0.005;
-
     private final DeltaTime deltaTime;
     private final HardwareConstants.HoodConstants constants;
 
@@ -102,7 +100,7 @@ public class HoodIOSim implements HoodIO {
                 "SimUpdate(%d)",
                 motor.getDeviceID()
         ));
-        simUpdateNotifier.startPeriodic(SIM_UPDATE_PERIOD_SEC);
+        simUpdateNotifier.startPeriodic(SimConstants.SIM_UPDATE_PERIODIC_SEC);
     }
 
     @Override
