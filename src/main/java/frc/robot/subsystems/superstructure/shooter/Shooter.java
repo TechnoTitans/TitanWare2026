@@ -95,15 +95,15 @@ public class Shooter extends SubsystemExt {
 
         this.inputs = new ShooterIOInputsAutoLogged();
 
-        this.shooterIO.config();
-        this.shooterIO.toFlywheelVelocity(velocitySetpointRotsPerSec);
-
         this.flywheelTorqueCurrentSysIdRoutine = makeTorqueCurrentSysIdRoutine(
                 Amps.of(4).per(Second),
                 Amp.of(40),
                 Seconds.of(10),
                 shooterIO::toFlywheelTorqueCurrent
         );
+
+        this.shooterIO.config();
+        this.shooterIO.toFlywheelVelocity(velocitySetpointRotsPerSec);
     }
 
     @Override

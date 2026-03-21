@@ -27,7 +27,7 @@ import static edu.wpi.first.wpilibj2.command.Commands.*;
 
 public class Autos {
     public static final String LogKey = "Auto";
-    private static final int SHOOTING_TIME = 6;
+    private static final int SHOOTING_TIME = 5;
 
     private final Swerve swerve;
     private final Intake intake;
@@ -295,6 +295,7 @@ public class Autos {
         return routine;
     }
 
+    //TODO: Work in progress
     public AutoRoutine leftDoubleSweep() {
         final AutoRoutine routine = autoFactory.newRoutine("LeftDoubleSweep");
         final AutoTrajectory firstSweep = routine.trajectory("LeftFirstSweep");

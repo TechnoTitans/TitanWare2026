@@ -105,6 +105,8 @@ public class Turret extends SubsystemExt {
                 Seconds.of(6)
         );
 
+
+        //TODO: Get real turret offsets
         final Rotation2d absolutePosition = CRT.findAbsolutePosition(
                 constants.turretTooth(),
                 inputs.primaryEncoderPositionRots,
@@ -114,7 +116,7 @@ public class Turret extends SubsystemExt {
         );
 //        this.turretIO.seedTurretPosition(absolutePosition);
 
-        turretIO.setPosition(0);
+        this.turretIO.setPosition(0);
     }
 
     @Override
