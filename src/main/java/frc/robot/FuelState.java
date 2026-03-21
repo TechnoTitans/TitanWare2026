@@ -357,7 +357,7 @@ public class FuelState extends VirtualSubsystem {
 
     private static final InterpolatingDoubleTreeMap ShooterOmegaToBallVelocity = new InterpolatingDoubleTreeMap();
     private static double shooterSurfaceVelocity(final double shooterVelocityRotsPerSec) {
-        return shooterVelocityRotsPerSec * (Units.inchesToMeters(3.965) * Math.PI);
+        return shooterVelocityRotsPerSec * (Units.inchesToMeters(3.965) * Math.PI) * 0.80;
     }
     static {
         ShooterOmegaToBallVelocity.put(0d, 0d);

@@ -20,7 +20,6 @@ import frc.robot.utils.commands.SubsystemExt;
 import org.littletonrobotics.junction.Logger;
 
 import java.util.HashMap;
-import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.function.DoubleSupplier;
 
@@ -43,6 +42,7 @@ public class Shooter extends SubsystemExt {
 
     private enum InternalGoal {
         NONE,
+        DEFAULT,
         IDLE(Goal.IDLE),
         NO_VISION(Goal.NO_VISION),
         TRACKING;
@@ -57,7 +57,9 @@ public class Shooter extends SubsystemExt {
         }
 
         public static InternalGoal fromGoal(final Goal goal) {
-            return Objects.requireNonNull(GoalToInternal.get(goal));
+            final InternalGoal internalGoal = GoalToInternal.get(goal);
+
+            return internalGoal == null ? DEFAULT : internalGoal;
         }
 
         public final Goal goal;
@@ -135,12 +137,12 @@ public class Shooter extends SubsystemExt {
         return startEnd(
                 () -> setDesiredGoal(goal),
                 () -> setDesiredGoal(Goal.IDLE)
-        ).withName("ToGoal: " + goal.toString());
+        ).withName("ToGoal: " + goal);
     }
 
     public Command setGoal(final Goal goal) {
         return runOnce(() -> setDesiredGoal(goal))
-                .withName("SetGoal: " + goal.toString());
+                .withName("SetGoal: " + goal);
     }
 
     public Command runGoal(final Goal goal) {

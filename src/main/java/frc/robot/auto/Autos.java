@@ -295,10 +295,49 @@ public class Autos {
         return routine;
     }
 
+    public AutoRoutine leftDoubleSweep() {
+        final AutoRoutine routine = autoFactory.newRoutine("LeftDoubleSweep");
+        final AutoTrajectory firstSweep = routine.trajectory("LeftFirstSweep");
+        final AutoTrajectory secondSweep = routine.trajectory("LeftSweep");
+
+        routine.active().onTrue(
+                runStartingTrajectory(firstSweep)
+        );
+
+        firstSweep.active().whileTrue(
+                intakeFromTrench(
+                        staticParametersFromFinalPose(firstSweep),
+                        staticShotCalculation
+                )
+        );
+
+        firstSweep.done().onTrue(
+                sequence(
+                        shootStatic(),
+                        deadline(
+                                waitUntil(superstructure.atSetpoint))
+                                .andThen(secondSweep.cmd())
+                                .asProxy(),
+                        superstructure.runParametersWithHoodStowed(staticShotCalculation).asProxy()
+                )
+        );
+
+        secondSweep.active().whileTrue(
+                intakeFromTrench(
+                        staticParametersFromFinalPose(secondSweep),
+                        staticShotCalculation
+                )
+        );
+
+        secondSweep.done().onTrue(shootStatic());
+
+        return routine;
+    }
+
     public AutoRoutine rightDoubleSweep() {
         final AutoRoutine routine = autoFactory.newRoutine("RightDoubleSweep");
         final AutoTrajectory firstSweep = routine.trajectory("RightFirstSweep");
-        final AutoTrajectory rightSweep = routine.trajectory("RightSweep");
+        final AutoTrajectory secondSweep = routine.trajectory("RightSweep");
 
         routine.active().onTrue(
                 runStartingTrajectory(firstSweep)
@@ -316,21 +355,21 @@ public class Autos {
                         shootStatic(),
                         deadline(
                                 waitUntil(superstructure.safeForTrench)
-                                        .andThen(rightSweep.cmd())
+                                        .andThen(secondSweep.cmd())
                                         .asProxy(),
                                 superstructure.runParametersWithHoodStowed(staticShotCalculation).asProxy()
                         )
                 )
         );
 
-        rightSweep.active().whileTrue(
+        secondSweep.active().whileTrue(
                 intakeFromTrench(
-                        staticParametersFromFinalPose(rightSweep),
+                        staticParametersFromFinalPose(secondSweep),
                         staticShotCalculation
                 )
         );
 
-        rightSweep.done().onTrue(shootStatic());
+        secondSweep.done().onTrue(shootStatic());
 
         return routine;
     }

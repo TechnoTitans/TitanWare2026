@@ -4,6 +4,7 @@ import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
+import frc.robot.constants.Constants;
 import frc.robot.constants.FieldConstants;
 import frc.robot.constants.PoseConstants;
 import frc.robot.subsystems.drive.Swerve;
@@ -51,7 +52,7 @@ public class ShootCommands extends VirtualSubsystem {
 
         this.shouldBackOutIndexer = group.t(
                 "ShouldBackOutIndexer",
-                () -> indexer.getFeederFilteredCurrent() > BackOutCurrentThreshold
+                () -> indexer.getSpindexerFilteredCurrent() > BackOutCurrentThreshold
         ).debounce(0.25);
     }
 
@@ -115,6 +116,7 @@ public class ShootCommands extends VirtualSubsystem {
                         <= SwerveSpeed.Speeds.SHOOTING.getTranslationSpeed()
         );
 
+        //TODO: Find a cleaner solution for it automatically backing out in sim
         return Commands.deadline(
                 Commands.repeatingSequence(
                         Commands.waitUntil(targetValid
@@ -128,9 +130,9 @@ public class ShootCommands extends VirtualSubsystem {
                                 intake.stowFeed().asProxy()
                                         .unless(intake.isIntaking)
                         )
-                                .until(shouldBackOutIndexer),
+                                .until(shouldBackOutIndexer.and(() -> Constants.CURRENT_MODE != Constants.RobotMode.SIM)),
                         indexer.backOut()
-                                .asProxy()
+                                .onlyIf(() -> Constants.CURRENT_MODE != Constants.RobotMode.SIM)
                 ),
                 SwerveSpeed.toSwerveSpeed(SwerveSpeed.Speeds.SHOOTING),
                 superstructure.runParameters(

@@ -51,14 +51,12 @@ public class ShotCalculator {
 
     private static final InterpolatingDoubleTreeMap TOFMap = new InterpolatingDoubleTreeMap();
     static {
-        TOFMap.put(3.213d, 1.01);
-        TOFMap.put(3.664d, 1.19);
-        TOFMap.put(4.643, 1.21);
-        TOFMap.put(3.17, 1.13);
-        TOFMap.put(2.209, 1.15);
-        TOFMap.put(3.715, 1.08);
         TOFMap.put(1.989, 1.2);
-        TOFMap.put(2.823, 1.18);
+        TOFMap.put(2.209, 1.3);
+        TOFMap.put(2.823, 1.4);
+        TOFMap.put(3.17, 1.5);
+        TOFMap.put(3.664d, 1.6);
+        TOFMap.put(4.643, 1.7);
     }
 
     public record ShotCalculation(

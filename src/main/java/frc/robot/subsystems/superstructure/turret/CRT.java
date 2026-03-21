@@ -1,8 +1,8 @@
-package frc.robot.utils.position;
+package frc.robot.subsystems.superstructure.turret;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj.DriverStation;
 
-public class ChineseRemainder {
+public class CRT {
     private static final long CRT_RESOLUTION = 1_000_000;
 
     private static long[] egcd(final long a, final long b) {

@@ -1,0 +1,35 @@
+{
+ "name":"LeftSweep",
+ "version":3,
+ "snapshot":{
+  "waypoints":[],
+  "constraints":[],
+  "targetDt":0.05
+ },
+ "params":{
+  "waypoints":[
+    {"x":{"exp":"LeftShooting.x", "val":4.2}, "y":{"exp":"LeftShooting.y", "val":7.46143044688797}, "heading":{"exp":"LeftShooting.heading", "val":3.141592653589793}, "intervals":40, "split":false, "fixTranslation":true, "fixHeading":true, "overrideIntervals":false},
+    {"x":{"exp":"5.602217197418213 m", "val":5.602217197418213}, "y":{"exp":"FieldWidth - 0.6704558730125427 m", "val":7.3988701269874575}, "heading":{"exp":"180 deg", "val":3.141592653589793}, "intervals":40, "split":false, "fixTranslation":true, "fixHeading":true, "overrideIntervals":false},
+    {"x":{"exp":"6.431604862213135 m", "val":6.431604862213135}, "y":{"exp":"5.753773212432861 m", "val":5.753773212432861}, "heading":{"exp":"-1.3632998172747668 rad", "val":-1.3632998172747668}, "intervals":40, "split":false, "fixTranslation":true, "fixHeading":true, "overrideIntervals":false},
+    {"x":{"exp":"7.789287090301514 m", "val":7.789287090301514}, "y":{"exp":"3.9919114112854004 m", "val":3.9919114112854}, "heading":{"exp":"0 deg", "val":0.0}, "intervals":40, "split":false, "fixTranslation":true, "fixHeading":true, "overrideIntervals":false},
+    {"x":{"exp":"7.075228691101074 m", "val":7.075228691101074}, "y":{"exp":"2.098104476928711 m", "val":2.098104476928711}, "heading":{"exp":"0 deg", "val":0.0}, "intervals":40, "split":false, "fixTranslation":true, "fixHeading":true, "overrideIntervals":false},
+    {"x":{"exp":"6.23698616027832 m", "val":6.23698616027832}, "y":{"exp":"3.0062005519866943 m", "val":3.0062005519866943}, "heading":{"exp":"0 deg", "val":0.0}, "intervals":40, "split":false, "fixTranslation":true, "fixHeading":true, "overrideIntervals":false},
+    {"x":{"exp":"6.151609897613525 m", "val":6.151609897613525}, "y":{"exp":"4.411032676696777 m", "val":4.411032676696777}, "heading":{"exp":"0 deg", "val":0.0}, "intervals":40, "split":false, "fixTranslation":true, "fixHeading":true, "overrideIntervals":false}],
+  "constraints":[
+    {"from":"first", "to":null, "data":{"type":"StopPoint", "props":{}}, "enabled":true},
+    {"from":"last", "to":null, "data":{"type":"StopPoint", "props":{}}, "enabled":true},
+    {"from":"first", "to":"last", "data":{"type":"KeepInRectangle", "props":{"x":{"exp":"0 m", "val":0.0}, "y":{"exp":"0 m", "val":0.0}, "w":{"exp":"16.541 m", "val":16.541}, "h":{"exp":"8.0692 m", "val":8.0692}}}, "enabled":false}],
+  "targetDt":{
+   "exp":"0.05 s",
+   "val":0.05
+  }
+ },
+ "trajectory":{
+  "config":null,
+  "sampleType":null,
+  "waypoints":[],
+  "samples":[],
+  "splits":[]
+ },
+ "events":[]
+}

@@ -1,6 +1,5 @@
 package frc.robot.subsystems.indexer.feeder;
 
-import edu.wpi.first.math.filter.LinearFilter;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -28,9 +27,7 @@ public class Feeder extends SubsystemBase {
     private final FeederIOInputsAutoLogged inputs;
 
     private Goal desiredGoal = Goal.OFF;
-    private double torqueCurrentSetpointAmps = desiredGoal.torqueCurrentAmps;
-
-    private final LinearFilter currentFilter;
+    private double torqueCurrentSetpointAmps = 0.0;
 
     public Feeder(final Constants.RobotMode mode, final HardwareConstants.FeederConstants constants) {
         this.feederIO = switch (mode) {
@@ -41,8 +38,6 @@ public class Feeder extends SubsystemBase {
         };
 
         this.inputs = new FeederIOInputsAutoLogged();
-
-        this.currentFilter = LinearFilter.movingAverage(3);
 
         this.feederIO.config();
         this.feederIO.toWheelTorqueCurrent(desiredGoal.torqueCurrentAmps);
@@ -68,12 +63,9 @@ public class Feeder extends SubsystemBase {
         return runEnd(
                 () -> setDesiredGoal(goal),
                 () -> setDesiredGoal(Goal.OFF)
-        ).withName("ToGoal: " + goal.toString());
+        ).withName("ToGoal: " + goal);
     }
 
-    public double getFilteredCurrent() {
-        return currentFilter.calculate(inputs.wheelTorqueCurrentAmps);
-    }
 
     private void setDesiredGoal(final Goal goal) {
         desiredGoal = goal;

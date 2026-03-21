@@ -6,7 +6,6 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.constants.Constants;
 import frc.robot.constants.HardwareConstants;
-import frc.robot.utils.commands.LoggedTrigger;
 import org.littletonrobotics.junction.Logger;
 
 public class IntakeRollers extends SubsystemBase {
@@ -28,8 +27,6 @@ public class IntakeRollers extends SubsystemBase {
 
     private Goal desiredGoal = Goal.OFF;
     private double voltageSetpoint = 0.0;
-
-    private final LoggedTrigger.Group group = LoggedTrigger.Group.from(LogKey);
 
     public IntakeRollers(final Constants.RobotMode mode, final HardwareConstants.IntakeRollerConstants constants) {
         this.intakeRollersIO = switch (mode) {
@@ -62,12 +59,12 @@ public class IntakeRollers extends SubsystemBase {
         return startEnd(
                 () -> setDesiredGoal(goal),
                 () -> setDesiredGoal(Goal.OFF)
-        ).withName("ToGoal: " + goal.toString());
+        ).withName("ToGoal: " + goal);
     }
 
     public Command setGoal(final Goal goal) {
         return runOnce(() -> setDesiredGoal(goal))
-                .withName("SetGoal: " + goal.toString());
+                .withName("SetGoal: " + goal);
     }
 
     private void setDesiredGoal(final Goal goal) {

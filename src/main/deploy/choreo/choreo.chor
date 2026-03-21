@@ -29,8 +29,8 @@
    },
    "LeftShooting":{
     "x":{
-     "exp":"3.7 m",
-     "val":3.7
+     "exp":"4.2 m",
+     "val":4.2
     },
     "y":{
      "exp":"FieldWidth - 0.60789555311203 m",

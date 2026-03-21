@@ -42,7 +42,7 @@ public class Indexer {
         ).withName("BackOut");
     }
 
-    public double getFeederFilteredCurrent() {
-        return feeder.getFilteredCurrent();
+    public double getSpindexerFilteredCurrent() {
+        return spindexer.getFilteredCurrent();
     }
 }

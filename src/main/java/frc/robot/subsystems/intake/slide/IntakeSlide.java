@@ -15,7 +15,6 @@ import frc.robot.utils.control.DeltaTime;
 import org.littletonrobotics.junction.Logger;
 
 import java.util.HashMap;
-import java.util.Objects;
 
 public class IntakeSlide extends SubsystemExt {
     protected static final String LogKey = "IntakeSlide";
@@ -38,6 +37,7 @@ public class IntakeSlide extends SubsystemExt {
 
     private enum InternalGoal {
         NONE,
+        DEFAULT,
         STOW(Goal.STOW),
         EXTEND(Goal.EXTEND),
         SHOOTING(Goal.SHOOTING),
@@ -53,7 +53,9 @@ public class IntakeSlide extends SubsystemExt {
         }
 
         public static InternalGoal fromGoal(final Goal goal) {
-            return Objects.requireNonNull(GoalToInternal.get(goal));
+            final InternalGoal internalGoal = GoalToInternal.get(goal);
+
+            return internalGoal == null ? DEFAULT : internalGoal;
         }
 
         public final Goal goal;
@@ -107,8 +109,6 @@ public class IntakeSlide extends SubsystemExt {
     private final IntakeSlideIOInputsAutoLogged inputs = new IntakeSlideIOInputsAutoLogged();
 
     private final DeltaTime deltaTime = new DeltaTime();
-    private final TrapezoidProfile profile =
-            new TrapezoidProfile(new TrapezoidProfile.Constraints(0.4, 0.3));
     private final TrapezoidProfile.State profileGoal = new TrapezoidProfile.State(0,0);
     private TrapezoidProfile.State profileSetpoint = new TrapezoidProfile.State(0,0);
 
@@ -133,7 +133,7 @@ public class IntakeSlide extends SubsystemExt {
             case REPLAY, DISABLED -> new IntakeSlideIO() {};
         };
 
-        intakeSlideIO.zeroMotors();
+        this.intakeSlideIO.zeroMotors();
 
         final LoggedTrigger softModeTrigger = group.t("SoftMode", this::atSetpoint).debounce(0.1);
         softModeTrigger.onTrue(Commands.runOnce(() -> {
@@ -188,7 +188,7 @@ public class IntakeSlide extends SubsystemExt {
         return startEnd(
                 () -> setDesiredGoal(goal),
                 () -> setDesiredGoal(Goal.STOW)
-        ).withName("ToGoal: " + goal.toString());
+        ).withName("ToGoal: " + goal);
     }
 
     public Command toGoalHold(final Goal goal) {
@@ -203,7 +203,7 @@ public class IntakeSlide extends SubsystemExt {
 
     public Command setGoal(final Goal goal) {
         return runOnce(() -> setDesiredGoal(goal))
-                .withName("SetGoal: " + goal.toString());
+                .withName("SetGoal: " + goal);
     }
 
     public Rotation2d getIntakeSlidePositionRots() {

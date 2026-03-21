@@ -16,11 +16,9 @@ import frc.robot.constants.Constants;
 import frc.robot.constants.HardwareConstants;
 import frc.robot.utils.commands.LoggedTrigger;
 import frc.robot.utils.commands.SubsystemExt;
-import frc.robot.utils.position.ChineseRemainder;
 import org.littletonrobotics.junction.Logger;
 
 import java.util.HashMap;
-import java.util.Objects;
 import java.util.function.DoubleSupplier;
 
 import static edu.wpi.first.units.Units.*;
@@ -43,6 +41,7 @@ public class Turret extends SubsystemExt {
 
     private enum InternalGoal {
         NONE,
+        DEFAULT,
         STOW(Goal.STOW),
         NO_VISION(Goal.NO_VISION),
         TRACKING;
@@ -57,7 +56,9 @@ public class Turret extends SubsystemExt {
         }
 
         public static InternalGoal fromGoal(final Goal goal) {
-            return Objects.requireNonNull(GoalToInternal.get(goal));
+            final InternalGoal internalGoal = GoalToInternal.get(goal);
+
+            return internalGoal == null ? DEFAULT : internalGoal;
         }
 
         public final Goal goal;
@@ -104,7 +105,7 @@ public class Turret extends SubsystemExt {
                 Seconds.of(6)
         );
 
-        final Rotation2d absolutePosition = ChineseRemainder.findAbsolutePosition(
+        final Rotation2d absolutePosition = CRT.findAbsolutePosition(
                 constants.turretTooth(),
                 inputs.primaryEncoderPositionRots,
                 constants.primaryEncoderTooth(),
@@ -114,8 +115,6 @@ public class Turret extends SubsystemExt {
 //        this.turretIO.seedTurretPosition(absolutePosition);
 
         turretIO.setPosition(0);
-        //TODO: Won't log since Logger hasn't started yet
-        Logger.recordOutput(LogKey + "/CRTResult", absolutePosition);
     }
 
     @Override
@@ -154,12 +153,12 @@ public class Turret extends SubsystemExt {
         return startEnd(
                 () -> setDesiredGoal(goal),
                 ()-> setDesiredGoal(Goal.STOW)
-        ).withName("ToGoal: " + goal.toString());
+        ).withName("ToGoal: " + goal);
     }
 
     public Command setGoal(final Goal goal) {
      return runOnce(() -> setDesiredGoal(goal))
-             .withName("SetGoal: " + goal.toString());
+             .withName("SetGoal: " + goal);
     }
 
     public Command runGoal(final Goal goal) {
