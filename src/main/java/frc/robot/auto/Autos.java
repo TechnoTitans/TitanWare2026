@@ -196,9 +196,7 @@ public class Autos {
     public AutoRoutine doNothing() {
         final AutoRoutine routine = autoFactory.newRoutine("DoNothing");
 
-        routine.active().whileTrue(
-                Commands.waitUntil(RobotModeTriggers.autonomous().negate())
-        );
+        routine.active().whileTrue(Commands.waitUntil(RobotModeTriggers.autonomous().negate()));
 
         return routine;
     }
@@ -206,11 +204,7 @@ public class Autos {
     public AutoRoutine onlyShootPreload() {
         final AutoRoutine routine = autoFactory.newRoutine("OnlyShootPreload");
 
-        routine.active().onTrue(
-                Commands.sequence(
-                        shootStatic()
-                )
-        );
+        routine.active().onTrue(shootStatic());
 
         return routine;
     }
@@ -220,9 +214,7 @@ public class Autos {
         final AutoTrajectory startToCenterLineAndBack = routine.trajectory("LeftStartToCenterLineAndBack");
         final AutoTrajectory shootingToDepot = routine.trajectory("LeftShootingToDepot");
 
-        routine.active().onTrue(
-                runStartingTrajectory(startToCenterLineAndBack)
-        );
+        routine.active().onTrue(runStartingTrajectory(startToCenterLineAndBack));
 
         startToCenterLineAndBack.active().whileTrue(
                 intakeFromTrench(
@@ -260,9 +252,7 @@ public class Autos {
         final AutoTrajectory firstSweep = routine.trajectory("RightFirstSweep");
         final AutoTrajectory shootingToOutpost = routine.trajectory("RightShootingToOutput");
 
-        routine.active().onTrue(
-                runStartingTrajectory(firstSweep)
-        );
+        routine.active().onTrue(runStartingTrajectory(firstSweep));
 
         firstSweep.active().whileTrue(
                 intakeFromTrench(
@@ -301,9 +291,7 @@ public class Autos {
         final AutoTrajectory firstSweep = routine.trajectory("LeftFirstSweep");
         final AutoTrajectory secondSweep = routine.trajectory("LeftSweep");
 
-        routine.active().onTrue(
-                runStartingTrajectory(firstSweep)
-        );
+        routine.active().onTrue(runStartingTrajectory(firstSweep));
 
         firstSweep.active().whileTrue(
                 intakeFromTrench(
@@ -316,10 +304,11 @@ public class Autos {
                 sequence(
                         shootStatic(),
                         deadline(
-                                waitUntil(superstructure::atSetpoint))
-                                .andThen(secondSweep.cmd())
-                                .asProxy(),
-                        superstructure.runParametersWithHoodStowed(staticShotCalculation).asProxy()
+                                waitUntil(superstructure::atSetpoint)
+                                    .andThen(secondSweep.cmd())
+                                    .asProxy(),
+                                superstructure.runParametersWithHoodStowed(staticShotCalculation).asProxy()
+                        )
                 )
         );
 
@@ -340,9 +329,7 @@ public class Autos {
         final AutoTrajectory firstSweep = routine.trajectory("RightFirstSweep");
         final AutoTrajectory secondSweep = routine.trajectory("RightSweep");
 
-        routine.active().onTrue(
-                runStartingTrajectory(firstSweep)
-        );
+        routine.active().onTrue(runStartingTrajectory(firstSweep));
 
         firstSweep.active().whileTrue(
                 intakeFromTrench(
