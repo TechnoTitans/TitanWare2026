@@ -83,7 +83,7 @@ public class Robot extends LoggedRobot {
     );
 
     public final PhotonVision photonVision = new PhotonVision(
-            Constants.CURRENT_MODE,
+            Constants.RobotMode.DISABLED,
             swerve
     );
 
@@ -455,7 +455,7 @@ public class Robot extends LoggedRobot {
                 intake.intake()
         );
 
-        driverController.rightTrigger(0.5, teleopEventLoop)
+        driverController.a(teleopEventLoop)
                 .whileTrue(shootCommands.shoot())
                 .onFalse(intake.deploy());
 

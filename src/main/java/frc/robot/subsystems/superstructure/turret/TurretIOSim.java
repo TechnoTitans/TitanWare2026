@@ -125,10 +125,10 @@ public class TurretIOSim implements TurretIO {
         motorConfig.Slot0 = new Slot0Configs()
                 .withKS(0.24265)
                 .withStaticFeedforwardSign(StaticFeedforwardSignValue.UseClosedLoopSign)
-                .withKV(3.067)
+                .withKV(5)
                 .withKA(0.14961)
                 .withKP(50)
-                .withKD(4);
+                .withKD(3);
         motorConfig.Slot1 = new Slot1Configs()
                 .withKS(0.24265)
                 .withStaticFeedforwardSign(StaticFeedforwardSignValue.UseClosedLoopSign)

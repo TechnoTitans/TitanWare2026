@@ -8,11 +8,20 @@ import edu.wpi.first.math.interpolation.InterpolatingTreeMap;
 import edu.wpi.first.math.interpolation.InverseInterpolator;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.util.Units;
+import frc.robot.constants.Constants;
 import frc.robot.constants.PoseConstants;
 
 import java.util.function.Supplier;
 
+//TODO: Move Moving into another file
 public class ShotCalculator {
+    public record ShotCalculation(
+            double turretRotationRots,
+            double turretSpeedRotsPerSec,
+            double hoodRotationRots,
+            double shooterVelocityRotsPerSec
+    ) {}
+
     private record ShooterCalculation(
             double shooterVelocityRotsPerSec,
             double hoodPositionRots
@@ -34,37 +43,55 @@ public class ShotCalculator {
         }
     }
 
-    public static final InterpolatingTreeMap<Double, ShooterCalculation> ShotMap =
+    private static final InterpolatingTreeMap<Double, ShooterCalculation> ShotMap =
             new InterpolatingTreeMap<>(InverseInterpolator.forDouble(), ShooterCalculation::interpolate);
     static {
-        ShotMap.put(1.30, new ShooterCalculation(28, 0));
-        ShotMap.put(2.07, new ShooterCalculation(32, 0.005));
-        ShotMap.put(2.42, new ShooterCalculation(32, 0.008));
-        ShotMap.put(2.67, new ShooterCalculation(33, 0.01));
-        ShotMap.put(3.07, new ShooterCalculation(35, 0.012));
-        ShotMap.put(3.60, new ShooterCalculation(36, 0.014));
-        ShotMap.put(4.54, new ShooterCalculation(40, 0.021));
-        ShotMap.put(5.18, new ShooterCalculation(43, 0.025));
-        ShotMap.put(5.84, new ShooterCalculation(44, 0.027));
-        ShotMap.put(6.16, new ShooterCalculation(44, 0.041));
+        if (Constants.CURRENT_MODE != Constants.RobotMode.SIM) {
+            ShotMap.put(1.30, new ShooterCalculation(28, 0));
+            ShotMap.put(2.07, new ShooterCalculation(32, 0.005));
+            ShotMap.put(2.42, new ShooterCalculation(32, 0.008));
+            ShotMap.put(2.67, new ShooterCalculation(33, 0.01));
+            ShotMap.put(3.07, new ShooterCalculation(35, 0.012));
+            ShotMap.put(3.60, new ShooterCalculation(36, 0.014));
+            ShotMap.put(4.54, new ShooterCalculation(40, 0.021));
+            ShotMap.put(5.18, new ShooterCalculation(43, 0.025));
+            ShotMap.put(5.84, new ShooterCalculation(44, 0.027));
+            ShotMap.put(6.16, new ShooterCalculation(44, 0.041));
+        } else {
+            ShotMap.put(1.3, new ShooterCalculation(21, 0));
+            ShotMap.put(1.5, new ShooterCalculation(21, 0.008));
+            ShotMap.put(2.0, new ShooterCalculation(21, 0.0175));
+            ShotMap.put(2.5, new ShooterCalculation(21, 0.031));
+            ShotMap.put(3.0, new ShooterCalculation(22.5, 0.034));
+            ShotMap.put(3.5, new ShooterCalculation(23, 0.045));
+            ShotMap.put(4.0, new ShooterCalculation(24, 0.0475));
+            ShotMap.put(4.5, new ShooterCalculation(25, 0.05));
+            ShotMap.put(5.0, new ShooterCalculation(26, 0.0525));
+            ShotMap.put(5.5, new ShooterCalculation(27, 0.055));
+            ShotMap.put(6.0, new ShooterCalculation(27.75, 0.0565));
+        }
     }
 
-    private static final InterpolatingDoubleTreeMap TOFMap = new InterpolatingDoubleTreeMap();
+    private static final InterpolatingDoubleTreeMap TimeOfFlightMap = new InterpolatingDoubleTreeMap();
     static {
-        TOFMap.put(1.989, 1.2);
-        TOFMap.put(2.209, 1.3);
-        TOFMap.put(2.823, 1.4);
-        TOFMap.put(3.17, 1.5);
-        TOFMap.put(3.664d, 1.6);
-        TOFMap.put(4.643, 1.7);
+        if (Constants.CURRENT_MODE != Constants.RobotMode.SIM) {
+            TimeOfFlightMap.put(1.989, 1.2);
+            TimeOfFlightMap.put(2.209, 1.3);
+            TimeOfFlightMap.put(2.823, 1.4);
+            TimeOfFlightMap.put(3.17, 1.5);
+            TimeOfFlightMap.put(3.664d, 1.6);
+            TimeOfFlightMap.put(4.643, 1.7);
+        } else {
+            TimeOfFlightMap.put(1.208, 1.163);
+            TimeOfFlightMap.put(1.418, 1.06);
+            TimeOfFlightMap.put(2.17, 1.0);
+            TimeOfFlightMap.put(2.72, 1.02);
+            TimeOfFlightMap.put(3.51, 1.06);
+            TimeOfFlightMap.put(4.63, 1.2);
+            TimeOfFlightMap.put(4.9, 1.24);
+            TimeOfFlightMap.put(5.73, 1.31);
+        }
     }
-
-    public record ShotCalculation(
-            double turretRotationRots,
-            double turretSpeedRotsPerSec,
-            double hoodRotationRots,
-            double shooterVelocityRotsPerSec
-    ) {}
 
     private static final double LookaheadSeconds = 0.025;
 
@@ -88,9 +115,7 @@ public class ShotCalculator {
         final Pose2d turretPose = robotPose.transformBy(PoseConstants.Turret.ROBOT_TO_TURRET_TRANSFORM_2D);
 
         final Translation2d targetTranslation = targetPose.getTranslation();
-
         final double turretToTargetDistance = targetTranslation.getDistance(turretPose.getTranslation());
-
         final Rotation2d desiredTurretAngle = targetTranslation.minus(turretPose.getTranslation())
                 .getAngle()
                 .minus(robotPose.getRotation());
@@ -118,24 +143,26 @@ public class ShotCalculator {
 
     private static ShotCalculation getMovingShotCalculation(
             final Pose2d swervePose,
-            final ChassisSpeeds swerveSpeeds,
+            final ChassisSpeeds robotRelativeSpeeds,
             final Pose2d targetPose
     ) {
-        final Pose2d turretPose = swervePose.transformBy(PoseConstants.Turret.ROBOT_TO_TURRET_TRANSFORM_2D);
+        final Pose2d turretPose = new Pose2d(
+                swervePose.transformBy(PoseConstants.Turret.ROBOT_TO_TURRET_TRANSFORM_2D).getTranslation(),
+                Rotation2d.kZero
+        );
 
         final Translation2d targetTranslation = targetPose.getTranslation();
-
         final double turretToTargetDistance = targetTranslation.getDistance(turretPose.getTranslation());
 
         final Pose2d lookaheadRobotPose = swervePose.exp(new Twist2d(
-                swerveSpeeds.vxMetersPerSecond * LookaheadSeconds,
-                swerveSpeeds.vyMetersPerSecond * LookaheadSeconds,
-                swerveSpeeds.omegaRadiansPerSecond * LookaheadSeconds
+                robotRelativeSpeeds.vxMetersPerSecond * LookaheadSeconds,
+                robotRelativeSpeeds.vyMetersPerSecond * LookaheadSeconds,
+                robotRelativeSpeeds.omegaRadiansPerSecond * LookaheadSeconds
         ));
 
         final Rotation2d robotAngle = lookaheadRobotPose.getRotation();
         final ChassisSpeeds fieldSpeeds = ChassisSpeeds.fromRobotRelativeSpeeds(
-                swerveSpeeds,
+                robotRelativeSpeeds,
                 robotAngle
         );
 
@@ -145,8 +172,9 @@ public class ShotCalculator {
         double timeOfFlight;
         Pose2d futureTurretPose = turretPose;
         double futureDistance = turretToTargetDistance;
+
         for (int i = 0; i < 20; i++) {
-            timeOfFlight = TOFMap.get(futureDistance);
+            timeOfFlight = TimeOfFlightMap.get(futureDistance);
 
             final Translation2d delta = new Translation2d(
                     turretFieldVelocity.vxMetersPerSecond * timeOfFlight,
@@ -166,10 +194,10 @@ public class ShotCalculator {
                 .getAngle()
                 .minus(futureRobotPose.getRotation());
 
-        final ShooterCalculation shotCalculation = ShotMap.get(turretToTargetDistance);
+        final ShooterCalculation shotCalculation = ShotMap.get(futureDistance);
         return new ShotCalculation(
                 desiredTurretAngle.getRotations(),
-                Units.radiansToRotations(-swerveSpeeds.omegaRadiansPerSecond),
+                Units.radiansToRotations(-robotRelativeSpeeds.omegaRadiansPerSecond),
                 shotCalculation.hoodPositionRots(),
                 shotCalculation.shooterVelocityRotsPerSec()
         );

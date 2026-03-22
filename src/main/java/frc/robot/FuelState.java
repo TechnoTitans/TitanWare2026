@@ -117,7 +117,7 @@ public class FuelState extends VirtualSubsystem {
         final double fuelIntakePerSecond = 5;
         intake.isIntaking.whileTrue(setInterval(1 / fuelIntakePerSecond, () -> simFuelCount++));
 
-        final double fuelFedPerSecond = 6;
+        final double fuelFedPerSecond = 10;
         indexer.isIndexing
                 .whileTrue(setInterval(
                         1 / fuelFedPerSecond,
@@ -357,7 +357,7 @@ public class FuelState extends VirtualSubsystem {
 
     private static final InterpolatingDoubleTreeMap ShooterOmegaToBallVelocity = new InterpolatingDoubleTreeMap();
     private static double shooterSurfaceVelocity(final double shooterVelocityRotsPerSec) {
-        return shooterVelocityRotsPerSec * (Units.inchesToMeters(3.965) * Math.PI) * 0.80;
+        return shooterVelocityRotsPerSec * (Units.inchesToMeters(3.965) * Math.PI);
     }
     static {
         ShooterOmegaToBallVelocity.put(0d, 0d);
