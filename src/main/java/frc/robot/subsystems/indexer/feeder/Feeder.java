@@ -6,9 +6,10 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.constants.Constants;
 import frc.robot.constants.HardwareConstants;
+import frc.robot.utils.commands.ext.SubsystemExt;
 import org.littletonrobotics.junction.Logger;
 
-public class Feeder extends SubsystemBase {
+public class Feeder extends SubsystemExt {
     protected static final String LogKey = "Feeder";
 
     public enum Goal {
@@ -60,7 +61,7 @@ public class Feeder extends SubsystemBase {
     }
 
     public Command toGoal(final Goal goal) {
-        return runEnd(
+        return startEnd(
                 () -> setDesiredGoal(goal),
                 () -> setDesiredGoal(Goal.OFF)
         ).withName("ToGoal: " + goal);

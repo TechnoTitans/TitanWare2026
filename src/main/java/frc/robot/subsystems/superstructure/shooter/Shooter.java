@@ -15,8 +15,8 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.constants.Constants;
 import frc.robot.constants.HardwareConstants;
-import frc.robot.utils.commands.LoggedTrigger;
-import frc.robot.utils.commands.SubsystemExt;
+import frc.robot.utils.commands.ext.SubsystemExt;
+import frc.robot.utils.commands.trigger.LoggedTrigger;
 import org.littletonrobotics.junction.Logger;
 
 import java.util.HashMap;
@@ -146,9 +146,8 @@ public class Shooter extends SubsystemExt {
     }
 
     public Command runGoal(final Goal goal) {
-        return startEnd(
-                () -> setDesiredGoal(goal),
-                () -> {}
+        return startIdle(
+                () -> setDesiredGoal(goal)
         ).withName("RunGoal");
     }
 

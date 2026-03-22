@@ -4,7 +4,7 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.subsystems.indexer.feeder.Feeder;
 import frc.robot.subsystems.indexer.spindexer.Spindexer;
-import frc.robot.utils.commands.LoggedTrigger;
+import frc.robot.utils.commands.trigger.LoggedTrigger;
 
 public class Indexer {
     protected static final String LogKey = "Indexer";
@@ -26,7 +26,7 @@ public class Indexer {
 
     public Command feed() {
         return Commands.parallel(
-                Commands.startEnd(
+                Commands.runEnd(
                         () -> indexing = true,
                         () -> indexing = false
                 ),

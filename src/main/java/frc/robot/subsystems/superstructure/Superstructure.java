@@ -9,7 +9,7 @@ import frc.robot.subsystems.superstructure.hood.Hood;
 import frc.robot.subsystems.superstructure.shooter.Shooter;
 import frc.robot.subsystems.superstructure.turret.Turret;
 import frc.robot.utils.Container;
-import frc.robot.utils.commands.LoggedTrigger;
+import frc.robot.utils.commands.trigger.LoggedTrigger;
 import frc.robot.utils.subsystems.VirtualSubsystem;
 import org.littletonrobotics.junction.Logger;
 
@@ -74,7 +74,6 @@ public class Superstructure extends VirtualSubsystem {
     private InternalGoal desiredGoal = InternalGoal.STOW;
     private InternalGoal currentGoal = InternalGoal.NONE;
 
-    public final LoggedTrigger atSetpoint;
     public final LoggedTrigger safeForTrench;
 
     public Superstructure(
@@ -86,10 +85,6 @@ public class Superstructure extends VirtualSubsystem {
         this.hood = hood;
         this.shooter = shooter;
 
-        this.atSetpoint = turret.atSetpoint
-                .and(hood.atSetpoint)
-                .and(shooter.atSetpoint)
-                .debounce(0.1, Debouncer.DebounceType.kFalling);
         this.safeForTrench = hood.safeForTrench;
     }
 
@@ -97,7 +92,7 @@ public class Superstructure extends VirtualSubsystem {
     public void periodic() {
         final double superstructurePeriodicUpdateStart = Timer.getFPGATimestamp();
 
-        if (atSetpoint.getAsBoolean()) {
+        if (hood.atSetpoint() && shooter.atSetpoint() && turret.atSetpoint()) {
             currentGoal = desiredGoal;
         } else {
             currentGoal = InternalGoal.NONE;
@@ -106,14 +101,13 @@ public class Superstructure extends VirtualSubsystem {
         Logger.recordOutput(LogKey + "/CurrentGoal", currentGoal);
         Logger.recordOutput(LogKey + "/DesiredGoal", desiredGoal);
 
-        Logger.recordOutput(LogKey + "/AtSetpoint", atSetpoint);
-
         Logger.recordOutput(
                 LogKey + "/PeriodicIOPeriodMs",
                 Units.secondsToMilliseconds(Timer.getFPGATimestamp() - superstructurePeriodicUpdateStart)
         );
     }
 
+    //TODO: Make toGoalLike
     public Command toGoal(final Goal goal) {
         return Commands.parallel(
                 Commands.runOnce(() -> setDesiredGoal(goal)),
@@ -123,6 +117,7 @@ public class Superstructure extends VirtualSubsystem {
         ).withName("ToGoal:" + goal);
     }
 
+    @SuppressWarnings("unused")
     public Command setGoal(final Goal goal) {
         return Commands.runOnce(() -> setDesiredGoal(goal))
                 .withName("SetGoal: " + goal);
@@ -140,6 +135,10 @@ public class Superstructure extends VirtualSubsystem {
                 shotCalculationSupplier,
                 cached -> hood.runGoal(Hood.Goal.STOW)
         ).withName("RunParametersWithHoodStowed");
+    }
+
+    public boolean atSetpoint() {
+        return currentGoal == desiredGoal;
     }
 
     public double getShooterVelocityRotsPerSec() {

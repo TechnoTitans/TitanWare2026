@@ -1,4 +1,4 @@
-package frc.robot.utils.commands;
+package frc.robot.utils.commands.trigger;
 
 import edu.wpi.first.math.filter.Debouncer;
 import edu.wpi.first.wpilibj.event.EventLoop;

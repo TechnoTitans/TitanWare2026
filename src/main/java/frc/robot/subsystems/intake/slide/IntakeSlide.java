@@ -9,8 +9,8 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.constants.Constants;
 import frc.robot.constants.HardwareConstants;
-import frc.robot.utils.commands.LoggedTrigger;
-import frc.robot.utils.commands.SubsystemExt;
+import frc.robot.utils.commands.ext.SubsystemExt;
+import frc.robot.utils.commands.trigger.LoggedTrigger;
 import frc.robot.utils.control.DeltaTime;
 import org.littletonrobotics.junction.Logger;
 
@@ -121,8 +121,6 @@ public class IntakeSlide extends SubsystemExt {
 
     private final LoggedTrigger.Group group = LoggedTrigger.Group.from(LogKey);
     public final LoggedTrigger atSetpoint = group.t("AtSetpoint", this::atSetpoint);
-    private final LoggedTrigger atUpperLimit = group.t("AtUpperLimit", this::atUpperLimit);
-    private final LoggedTrigger atLowerLimit = group.t("AtLowerLimit", this::atLowerLimit);
 
     public IntakeSlide(final Constants.RobotMode mode, final HardwareConstants.IntakeSlideConstants constants) {
         this.constants = constants;
@@ -177,6 +175,9 @@ public class IntakeSlide extends SubsystemExt {
         Logger.recordOutput(LogKey + "/DesiredGoal", desiredGoal.toString());
         Logger.recordOutput(LogKey + "/PositionSetpointRots", positionSetpointRots);
         Logger.recordOutput(LogKey + "/HoldMode", holdMode);
+
+        Logger.recordOutput(LogKey + "/AtUpperLimit", atUpperLimit());
+        Logger.recordOutput(LogKey + "/AtLowerLimit", atLowerLimit());
 
         Logger.recordOutput(
                 LogKey + "/PeriodicIOPeriodMs",

@@ -1,4 +1,4 @@
-package frc.robot.utils.commands;
+package frc.robot.utils.commands.fast;
 
 import edu.wpi.first.util.sendable.SendableBuilder;
 import edu.wpi.first.wpilibj2.command.Command;

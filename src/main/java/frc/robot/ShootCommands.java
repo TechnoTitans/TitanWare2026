@@ -12,7 +12,7 @@ import frc.robot.subsystems.indexer.Indexer;
 import frc.robot.subsystems.intake.Intake;
 import frc.robot.subsystems.superstructure.ShotCalculator;
 import frc.robot.subsystems.superstructure.Superstructure;
-import frc.robot.utils.commands.LoggedTrigger;
+import frc.robot.utils.commands.trigger.LoggedTrigger;
 import frc.robot.utils.subsystems.VirtualSubsystem;
 import frc.robot.utils.teleop.SwerveSpeed;
 import org.littletonrobotics.junction.Logger;
@@ -121,12 +121,12 @@ public class ShootCommands extends VirtualSubsystem {
                 Commands.repeatingSequence(
                         Commands.waitUntil(targetValid
                                 .and(swerveReady)
-                                .and(superstructure.atSetpoint)),
+                                .and(superstructure::atSetpoint)),
                         Commands.deadline(
                                 indexer.feed()
                                         .onlyWhile(targetValid
                                                 .and(swerveReady)
-                                                .and(superstructure.atSetpoint)),
+                                                .and(superstructure::atSetpoint)),
                                 intake.stowFeed().asProxy()
                                         .unless(intake.isIntaking)
                         )
@@ -148,11 +148,11 @@ public class ShootCommands extends VirtualSubsystem {
     public Command shootNoVision() {
         return Commands.deadline(
                 Commands.repeatingSequence(
-                        Commands.waitUntil(superstructure.atSetpoint),
+                        Commands.waitUntil(superstructure::atSetpoint),
                         Commands.deadline(
                                 indexer.feed()
 
-                                        .onlyWhile(superstructure.atSetpoint),
+                                        .onlyWhile(superstructure::atSetpoint),
                                 intake.stowFeed().asProxy()
                         )
                 ),

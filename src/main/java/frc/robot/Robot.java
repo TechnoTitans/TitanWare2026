@@ -29,9 +29,9 @@ import frc.robot.subsystems.superstructure.shooter.Shooter;
 import frc.robot.subsystems.superstructure.turret.Turret;
 import frc.robot.subsystems.vision.PhotonVision;
 import frc.robot.utils.closeables.ToClose;
-import frc.robot.utils.commands.CommandsExt;
-import frc.robot.utils.commands.LoggedTrigger;
-import frc.robot.utils.commands.RobotModeLoggedTriggers;
+import frc.robot.utils.commands.ext.CommandsExt;
+import frc.robot.utils.commands.trigger.LoggedTrigger;
+import frc.robot.utils.commands.trigger.RobotModeLoggedTriggers;
 import frc.robot.utils.ctre.RefreshAll;
 import frc.robot.utils.logging.CommandLogger;
 import frc.robot.utils.subsystems.VirtualSubsystem;
@@ -451,11 +451,10 @@ public class Robot extends LoggedRobot {
                         SwerveSpeed.Speeds.NORMAL
                 ).withName("SwerveSpeedSlow"));
 
-        driverController.leftTrigger(0.5, teleopEventLoop).whileTrue(
-                intake.intake()
-        );
+        driverController.leftTrigger(0.5, teleopEventLoop)
+                .whileTrue(intake.intake());
 
-        driverController.a(teleopEventLoop)
+        driverController.rightTrigger(0.5, teleopEventLoop)
                 .whileTrue(shootCommands.shoot())
                 .onFalse(intake.deploy());
 
@@ -463,16 +462,20 @@ public class Robot extends LoggedRobot {
                 .whileTrue(shootCommands.shootNoVision())
                 .onFalse(intake.deploy());
 
-        coController.leftTrigger(0.5, teleopEventLoop).whileTrue(intake.intake());
+        coController.leftTrigger(0.5, teleopEventLoop)
+                .whileTrue(intake.intake());
 
-        coController.y(teleopEventLoop).onTrue(intake.deploy());
+        coController.y(teleopEventLoop)
+                .onTrue(intake.deploy());
 
-        coController.a(teleopEventLoop).onTrue(intake.stow());
+        coController.a(teleopEventLoop)
+                .onTrue(intake.stow());
 
         coController.rightTrigger(0.5, teleopEventLoop)
                 .whileTrue(shootCommands.shoot())
                 .onFalse(intake.deploy());
 
-        coController.b(teleopEventLoop).whileTrue(indexer.backOut());
+        coController.b(teleopEventLoop)
+                .whileTrue(indexer.backOut());
     }
 }

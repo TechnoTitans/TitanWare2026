@@ -6,9 +6,10 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.constants.Constants;
 import frc.robot.constants.HardwareConstants;
+import frc.robot.utils.commands.ext.SubsystemExt;
 import org.littletonrobotics.junction.Logger;
 
-public class IntakeRollers extends SubsystemBase {
+public class IntakeRollers extends SubsystemExt {
     protected static final String LogKey = "IntakeRollers";
 
     public enum Goal {

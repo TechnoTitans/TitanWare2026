@@ -14,8 +14,8 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.constants.Constants;
 import frc.robot.constants.HardwareConstants;
-import frc.robot.utils.commands.LoggedTrigger;
-import frc.robot.utils.commands.SubsystemExt;
+import frc.robot.utils.commands.ext.SubsystemExt;
+import frc.robot.utils.commands.trigger.LoggedTrigger;
 import org.littletonrobotics.junction.Logger;
 
 import java.util.HashMap;
@@ -85,9 +85,6 @@ public class Turret extends SubsystemExt {
     private double positionSetpointRots = 0.0;
     private double velocitySetpointRotsPerSec = 0.0;
 
-    private final LoggedTrigger.Group group = LoggedTrigger.Group.from(LogKey);
-    public final LoggedTrigger atSetpoint = group.t("AtSetpoint", this::atSetpoint);
-
     public Turret(final Constants.RobotMode mode, final HardwareConstants.TurretConstants constants) {
         this.constants = constants;
         this.turretIO = switch (mode) {
@@ -104,7 +101,6 @@ public class Turret extends SubsystemExt {
                 Volts.of(2),
                 Seconds.of(6)
         );
-
 
         //TODO: Get real turret offsets
         final Rotation2d absolutePosition = CRT.findAbsolutePosition(
@@ -145,6 +141,9 @@ public class Turret extends SubsystemExt {
         Logger.recordOutput(LogKey + "/PositionSetpointRots", positionSetpointRots);
         Logger.recordOutput(LogKey + "/VelocitySetpointRotsPerSec", velocitySetpointRotsPerSec);
 
+        Logger.recordOutput(LogKey + "/AtUpperLimit", atUpperLimit());
+        Logger.recordOutput(LogKey + "/AtLowerLimit", atLowerLimit());
+
         Logger.recordOutput(
                 LogKey + "/PeriodicIOPeriodMs",
                 Units.secondsToMilliseconds(Timer.getFPGATimestamp() - turretPeriodicUpdateStart)
@@ -159,15 +158,13 @@ public class Turret extends SubsystemExt {
     }
 
     public Command setGoal(final Goal goal) {
-     return runOnce(() -> setDesiredGoal(goal))
+        return runOnce(() -> setDesiredGoal(goal))
              .withName("SetGoal: " + goal);
     }
 
     public Command runGoal(final Goal goal) {
-        return startEnd(
-                () -> setDesiredGoal(goal),
-                () -> {}
-        ).withName("RunGoal");
+        return startIdle(() -> setDesiredGoal(goal))
+                .withName("RunGoal");
     }
 
     public Command runPositionWithVelocity(final DoubleSupplier positionRots, final DoubleSupplier velocityRotsPerSec) {
@@ -185,6 +182,10 @@ public class Turret extends SubsystemExt {
         return Rotation2d.fromRotations(inputs.turretPositionRots);
     }
 
+    public boolean atSetpoint() {
+        return currentGoal == desiredGoal;
+    }
+
     private void setDesiredGoal(final Goal goal) {
         desiredGoal = InternalGoal.fromGoal(goal);
         setPosition(desiredGoal.goal.positionSetpointRots);
@@ -200,10 +201,6 @@ public class Turret extends SubsystemExt {
         positionSetpointRots = optimizeWrap(positionRots);
         velocitySetpointRotsPerSec = velocityRotsPerSec;
         turretIO.toTurretContinuousPosition(positionSetpointRots, velocityRotsPerSec);
-    }
-
-    private boolean atSetpoint() {
-        return currentGoal == desiredGoal;
     }
 
     private boolean atUpperLimit() {

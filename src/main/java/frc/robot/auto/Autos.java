@@ -18,7 +18,7 @@ import frc.robot.subsystems.intake.Intake;
 import frc.robot.subsystems.superstructure.ShotCalculator;
 import frc.robot.subsystems.superstructure.Superstructure;
 import frc.robot.subsystems.vision.PhotonVision;
-import frc.robot.utils.commands.LoggedTrigger;
+import frc.robot.utils.commands.trigger.LoggedTrigger;
 import org.littletonrobotics.junction.Logger;
 
 import java.util.function.Supplier;
@@ -153,12 +153,12 @@ public class Autos {
         return deadline(
                 repeatingSequence(
                         waitUntil(robotStopped
-                                .and(superstructure.atSetpoint)),
+                                .and(superstructure::atSetpoint)),
                         runOnce(timer::start),
                         deadline(
                                 indexer.feed()
                                         .onlyWhile(robotStopped
-                                                .and(superstructure.atSetpoint))
+                                                .and(superstructure::atSetpoint))
                                         .finallyDo(timer::stop),
                                 intake.stowFeed()
                         )
@@ -179,11 +179,11 @@ public class Autos {
 
         return deadline(
                 repeatingSequence(
-                        waitUntil(superstructure.atSetpoint),
+                        waitUntil(superstructure::atSetpoint),
                         runOnce(timer::start),
                         deadline(
                                 indexer.feed()
-                                        .onlyWhile(superstructure.atSetpoint)
+                                        .onlyWhile(superstructure::atSetpoint)
                                         .finallyDo(timer::stop),
                                 intake.stowFeed()
                         )
@@ -316,7 +316,7 @@ public class Autos {
                 sequence(
                         shootStatic(),
                         deadline(
-                                waitUntil(superstructure.atSetpoint))
+                                waitUntil(superstructure::atSetpoint))
                                 .andThen(secondSweep.cmd())
                                 .asProxy(),
                         superstructure.runParametersWithHoodStowed(staticShotCalculation).asProxy()

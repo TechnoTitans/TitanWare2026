@@ -7,8 +7,8 @@ import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.constants.Constants;
 import frc.robot.constants.HardwareConstants;
-import frc.robot.utils.commands.LoggedTrigger;
-import frc.robot.utils.commands.SubsystemExt;
+import frc.robot.utils.commands.ext.SubsystemExt;
+import frc.robot.utils.commands.trigger.LoggedTrigger;
 import org.littletonrobotics.junction.Logger;
 
 import java.util.HashMap;
@@ -74,10 +74,7 @@ public class Hood extends SubsystemExt {
     private double positionSetpointRots = 0.0;
 
     private final LoggedTrigger.Group group = LoggedTrigger.Group.from(LogKey);
-    public final LoggedTrigger atSetpoint = group.t("AtSetpoint", this::atSetpoint);
     public final LoggedTrigger safeForTrench = group.t("SafeForTrench", () -> atGoal(Goal.STOW));
-    private final LoggedTrigger atUpperLimit = group.t("AtUpperLimit", this::atUpperLimit);
-    private final LoggedTrigger atLowerLimit = group.t("AtLowerLimit", this::atLowerLimit);
 
     public Hood(final Constants.RobotMode mode, final HardwareConstants.HoodConstants constants) {
         this.constants = constants;
@@ -117,6 +114,9 @@ public class Hood extends SubsystemExt {
         Logger.recordOutput(LogKey + "/DesiredGoal", desiredGoal.toString());
         Logger.recordOutput(LogKey + "/PositionSetpointRots", positionSetpointRots);
 
+        Logger.recordOutput(LogKey + "/AtUpperLimit", atUpperLimit());
+        Logger.recordOutput(LogKey + "/AtLowerLimit", atLowerLimit());
+
         Logger.recordOutput(
                 LogKey + "/PeriodicIOPeriodMs",
                 Units.secondsToMilliseconds(Timer.getFPGATimestamp() - hoodPeriodicUpdateStart)
@@ -136,10 +136,8 @@ public class Hood extends SubsystemExt {
     }
 
     public Command runGoal(final Goal goal) {
-        return startEnd(
-                () -> setDesiredGoal(goal),
-                () -> {}
-        ).withName("RunGoal");
+        return startIdle(() -> setDesiredGoal(goal))
+                .withName("RunGoal");
     }
 
     public Command runPosition(final DoubleSupplier positionRotsSupplier) {
@@ -153,6 +151,10 @@ public class Hood extends SubsystemExt {
         return Rotation2d.fromRotations(inputs.hoodPositionRots);
     }
 
+    public boolean atSetpoint() {
+        return currentGoal == desiredGoal;
+    }
+
     private void setDesiredGoal(final Goal goal) {
         desiredGoal = InternalGoal.fromGoal(goal);
         setDesiredPosition(goal.positionRots);
@@ -161,10 +163,6 @@ public class Hood extends SubsystemExt {
     private void setDesiredPosition(final double positionRots) {
         positionSetpointRots = positionRots;
         hoodIO.toHoodPosition(positionRots);
-    }
-
-    private boolean atSetpoint() {
-        return currentGoal == desiredGoal;
     }
 
     private boolean atUpperLimit() {
