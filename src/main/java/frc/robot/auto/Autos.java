@@ -273,16 +273,39 @@ public class Autos {
         return routine;
     }
 
+    public AutoRoutine leftFerryClean() {
+        final AutoRoutine routine = autoFactory.newRoutine("LeftFerryClean");
+        final AutoTrajectory ferry = routine.trajectory("LeftFerry");
+        final AutoTrajectory cleanSweep = routine.trajectory("LeftClean");
+
+        routine.active().onTrue(runStartingTrajectory(ferry));
+
+        routine.active().whileTrue(
+                Commands.parallel(
+                        intake.intake(),
+                        shootWhileMoving()
+                )
+        );
+
+        ferry.done().onTrue(
+                cleanSweep.cmd()
+        );
+
+        cleanSweep.done().onTrue(
+                swerve.runWheelXCommand()
+        );
+
+        return routine;
+    }
+
     public AutoRoutine rightFerryClean() {
         final AutoRoutine routine = autoFactory.newRoutine("RightFerryClean");
         final AutoTrajectory ferry = routine.trajectory("RightFerry");
         final AutoTrajectory cleanSweep = routine.trajectory("RightClean");
 
-        routine.active().onTrue(runStartingTrajectory(ferry));
-
-        ferry.active().onTrue(
-                Commands.sequence(
-                        intake.deployWithRollers(),
+        routine.active().whileTrue(
+                Commands.parallel(
+                        intake.intake(),
                         shootWhileMoving()
                 )
         );
@@ -328,7 +351,7 @@ public class Autos {
             final Supplier<ShotCalculator.ShotCalculation> tracking
     ) {
         return parallel(
-                intake.deployWithRollers(),
+                intake.intake(),
                 sequence(
                         waitUntil(targetIsHub.negate()
                                 .and(turretSafe)),
@@ -373,9 +396,7 @@ public class Autos {
                         waitUntil(superstructure::atSetpoint),
                         deadline(
                                 indexer.feed()
-                                        .onlyWhile(superstructure::atSetpoint),
-                                intake.stowFeed()
-                                        .unless(intake.isIntaking)
+                                        .onlyWhile(superstructure::atSetpoint)
                         )
                 ),
                 superstructure.runParameters(movingShotCalculation)

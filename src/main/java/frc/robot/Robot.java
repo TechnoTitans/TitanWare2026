@@ -438,7 +438,13 @@ public class Robot extends LoggedRobot {
         ));
 
         autoChooser.addAutoOption(new AutoOption(
-                "RightFerry",
+                "LeftFerryClean",
+                autos::leftFerryClean,
+                Constants.CompetitionType.COMPETITION
+        ));
+
+        autoChooser.addAutoOption(new AutoOption(
+                "RightFerryClean",
                 autos::rightFerryClean,
                 Constants.CompetitionType.COMPETITION
         ));
