@@ -15,7 +15,6 @@ import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.constants.Constants;
 import frc.robot.constants.HardwareConstants;
 import frc.robot.utils.commands.ext.SubsystemExt;
-import frc.robot.utils.commands.trigger.LoggedTrigger;
 import org.littletonrobotics.junction.Logger;
 
 import java.util.HashMap;
@@ -153,7 +152,7 @@ public class Turret extends SubsystemExt {
     public Command toGoal(final Goal goal) {
         return startEnd(
                 () -> setDesiredGoal(goal),
-                ()-> setDesiredGoal(Goal.STOW)
+                () -> setDesiredGoal(Goal.STOW)
         ).withName("ToGoal: " + goal);
     }
 
@@ -170,7 +169,7 @@ public class Turret extends SubsystemExt {
     public Command runPositionWithVelocity(final DoubleSupplier positionRots, final DoubleSupplier velocityRotsPerSec) {
         return instantRun(
                 () -> desiredGoal = InternalGoal.TRACKING,
-                () -> setPositionWithVelocity(positionRots.getAsDouble(), velocityRotsPerSec.getAsDouble())
+                () -> setDesiredPositionWithVelocity(positionRots.getAsDouble(), velocityRotsPerSec.getAsDouble())
         ).withName("RunPositionWithVelocity");
     }
 
@@ -188,16 +187,16 @@ public class Turret extends SubsystemExt {
 
     private void setDesiredGoal(final Goal goal) {
         desiredGoal = InternalGoal.fromGoal(goal);
-        setPosition(desiredGoal.goal.positionSetpointRots);
+        setDesiredPosition(desiredGoal.goal.positionSetpointRots);
     }
 
-    private void setPosition(final double positionRots) {
-        positionSetpointRots = optimizeWrap(positionRots);
+    private void setDesiredPosition(final double positionRots) {
+        positionSetpointRots = positionRots;
         velocitySetpointRotsPerSec = 0;
         turretIO.toTurretPosition(positionSetpointRots);
     }
 
-    private void setPositionWithVelocity(final double positionRots, final double velocityRotsPerSec) {
+    private void setDesiredPositionWithVelocity(final double positionRots, final double velocityRotsPerSec) {
         positionSetpointRots = optimizeWrap(positionRots);
         velocitySetpointRotsPerSec = velocityRotsPerSec;
         turretIO.toTurretContinuousPosition(positionSetpointRots, velocityRotsPerSec);

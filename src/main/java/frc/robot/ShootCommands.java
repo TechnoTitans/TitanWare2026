@@ -151,7 +151,6 @@ public class ShootCommands extends VirtualSubsystem {
                         Commands.waitUntil(superstructure::atSetpoint),
                         Commands.deadline(
                                 indexer.feed()
-
                                         .onlyWhile(superstructure::atSetpoint),
                                 intake.stowFeed().asProxy()
                         )

@@ -29,8 +29,8 @@ public class FieldConstants {
     public static final double RED_FERRY_LEFT_Y_BOUNDARY = BLUE_FERRY_RIGHT_Y_BOUNDARY;
     public static final double RED_FERRY_RIGHT_Y_BOUNDARY = BLUE_FERRY_LEFT_Y_BOUNDARY;
 
-    public static final Pose2d BLUE_FERRY_LEFT = new Pose2d(2, 2, Rotation2d.kZero);
-    public static final Pose2d BLUE_FERRY_RIGHT = new Pose2d(2, 6, Rotation2d.kZero);
+    public static final Pose2d BLUE_FERRY_LEFT = new Pose2d(4, 2, Rotation2d.kZero);
+    public static final Pose2d BLUE_FERRY_RIGHT = new Pose2d(4, 6, Rotation2d.kZero);
 
     public static final Pose2d RED_FERRY_LEFT = BLUE_FERRY_LEFT.relativeTo(RED_ORIGIN);
     public static final Pose2d RED_FERRY_RIGHT = BLUE_FERRY_RIGHT.relativeTo(RED_ORIGIN);

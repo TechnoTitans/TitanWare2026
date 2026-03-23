@@ -117,7 +117,7 @@ public class FuelState extends VirtualSubsystem {
         final double fuelIntakePerSecond = 5;
         intake.isIntaking.whileTrue(setInterval(1 / fuelIntakePerSecond, () -> simFuelCount++));
 
-        final double fuelFedPerSecond = 10;
+        final double fuelFedPerSecond = 12;
         indexer.isIndexing
                 .whileTrue(setInterval(
                         1 / fuelFedPerSecond,

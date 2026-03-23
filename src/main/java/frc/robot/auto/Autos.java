@@ -183,7 +183,8 @@ public class Autos {
                         runOnce(timer::start),
                         deadline(
                                 indexer.feed()
-                                        .onlyWhile(superstructure::atSetpoint)
+                                        .onlyWhile(robotStopped
+                                                .and(superstructure::atSetpoint))
                                         .finallyDo(timer::stop),
                                 intake.stowFeed()
                         )

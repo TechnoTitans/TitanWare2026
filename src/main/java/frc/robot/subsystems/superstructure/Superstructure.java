@@ -114,7 +114,9 @@ public class Superstructure extends VirtualSubsystem {
                 turret.toGoal(goal.turretGoal),
                 hood.toGoal(goal.hoodGoal),
                 shooter.toGoal(goal.shooterGoal)
-        ).withName("ToGoal:" + goal);
+        )
+                .finallyDo(() -> setDesiredGoal(Goal.STOW))
+                .withName("ToGoal:" + goal);
     }
 
     @SuppressWarnings("unused")

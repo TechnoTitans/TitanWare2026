@@ -65,10 +65,10 @@ public class ShotCalculator {
             ShotMap.put(3.0, new ShooterCalculation(22.5, 0.034));
             ShotMap.put(3.5, new ShooterCalculation(23, 0.045));
             ShotMap.put(4.0, new ShooterCalculation(24, 0.0475));
-            ShotMap.put(4.5, new ShooterCalculation(25, 0.05));
-            ShotMap.put(5.0, new ShooterCalculation(26, 0.0525));
-            ShotMap.put(5.5, new ShooterCalculation(27, 0.055));
-            ShotMap.put(6.0, new ShooterCalculation(27.75, 0.0565));
+            ShotMap.put(4.5, new ShooterCalculation(25.5, 0.05));
+            ShotMap.put(5.0, new ShooterCalculation(26.5, 0.0525));
+            ShotMap.put(5.5, new ShooterCalculation(27.5, 0.055));
+            ShotMap.put(6.0, new ShooterCalculation(28.75, 0.0565));
         }
     }
 
