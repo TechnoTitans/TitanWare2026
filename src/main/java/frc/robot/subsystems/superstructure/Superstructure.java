@@ -1,6 +1,5 @@
 package frc.robot.subsystems.superstructure;
 
-import edu.wpi.first.math.filter.Debouncer;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -109,11 +108,13 @@ public class Superstructure extends VirtualSubsystem {
 
     //TODO: Make toGoalLike
     public Command toGoal(final Goal goal) {
-        return Commands.parallel(
+        return Commands.sequence(
                 Commands.runOnce(() -> setDesiredGoal(goal)),
-                turret.toGoal(goal.turretGoal),
-                hood.toGoal(goal.hoodGoal),
-                shooter.toGoal(goal.shooterGoal)
+                Commands.parallel(
+                        turret.toGoal(goal.turretGoal),
+                        hood.toGoal(goal.hoodGoal),
+                        shooter.toGoal(goal.shooterGoal)
+                )
         )
                 .finallyDo(() -> setDesiredGoal(Goal.STOW))
                 .withName("ToGoal:" + goal);

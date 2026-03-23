@@ -109,9 +109,7 @@ public class Turret extends SubsystemExt {
                 inputs.secondaryEncoderPositionRots,
                 constants.secondaryEncoderTooth()
         );
-//        this.turretIO.seedTurretPosition(absolutePosition);
-
-        this.turretIO.setPosition(0);
+        this.turretIO.seedTurretPosition(absolutePosition);
     }
 
     @Override

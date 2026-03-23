@@ -210,7 +210,7 @@ public class TurretIOSim implements TurretIO {
     public void toTurretPosition(final double positionRots) {
         turretMotor.setControl(
                 motionMagicExpoVoltage
-                        .withPosition(0)
+                        .withPosition(positionRots)
                         .withSlot(0)
         );
     }
@@ -221,7 +221,7 @@ public class TurretIOSim implements TurretIO {
                 positionVoltage
                         .withPosition(positionRots)
                         .withVelocity(velocityRotsPerSec)
-                        .withSlot(0)
+                        .withSlot(1)
         );
     }
 

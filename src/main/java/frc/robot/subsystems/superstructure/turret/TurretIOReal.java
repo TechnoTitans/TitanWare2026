@@ -157,7 +157,7 @@ public class TurretIOReal implements TurretIO {
     public void toTurretPosition(final double positionRots) {
         turretMotor.setControl(
                 motionMagicExpoVoltage
-                    .withPosition(0)
+                    .withPosition(positionRots)
                     .withSlot(0)
         );
     }
