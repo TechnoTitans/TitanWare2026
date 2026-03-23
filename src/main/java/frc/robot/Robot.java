@@ -436,6 +436,12 @@ public class Robot extends LoggedRobot {
                 autos::rightDoubleSweep,
                 Constants.CompetitionType.COMPETITION
         ));
+
+        autoChooser.addAutoOption(new AutoOption(
+                "RightFerry",
+                autos::rightFerryClean,
+                Constants.CompetitionType.COMPETITION
+        ));
     }
 
     public void configureButtonBindings(final EventLoop teleopEventLoop) {

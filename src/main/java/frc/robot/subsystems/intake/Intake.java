@@ -43,6 +43,16 @@ public class Intake {
                 .withName("DeployIntake");
     }
 
+    public Command deployWithRollers() {
+        return Commands.parallel(
+                slide.setGoal(IntakeSlide.Goal.EXTEND),
+                Commands.sequence(
+                        Commands.waitUntil(() -> slide.atGoal(IntakeSlide.Goal.EXTEND)),
+                        rollers.setGoal(IntakeRollers.Goal.INTAKE)
+                )
+        ).withName("DeployWithRollers");
+    }
+
     public Command stow() {
         return Commands.parallel(
                 slide.setGoal(IntakeSlide.Goal.STOW),

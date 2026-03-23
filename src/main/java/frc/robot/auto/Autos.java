@@ -83,7 +83,7 @@ public class Autos {
         this.movingShotCalculation = ShotCalculator.getMovingShotCalculationSupplier(
                 swerve::getPose,
                 swerve::getRobotRelativeSpeeds,
-                FieldConstants::getHubPose
+                getTargetPoseSupplier()
         );
 
         final LoggedTrigger.Group group = LoggedTrigger.Group.from(LogKey);
@@ -103,95 +103,6 @@ public class Autos {
                             : (turretX <= safeXClose || turretX >= safeXFar);
                 }
         );
-    }
-
-    private Command runStartingTrajectory(final AutoTrajectory startingTrajectory) {
-        return Commands.sequence(
-                startingTrajectory.resetOdometry(),
-                startingTrajectory.cmd()
-        ).withName("RunStartingTrajectory");
-    }
-
-    private Supplier<ShotCalculator.ShotCalculation> staticParameters(final Supplier<Pose2d> robotPoseSupplier) {
-        return ShotCalculator.getStaticShotCalculationSupplier(
-                robotPoseSupplier,
-                swerve::getFieldRelativeSpeeds,
-                FieldConstants::getHubPose
-        );
-    }
-
-    private Supplier<ShotCalculator.ShotCalculation> staticParametersFromPose(final Pose2d pose) {
-        return staticParameters(() -> pose);
-    }
-
-    private Supplier<ShotCalculator.ShotCalculation> staticParametersFromFinalPose(final AutoTrajectory trajectory) {
-        return trajectory.getFinalPose()
-                .map(this::staticParametersFromPose)
-                .orElse(staticShotCalculation);
-    }
-
-    private Command intakeFromTrench(
-            final Supplier<ShotCalculator.ShotCalculation> fixed,
-            final Supplier<ShotCalculator.ShotCalculation> tracking
-    ) {
-        return parallel(
-                intake.intake(),
-                sequence(
-                        waitUntil(targetIsHub.negate()
-                                .and(turretSafe)),
-                        superstructure.runParametersWithHoodStowed(fixed)
-                                .until(targetIsHub.and(turretSafe)),
-                        superstructure.runParameters(tracking)
-                                .onlyIf(turretSafe)
-                )
-        ).withName("IntakeFromTrench");
-    }
-
-    private Command shootStatic() {
-        final Timer timer = new Timer();
-
-        return deadline(
-                repeatingSequence(
-                        waitUntil(robotStopped
-                                .and(superstructure::atSetpoint)),
-                        runOnce(timer::start),
-                        deadline(
-                                indexer.feed()
-                                        .onlyWhile(robotStopped
-                                                .and(superstructure::atSetpoint))
-                                        .finallyDo(timer::stop),
-                                intake.stowFeed()
-                        )
-                ).until(() -> timer.hasElapsed(SHOOTING_TIME)),
-                superstructure.runParameters(staticShotCalculation)
-                                .onlyIf(turretSafe),
-                swerve.runWheelXCommand(),
-                Commands.run(
-                        () -> Logger.recordOutput("RobotStopped", robotStopped)
-                ),
-                runOnce(timer::reset)
-        )
-                .withName("ShootStatic");
-    }
-
-    private Command shootWhileMoving() {
-        final Timer timer = new Timer();
-
-        return deadline(
-                repeatingSequence(
-                        waitUntil(superstructure::atSetpoint),
-                        runOnce(timer::start),
-                        deadline(
-                                indexer.feed()
-                                        .onlyWhile(robotStopped
-                                                .and(superstructure::atSetpoint))
-                                        .finallyDo(timer::stop),
-                                intake.stowFeed()
-                        )
-                ).until(() -> timer.hasElapsed(SHOOTING_TIME)),
-                superstructure.runParameters(movingShotCalculation)
-                        .onlyIf(turretSafe)
-        ).withName("ShootWhileMoving");
     }
 
     public AutoRoutine doNothing() {
@@ -286,7 +197,6 @@ public class Autos {
         return routine;
     }
 
-    //TODO: Work in progress
     public AutoRoutine leftDoubleSweep() {
         final AutoRoutine routine = autoFactory.newRoutine("LeftDoubleSweep");
         final AutoTrajectory firstSweep = routine.trajectory("LeftFirstSweep");
@@ -362,10 +272,133 @@ public class Autos {
 
         return routine;
     }
-//
-//    public AutoRoutine rightSweepFerryClean() {
-//        final AutoRoutine routine = autoFactory.newRoutine("RightSweepFerryClean");
-//        final AutoTrajectory firstSweep = routine.trajectory("RightFirstSweep");
-//        final AutoTrajectory cleanSweep = routine.trajectory("RightCleanSweep");
-//    }
+
+    public AutoRoutine rightFerryClean() {
+        final AutoRoutine routine = autoFactory.newRoutine("RightFerryClean");
+        final AutoTrajectory ferry = routine.trajectory("RightFerry");
+        final AutoTrajectory cleanSweep = routine.trajectory("RightClean");
+
+        routine.active().onTrue(runStartingTrajectory(ferry));
+
+        ferry.active().onTrue(
+                Commands.sequence(
+                        intake.deployWithRollers(),
+                        shootWhileMoving()
+                )
+        );
+
+        ferry.done().onTrue(
+                cleanSweep.cmd()
+        );
+
+        cleanSweep.done().onTrue(
+                swerve.runWheelXCommand()
+        );
+
+        return routine;
+    }
+
+    private Command runStartingTrajectory(final AutoTrajectory startingTrajectory) {
+        return Commands.sequence(
+                startingTrajectory.resetOdometry(),
+                startingTrajectory.cmd()
+        ).withName("RunStartingTrajectory");
+    }
+
+    private Supplier<ShotCalculator.ShotCalculation> staticParameters(final Supplier<Pose2d> robotPoseSupplier) {
+        return ShotCalculator.getStaticShotCalculationSupplier(
+                robotPoseSupplier,
+                swerve::getFieldRelativeSpeeds,
+                FieldConstants::getHubPose
+        );
+    }
+
+    private Supplier<ShotCalculator.ShotCalculation> staticParametersFromPose(final Pose2d pose) {
+        return staticParameters(() -> pose);
+    }
+
+    private Supplier<ShotCalculator.ShotCalculation> staticParametersFromFinalPose(final AutoTrajectory trajectory) {
+        return trajectory.getFinalPose()
+                .map(this::staticParametersFromPose)
+                .orElse(staticShotCalculation);
+    }
+
+    private Command intakeFromTrench(
+            final Supplier<ShotCalculator.ShotCalculation> fixed,
+            final Supplier<ShotCalculator.ShotCalculation> tracking
+    ) {
+        return parallel(
+                intake.deployWithRollers(),
+                sequence(
+                        waitUntil(targetIsHub.negate()
+                                .and(turretSafe)),
+                        superstructure.runParametersWithHoodStowed(fixed)
+                                .until(targetIsHub.and(turretSafe)),
+                        superstructure.runParameters(tracking)
+                                .onlyIf(turretSafe)
+                )
+        ).withName("IntakeFromTrench");
+    }
+
+    private Command shootStatic() {
+        final Timer timer = new Timer();
+
+        return deadline(
+                repeatingSequence(
+                        waitUntil(robotStopped
+                                .and(superstructure::atSetpoint)),
+                        runOnce(timer::start),
+                        deadline(
+                                indexer.feed()
+                                        .onlyWhile(robotStopped
+                                                .and(superstructure::atSetpoint))
+                                        .finallyDo(timer::stop),
+                                intake.stowFeed()
+                        )
+                ).until(() -> timer.hasElapsed(SHOOTING_TIME)),
+                superstructure.runParameters(staticShotCalculation)
+                        .onlyIf(turretSafe),
+                swerve.runWheelXCommand(),
+                Commands.run(
+                        () -> Logger.recordOutput("RobotStopped", robotStopped)
+                ),
+                runOnce(timer::reset)
+        )
+                .withName("ShootStatic");
+    }
+
+    private Command shootWhileMoving() {
+        return deadline(
+                repeatingSequence(
+                        waitUntil(superstructure::atSetpoint),
+                        deadline(
+                                indexer.feed()
+                                        .onlyWhile(superstructure::atSetpoint),
+                                intake.stowFeed()
+                                        .unless(intake.isIntaking)
+                        )
+                ),
+                superstructure.runParameters(movingShotCalculation)
+                        .onlyIf(turretSafe)
+        ).withName("ShootWhileMoving");
+    }
+
+    private Supplier<Pose2d> getTargetPoseSupplier() {
+        return () -> {
+            final Pose2d robotPose = swerve.getPose();
+            final ShootCommands.Target target = ShootCommands.getTarget(robotPose);
+            return switch (target) {
+                case HUB -> FieldConstants.getHubPose();
+                case FERRY, FERRY_BLOCKED -> {
+                    final boolean isRed = Robot.IsRedAlliance.getAsBoolean();
+                    final Pose2d ferryLeft = FieldConstants.getFerryLeft();
+                    final Pose2d ferryRight = FieldConstants.getFerryRight();
+
+                    yield robotPose.getY() <= FieldConstants.getFerryLeftYBoundary()
+                            ? (isRed ? ferryRight : ferryLeft)
+                            : (isRed ? ferryLeft : ferryRight);
+                }
+            };
+        };
+    }
 }
