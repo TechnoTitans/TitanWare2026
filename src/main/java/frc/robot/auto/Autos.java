@@ -321,6 +321,66 @@ public class Autos {
         return routine;
     }
 
+    //TODO: Work in progress
+    public AutoRoutine rightDoubleSweepContinuous() {
+        final AutoRoutine routine = autoFactory.newRoutine("RightDoubleSweepContinuous");
+        final AutoTrajectory firstSweep = routine.trajectory("RightFirstSweepContinuous");
+        final AutoTrajectory transition = routine.trajectory("RightShootingTransition");
+        final AutoTrajectory secondSweep = routine.trajectory("RightSweepContinuous");
+
+        routine.active().onTrue(runStartingTrajectory(firstSweep));
+
+        firstSweep.active().whileTrue(
+                intakeFromTrench(
+                        staticParametersFromFinalPose(firstSweep),
+                        staticShotCalculation
+                )
+        );
+
+        firstSweep.done().onTrue(
+                transition.cmd()
+        );
+
+        transition.active().whileTrue(
+                shootWhileMoving()
+        );
+
+        transition.done().onTrue(
+                deadline(
+                        waitUntil(superstructure.safeForTrench)
+                                .andThen(secondSweep.cmd())
+                                .asProxy(),
+                        superstructure.runParametersWithHoodStowed(staticShotCalculation).asProxy()
+                )
+        );
+
+        secondSweep.active().whileTrue(
+                intakeFromTrench(
+                        staticParametersFromFinalPose(secondSweep),
+                        staticShotCalculation
+                )
+        );
+
+        secondSweep.done().onTrue(
+                transition.cmd()
+        );
+
+        transition.active().whileTrue(
+                shootWhileMoving()
+        );
+
+        transition.done().onTrue(
+                deadline(
+                        waitUntil(superstructure.safeForTrench)
+                                .andThen(secondSweep.cmd())
+                                .asProxy(),
+                        superstructure.runParametersWithHoodStowed(staticShotCalculation).asProxy()
+                )
+        );
+
+        return routine;
+    }
+
     private Command runStartingTrajectory(final AutoTrajectory startingTrajectory) {
         return Commands.sequence(
                 startingTrajectory.resetOdometry(),
