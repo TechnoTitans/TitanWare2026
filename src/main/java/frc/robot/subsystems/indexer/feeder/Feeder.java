@@ -51,7 +51,7 @@ public class Feeder extends SubsystemExt {
         feederIO.updateInputs(inputs);
         Logger.processInputs(LogKey, inputs);
 
-        Logger.recordOutput(LogKey + "/DesiredGoal", desiredGoal.toString());
+        Logger.recordOutput(LogKey + "/DesiredGoal", desiredGoal);
         Logger.recordOutput(LogKey + "/TorqueCurrentSetpointAmps", torqueCurrentSetpointAmps);
 
         Logger.recordOutput(

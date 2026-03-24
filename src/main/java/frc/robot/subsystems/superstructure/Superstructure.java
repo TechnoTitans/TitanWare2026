@@ -97,8 +97,8 @@ public class Superstructure extends VirtualSubsystem {
             currentGoal = InternalGoal.NONE;
         }
 
-        Logger.recordOutput(LogKey + "/CurrentGoal", currentGoal);
         Logger.recordOutput(LogKey + "/DesiredGoal", desiredGoal);
+        Logger.recordOutput(LogKey + "/CurrentGoal", currentGoal);
 
         Logger.recordOutput(
                 LogKey + "/PeriodicIOPeriodMs",

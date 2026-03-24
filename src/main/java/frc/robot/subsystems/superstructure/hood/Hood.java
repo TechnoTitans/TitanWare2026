@@ -115,9 +115,9 @@ public class Hood extends SubsystemExt {
             currentGoal = InternalGoal.NONE;
         }
 
-        Logger.recordOutput(LogKey + "/CurrentGoal", currentGoal.toString());
-        Logger.recordOutput(LogKey + "/DesiredGoal", desiredGoal.toString());
-        Logger.recordOutput(LogKey + "/AtSetpoint", atSetpoint());
+        Logger.recordOutput(LogKey + "/DesiredGoal", desiredGoal);
+        Logger.recordOutput(LogKey + "/CurrentGoal", currentGoal);
+        Logger.recordOutput(LogKey + "/AtSetpoint", atSetpoint);
         Logger.recordOutput(LogKey + "/PositionSetpointRots", positionSetpointRots);
 
         Logger.recordOutput(LogKey + "/AtUpperLimit", atUpperLimit());

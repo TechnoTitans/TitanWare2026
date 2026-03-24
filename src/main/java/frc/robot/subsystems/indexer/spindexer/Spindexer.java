@@ -55,7 +55,7 @@ public class Spindexer extends SubsystemExt {
         spindexerIO.updateInputs(inputs);
         Logger.processInputs(LogKey, inputs);
 
-        Logger.recordOutput(LogKey + "/DesiredGoal", desiredGoal.toString());
+        Logger.recordOutput(LogKey + "/DesiredGoal", desiredGoal);
         Logger.recordOutput(LogKey + "/VoltageSetpoint", voltageSetpoint);
 
         Logger.recordOutput(
