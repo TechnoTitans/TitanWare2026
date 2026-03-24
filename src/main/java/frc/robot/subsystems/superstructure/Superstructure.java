@@ -99,6 +99,7 @@ public class Superstructure extends VirtualSubsystem {
 
         Logger.recordOutput(LogKey + "/DesiredGoal", desiredGoal);
         Logger.recordOutput(LogKey + "/CurrentGoal", currentGoal);
+        Logger.recordOutput(LogKey + "/SafeForTrench", safeForTrench);
 
         Logger.recordOutput(
                 LogKey + "/PeriodicIOPeriodMs",

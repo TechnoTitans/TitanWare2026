@@ -349,10 +349,10 @@ public class Autos {
 
         transition.done().onTrue(
                 deadline(
-                        waitUntil(superstructure.safeForTrench)
-                                .andThen(secondSweep.cmd())
+                        secondSweep.cmd()
                                 .asProxy(),
-                        superstructure.runParametersWithHoodStowed(staticShotCalculation).asProxy()
+                        superstructure.runParametersWithHoodStowed(movingShotCalculation)
+                                .asProxy()
                 )
         );
 
@@ -373,10 +373,10 @@ public class Autos {
 
         transition.done().onTrue(
                 deadline(
-                        waitUntil(superstructure.safeForTrench)
-                                .andThen(secondSweep.cmd())
+                        secondSweep.cmd()
                                 .asProxy(),
-                        superstructure.runParametersWithHoodStowed(staticShotCalculation).asProxy()
+                        superstructure.runParametersWithHoodStowed(movingShotCalculation)
+                                .asProxy()
                 )
         );
 
@@ -456,13 +456,10 @@ public class Autos {
         return deadline(
                 repeatingSequence(
                         waitUntil(superstructure::atSetpoint),
-                        deadline(
-                                indexer.feed()
-                                        .onlyWhile(superstructure::atSetpoint)
-                        )
+                        indexer.feed()
+                                .onlyWhile(superstructure::atSetpoint)
                 ),
                 superstructure.runParameters(movingShotCalculation)
-                        .onlyIf(turretSafe)
         ).withName("ShootWhileMoving");
     }
 
