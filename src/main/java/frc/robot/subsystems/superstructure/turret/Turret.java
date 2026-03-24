@@ -15,6 +15,7 @@ import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.constants.Constants;
 import frc.robot.constants.HardwareConstants;
 import frc.robot.utils.commands.ext.SubsystemExt;
+import frc.robot.utils.commands.trigger.LoggedTrigger;
 import org.littletonrobotics.junction.Logger;
 
 import java.util.HashMap;
@@ -79,10 +80,11 @@ public class Turret extends SubsystemExt {
     private final SysIdRoutine voltageSysIdRoutine;
 
     private InternalGoal desiredGoal = InternalGoal.STOW;
-    private InternalGoal currentGoal = InternalGoal.NONE;
 
     private double positionSetpointRots = 0.0;
     private double velocitySetpointRotsPerSec = 0.0;
+
+    public final LoggedTrigger atSetpoint;
 
     public Turret(final Constants.RobotMode mode, final HardwareConstants.TurretConstants constants) {
         this.constants = constants;
@@ -93,6 +95,18 @@ public class Turret extends SubsystemExt {
         };
 
         this.inputs = new TurretIOInputsAutoLogged();
+
+        final LoggedTrigger.Group group = LoggedTrigger.Group.from(LogKey);
+        this.atSetpoint = group.t("AtSetpoint", () -> MathUtil.isNear(
+                positionSetpointRots,
+                inputs.turretPositionRots,
+                PositionToleranceRots
+        ) && MathUtil.isNear(
+                velocitySetpointRotsPerSec,
+                inputs.turretVelocityRotsPerSec,
+                VelocityToleranceRotsPerSec
+        ));
+
         this.turretIO.config();
 
         this.voltageSysIdRoutine = makeVoltageSysIdRoutine(
@@ -118,15 +132,8 @@ public class Turret extends SubsystemExt {
         turretIO.updateInputs(inputs);
         Logger.processInputs(LogKey, inputs);
 
-        if (MathUtil.isNear(
-                positionSetpointRots,
-                inputs.turretPositionRots,
-                PositionToleranceRots
-        ) && MathUtil.isNear(
-                velocitySetpointRotsPerSec,
-                inputs.turretVelocityRotsPerSec,
-                VelocityToleranceRotsPerSec
-        )) {
+        final InternalGoal currentGoal;
+        if (atSetpoint()) {
             currentGoal = desiredGoal;
         } else {
             currentGoal = InternalGoal.NONE;
@@ -134,6 +141,7 @@ public class Turret extends SubsystemExt {
 
         Logger.recordOutput(LogKey + "/CurrentGoal", currentGoal.toString());
         Logger.recordOutput(LogKey + "/DesiredGoal", desiredGoal.toString());
+        Logger.recordOutput(LogKey + "/AtSetpoint", atSetpoint());
         Logger.recordOutput(LogKey + "/PositionSetpointRots", positionSetpointRots);
         Logger.recordOutput(LogKey + "/VelocitySetpointRotsPerSec", velocitySetpointRotsPerSec);
 
@@ -179,7 +187,7 @@ public class Turret extends SubsystemExt {
     }
 
     public boolean atSetpoint() {
-        return currentGoal == desiredGoal;
+        return atSetpoint.getAsBoolean();
     }
 
     private void setDesiredGoal(final Goal goal) {

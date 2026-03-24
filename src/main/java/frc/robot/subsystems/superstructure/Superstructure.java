@@ -106,7 +106,6 @@ public class Superstructure extends VirtualSubsystem {
         );
     }
 
-    //TODO: Make toGoalLike
     public Command toGoal(final Goal goal) {
         return Commands.sequence(
                 Commands.runOnce(() -> setDesiredGoal(goal)),

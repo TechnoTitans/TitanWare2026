@@ -66,14 +66,14 @@ public class Hood extends SubsystemExt {
     }
 
     private final HoodIO hoodIO;
-    private final HoodIOInputsAutoLogged inputs = new HoodIOInputsAutoLogged();
+    private final HoodIOInputsAutoLogged inputs;
 
     private InternalGoal desiredGoal = InternalGoal.STOW;
-    private InternalGoal currentGoal = InternalGoal.NONE;
 
     private double positionSetpointRots = 0.0;
 
     private final LoggedTrigger.Group group = LoggedTrigger.Group.from(LogKey);
+    public final LoggedTrigger atSetpoint;
     public final LoggedTrigger safeForTrench = group.t("SafeForTrench", () -> atGoal(Goal.STOW));
 
     public Hood(final Constants.RobotMode mode, final HardwareConstants.HoodConstants constants) {
@@ -84,6 +84,18 @@ public class Hood extends SubsystemExt {
             case DISABLED, REPLAY -> new HoodIO() {
             };
         };
+
+        this.inputs = new HoodIOInputsAutoLogged();
+
+        this.atSetpoint = group.t("AtSetpoint", () -> MathUtil.isNear(
+                positionSetpointRots,
+                inputs.hoodPositionRots,
+                PositionToleranceRots
+        ) && MathUtil.isNear(
+                0,
+                inputs.hoodVelocityRotsPerSec,
+                VelocityToleranceRotsPerSec
+        ));
 
         this.hoodIO.config();
         this.hoodIO.zeroMotor();
@@ -96,15 +108,8 @@ public class Hood extends SubsystemExt {
         hoodIO.updateInputs(inputs);
         Logger.processInputs(LogKey, inputs);
 
-        if (MathUtil.isNear(
-                positionSetpointRots,
-                inputs.hoodPositionRots,
-                PositionToleranceRots
-        ) && MathUtil.isNear(
-                0,
-                inputs.hoodVelocityRotsPerSec,
-                VelocityToleranceRotsPerSec
-        )) {
+        final InternalGoal currentGoal;
+        if (atSetpoint()) {
             currentGoal = desiredGoal;
         } else {
             currentGoal = InternalGoal.NONE;
@@ -112,6 +117,7 @@ public class Hood extends SubsystemExt {
 
         Logger.recordOutput(LogKey + "/CurrentGoal", currentGoal.toString());
         Logger.recordOutput(LogKey + "/DesiredGoal", desiredGoal.toString());
+        Logger.recordOutput(LogKey + "/AtSetpoint", atSetpoint());
         Logger.recordOutput(LogKey + "/PositionSetpointRots", positionSetpointRots);
 
         Logger.recordOutput(LogKey + "/AtUpperLimit", atUpperLimit());
@@ -152,7 +158,7 @@ public class Hood extends SubsystemExt {
     }
 
     public boolean atSetpoint() {
-        return currentGoal == desiredGoal;
+        return atSetpoint.getAsBoolean();
     }
 
     private void setDesiredGoal(final Goal goal) {
@@ -174,6 +180,7 @@ public class Hood extends SubsystemExt {
     }
 
     private boolean atGoal(final Goal goal) {
-        return currentGoal == InternalGoal.fromGoal(goal);
+        return desiredGoal == InternalGoal.fromGoal(goal)
+                && atSetpoint();
     }
 }

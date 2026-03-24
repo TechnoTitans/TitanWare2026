@@ -113,14 +113,12 @@ public class IntakeSlide extends SubsystemExt {
     private TrapezoidProfile.State profileSetpoint = new TrapezoidProfile.State(0,0);
 
     private InternalGoal desiredGoal = InternalGoal.STOW;
-    private InternalGoal currentGoal = InternalGoal.NONE;
 
     private double positionSetpointRots = 0.0;
 
     private HoldMode holdMode = HoldMode.HARD;
 
-    private final LoggedTrigger.Group group = LoggedTrigger.Group.from(LogKey);
-    public final LoggedTrigger atSetpoint = group.t("AtSetpoint", this::atSetpoint);
+    public final LoggedTrigger atSetpoint;
 
     public IntakeSlide(final Constants.RobotMode mode, final HardwareConstants.IntakeSlideConstants constants) {
         this.constants = constants;
@@ -130,6 +128,17 @@ public class IntakeSlide extends SubsystemExt {
             case SIM -> new IntakeSlideIOSim(constants);
             case REPLAY, DISABLED -> new IntakeSlideIO() {};
         };
+
+        final LoggedTrigger.Group group = LoggedTrigger.Group.from(LogKey);
+        this.atSetpoint = group.t("AtSetpoint", () -> MathUtil.isNear(
+                positionSetpointRots,
+                inputs.averagePositionRots,
+                PositionToleranceRots
+        ) && MathUtil.isNear(
+                0,
+                inputs.averageVelocityRotsPerSec,
+                VelocityToleranceRotsPerSec
+        ));
 
         this.intakeSlideIO.zeroMotors();
 
@@ -147,15 +156,8 @@ public class IntakeSlide extends SubsystemExt {
         intakeSlideIO.updateInputs(inputs);
         Logger.processInputs(LogKey, inputs);
 
-        if (MathUtil.isNear(
-                positionSetpointRots,
-                inputs.averagePositionRots,
-                PositionToleranceRots
-        ) && MathUtil.isNear(
-                0,
-                inputs.averageVelocityRotsPerSec,
-                VelocityToleranceRotsPerSec
-        )) {
+        final InternalGoal currentGoal;
+        if (atSetpoint()) {
             currentGoal = desiredGoal;
         } else {
             currentGoal = InternalGoal.NONE;
@@ -171,8 +173,9 @@ public class IntakeSlide extends SubsystemExt {
             }
         }
 
-        Logger.recordOutput(LogKey + "/CurrentGoal", currentGoal.toString());
         Logger.recordOutput(LogKey + "/DesiredGoal", desiredGoal.toString());
+        Logger.recordOutput(LogKey + "/CurrentGoal", currentGoal.toString());
+        Logger.recordOutput(LogKey + "/AtSetpoint", atSetpoint());
         Logger.recordOutput(LogKey + "/PositionSetpointRots", positionSetpointRots);
         Logger.recordOutput(LogKey + "/HoldMode", holdMode);
 
@@ -212,7 +215,8 @@ public class IntakeSlide extends SubsystemExt {
     }
 
     public boolean atGoal(final Goal goal) {
-        return currentGoal == InternalGoal.fromGoal(goal);
+        return desiredGoal == InternalGoal.fromGoal(goal)
+                && atSetpoint();
     }
 
     private void setDesiredGoal(final Goal goal) {
@@ -247,14 +251,14 @@ public class IntakeSlide extends SubsystemExt {
     }
 
     private boolean atSetpoint() {
-        return currentGoal == desiredGoal;
-    }
-
-    private boolean atLowerLimit() {
-        return inputs.masterPositionRots <= constants.reverseLimitRots();
+        return atSetpoint.getAsBoolean();
     }
 
     private boolean atUpperLimit() {
         return inputs.masterPositionRots >= constants.forwardLimitRots();
+    }
+
+    private boolean atLowerLimit() {
+        return inputs.masterPositionRots <= constants.reverseLimitRots();
     }
 }

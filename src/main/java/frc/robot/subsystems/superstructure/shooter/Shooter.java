@@ -79,12 +79,10 @@ public class Shooter extends SubsystemExt {
     private final SysIdRoutine flywheelTorqueCurrentSysIdRoutine;
 
     private InternalGoal desiredGoal = InternalGoal.TRACKING;
-    private InternalGoal currentGoal = InternalGoal.NONE;
 
     private double velocitySetpointRotsPerSec;
 
-    private final LoggedTrigger.Group group = LoggedTrigger.Group.from(LogKey);
-    public final LoggedTrigger atSetpoint = group.t("AtSetpoint", this::atSetpoint);
+    public final LoggedTrigger atSetpoint;
 
     public Shooter(final Constants.RobotMode mode, final HardwareConstants.ShooterConstants constants) {
         this.shooterIO = switch (mode) {
@@ -94,6 +92,13 @@ public class Shooter extends SubsystemExt {
         };
 
         this.inputs = new ShooterIOInputsAutoLogged();
+
+        final LoggedTrigger.Group group = LoggedTrigger.Group.from(LogKey);
+        this.atSetpoint = group.t("AtSetpoint", () -> MathUtil.isNear(
+                velocitySetpointRotsPerSec,
+                inputs.masterVelocityRotsPerSec,
+                VelocityToleranceRotsPerSec
+        ));
 
         this.flywheelTorqueCurrentSysIdRoutine = makeTorqueCurrentSysIdRoutine(
                 Amps.of(4).per(Second),
@@ -113,11 +118,8 @@ public class Shooter extends SubsystemExt {
         shooterIO.updateInputs(inputs);
         Logger.processInputs(LogKey, inputs);
 
-        if (MathUtil.isNear(
-                velocitySetpointRotsPerSec,
-                inputs.masterVelocityRotsPerSec,
-                VelocityToleranceRotsPerSec
-        )) {
+        final InternalGoal currentGoal;
+        if (atSetpoint()) {
             currentGoal = desiredGoal;
         } else {
             currentGoal = InternalGoal.NONE;
@@ -125,6 +127,7 @@ public class Shooter extends SubsystemExt {
 
         Logger.recordOutput(LogKey + "/DesiredGoal", desiredGoal.toString());
         Logger.recordOutput(LogKey + "/CurrentGoal", currentGoal.toString());
+        Logger.recordOutput(LogKey + "/AtSetpoint", atSetpoint());
         Logger.recordOutput(LogKey + "/VelocitySetpointRotsPerSec", velocitySetpointRotsPerSec);
 
         Logger.recordOutput(
@@ -167,7 +170,7 @@ public class Shooter extends SubsystemExt {
     }
 
     public boolean atSetpoint() {
-        return currentGoal == desiredGoal;
+        return atSetpoint.getAsBoolean();
     }
 
     private void setDesiredGoal(final Goal goal) {

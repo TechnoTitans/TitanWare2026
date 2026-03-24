@@ -26,7 +26,7 @@ public class Indexer {
 
     public Command feed() {
         return Commands.parallel(
-                Commands.runEnd(
+                Commands.startEnd(
                         () -> indexing = true,
                         () -> indexing = false
                 ),

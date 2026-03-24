@@ -303,6 +303,8 @@ public class Autos {
         final AutoTrajectory ferry = routine.trajectory("RightFerry");
         final AutoTrajectory cleanSweep = routine.trajectory("RightClean");
 
+        routine.active().onTrue(runStartingTrajectory(ferry));
+
         routine.active().whileTrue(
                 Commands.parallel(
                         intake.intake(),
