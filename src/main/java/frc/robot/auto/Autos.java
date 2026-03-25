@@ -21,10 +21,12 @@ import frc.robot.subsystems.vision.PhotonVision;
 import frc.robot.utils.commands.trigger.LoggedTrigger;
 import org.littletonrobotics.junction.Logger;
 
+import java.util.function.BooleanSupplier;
 import java.util.function.Supplier;
 
 import static edu.wpi.first.wpilibj2.command.Commands.*;
 
+//TODO: Make sure all lefts and rights are mirrored
 public class Autos {
     public static final String LogKey = "Auto";
     private static final int SHOOTING_TIME = 5;
@@ -38,6 +40,8 @@ public class Autos {
 
     private final Supplier<ShotCalculator.ShotCalculation> staticShotCalculation;
     private final Supplier<ShotCalculator.ShotCalculation> movingShotCalculation;
+
+    private boolean shouldFerryLeftSide = false;
 
     private final LoggedTrigger robotStopped;
     private final LoggedTrigger targetIsHub;
@@ -83,7 +87,7 @@ public class Autos {
         this.movingShotCalculation = ShotCalculator.getMovingShotCalculationSupplier(
                 swerve::getPose,
                 swerve::getRobotRelativeSpeeds,
-                getTargetPoseSupplier()
+                getTargetPoseSupplier(() -> shouldFerryLeftSide)
         );
 
         final LoggedTrigger.Group group = LoggedTrigger.Group.from(LogKey);
@@ -126,7 +130,12 @@ public class Autos {
         final AutoTrajectory startToCenterLineAndBack = routine.trajectory("LeftStartToCenterLineAndBack");
         final AutoTrajectory shootingToDepot = routine.trajectory("LeftShootingToDepot");
 
-        routine.active().onTrue(runStartingTrajectory(startToCenterLineAndBack));
+        routine.active().onTrue(
+                parallel(
+                        runStartingTrajectory(startToCenterLineAndBack),
+                        runOnce(() -> shouldFerryLeftSide = true)
+                )
+        );
 
         startToCenterLineAndBack.active().whileTrue(
                 intakeFromTrench(
@@ -164,7 +173,12 @@ public class Autos {
         final AutoTrajectory firstSweep = routine.trajectory("RightFirstSweep");
         final AutoTrajectory shootingToOutpost = routine.trajectory("RightShootingToOutput");
 
-        routine.active().onTrue(runStartingTrajectory(firstSweep));
+        routine.active().onTrue(
+                parallel(
+                        runStartingTrajectory(firstSweep),
+                        runOnce(() -> shouldFerryLeftSide = false)
+                )
+        );
 
         firstSweep.active().whileTrue(
                 intakeFromTrench(
@@ -202,7 +216,12 @@ public class Autos {
         final AutoTrajectory firstSweep = routine.trajectory("LeftFirstSweep");
         final AutoTrajectory secondSweep = routine.trajectory("LeftSweep");
 
-        routine.active().onTrue(runStartingTrajectory(firstSweep));
+        routine.active().onTrue(
+                parallel(
+                        runStartingTrajectory(firstSweep),
+                        runOnce(() -> shouldFerryLeftSide = true)
+                )
+        );
 
         firstSweep.active().whileTrue(
                 intakeFromTrench(
@@ -240,7 +259,12 @@ public class Autos {
         final AutoTrajectory firstSweep = routine.trajectory("RightFirstSweep");
         final AutoTrajectory secondSweep = routine.trajectory("RightSweep");
 
-        routine.active().onTrue(runStartingTrajectory(firstSweep));
+        routine.active().onTrue(
+                parallel(
+                    runStartingTrajectory(firstSweep),
+                    runOnce(() -> shouldFerryLeftSide = false)
+                )
+        );
 
         firstSweep.active().whileTrue(
                 intakeFromTrench(
@@ -275,10 +299,14 @@ public class Autos {
 
     public AutoRoutine leftFerryClean() {
         final AutoRoutine routine = autoFactory.newRoutine("LeftFerryClean");
-        final AutoTrajectory ferry = routine.trajectory("LeftFerry");
-        final AutoTrajectory cleanSweep = routine.trajectory("LeftClean");
+        final AutoTrajectory ferryAndClean = routine.trajectory("LeftFerryAndClean");
 
-        routine.active().onTrue(runStartingTrajectory(ferry));
+        routine.active().onTrue(
+                parallel(
+                    runStartingTrajectory(ferryAndClean),
+                    runOnce(() -> shouldFerryLeftSide = true)
+                )
+        );
 
         routine.active().whileTrue(
                 Commands.parallel(
@@ -287,11 +315,7 @@ public class Autos {
                 )
         );
 
-        ferry.done().onTrue(
-                cleanSweep.cmd()
-        );
-
-        cleanSweep.done().onTrue(
+        ferryAndClean.done().onTrue(
                 swerve.runWheelXCommand()
         );
 
@@ -300,10 +324,14 @@ public class Autos {
 
     public AutoRoutine rightFerryClean() {
         final AutoRoutine routine = autoFactory.newRoutine("RightFerryClean");
-        final AutoTrajectory ferry = routine.trajectory("RightFerry");
-        final AutoTrajectory cleanSweep = routine.trajectory("RightClean");
+        final AutoTrajectory ferryAndClean = routine.trajectory("RightFerryAndClean");
 
-        routine.active().onTrue(runStartingTrajectory(ferry));
+        routine.active().onTrue(
+                parallel(
+                        runStartingTrajectory(ferryAndClean),
+                        runOnce(() -> shouldFerryLeftSide = false)
+                )
+        );
 
         routine.active().whileTrue(
                 Commands.parallel(
@@ -312,25 +340,89 @@ public class Autos {
                 )
         );
 
-        ferry.done().onTrue(
-                cleanSweep.cmd()
-        );
-
-        cleanSweep.done().onTrue(
+        ferryAndClean.done().onTrue(
                 swerve.runWheelXCommand()
         );
 
         return routine;
     }
 
-    //TODO: Work in progress
+    public AutoRoutine leftDoubleSweepContinuous() {
+        final AutoRoutine routine = autoFactory.newRoutine("LeftDoubleSweepContinuous");
+        final AutoTrajectory firstSweep = routine.trajectory("LeftFirstSweepContinuous");
+        final AutoTrajectory transition = routine.trajectory("LeftShootingTransition");
+        final AutoTrajectory secondSweep = routine.trajectory("LeftSweepContinuous");
+
+        routine.active().onTrue(
+                parallel(
+                        runStartingTrajectory(firstSweep),
+                        runOnce(() -> shouldFerryLeftSide = true)
+                )
+        );
+
+        firstSweep.active().whileTrue(
+                intakeFromTrench(
+                        staticParametersFromFinalPose(firstSweep),
+                        staticShotCalculation
+                )
+        );
+
+        firstSweep.done().onTrue(
+                transition.cmd()
+        );
+
+        transition.active().whileTrue(
+                shootWhileMoving()
+        );
+
+        transition.done().onTrue(
+                deadline(
+                        secondSweep.cmd()
+                                .asProxy(),
+                        superstructure.runParametersWithHoodStowed(movingShotCalculation)
+                                .asProxy()
+                )
+        );
+
+        secondSweep.active().whileTrue(
+                intakeFromTrench(
+                        staticParametersFromFinalPose(secondSweep),
+                        staticShotCalculation
+                )
+        );
+
+        secondSweep.done().onTrue(
+                transition.cmd()
+        );
+
+        transition.active().whileTrue(
+                shootWhileMoving()
+        );
+
+        transition.done().onTrue(
+                deadline(
+                        secondSweep.cmd()
+                                .asProxy(),
+                        superstructure.runParametersWithHoodStowed(movingShotCalculation)
+                                .asProxy()
+                )
+        );
+
+        return routine;
+    }
+
     public AutoRoutine rightDoubleSweepContinuous() {
         final AutoRoutine routine = autoFactory.newRoutine("RightDoubleSweepContinuous");
         final AutoTrajectory firstSweep = routine.trajectory("RightFirstSweepContinuous");
         final AutoTrajectory transition = routine.trajectory("RightShootingTransition");
         final AutoTrajectory secondSweep = routine.trajectory("RightSweepContinuous");
 
-        routine.active().onTrue(runStartingTrajectory(firstSweep));
+        routine.active().onTrue(
+                parallel(
+                        runStartingTrajectory(firstSweep),
+                        runOnce(() -> shouldFerryLeftSide = false)
+                )
+        );
 
         firstSweep.active().whileTrue(
                 intakeFromTrench(
@@ -463,7 +555,7 @@ public class Autos {
         ).withName("ShootWhileMoving");
     }
 
-    private Supplier<Pose2d> getTargetPoseSupplier() {
+    private Supplier<Pose2d> getTargetPoseSupplier(final BooleanSupplier shouldFerryLeftSide) {
         return () -> {
             final Pose2d robotPose = swerve.getPose();
             final ShootCommands.Target target = ShootCommands.getTarget(robotPose);
@@ -474,7 +566,7 @@ public class Autos {
                     final Pose2d ferryLeft = FieldConstants.getFerryLeft();
                     final Pose2d ferryRight = FieldConstants.getFerryRight();
 
-                    yield robotPose.getY() <= FieldConstants.getFerryLeftYBoundary()
+                    yield !shouldFerryLeftSide.getAsBoolean()
                             ? (isRed ? ferryRight : ferryLeft)
                             : (isRed ? ferryLeft : ferryRight);
                 }

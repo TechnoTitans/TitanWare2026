@@ -450,10 +450,17 @@ public class Robot extends LoggedRobot {
         ));
 
         autoChooser.addAutoOption(new AutoOption(
+                "LeftDoubleSweepContinuous",
+                autos::leftDoubleSweepContinuous,
+                Constants.CompetitionType.COMPETITION
+        ));
+
+        autoChooser.addAutoOption(new AutoOption(
                 "RightDoubleSweepContinuous",
                 autos::rightDoubleSweepContinuous,
                 Constants.CompetitionType.COMPETITION
         ));
+
     }
 
     public void configureButtonBindings(final EventLoop teleopEventLoop) {

@@ -3,7 +3,6 @@ package frc.robot;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.constants.Constants;
 import frc.robot.constants.FieldConstants;
 import frc.robot.constants.PoseConstants;
@@ -18,6 +17,8 @@ import frc.robot.utils.teleop.SwerveSpeed;
 import org.littletonrobotics.junction.Logger;
 
 import java.util.function.Supplier;
+
+import static edu.wpi.first.wpilibj2.command.Commands.*;
 
 public class ShootCommands extends VirtualSubsystem {
     protected static final String LogKey = "ShootCommands";
@@ -117,12 +118,12 @@ public class ShootCommands extends VirtualSubsystem {
         );
 
         //TODO: Find a cleaner solution for it automatically backing out in sim
-        return Commands.deadline(
-                Commands.repeatingSequence(
-                        Commands.waitUntil(targetValid
+        return deadline(
+                repeatingSequence(
+                        waitUntil(targetValid
                                 .and(swerveReady)
                                 .and(superstructure::atSetpoint)),
-                        Commands.deadline(
+                        deadline(
                                 indexer.feed()
                                         .onlyWhile(targetValid
                                                 .and(swerveReady)
@@ -146,10 +147,10 @@ public class ShootCommands extends VirtualSubsystem {
     }
 
     public Command shootNoVision() {
-        return Commands.deadline(
-                Commands.repeatingSequence(
-                        Commands.waitUntil(superstructure::atSetpoint),
-                        Commands.deadline(
+        return deadline(
+                repeatingSequence(
+                        waitUntil(superstructure::atSetpoint),
+                        deadline(
                                 indexer.feed()
                                         .onlyWhile(superstructure::atSetpoint),
                                 intake.stowFeed().asProxy()
