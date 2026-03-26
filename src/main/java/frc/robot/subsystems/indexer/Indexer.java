@@ -42,6 +42,14 @@ public class Indexer {
         ).withName("BackOut");
     }
 
+    public void setFeederTOFDetected(final boolean isDetected) {
+        feeder.setTOFDetected(isDetected);
+    }
+
+    public boolean isFeederTOFDetected() {
+        return feeder.isTOFDetected();
+    }
+
     public double getSpindexerFilteredCurrent() {
         return spindexer.getFilteredCurrent();
     }

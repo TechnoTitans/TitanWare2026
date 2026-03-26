@@ -77,6 +77,7 @@ public class HardwareConstants {
     public record FeederConstants(
             CANBus CANBus,
             int motorID,
+            int CANRangeID,
             double gearing
     ) {}
 
@@ -84,6 +85,7 @@ public class HardwareConstants {
     public static final FeederConstants FEEDER = new FeederConstants(
             CANBus.CANIVORE,
             18,
+            19,
             1.8667
     );
 
@@ -104,9 +106,9 @@ public class HardwareConstants {
 
     public static final TurretConstants TURRET = new TurretConstants(
             CANBus.CANIVORE,
-            19,
             20,
             21,
+            22,
             24,
             80,
             13,
@@ -126,7 +128,7 @@ public class HardwareConstants {
 
     public static final HoodConstants HOOD = new HoodConstants(
             CANBus.RIO,
-            22,
+            23,
             102,
             0.11,
             0
@@ -141,8 +143,8 @@ public class HardwareConstants {
 
     public static final ShooterConstants SHOOTER = new ShooterConstants(
             CANBus.RIO,
-            23,
             24,
+            25,
             2
     );
 }

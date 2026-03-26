@@ -4,10 +4,10 @@ import choreo.auto.AutoFactory;
 import choreo.auto.AutoRoutine;
 import choreo.auto.AutoTrajectory;
 import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
+import frc.robot.FuelState;
 import frc.robot.Robot;
 import frc.robot.ShootCommands;
 import frc.robot.constants.FieldConstants;
@@ -21,27 +21,23 @@ import frc.robot.subsystems.vision.PhotonVision;
 import frc.robot.utils.commands.trigger.LoggedTrigger;
 import org.littletonrobotics.junction.Logger;
 
-import java.util.function.BooleanSupplier;
 import java.util.function.Supplier;
 
 import static edu.wpi.first.wpilibj2.command.Commands.*;
 
-//TODO: Make sure all lefts and rights are mirrored
 public class Autos {
     public static final String LogKey = "Auto";
-    private static final int SHOOTING_TIME = 5;
 
     private final Swerve swerve;
     private final Intake intake;
     private final Indexer indexer;
     private final Superstructure superstructure;
+    private final FuelState fuelState;
 
     private final AutoFactory autoFactory;
 
     private final Supplier<ShotCalculator.ShotCalculation> staticShotCalculation;
     private final Supplier<ShotCalculator.ShotCalculation> movingShotCalculation;
-
-    private boolean shouldFerryLeftSide = false;
 
     private final LoggedTrigger robotStopped;
     private final LoggedTrigger targetIsHub;
@@ -52,12 +48,14 @@ public class Autos {
             final Intake intake,
             final Indexer indexer,
             final Superstructure superstructure,
-            final PhotonVision photonVision
+            final PhotonVision photonVision,
+            final FuelState fuelState
     ) {
         this.swerve = swerve;
         this.intake = intake;
         this.indexer = indexer;
         this.superstructure = superstructure;
+        this.fuelState = fuelState;
 
         this.autoFactory = new AutoFactory(
                 swerve::getPose,
@@ -87,7 +85,7 @@ public class Autos {
         this.movingShotCalculation = ShotCalculator.getMovingShotCalculationSupplier(
                 swerve::getPose,
                 swerve::getRobotRelativeSpeeds,
-                getTargetPoseSupplier(() -> shouldFerryLeftSide)
+                getTargetPoseSupplier()
         );
 
         final LoggedTrigger.Group group = LoggedTrigger.Group.from(LogKey);
@@ -130,12 +128,10 @@ public class Autos {
         final AutoTrajectory startToCenterLineAndBack = routine.trajectory("LeftStartToCenterLineAndBack");
         final AutoTrajectory shootingToDepot = routine.trajectory("LeftShootingToDepot");
 
-        routine.active().onTrue(
-                parallel(
-                        runStartingTrajectory(startToCenterLineAndBack),
-                        runOnce(() -> shouldFerryLeftSide = true)
-                )
-        );
+        routine.active().onTrue(parallel(
+                runStartingTrajectory(startToCenterLineAndBack),
+                runOnce(fuelState::setSimFuelPreloaded)
+        ));
 
         startToCenterLineAndBack.active().whileTrue(
                 intakeFromTrench(
@@ -173,12 +169,10 @@ public class Autos {
         final AutoTrajectory firstSweep = routine.trajectory("RightFirstSweep");
         final AutoTrajectory shootingToOutpost = routine.trajectory("RightShootingToOutput");
 
-        routine.active().onTrue(
-                parallel(
-                        runStartingTrajectory(firstSweep),
-                        runOnce(() -> shouldFerryLeftSide = false)
-                )
-        );
+        routine.active().onTrue(parallel(
+                runStartingTrajectory(firstSweep),
+                runOnce(fuelState::setSimFuelPreloaded)
+        ));
 
         firstSweep.active().whileTrue(
                 intakeFromTrench(
@@ -216,12 +210,10 @@ public class Autos {
         final AutoTrajectory firstSweep = routine.trajectory("LeftFirstSweep");
         final AutoTrajectory secondSweep = routine.trajectory("LeftSweep");
 
-        routine.active().onTrue(
-                parallel(
-                        runStartingTrajectory(firstSweep),
-                        runOnce(() -> shouldFerryLeftSide = true)
-                )
-        );
+        routine.active().onTrue(parallel(
+                runStartingTrajectory(firstSweep),
+                runOnce(fuelState::setSimFuelPreloaded)
+        ));
 
         firstSweep.active().whileTrue(
                 intakeFromTrench(
@@ -259,12 +251,10 @@ public class Autos {
         final AutoTrajectory firstSweep = routine.trajectory("RightFirstSweep");
         final AutoTrajectory secondSweep = routine.trajectory("RightSweep");
 
-        routine.active().onTrue(
-                parallel(
-                    runStartingTrajectory(firstSweep),
-                    runOnce(() -> shouldFerryLeftSide = false)
-                )
-        );
+        routine.active().onTrue(parallel(
+                runStartingTrajectory(firstSweep),
+                runOnce(fuelState::setSimFuelPreloaded)
+        ));
 
         firstSweep.active().whileTrue(
                 intakeFromTrench(
@@ -301,17 +291,15 @@ public class Autos {
         final AutoRoutine routine = autoFactory.newRoutine("LeftFerryClean");
         final AutoTrajectory ferryAndClean = routine.trajectory("LeftFerryAndClean");
 
-        routine.active().onTrue(
-                parallel(
-                    runStartingTrajectory(ferryAndClean),
-                    runOnce(() -> shouldFerryLeftSide = true)
-                )
-        );
+        routine.active().onTrue(parallel(
+                runStartingTrajectory(ferryAndClean),
+                runOnce(fuelState::setSimFuelPreloaded)
+        ));
 
         routine.active().whileTrue(
                 Commands.parallel(
                         intake.intake(),
-                        shootWhileMoving()
+                        ferryShotWhileMoving(true)
                 )
         );
 
@@ -326,17 +314,12 @@ public class Autos {
         final AutoRoutine routine = autoFactory.newRoutine("RightFerryClean");
         final AutoTrajectory ferryAndClean = routine.trajectory("RightFerryAndClean");
 
-        routine.active().onTrue(
-                parallel(
-                        runStartingTrajectory(ferryAndClean),
-                        runOnce(() -> shouldFerryLeftSide = false)
-                )
-        );
+        routine.active().onTrue(runStartingTrajectory(ferryAndClean));
 
         routine.active().whileTrue(
                 Commands.parallel(
                         intake.intake(),
-                        shootWhileMoving()
+                        ferryShotWhileMoving(false)
                 )
         );
 
@@ -353,12 +336,10 @@ public class Autos {
         final AutoTrajectory transition = routine.trajectory("LeftShootingTransition");
         final AutoTrajectory secondSweep = routine.trajectory("LeftSweepContinuous");
 
-        routine.active().onTrue(
-                parallel(
-                        runStartingTrajectory(firstSweep),
-                        runOnce(() -> shouldFerryLeftSide = true)
-                )
-        );
+        routine.active().onTrue(parallel(
+                runStartingTrajectory(firstSweep),
+                runOnce(fuelState::setSimFuelPreloaded)
+        ));
 
         firstSweep.active().whileTrue(
                 intakeFromTrench(
@@ -417,12 +398,11 @@ public class Autos {
         final AutoTrajectory transition = routine.trajectory("RightShootingTransition");
         final AutoTrajectory secondSweep = routine.trajectory("RightSweepContinuous");
 
-        routine.active().onTrue(
-                parallel(
-                        runStartingTrajectory(firstSweep),
-                        runOnce(() -> shouldFerryLeftSide = false)
-                )
-        );
+        routine.active().onTrue(parallel(
+                runStartingTrajectory(firstSweep),
+                runOnce(fuelState::setSimFuelPreloaded)
+        ));
+
 
         firstSweep.active().whileTrue(
                 intakeFromTrench(
@@ -518,30 +498,41 @@ public class Autos {
     }
 
     private Command shootStatic() {
-        final Timer timer = new Timer();
-
         return deadline(
                 repeatingSequence(
                         waitUntil(robotStopped
                                 .and(superstructure::atSetpoint)),
-                        runOnce(timer::start),
                         deadline(
                                 indexer.feed()
                                         .onlyWhile(robotStopped
-                                                .and(superstructure::atSetpoint))
-                                        .finallyDo(timer::stop),
+                                                .and(superstructure::atSetpoint)),
                                 intake.stowFeed()
                         )
-                ).until(() -> timer.hasElapsed(SHOOTING_TIME)),
+                )
+                        .onlyWhile(fuelState.hasFuel),
                 superstructure.runParameters(staticShotCalculation)
                         .onlyIf(turretSafe),
-                swerve.runWheelXCommand(),
-                Commands.run(
-                        () -> Logger.recordOutput("RobotStopped", robotStopped)
-                ),
-                runOnce(timer::reset)
+                swerve.runWheelXCommand()
         )
                 .withName("ShootStatic");
+    }
+
+    private Command ferryShotWhileMoving(final boolean isLeftSideFerry) {
+        return deadline(
+                repeatingSequence(
+                        waitUntil(superstructure::atSetpoint),
+                        indexer.feed()
+                                .onlyWhile(superstructure::atSetpoint)
+                ).onlyWhile(fuelState.hasFuel
+                        .or(intake.isIntaking)),
+                superstructure.runParameters(ShotCalculator.getMovingShotCalculationSupplier(
+                        swerve::getPose,
+                        swerve::getRobotRelativeSpeeds,
+                        getTargetPoseSupplierWithFerryPose(
+                                isLeftSideFerry ? FieldConstants.getFerryRight() : FieldConstants.getFerryLeft()
+                        )
+                ))
+        ).withName("FerryShotWhileMoving");
     }
 
     private Command shootWhileMoving() {
@@ -555,7 +546,18 @@ public class Autos {
         ).withName("ShootWhileMoving");
     }
 
-    private Supplier<Pose2d> getTargetPoseSupplier(final BooleanSupplier shouldFerryLeftSide) {
+    private Supplier<Pose2d> getTargetPoseSupplierWithFerryPose(final Pose2d ferryPose) {
+        return () -> {
+            final Pose2d robotPose = swerve.getPose();
+            final ShootCommands.Target target = ShootCommands.getTarget(robotPose);
+            return switch (target) {
+                case HUB -> FieldConstants.getHubPose();
+                case FERRY, FERRY_BLOCKED -> ferryPose;
+            };
+        };
+    }
+
+    private Supplier<Pose2d> getTargetPoseSupplier() {
         return () -> {
             final Pose2d robotPose = swerve.getPose();
             final ShootCommands.Target target = ShootCommands.getTarget(robotPose);
@@ -566,7 +568,7 @@ public class Autos {
                     final Pose2d ferryLeft = FieldConstants.getFerryLeft();
                     final Pose2d ferryRight = FieldConstants.getFerryRight();
 
-                    yield !shouldFerryLeftSide.getAsBoolean()
+                    yield robotPose.getY() <= FieldConstants.getFerryLeftYBoundary()
                             ? (isRed ? ferryRight : ferryLeft)
                             : (isRed ? ferryLeft : ferryRight);
                 }

@@ -167,7 +167,8 @@ public class Robot extends LoggedRobot {
             intake,
             indexer,
             superstructure,
-            photonVision
+            photonVision,
+            fuelState
     );
 
     private final AutoChooser autoChooser = new AutoChooser(

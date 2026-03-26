@@ -1,5 +1,9 @@
 package frc.robot.constants;
 
+import edu.wpi.first.math.geometry.Rotation3d;
+import edu.wpi.first.math.geometry.Transform3d;
+import edu.wpi.first.math.util.Units;
+
 public interface SimConstants {
     double SIM_UPDATE_PERIODIC_SEC = 0.005;
 
@@ -11,6 +15,9 @@ public interface SimConstants {
     }
     interface Shooter {
         double MOMENT_OF_INERTIA = 0.01;
+
+        double WheelRadiusMeters = Units.inchesToMeters(2);
+        double WHEEL_CIRCUMFERENCE_METERS = 2 * Math.PI * WheelRadiusMeters;
     }
 
     interface Turret {
@@ -27,5 +34,12 @@ public interface SimConstants {
 
     interface Hood {
         double MOMENT_OF_INERTIA = 0.04;
+
+        Transform3d FuelExitOffset = new Transform3d(
+                Units.inchesToMeters(-4.604),
+                0,
+                Units.inchesToMeters(-2.125),
+                new Rotation3d(0, (-Math.PI / 2) + Units.degreesToRadians(10), 0)
+        );
     }
 }

@@ -3,6 +3,7 @@ package frc.robot;
 import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.Vector;
+import edu.wpi.first.math.filter.Debouncer;
 import edu.wpi.first.math.geometry.*;
 import edu.wpi.first.math.interpolation.InterpolatingDoubleTreeMap;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
@@ -15,18 +16,21 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.constants.Constants;
 import frc.robot.constants.FieldConstants;
 import frc.robot.constants.PoseConstants;
+import frc.robot.constants.SimConstants;
 import frc.robot.subsystems.drive.Swerve;
 import frc.robot.subsystems.indexer.Indexer;
 import frc.robot.subsystems.intake.Intake;
 import frc.robot.subsystems.superstructure.ShotCalculator;
 import frc.robot.subsystems.superstructure.Superstructure;
 import frc.robot.utils.Container;
+import frc.robot.utils.commands.ext.CommandsExt;
 import frc.robot.utils.commands.trigger.LoggedTrigger;
 import frc.robot.utils.commands.trigger.RobotModeLoggedTriggers;
 import frc.robot.utils.control.DeltaTime;
 import frc.robot.utils.subsystems.VirtualSubsystem;
 import org.littletonrobotics.junction.Logger;
 
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.Function;
 
 public class FuelState extends VirtualSubsystem {
@@ -50,6 +54,8 @@ public class FuelState extends VirtualSubsystem {
     private int simScoredFuelCount = 0;
     private double simTimeOfFlight;
 
+    public final LoggedTrigger hasFuel;
+
     public FuelState(
             final Constants.RobotMode mode,
             final Swerve swerve,
@@ -67,8 +73,11 @@ public class FuelState extends VirtualSubsystem {
         this.superstructure = superstructure;
         this.componentsSolver = componentsSolver;
 
-        this.hasSimFuel = group.t("hasSimFuel", () -> simFuelCount > 0);
+        this.hasSimFuel = group.t("HasSimFuel", () -> simFuelCount > 0);
+        this.hasFuel = group.t("HasFuel", indexer::isFeederTOFDetected)
+                .debounce(0.5, Debouncer.DebounceType.kFalling);
 
+        configureStateTriggers();
         switch (mode) {
             case SIM, REPLAY -> {
                 this.fuelCache = new FuelCache(50, fuel -> {
@@ -92,6 +101,8 @@ public class FuelState extends VirtualSubsystem {
 
     @Override
     public void periodic() {
+        Logger.recordOutput(LogKey + "/HasFuel", hasFuel);
+
         switch (mode) {
             case SIM, REPLAY -> {
                 fuelCache.periodic(deltaTime.get());
@@ -107,18 +118,36 @@ public class FuelState extends VirtualSubsystem {
 
     public void setSimFuelCount(final int simFuelCount) {
         switch (mode) {
-            case SIM, REPLAY -> this.simFuelCount = simFuelCount;
+            case SIM, REPLAY -> {
+                this.simFuelCount = simFuelCount;
+                if (simFuelCount > 0) {
+                    indexer.setFeederTOFDetected(true);
+                }
+            }
         }
     }
 
+    public void setSimFuelPreloaded() {
+        setSimFuelCount(8);
+    }
+
+    private void configureStateTriggers() {
+        intake.isIntaking.and(hasFuel.negate())
+                .whileTrue(CommandsExt.defaultCommand(indexer.feed()));
+    }
+
     private void configureSimTriggers() {
+        final ThreadLocalRandom random = ThreadLocalRandom.current();
+
         teleopEnabled.onTrue(Commands.runOnce(() -> setSimFuelCount(500)));
 
-        final double fuelIntakePerSecond = 5;
+        final double fuelIntakePerSecond = 10;
         intake.isIntaking.whileTrue(setInterval(1 / fuelIntakePerSecond, () -> simFuelCount++));
 
-        final double fuelFedPerSecond = 12;
+        final double fuelFedPerSecond = 18;
         indexer.isIndexing
+                .and(hasFuel)
+                .and(hasSimFuel)
                 .whileTrue(setInterval(
                         1 / fuelFedPerSecond,
                         () -> {
@@ -129,11 +158,12 @@ public class FuelState extends VirtualSubsystem {
                                             hoodComponentPose.getTranslation(),
                                             hoodComponentPose.getRotation()
                                     ))
-                                    .plus(PoseConstants.Hood.FuelExitOffset);
+                                    .plus(SimConstants.Hood.FuelExitOffset);
 
                             final ChassisSpeeds turretFieldSpeeds = ShotCalculator.getTurretFieldSpeeds(
                                     robotPose,
-                                    robotPose.plus(PoseConstants.Turret.ROBOT_TO_TURRET_TRANSFORM_2D).getTranslation(),
+                                    robotPose.transformBy(PoseConstants.Turret.ROBOT_TO_TURRET_TRANSFORM_2D)
+                                            .getTranslation(),
                                     swerve.getFieldRelativeSpeeds()
                             );
 
@@ -145,6 +175,27 @@ public class FuelState extends VirtualSubsystem {
                             simFuelCount = Math.max(simFuelCount - 1, 0);
                         }
                 ));
+
+        intake.isIntaking
+                .and(indexer.isIndexing)
+                .and(hasFuel.negate())
+                .and(hasSimFuel)
+                .onTrue(Commands.sequence(
+                        waitRand(random, 0.25, 0.5),
+                        Commands.runOnce(() -> indexer.setFeederTOFDetected(true))
+                ));
+        indexer.isIndexing
+                .and(hasSimFuel.negate())
+                .onTrue(Commands.runOnce(() -> indexer.setFeederTOFDetected(false)));
+    }
+
+    @SuppressWarnings("SameParameterValue")
+    private static Command waitRand(
+            final ThreadLocalRandom random,
+            final double lowerInclusiveSeconds,
+            final double upperExclusiveSeconds
+    ) {
+        return Commands.waitSeconds(random.nextDouble(lowerInclusiveSeconds, upperExclusiveSeconds));
     }
 
     private static Command setInterval(final double intervalSeconds, final Runnable callback) {
@@ -357,7 +408,7 @@ public class FuelState extends VirtualSubsystem {
 
     private static final InterpolatingDoubleTreeMap ShooterOmegaToBallVelocity = new InterpolatingDoubleTreeMap();
     private static double shooterSurfaceVelocity(final double shooterVelocityRotsPerSec) {
-        return shooterVelocityRotsPerSec * (Units.inchesToMeters(3.965) * Math.PI);
+        return shooterVelocityRotsPerSec * SimConstants.Shooter.WHEEL_CIRCUMFERENCE_METERS;
     }
     static {
         ShooterOmegaToBallVelocity.put(0d, 0d);

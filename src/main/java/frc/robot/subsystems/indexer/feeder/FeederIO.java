@@ -10,6 +10,8 @@ public interface FeederIO {
         public double wheelVoltage = 0.0;
         public double wheelTorqueCurrentAmps = 0.0;
         public double wheelTempCelsius = 0.0;
+
+        public boolean TOFDetected = false;
     }
 
     default void updateInputs(final FeederIOInputs inputs) {}
@@ -17,4 +19,6 @@ public interface FeederIO {
     default void config() {}
 
     default void toWheelTorqueCurrent(final double torqueCurrentAmps) {}
+
+    default void setTOFDetected(final boolean isDetected) {}
 }
