@@ -15,8 +15,10 @@ import frc.robot.constants.PoseConstants;
 import frc.robot.subsystems.drive.Swerve;
 import frc.robot.subsystems.indexer.Indexer;
 import frc.robot.subsystems.intake.Intake;
-import frc.robot.subsystems.superstructure.ShotCalculator;
 import frc.robot.subsystems.superstructure.Superstructure;
+import frc.robot.subsystems.superstructure.calculation.MovingShot;
+import frc.robot.subsystems.superstructure.calculation.ShotCalculation;
+import frc.robot.subsystems.superstructure.calculation.StaticShot;
 import frc.robot.subsystems.vision.PhotonVision;
 import frc.robot.utils.commands.trigger.LoggedTrigger;
 import org.littletonrobotics.junction.Logger;
@@ -36,8 +38,8 @@ public class Autos {
 
     private final AutoFactory autoFactory;
 
-    private final Supplier<ShotCalculator.ShotCalculation> staticShotCalculation;
-    private final Supplier<ShotCalculator.ShotCalculation> movingShotCalculation;
+    private final Supplier<ShotCalculation> staticShotCalculation;
+    private final Supplier<ShotCalculation> movingShotCalculation;
 
     private final LoggedTrigger robotStopped;
     private final LoggedTrigger targetIsHub;
@@ -82,7 +84,7 @@ public class Autos {
         );
 
         this.staticShotCalculation = staticParameters(swerve::getPose);
-        this.movingShotCalculation = ShotCalculator.getMovingShotCalculationSupplier(
+        this.movingShotCalculation = MovingShot.getShotCalculationSupplier(
                 swerve::getPose,
                 swerve::getRobotRelativeSpeeds,
                 getTargetPoseSupplier()
@@ -462,27 +464,27 @@ public class Autos {
         ).withName("RunStartingTrajectory");
     }
 
-    private Supplier<ShotCalculator.ShotCalculation> staticParameters(final Supplier<Pose2d> robotPoseSupplier) {
-        return ShotCalculator.getStaticShotCalculationSupplier(
+    private Supplier<ShotCalculation> staticParameters(final Supplier<Pose2d> robotPoseSupplier) {
+        return StaticShot.getShotCalculationSupplier(
                 robotPoseSupplier,
-                swerve::getFieldRelativeSpeeds,
+                swerve::getRobotRelativeSpeeds,
                 FieldConstants::getHubPose
         );
     }
 
-    private Supplier<ShotCalculator.ShotCalculation> staticParametersFromPose(final Pose2d pose) {
+    private Supplier<ShotCalculation> staticParametersFromPose(final Pose2d pose) {
         return staticParameters(() -> pose);
     }
 
-    private Supplier<ShotCalculator.ShotCalculation> staticParametersFromFinalPose(final AutoTrajectory trajectory) {
+    private Supplier<ShotCalculation> staticParametersFromFinalPose(final AutoTrajectory trajectory) {
         return trajectory.getFinalPose()
                 .map(this::staticParametersFromPose)
                 .orElse(staticShotCalculation);
     }
 
     private Command intakeFromTrench(
-            final Supplier<ShotCalculator.ShotCalculation> fixed,
-            final Supplier<ShotCalculator.ShotCalculation> tracking
+            final Supplier<ShotCalculation> fixed,
+            final Supplier<ShotCalculation> tracking
     ) {
         return parallel(
                 intake.intake(),
@@ -525,7 +527,7 @@ public class Autos {
                                 .onlyWhile(superstructure::atSetpoint)
                 ).onlyWhile(fuelState.hasFuel
                         .or(intake.isIntaking)),
-                superstructure.runParameters(ShotCalculator.getMovingShotCalculationSupplier(
+                superstructure.runParameters(MovingShot.getShotCalculationSupplier(
                         swerve::getPose,
                         swerve::getRobotRelativeSpeeds,
                         getTargetPoseSupplierWithFerryPose(

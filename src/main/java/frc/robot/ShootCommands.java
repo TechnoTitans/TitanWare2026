@@ -9,8 +9,10 @@ import frc.robot.constants.PoseConstants;
 import frc.robot.subsystems.drive.Swerve;
 import frc.robot.subsystems.indexer.Indexer;
 import frc.robot.subsystems.intake.Intake;
-import frc.robot.subsystems.superstructure.ShotCalculator;
 import frc.robot.subsystems.superstructure.Superstructure;
+import frc.robot.subsystems.superstructure.calculation.MovingShot;
+import frc.robot.subsystems.superstructure.calculation.ShotCalculation;
+import frc.robot.subsystems.superstructure.calculation.StaticShot;
 import frc.robot.utils.commands.trigger.LoggedTrigger;
 import frc.robot.utils.subsystems.VirtualSubsystem;
 import frc.robot.utils.teleop.SwerveSpeed;
@@ -72,15 +74,15 @@ public class ShootCommands extends VirtualSubsystem {
 
     public Command trackTarget() {
         final Supplier<Pose2d> targetPoseSupplier = getTargetPoseSupplier();
-        final Supplier<ShotCalculator.ShotCalculation> staticCalculationSupplier =
-                ShotCalculator.getStaticShotCalculationSupplier(
+        final Supplier<ShotCalculation> staticCalculationSupplier =
+                StaticShot.getShotCalculationSupplier(
                         swerve::getPose,
                         swerve::getRobotRelativeSpeeds,
                         targetPoseSupplier
                 );
 
-        final Supplier<ShotCalculator.ShotCalculation> movingCalculationSupplier =
-                ShotCalculator.getMovingShotCalculationSupplier(
+        final Supplier<ShotCalculation> movingCalculationSupplier =
+                MovingShot.getShotCalculationSupplier(
                         swerve::getPose,
                         () -> {
                             final ChassisSpeeds robotSpeeds = swerve.getRobotRelativeSpeeds();
@@ -137,7 +139,7 @@ public class ShootCommands extends VirtualSubsystem {
                 ),
                 SwerveSpeed.toSwerveSpeed(SwerveSpeed.Speeds.SHOOTING),
                 superstructure.runParameters(
-                        ShotCalculator.getMovingShotCalculationSupplier(
+                        MovingShot.getShotCalculationSupplier(
                                 swerve::getPose,
                                 swerve::getRobotRelativeSpeeds,
                                 targetSupplier

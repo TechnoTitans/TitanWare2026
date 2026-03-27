@@ -4,6 +4,7 @@ import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
+import frc.robot.subsystems.superstructure.calculation.ShotCalculation;
 import frc.robot.subsystems.superstructure.hood.Hood;
 import frc.robot.subsystems.superstructure.shooter.Shooter;
 import frc.robot.subsystems.superstructure.turret.Turret;
@@ -39,7 +40,8 @@ public class Superstructure extends VirtualSubsystem {
         DEFAULT,
         STOW(Goal.STOW),
         NO_VISION(Goal.NO_VISION),
-        TRACKING;
+        TRACKING,
+        TRACKING_HOOD_DOWN;
 
         public static final HashMap<Goal, InternalGoal> GoalToInternal = new HashMap<>();
         static {
@@ -71,8 +73,8 @@ public class Superstructure extends VirtualSubsystem {
     private final Shooter shooter;
 
     private InternalGoal desiredGoal = InternalGoal.STOW;
-    private InternalGoal currentGoal = InternalGoal.NONE;
 
+    public final LoggedTrigger atSetpoint;
     public final LoggedTrigger safeForTrench;
 
     public Superstructure(
@@ -84,6 +86,10 @@ public class Superstructure extends VirtualSubsystem {
         this.hood = hood;
         this.shooter = shooter;
 
+        this.atSetpoint = hood.atSetpoint
+                .and(shooter.atSetpoint)
+                .and(turret.atSetpoint);
+
         this.safeForTrench = hood.safeForTrench;
     }
 
@@ -91,7 +97,8 @@ public class Superstructure extends VirtualSubsystem {
     public void periodic() {
         final double superstructurePeriodicUpdateStart = Timer.getFPGATimestamp();
 
-        if (hood.atSetpoint() && shooter.atSetpoint() && turret.atSetpoint()) {
+        final InternalGoal currentGoal;
+        if (atSetpoint.getAsBoolean()) {
             currentGoal = desiredGoal;
         } else {
             currentGoal = InternalGoal.NONE;
@@ -99,6 +106,7 @@ public class Superstructure extends VirtualSubsystem {
 
         Logger.recordOutput(LogKey + "/DesiredGoal", desiredGoal);
         Logger.recordOutput(LogKey + "/CurrentGoal", currentGoal);
+        Logger.recordOutput(LogKey + "/AtSetpoint", atSetpoint());
         Logger.recordOutput(LogKey + "/SafeForTrench", safeForTrench);
 
         Logger.recordOutput(
@@ -126,14 +134,16 @@ public class Superstructure extends VirtualSubsystem {
                 .withName("SetGoal: " + goal);
     }
 
-    public Command runParameters(final Supplier<ShotCalculator.ShotCalculation> shotCalculationSupplier) {
+    public Command runParameters(final Supplier<ShotCalculation> shotCalculationSupplier) {
         return runParametersWithHood(
                 shotCalculationSupplier,
-                cached -> hood.runPosition(() -> cached.get().hoodRotationRots())
+                cached -> hood.runPosition(
+                        () -> cached.get().shooterCalculation().hoodPositionRots()
+                )
         ).withName("RunParametersWithHoodStowed");
     }
 
-    public Command runParametersWithHoodStowed(final Supplier<ShotCalculator.ShotCalculation> shotCalculationSupplier) {
+    public Command runParametersWithHoodStowed(final Supplier<ShotCalculation> shotCalculationSupplier) {
         return runParametersWithHood(
                 shotCalculationSupplier,
                 cached -> hood.runGoal(Hood.Goal.STOW)
@@ -141,7 +151,7 @@ public class Superstructure extends VirtualSubsystem {
     }
 
     public boolean atSetpoint() {
-        return currentGoal == desiredGoal;
+        return atSetpoint.getAsBoolean();
     }
 
     public double getShooterVelocityRotsPerSec() {
@@ -149,16 +159,16 @@ public class Superstructure extends VirtualSubsystem {
     }
 
     private Command runParametersWithHood(
-            final Supplier<ShotCalculator.ShotCalculation> shotCalculationSupplier,
-            final Function<Supplier<ShotCalculator.ShotCalculation>, Command> hoodCommand
+            final Supplier<ShotCalculation> shotCalculationSupplier,
+            final Function<Supplier<ShotCalculation>, Command> hoodCommand
     ) {
-        final Container<ShotCalculator.ShotCalculation> calculation = Container.empty();
-        final Supplier<ShotCalculator.ShotCalculation> cached = () -> {
+        final Container<ShotCalculation> calculation = Container.empty();
+        final Supplier<ShotCalculation> cached = () -> {
             if (calculation.hasValue()) {
                 return calculation.get();
             }
 
-            final ShotCalculator.ShotCalculation newCalculation = shotCalculationSupplier.get();
+            final ShotCalculation newCalculation = shotCalculationSupplier.get();
             calculation.set(newCalculation);
             return newCalculation;
         };
@@ -170,12 +180,12 @@ public class Superstructure extends VirtualSubsystem {
                         () -> cached.get().turretSpeedRotsPerSec()
                 ),
                 hoodCommand.apply(cached),
-                shooter.runVelocity(() -> cached.get().shooterVelocityRotsPerSec()),
+                shooter.runVelocity(() -> cached.get().shooterCalculation().shooterVelocityRotsPerSec()),
                 Commands.run(calculation::clear)
         ).withName("RunParameters");
     }
 
-    private Command setInternalGoal(final InternalGoal goal) {
+    private Command setInternalGoal(@SuppressWarnings("SameParameterValue") final InternalGoal goal) {
         return Commands.runOnce(() -> desiredGoal = goal)
                 .withName("SetInternalGoal");
     }
