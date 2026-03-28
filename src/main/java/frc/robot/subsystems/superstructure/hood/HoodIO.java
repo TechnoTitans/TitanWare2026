@@ -12,9 +12,9 @@ public interface HoodIO {
         public double hoodTempCelsius = 0.0;
     }
 
-    default void updateInputs(final HoodIOInputs inputs) {}
-
     default void config() {}
+
+    default void updateInputs(final HoodIOInputs inputs) {}
 
     default void toHoodPosition(final double positionRots) {}
 

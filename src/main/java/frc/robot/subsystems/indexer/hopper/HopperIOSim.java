@@ -1,26 +1,40 @@
-package frc.robot.subsystems.superstructure.shooter;
+package frc.robot.subsystems.indexer.hopper;
 
 import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.Slot0Configs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.Follower;
-import com.ctre.phoenix6.controls.TorqueCurrentFOC;
-import com.ctre.phoenix6.controls.VelocityTorqueCurrentFOC;
 import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.ParentDevice;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.*;
+import com.ctre.phoenix6.sim.ChassisReference;
+import com.ctre.phoenix6.sim.TalonFXSimState;
+import edu.wpi.first.math.system.plant.DCMotor;
+import edu.wpi.first.math.system.plant.LinearSystemId;
 import edu.wpi.first.units.measure.*;
+import edu.wpi.first.wpilibj.Notifier;
+import edu.wpi.first.wpilibj.simulation.DCMotorSim;
 import frc.robot.constants.HardwareConstants;
+import frc.robot.constants.SimConstants;
+import frc.robot.utils.closeables.ToClose;
+import frc.robot.utils.control.DeltaTime;
 import frc.robot.utils.ctre.Phoenix6Utils;
 import frc.robot.utils.ctre.RefreshAll;
+import frc.robot.utils.sim.SimUtils;
+import frc.robot.utils.sim.motors.TalonFXSim;
 
-public class ShooterIOReal implements ShooterIO {
-    private final HardwareConstants.ShooterConstants constants;
+import java.util.List;
+
+public class HopperIOSim implements HopperIO {
+    private final DeltaTime deltaTime;
+    private final HardwareConstants.HopperConstants constants;
 
     private final TalonFX masterMotor;
     private final TalonFX followerMotor;
+
+    private final TalonFXSim motorsSim;
 
     private final StatusSignal<Angle> masterPosition;
     private final StatusSignal<AngularVelocity> masterVelocity;
@@ -34,16 +48,34 @@ public class ShooterIOReal implements ShooterIO {
     private final StatusSignal<Current> followerTorqueCurrent;
     private final StatusSignal<Temperature> followerDeviceTemp;
 
-    private final VelocityTorqueCurrentFOC velocityTorqueCurrentFOC;
     private final VoltageOut voltageOut;
-    private final TorqueCurrentFOC torqueCurrentFOC;
     private final Follower follower;
 
-    public ShooterIOReal(final HardwareConstants.ShooterConstants constants) {
+    public HopperIOSim(final HardwareConstants.HopperConstants constants) {
+        this.deltaTime = new DeltaTime(true);
         this.constants = constants;
 
         this.masterMotor = new TalonFX(constants.masterMotorID(), constants.CANBus().toPhoenix6CANBus());
         this.followerMotor = new TalonFX(constants.followerMotorID(), constants.CANBus().toPhoenix6CANBus());
+
+        final DCMotor dcMotor = DCMotor.getKrakenX60Foc(2);
+        final DCMotorSim motorsSim = new DCMotorSim(
+                LinearSystemId.createDCMotorSystem(
+                        dcMotor,
+                        SimConstants.Shooter.MOMENT_OF_INERTIA,
+                        constants.gearing()
+                ),
+                dcMotor
+        );
+
+        this.motorsSim = new TalonFXSim(
+                List.of(masterMotor, followerMotor),
+                constants.gearing(),
+                motorsSim::update,
+                voltage -> motorsSim.setInputVoltage(SimUtils.addMotorFriction(voltage, 0.25)),
+                motorsSim::getAngularPositionRad,
+                motorsSim::getAngularVelocityRadPerSec
+        );
 
         this.masterPosition = masterMotor.getPosition(false);
         this.masterVelocity = masterMotor.getVelocity(false);
@@ -57,10 +89,8 @@ public class ShooterIOReal implements ShooterIO {
         this.followerTorqueCurrent = followerMotor.getTorqueCurrent(false);
         this.followerDeviceTemp = followerMotor.getDeviceTemp(false);
 
-        this.velocityTorqueCurrentFOC = new VelocityTorqueCurrentFOC(0);
         this.voltageOut = new VoltageOut(0);
-        this.torqueCurrentFOC = new TorqueCurrentFOC(0);
-        this.follower = new Follower(masterMotor.getDeviceID(), MotorAlignmentValue.Opposed);
+        this.follower = new Follower(masterMotor.getDeviceID(), MotorAlignmentValue.Aligned);
 
         RefreshAll.add(
                 constants.CANBus(),
@@ -75,6 +105,18 @@ public class ShooterIOReal implements ShooterIO {
                 followerTorqueCurrent,
                 followerDeviceTemp
         );
+
+        final Notifier simUpdateNotifier = new Notifier(() -> {
+            final double dt = deltaTime.get();
+            this.motorsSim.update(dt);
+        });
+        ToClose.add(simUpdateNotifier);
+        simUpdateNotifier.setName(String.format(
+                "SimUpdate(%d,%d)",
+                masterMotor.getDeviceID(),
+                followerMotor.getDeviceID()
+        ));
+        simUpdateNotifier.startPeriodic(SimConstants.SIM_UPDATE_PERIODIC_SEC);
     }
 
     @Override
@@ -127,10 +169,18 @@ public class ShooterIOReal implements ShooterIO {
                 masterMotor,
                 followerMotor
         );
+
+        final TalonFXSimState masterMotorSimState = masterMotor.getSimState();
+        masterMotorSimState.Orientation = ChassisReference.CounterClockwise_Positive;
+        masterMotorSimState.setMotorType(TalonFXSimState.MotorType.KrakenX60);
+
+        final TalonFXSimState followerMotorSimState = followerMotor.getSimState();
+        followerMotorSimState.Orientation = ChassisReference.Clockwise_Positive;
+        followerMotorSimState.setMotorType(TalonFXSimState.MotorType.KrakenX60);
     }
 
     @Override
-    public void updateInputs(ShooterIOInputs inputs) {
+    public void updateInputs(HopperIOInputs inputs) {
         inputs.masterPositionRots = masterPosition.getValueAsDouble();
         inputs.masterVelocityRotsPerSec = masterVelocity.getValueAsDouble();
         inputs.masterVoltage = masterVoltage.getValueAsDouble();
@@ -145,20 +195,8 @@ public class ShooterIOReal implements ShooterIO {
     }
 
     @Override
-    public void toFlywheelVelocity(final double velocityRotsPerSec) {
-        masterMotor.setControl(velocityTorqueCurrentFOC.withVelocity(velocityRotsPerSec));
-        followerMotor.setControl(follower);
-    }
-
-    @Override
-    public void toFlywheelVoltage(final double volts) {
+    public void toRollersVoltage(final double volts) {
         masterMotor.setControl(voltageOut.withOutput(volts));
-        followerMotor.setControl(follower);
-    }
-
-    @Override
-    public void toFlywheelTorqueCurrent(final double torqueCurrentAmps) {
-        masterMotor.setControl(torqueCurrentFOC.withOutput(torqueCurrentAmps));
         followerMotor.setControl(follower);
     }
 }

@@ -1,10 +1,10 @@
-package frc.robot.subsystems.superstructure.shooter;
+package frc.robot.subsystems.indexer.hopper;
 
 import org.littletonrobotics.junction.AutoLog;
 
-public interface ShooterIO {
+public interface HopperIO {
     @AutoLog
-    class ShooterIOInputs {
+    class HopperIOInputs {
         public double masterPositionRots = 0.0;
         public double masterVelocityRotsPerSec = 0.0;
         public double masterVoltage = 0.0;
@@ -20,11 +20,7 @@ public interface ShooterIO {
 
     default void config() {}
 
-    default void updateInputs(final ShooterIOInputs inputs) {}
+    default void updateInputs(final HopperIOInputs inputs) {}
 
-    default void toFlywheelVelocity(final double velocityRotsPerSec) {}
-
-    default void toFlywheelVoltage(final double volts) {}
-
-    default void toFlywheelTorqueCurrent(final double torqueCurrentAmps) {}
+    default void toRollersVoltage(final double volts) {}
 }

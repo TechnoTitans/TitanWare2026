@@ -14,9 +14,9 @@ public interface FeederIO {
         public boolean TOFDetected = false;
     }
 
-    default void updateInputs(final FeederIOInputs inputs) {}
-
     default void config() {}
+
+    default void updateInputs(final FeederIOInputs inputs) {}
 
     default void toWheelTorqueCurrent(final double torqueCurrentAmps) {}
 

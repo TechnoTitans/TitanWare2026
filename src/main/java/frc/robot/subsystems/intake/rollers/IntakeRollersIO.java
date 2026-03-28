@@ -12,9 +12,9 @@ public interface IntakeRollersIO {
         public double rollersTempCelsius = 0.0;
     }
 
-    default void updateInputs(final IntakeRollerIOInputs inputs) {}
-
     default void config() {}
+
+    default void updateInputs(final IntakeRollerIOInputs inputs) {}
 
     default void toRollersVoltage(final double volts) {}
 }

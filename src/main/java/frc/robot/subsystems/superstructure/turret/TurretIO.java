@@ -17,9 +17,9 @@ public interface TurretIO {
         public double secondaryEncoderPositionRots = 0.0;
     }
 
-    default void updateInputs(final TurretIOInputs inputs) {}
-
     default void config() {}
+
+    default void updateInputs(final TurretIOInputs inputs) {}
 
     default void toTurretPosition(final double positionRots) {}
 
