@@ -60,7 +60,7 @@ public class SpindexerIOReal implements SpindexerIO {
         motorConfig.CurrentLimits.SupplyCurrentLowerTime = 1.5;
         motorConfig.CurrentLimits.SupplyCurrentLimitEnable = true;
         motorConfig.MotorOutput.NeutralMode = NeutralModeValue.Brake;
-        motorConfig.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
+        motorConfig.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
         motorConfig.Feedback.FeedbackSensorSource = FeedbackSensorSourceValue.RotorSensor;
         motorConfig.Feedback.SensorToMechanismRatio = constants.gearing();
         Phoenix6Utils.tryUntilOk(motor, () -> motor.getConfigurator().apply(motorConfig));

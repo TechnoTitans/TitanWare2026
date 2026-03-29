@@ -26,8 +26,8 @@ import static edu.wpi.first.units.Units.*;
 
 public class Turret extends SubsystemExt {
     protected static final String LogKey = "Turret";
-    private static final double PositionToleranceRots = 0.05;
-    private static final double VelocityToleranceRotsPerSec = 0.25;
+    private static final double PositionToleranceRots = 0.03;
+    private static final double VelocityToleranceRotsPerSec = 0.1;
 
     public enum Goal {
         STOW(0),
@@ -123,7 +123,7 @@ public class Turret extends SubsystemExt {
                 inputs.secondaryEncoderPositionRots,
                 constants.secondaryEncoderTooth()
         );
-        this.turretIO.seedTurretPosition(absolutePosition);
+        this.turretIO.setPosition(0);
     }
 
     @Override

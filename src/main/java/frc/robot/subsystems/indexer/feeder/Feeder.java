@@ -12,14 +12,14 @@ public class Feeder extends SubsystemExt {
     protected static final String LogKey = "Feeder";
 
     public enum Goal {
-        BACK_OUT(-60),
+        BACK_OUT(-5),
         OFF(0),
-        FEED(60);
+        FEED(10);
 
-        private final double torqueCurrentAmps;
+        private final double voltageSetpoint;
 
-        Goal(final double torqueCurrentAmps) {
-            this.torqueCurrentAmps = torqueCurrentAmps;
+        Goal(final double voltageSetpoint) {
+            this.voltageSetpoint = voltageSetpoint;
         }
     }
 
@@ -27,7 +27,7 @@ public class Feeder extends SubsystemExt {
     private final FeederIOInputsAutoLogged inputs;
 
     private Goal desiredGoal = Goal.OFF;
-    private double torqueCurrentSetpointAmps = 0.0;
+    private double voltageSetpoint = 0.0;
 
     public Feeder(final Constants.RobotMode mode, final HardwareConstants.FeederConstants constants) {
         this.feederIO = switch (mode) {
@@ -40,7 +40,7 @@ public class Feeder extends SubsystemExt {
         this.inputs = new FeederIOInputsAutoLogged();
 
         this.feederIO.config();
-        this.feederIO.toWheelTorqueCurrent(desiredGoal.torqueCurrentAmps);
+        this.feederIO.toWheelVoltage(desiredGoal.voltageSetpoint);
     }
 
     @Override
@@ -51,7 +51,7 @@ public class Feeder extends SubsystemExt {
         Logger.processInputs(LogKey, inputs);
 
         Logger.recordOutput(LogKey + "/DesiredGoal", desiredGoal);
-        Logger.recordOutput(LogKey + "/TorqueCurrentSetpointAmps", torqueCurrentSetpointAmps);
+        Logger.recordOutput(LogKey + "/VoltageSetpoint", voltageSetpoint);
 
         Logger.recordOutput(
                 LogKey + "/PeriodicIOPeriodMs",
@@ -76,11 +76,11 @@ public class Feeder extends SubsystemExt {
 
     private void setDesiredGoal(final Goal goal) {
         desiredGoal = goal;
-        setDesiredTorqueCurrent(goal.torqueCurrentAmps);
+        setDesiredVoltage(goal.voltageSetpoint);
     }
 
-    private void setDesiredTorqueCurrent(final double torqueCurrentAmps) {
-        torqueCurrentSetpointAmps = torqueCurrentAmps;
-        feederIO.toWheelTorqueCurrent(torqueCurrentAmps);
+    private void setDesiredVoltage(final double volts) {
+        voltageSetpoint = volts;
+        feederIO.toWheelVoltage(volts);
     }
 }

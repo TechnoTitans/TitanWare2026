@@ -18,16 +18,16 @@ public record ShotParameters(
     static {
         switch (Constants.CURRENT_MODE) {
             case REAL, REPLAY, DISABLED -> {
-                ShotMap.put(1.30, new Shooter(28, 0));
-                ShotMap.put(2.07, new Shooter(32, 0.005));
-                ShotMap.put(2.42, new Shooter(32, 0.008));
-                ShotMap.put(2.67, new Shooter(33, 0.01));
-                ShotMap.put(3.07, new Shooter(35, 0.012));
-                ShotMap.put(3.60, new Shooter(36, 0.014));
-                ShotMap.put(4.54, new Shooter(40, 0.021));
-                ShotMap.put(5.18, new Shooter(43, 0.025));
-                ShotMap.put(5.84, new Shooter(44, 0.027));
-                ShotMap.put(6.16, new Shooter(44, 0.041));
+                ShotMap.put(1.30, new Shooter(27.5, 0));
+                ShotMap.put(2.07, new Shooter(30, 0.005));
+                ShotMap.put(2.42, new Shooter(31, 0.008));
+                ShotMap.put(2.67, new Shooter(32, 0.01));
+                ShotMap.put(3.07, new Shooter(33.5, 0.012));
+                ShotMap.put(3.60, new Shooter(34, 0.014));
+                ShotMap.put(4.54, new Shooter(38, 0.023));
+                ShotMap.put(5.18, new Shooter(38.5, 0.035));
+                ShotMap.put(5.84, new Shooter(40, 0.038));
+                ShotMap.put(6.16, new Shooter(40, 0.041));
             }
             case SIM -> {
                 ShotMap.put(1.3, new Shooter(21, 0));
