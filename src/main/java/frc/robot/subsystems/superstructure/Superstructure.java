@@ -1,11 +1,14 @@
 package frc.robot.subsystems.superstructure;
 
+import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Transform2d;
+import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
-import frc.robot.subsystems.superstructure.calculation.ShotCalculation;
 import frc.robot.subsystems.superstructure.hood.Hood;
+import frc.robot.subsystems.superstructure.params.ShotParameters;
 import frc.robot.subsystems.superstructure.shooter.Shooter;
 import frc.robot.subsystems.superstructure.turret.Turret;
 import frc.robot.utils.Container;
@@ -134,18 +137,18 @@ public class Superstructure extends VirtualSubsystem {
                 .withName("SetGoal: " + goal);
     }
 
-    public Command runParameters(final Supplier<ShotCalculation> shotCalculationSupplier) {
+    public Command runParameters(final Supplier<ShotParameters> shotParametersSupplier) {
         return runParametersWithHood(
-                shotCalculationSupplier,
+                shotParametersSupplier,
                 cached -> hood.runPosition(
-                        () -> cached.get().shooterCalculation().hoodPositionRots()
+                        () -> cached.get().shooter().hoodPositionRots()
                 )
         ).withName("RunParametersWithHoodStowed");
     }
 
-    public Command runParametersWithHoodStowed(final Supplier<ShotCalculation> shotCalculationSupplier) {
+    public Command runParametersWithHoodStowed(final Supplier<ShotParameters> shotParametersSupplier) {
         return runParametersWithHood(
-                shotCalculationSupplier,
+                shotParametersSupplier,
                 cached -> hood.runGoal(Hood.Goal.STOW)
         ).withName("RunParametersWithHoodStowed");
     }
@@ -158,30 +161,38 @@ public class Superstructure extends VirtualSubsystem {
         return shooter.getVelocityRotsPerSec();
     }
 
+    public Transform2d getRobotToTurret() {
+        return turret.getOffsetFromCenter();
+    }
+
+    public Translation2d getTurretTranslation(final Pose2d robotPose) {
+        return robotPose.plus(getRobotToTurret()).getTranslation();
+    }
+
     private Command runParametersWithHood(
-            final Supplier<ShotCalculation> shotCalculationSupplier,
-            final Function<Supplier<ShotCalculation>, Command> hoodCommand
+            final Supplier<ShotParameters> shotParametersSupplier,
+            final Function<Supplier<ShotParameters>, Command> hoodCommand
     ) {
-        final Container<ShotCalculation> calculation = Container.empty();
-        final Supplier<ShotCalculation> cached = () -> {
-            if (calculation.hasValue()) {
-                return calculation.get();
+        final Container<ShotParameters> params = Container.empty();
+        final Supplier<ShotParameters> cached = () -> {
+            if (params.hasValue()) {
+                return params.get();
             }
 
-            final ShotCalculation newCalculation = shotCalculationSupplier.get();
-            calculation.set(newCalculation);
-            return newCalculation;
+            final ShotParameters newParams = shotParametersSupplier.get();
+            params.set(newParams);
+            return newParams;
         };
 
         return Commands.parallel(
                 setInternalGoal(InternalGoal.TRACKING),
                 turret.runPositionWithVelocity(
-                        () -> cached.get().turretRotationRots(),
-                        () -> cached.get().turretSpeedRotsPerSec()
+                        () -> cached.get().turretAngle().getRotations(),
+                        () -> cached.get().turretVelocityRotsPerSec()
                 ),
                 hoodCommand.apply(cached),
-                shooter.runVelocity(() -> cached.get().shooterCalculation().shooterVelocityRotsPerSec()),
-                Commands.run(calculation::clear)
+                shooter.runVelocity(() -> cached.get().shooter().shooterVelocityRotsPerSec()),
+                Commands.run(params::clear)
         ).withName("RunParameters");
     }
 

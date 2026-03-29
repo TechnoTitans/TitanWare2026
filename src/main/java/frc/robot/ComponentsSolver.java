@@ -5,12 +5,11 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Transform3d;
 import frc.robot.constants.HardwareConstants;
-import frc.robot.constants.PoseConstants;
+import frc.robot.constants.SimConstants;
 import org.littletonrobotics.junction.Logger;
 
 import java.util.function.Supplier;
 
-@SuppressWarnings("ClassCanBeRecord")
 public class ComponentsSolver {
     private final Supplier<Rotation2d> turretRotationSupplier;
     private final Supplier<Rotation2d> hoodRotationSupplier;
@@ -41,13 +40,13 @@ public class ComponentsSolver {
 
     public Pose3d[] getSuperstructurePoses() {
         final Pose3d turretPose = new Pose3d(
-                PoseConstants.Turret.ORIGIN,
+                SimConstants.Turret.ORIGIN,
                 new Rotation3d(turretRotationSupplier.get())
         );
 
         final Pose3d hoodPose = turretPose
                 .plus(new Transform3d(
-                        PoseConstants.Hood.TURRET_TO_HOOD_TRANSLATION,
+                        SimConstants.Hood.TURRET_TO_HOOD_TRANSLATION,
                         new Rotation3d(0, hoodRotationSupplier.get().getRadians(), 0)
                 ));
 
@@ -61,11 +60,11 @@ public class ComponentsSolver {
         final double extensionRatio = intakeSlideRotationSupplier.get().getRotations()
                 / (HardwareConstants.INTAKE_SLIDE.forwardLimitRots() - HardwareConstants.INTAKE_SLIDE.reverseLimitRots());
 
-        final Pose3d intakePose = PoseConstants.IntakeSlide.RETRACTED_POSE
-                .interpolate(PoseConstants.IntakeSlide.EXTENDED_POSE, extensionRatio);
+        final Pose3d intakePose = SimConstants.IntakeSlide.RETRACTED_POSE
+                .interpolate(SimConstants.IntakeSlide.EXTENDED_POSE, extensionRatio);
 
-        final Pose3d hopperPose = PoseConstants.Hopper.RETRACTED_POSE
-                .interpolate(PoseConstants.Hopper.EXTENDED_POSE, extensionRatio);
+        final Pose3d hopperPose = SimConstants.Hopper.RETRACTED_POSE
+                .interpolate(SimConstants.Hopper.EXTENDED_POSE, extensionRatio);
 
         return new Pose3d[]{intakePose, hopperPose};
     }

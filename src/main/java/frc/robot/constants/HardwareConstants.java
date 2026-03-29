@@ -1,5 +1,8 @@
 package frc.robot.constants;
 
+import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Transform2d;
+
 import java.util.HashMap;
 import java.util.Objects;
 
@@ -101,7 +104,8 @@ public class HardwareConstants {
             double primaryEncoderOffset,
             double secondaryEncoderOffset,
             double forwardLimitRots,
-            double reverseLimitRots
+            double reverseLimitRots,
+            Transform2d offsetFromCenter
     ) {}
 
     public static final TurretConstants TURRET = new TurretConstants(
@@ -116,8 +120,10 @@ public class HardwareConstants {
             -0.320,
             0.340,
             0.75,
-            -0.25
+            -0.25,
+            new Transform2d(-0.127, 0, Rotation2d.kZero)
     );
+
     public record HoodConstants(
             CANBus CANBus,
             int motorID,

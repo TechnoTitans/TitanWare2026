@@ -15,13 +15,12 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.constants.Constants;
 import frc.robot.constants.FieldConstants;
-import frc.robot.constants.PoseConstants;
 import frc.robot.constants.SimConstants;
 import frc.robot.subsystems.drive.Swerve;
 import frc.robot.subsystems.indexer.Indexer;
 import frc.robot.subsystems.intake.Intake;
 import frc.robot.subsystems.superstructure.Superstructure;
-import frc.robot.subsystems.superstructure.calculation.MovingShot;
+import frc.robot.subsystems.superstructure.params.MovingTOFShot;
 import frc.robot.utils.Container;
 import frc.robot.utils.commands.ext.CommandsExt;
 import frc.robot.utils.commands.trigger.LoggedTrigger;
@@ -160,10 +159,9 @@ public class FuelState extends VirtualSubsystem {
                                     ))
                                     .plus(SimConstants.Hood.FuelExitOffset);
 
-                            final ChassisSpeeds turretFieldSpeeds = MovingShot.getTurretFieldSpeeds(
+                            final ChassisSpeeds turretFieldSpeeds = MovingTOFShot.getTurretFieldSpeeds(
                                     robotPose,
-                                    robotPose.transformBy(PoseConstants.Turret.ROBOT_TO_TURRET_TRANSFORM_2D)
-                                            .getTranslation(),
+                                    superstructure.getTurretTranslation(robotPose),
                                     swerve.getFieldRelativeSpeeds()
                             );
 

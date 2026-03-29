@@ -45,6 +45,7 @@ import org.littletonrobotics.junction.wpilog.WPILOGReader;
 import org.littletonrobotics.junction.wpilog.WPILOGWriter;
 
 import java.io.IOException;
+import java.lang.reflect.Field;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Arrays;
@@ -57,6 +58,8 @@ public class Robot extends LoggedRobot {
     private static final String LogKey = "Robot";
     private static final String AKitLogPath = "/U/logs";
     private static final String HootLogPath = "/U/logs";
+
+    private static final double LoopOverrunWarningTimeoutSeconds = 0.2;
 
     public static final BooleanSupplier IsRedAlliance = () -> {
         final Optional<DriverStation.Alliance> alliance = DriverStation.getAlliance();
@@ -138,20 +141,12 @@ public class Robot extends LoggedRobot {
             intakeRollers
     );
 
-    private final ShootCommands shootCommands = new ShootCommands(
-            swerve,
-            superstructure,
-            intake,
-            indexer
-    );
-
     private final ComponentsSolver componentsSolver = new ComponentsSolver(
             turret::getTurretPosition,
             hood::getHoodPosition,
             intakeSlide::getIntakeSlidePositionRots
     );
 
-    @SuppressWarnings("unused")
     private final FuelState fuelState = new FuelState(
             Constants.CURRENT_MODE,
             swerve,
@@ -161,6 +156,13 @@ public class Robot extends LoggedRobot {
             componentsSolver
     );
 
+    private final ShootCommands shootCommands = new ShootCommands(
+            swerve,
+            intake,
+            indexer,
+            fuelState,
+            superstructure
+    );
 
     public final Autos autos = new Autos(
             swerve,
@@ -229,6 +231,18 @@ public class Robot extends LoggedRobot {
 
         // disable joystick not found warnings when in sim
         DriverStation.silenceJoystickConnectionWarning(Constants.CURRENT_MODE == Constants.RobotMode.SIM);
+
+        // Adjust loop overrun warning timeout
+        try {
+            final Field watchdogField = IterativeRobotBase.class.getDeclaredField("m_watchdog");
+            watchdogField.setAccessible(true);
+
+            final Watchdog watchdog = (Watchdog) watchdogField.get(this);
+            watchdog.setTimeout(LoopOverrunWarningTimeoutSeconds);
+        } catch (final Exception e) {
+            DriverStation.reportWarning("Failed to disable loop overrun warnings.", false);
+        }
+        CommandScheduler.getInstance().setPeriod(LoopOverrunWarningTimeoutSeconds);
 
         switch (Constants.CURRENT_MODE) {
             case REAL -> {
@@ -317,10 +331,12 @@ public class Robot extends LoggedRobot {
 
         componentsSolver.periodic();
 
-        Logger.recordOutput("DistanceToHub", swerve.getPose()
-                .transformBy(PoseConstants.Turret.ROBOT_TO_TURRET_TRANSFORM_2D)
-                .getTranslation()
-                .getDistance(FieldConstants.getHubPose().getTranslation()));
+        Logger.recordOutput(
+                "DistanceToHub",
+                superstructure
+                        .getTurretTranslation(swerve.getPose())
+                        .getDistance(FieldConstants.getHubPose().getTranslation())
+        );
 
         final AllianceShift allianceShift = AllianceShift.get(0);
         final AllianceShift offsetAllianceShift = AllianceShift.get(MatchTimeOffsetSeconds);
@@ -480,7 +496,7 @@ public class Robot extends LoggedRobot {
         driverController.leftTrigger(0.5, teleopEventLoop)
                 .whileTrue(intake.intake());
 
-        driverController.rightTrigger(0.5, teleopEventLoop)
+        driverController.a(teleopEventLoop)
                 .whileTrue(shootCommands.shoot())
                 .onFalse(intake.deploy());
 

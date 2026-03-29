@@ -3,6 +3,7 @@ package frc.robot.subsystems.superstructure.turret;
 import com.ctre.phoenix6.SignalLogger;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.units.VoltageUnit;
 import edu.wpi.first.units.measure.Time;
@@ -184,6 +185,10 @@ public class Turret extends SubsystemExt {
 
     public Rotation2d getTurretPosition() {
         return Rotation2d.fromRotations(inputs.turretPositionRots);
+    }
+
+    public Transform2d getOffsetFromCenter() {
+        return constants.offsetFromCenter();
     }
 
     public boolean atSetpoint() {

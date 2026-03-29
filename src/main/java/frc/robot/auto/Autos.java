@@ -11,14 +11,14 @@ import frc.robot.FuelState;
 import frc.robot.Robot;
 import frc.robot.ShootCommands;
 import frc.robot.constants.FieldConstants;
-import frc.robot.constants.PoseConstants;
 import frc.robot.subsystems.drive.Swerve;
 import frc.robot.subsystems.indexer.Indexer;
 import frc.robot.subsystems.intake.Intake;
 import frc.robot.subsystems.superstructure.Superstructure;
-import frc.robot.subsystems.superstructure.calculation.MovingShot;
-import frc.robot.subsystems.superstructure.calculation.ShotCalculation;
-import frc.robot.subsystems.superstructure.calculation.StaticShot;
+import frc.robot.subsystems.superstructure.params.MovingTOFShot;
+import frc.robot.subsystems.superstructure.params.ShotParameters;
+import frc.robot.subsystems.superstructure.params.ShotProvider;
+import frc.robot.subsystems.superstructure.params.StaticShot;
 import frc.robot.subsystems.vision.PhotonVision;
 import frc.robot.utils.commands.trigger.LoggedTrigger;
 import org.littletonrobotics.junction.Logger;
@@ -30,16 +30,22 @@ import static edu.wpi.first.wpilibj2.command.Commands.*;
 public class Autos {
     public static final String LogKey = "Auto";
 
+    @SuppressWarnings("FieldCanBeLocal")
+    private final LoggedTrigger.Group group = LoggedTrigger.Group.from(LogKey);
+
     private final Swerve swerve;
     private final Intake intake;
     private final Indexer indexer;
-    private final Superstructure superstructure;
     private final FuelState fuelState;
+    private final Superstructure superstructure;
 
     private final AutoFactory autoFactory;
 
-    private final Supplier<ShotCalculation> staticShotCalculation;
-    private final Supplier<ShotCalculation> movingShotCalculation;
+    private final ShotProvider<ShotProvider.Kind.Static> staticShotProvider;
+    private final Supplier<ShotParameters> staticShot;
+
+    private final ShotProvider<ShotProvider.Kind.Moving> movingShotProvider;
+    private final Supplier<ShotParameters> movingShot;
 
     private final LoggedTrigger robotStopped;
     private final LoggedTrigger targetIsHub;
@@ -83,25 +89,30 @@ public class Autos {
                 }
         );
 
-        this.staticShotCalculation = staticParameters(swerve::getPose);
-        this.movingShotCalculation = MovingShot.getShotCalculationSupplier(
-                swerve::getPose,
-                swerve::getRobotRelativeSpeeds,
-                getTargetPoseSupplier()
-        );
+        this.staticShotProvider = new StaticShot();
+        this.staticShot = staticParameters(swerve::getPose);
 
-        final LoggedTrigger.Group group = LoggedTrigger.Group.from(LogKey);
-        this.robotStopped = group.t("RobotStopped",
+        this.movingShotProvider = new MovingTOFShot();
+        this.movingShot = movingParameters(FieldConstants::getHubPose);
+
+        this.robotStopped = group.t(
+                "RobotStopped",
                 () -> ShootCommands.linearSpeed(swerve.getFieldRelativeSpeeds()) <= 0.01
         );
-        this.targetIsHub = group.t("TargetIsHub",
-                () -> ShootCommands.getTarget(swerve.getPose()) == ShootCommands.Target.HUB);
-        this.turretSafe = group.t("TurretSafe",
+        this.targetIsHub = group.t(
+                "TargetIsHub",
+                () -> ShootCommands.getTarget(superstructure.getTurretTranslation(swerve.getPose()))
+                        == ShootCommands.Target.HUB
+        );
+        this.turretSafe = group.t(
+                "TurretSafe",
                 () -> {
                     final double safeXClose = FieldConstants.getTurretSafeXCloseBoundary();
                     final double safeXFar = FieldConstants.getTurretSafeXFarBoundary();
-                    final double turretX = swerve.getPose().plus(PoseConstants.Turret.ROBOT_TO_TURRET_TRANSFORM_2D)
+                    final double turretX = superstructure
+                            .getTurretTranslation(swerve.getPose())
                             .getX();
+
                     return Robot.IsRedAlliance.getAsBoolean()
                             ? (turretX >= safeXClose || turretX <= safeXFar)
                             : (turretX <= safeXClose || turretX >= safeXFar);
@@ -138,7 +149,7 @@ public class Autos {
         startToCenterLineAndBack.active().whileTrue(
                 intakeFromTrench(
                         staticParametersFromFinalPose(startToCenterLineAndBack),
-                        staticShotCalculation
+                        staticShot
                 )
         );
 
@@ -149,7 +160,7 @@ public class Autos {
                                 waitUntil(superstructure.safeForTrench)
                                         .andThen(shootingToDepot.cmd())
                                         .asProxy(),
-                                superstructure.runParametersWithHoodStowed(staticShotCalculation).asProxy()
+                                superstructure.runParametersWithHoodStowed(staticShot).asProxy()
                         )
                 )
         );
@@ -157,7 +168,7 @@ public class Autos {
         shootingToDepot.active().whileTrue(
                 intakeFromTrench(
                         staticParametersFromFinalPose(shootingToDepot),
-                        staticShotCalculation
+                        staticShot
                 )
         );
 
@@ -179,7 +190,7 @@ public class Autos {
         firstSweep.active().whileTrue(
                 intakeFromTrench(
                         staticParametersFromFinalPose(firstSweep),
-                        staticShotCalculation
+                        staticShot
                 )
         );
 
@@ -190,7 +201,7 @@ public class Autos {
                                 waitUntil(superstructure.safeForTrench)
                                         .andThen(shootingToOutpost.cmd())
                                         .asProxy(),
-                                superstructure.runParametersWithHoodStowed(staticShotCalculation).asProxy()
+                                superstructure.runParametersWithHoodStowed(staticShot).asProxy()
                         )
                 )
         );
@@ -198,7 +209,7 @@ public class Autos {
         shootingToOutpost.active().whileTrue(
                 intakeFromTrench(
                         staticParametersFromFinalPose(shootingToOutpost),
-                        staticShotCalculation
+                        staticShot
                 )
         );
 
@@ -220,7 +231,7 @@ public class Autos {
         firstSweep.active().whileTrue(
                 intakeFromTrench(
                         staticParametersFromFinalPose(firstSweep),
-                        staticShotCalculation
+                        staticShot
                 )
         );
 
@@ -231,7 +242,7 @@ public class Autos {
                                 waitUntil(superstructure::atSetpoint)
                                     .andThen(secondSweep.cmd())
                                     .asProxy(),
-                                superstructure.runParametersWithHoodStowed(staticShotCalculation).asProxy()
+                                superstructure.runParametersWithHoodStowed(staticShot).asProxy()
                         )
                 )
         );
@@ -239,7 +250,7 @@ public class Autos {
         secondSweep.active().whileTrue(
                 intakeFromTrench(
                         staticParametersFromFinalPose(secondSweep),
-                        staticShotCalculation
+                        staticShot
                 )
         );
 
@@ -261,7 +272,7 @@ public class Autos {
         firstSweep.active().whileTrue(
                 intakeFromTrench(
                         staticParametersFromFinalPose(firstSweep),
-                        staticShotCalculation
+                        staticShot
                 )
         );
 
@@ -272,7 +283,7 @@ public class Autos {
                                 waitUntil(superstructure.safeForTrench)
                                         .andThen(secondSweep.cmd())
                                         .asProxy(),
-                                superstructure.runParametersWithHoodStowed(staticShotCalculation).asProxy()
+                                superstructure.runParametersWithHoodStowed(staticShot).asProxy()
                         )
                 )
         );
@@ -280,7 +291,7 @@ public class Autos {
         secondSweep.active().whileTrue(
                 intakeFromTrench(
                         staticParametersFromFinalPose(secondSweep),
-                        staticShotCalculation
+                        staticShot
                 )
         );
 
@@ -301,7 +312,7 @@ public class Autos {
         routine.active().whileTrue(
                 Commands.parallel(
                         intake.intake(),
-                        ferryShotWhileMoving(true)
+                        ferryShotWhileMoving(FieldConstants.getFerryLeft())
                 )
         );
 
@@ -321,7 +332,7 @@ public class Autos {
         routine.active().whileTrue(
                 Commands.parallel(
                         intake.intake(),
-                        ferryShotWhileMoving(false)
+                        ferryShotWhileMoving(FieldConstants.getFerryRight())
                 )
         );
 
@@ -346,7 +357,7 @@ public class Autos {
         firstSweep.active().whileTrue(
                 intakeFromTrench(
                         staticParametersFromFinalPose(firstSweep),
-                        staticShotCalculation
+                        staticShot
                 )
         );
 
@@ -362,7 +373,7 @@ public class Autos {
                 deadline(
                         secondSweep.cmd()
                                 .asProxy(),
-                        superstructure.runParametersWithHoodStowed(movingShotCalculation)
+                        superstructure.runParametersWithHoodStowed(movingShot)
                                 .asProxy()
                 )
         );
@@ -370,7 +381,7 @@ public class Autos {
         secondSweep.active().whileTrue(
                 intakeFromTrench(
                         staticParametersFromFinalPose(secondSweep),
-                        staticShotCalculation
+                        staticShot
                 )
         );
 
@@ -386,7 +397,7 @@ public class Autos {
                 deadline(
                         secondSweep.cmd()
                                 .asProxy(),
-                        superstructure.runParametersWithHoodStowed(movingShotCalculation)
+                        superstructure.runParametersWithHoodStowed(movingShot)
                                 .asProxy()
                 )
         );
@@ -409,7 +420,7 @@ public class Autos {
         firstSweep.active().whileTrue(
                 intakeFromTrench(
                         staticParametersFromFinalPose(firstSweep),
-                        staticShotCalculation
+                        staticShot
                 )
         );
 
@@ -425,7 +436,7 @@ public class Autos {
                 deadline(
                         secondSweep.cmd()
                                 .asProxy(),
-                        superstructure.runParametersWithHoodStowed(movingShotCalculation)
+                        superstructure.runParametersWithHoodStowed(movingShot)
                                 .asProxy()
                 )
         );
@@ -433,7 +444,7 @@ public class Autos {
         secondSweep.active().whileTrue(
                 intakeFromTrench(
                         staticParametersFromFinalPose(secondSweep),
-                        staticShotCalculation
+                        staticShot
                 )
         );
 
@@ -449,7 +460,7 @@ public class Autos {
                 deadline(
                         secondSweep.cmd()
                                 .asProxy(),
-                        superstructure.runParametersWithHoodStowed(movingShotCalculation)
+                        superstructure.runParametersWithHoodStowed(movingShot)
                                 .asProxy()
                 )
         );
@@ -464,27 +475,37 @@ public class Autos {
         ).withName("RunStartingTrajectory");
     }
 
-    private Supplier<ShotCalculation> staticParameters(final Supplier<Pose2d> robotPoseSupplier) {
-        return StaticShot.getShotCalculationSupplier(
+    private Supplier<ShotParameters> staticParameters(final Supplier<Pose2d> robotPoseSupplier) {
+        return staticShotProvider.parametersSupplier(
                 robotPoseSupplier,
+                superstructure::getRobotToTurret,
                 swerve::getRobotRelativeSpeeds,
                 FieldConstants::getHubPose
         );
     }
 
-    private Supplier<ShotCalculation> staticParametersFromPose(final Pose2d pose) {
+    private Supplier<ShotParameters> movingParameters(final Supplier<Pose2d> targetPoseSupplier) {
+        return movingShotProvider.parametersSupplier(
+                swerve::getPose,
+                superstructure::getRobotToTurret,
+                swerve::getRobotRelativeSpeeds,
+                targetPoseSupplier
+        );
+    }
+
+    private Supplier<ShotParameters> staticParametersFromPose(final Pose2d pose) {
         return staticParameters(() -> pose);
     }
 
-    private Supplier<ShotCalculation> staticParametersFromFinalPose(final AutoTrajectory trajectory) {
+    private Supplier<ShotParameters> staticParametersFromFinalPose(final AutoTrajectory trajectory) {
         return trajectory.getFinalPose()
                 .map(this::staticParametersFromPose)
-                .orElse(staticShotCalculation);
+                .orElse(staticShot);
     }
 
     private Command intakeFromTrench(
-            final Supplier<ShotCalculation> fixed,
-            final Supplier<ShotCalculation> tracking
+            final Supplier<ShotParameters> fixed,
+            final Supplier<ShotParameters> tracking
     ) {
         return parallel(
                 intake.intake(),
@@ -512,14 +533,14 @@ public class Autos {
                         )
                 )
                         .onlyWhile(fuelState.hasFuel),
-                superstructure.runParameters(staticShotCalculation)
+                superstructure.runParameters(staticShot)
                         .onlyIf(turretSafe),
                 swerve.runWheelXCommand()
         )
                 .withName("ShootStatic");
     }
 
-    private Command ferryShotWhileMoving(final boolean isLeftSideFerry) {
+    private Command ferryShotWhileMoving(final Pose2d ferryTo) {
         return deadline(
                 repeatingSequence(
                         waitUntil(superstructure::atSetpoint),
@@ -527,13 +548,7 @@ public class Autos {
                                 .onlyWhile(superstructure::atSetpoint)
                 ).onlyWhile(fuelState.hasFuel
                         .or(intake.isIntaking)),
-                superstructure.runParameters(MovingShot.getShotCalculationSupplier(
-                        swerve::getPose,
-                        swerve::getRobotRelativeSpeeds,
-                        getTargetPoseSupplierWithFerryPose(
-                                isLeftSideFerry ? FieldConstants.getFerryRight() : FieldConstants.getFerryLeft()
-                        )
-                ))
+                superstructure.runParameters(movingParameters(() -> ferryTo))
         ).withName("FerryShotWhileMoving");
     }
 
@@ -544,37 +559,7 @@ public class Autos {
                         indexer.feed()
                                 .onlyWhile(superstructure::atSetpoint)
                 ),
-                superstructure.runParameters(movingShotCalculation)
+                superstructure.runParameters(movingShot)
         ).withName("ShootWhileMoving");
-    }
-
-    private Supplier<Pose2d> getTargetPoseSupplierWithFerryPose(final Pose2d ferryPose) {
-        return () -> {
-            final Pose2d robotPose = swerve.getPose();
-            final ShootCommands.Target target = ShootCommands.getTarget(robotPose);
-            return switch (target) {
-                case HUB -> FieldConstants.getHubPose();
-                case FERRY, FERRY_BLOCKED -> ferryPose;
-            };
-        };
-    }
-
-    private Supplier<Pose2d> getTargetPoseSupplier() {
-        return () -> {
-            final Pose2d robotPose = swerve.getPose();
-            final ShootCommands.Target target = ShootCommands.getTarget(robotPose);
-            return switch (target) {
-                case HUB -> FieldConstants.getHubPose();
-                case FERRY, FERRY_BLOCKED -> {
-                    final boolean isRed = Robot.IsRedAlliance.getAsBoolean();
-                    final Pose2d ferryLeft = FieldConstants.getFerryLeft();
-                    final Pose2d ferryRight = FieldConstants.getFerryRight();
-
-                    yield robotPose.getY() <= FieldConstants.getFerryLeftYBoundary()
-                            ? (isRed ? ferryRight : ferryLeft)
-                            : (isRed ? ferryLeft : ferryRight);
-                }
-            };
-        };
     }
 }
