@@ -73,7 +73,7 @@ public class IntakeSlideIOReal implements IntakeSlideIO {
         masterConfiguration.CurrentLimits.SupplyCurrentLowerTime = 2.0;
         masterConfiguration.CurrentLimits.SupplyCurrentLimitEnable = true;
         masterConfiguration.Feedback.FeedbackSensorSource = FeedbackSensorSourceValue.RotorSensor;
-        masterConfiguration.Feedback.SensorToMechanismRatio = constants.slideGearing();
+        masterConfiguration.Feedback.SensorToMechanismRatio = constants.gearing();
         masterConfiguration.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
         masterConfiguration.MotorOutput.NeutralMode = NeutralModeValue.Coast;
         masterConfiguration.SoftwareLimitSwitch.ForwardSoftLimitThreshold = constants.forwardLimitRots();
@@ -83,7 +83,7 @@ public class IntakeSlideIOReal implements IntakeSlideIO {
 
         final TalonFXConfiguration followerConfiguration = new TalonFXConfiguration();
         followerConfiguration.Feedback.FeedbackSensorSource = FeedbackSensorSourceValue.RotorSensor;
-        followerConfiguration.Feedback.SensorToMechanismRatio = constants.slideGearing();
+        followerConfiguration.Feedback.SensorToMechanismRatio = constants.gearing();
 
         final DifferentialMotorConstants<TalonFXConfiguration> differentialConstants =
                 new DifferentialMotorConstants<>();
@@ -182,7 +182,7 @@ public class IntakeSlideIOReal implements IntakeSlideIO {
     }
 
     @Override
-    public void toSlidePositionUnprofiled(final double positionRots, final double velocityRotsPerSec) {
+    public void toSlidePositionWithVelocity(final double positionRots, final double velocityRotsPerSec) {
         diffMechanism.setControl(
                 averagePositionTorqueCurrentFOC
                         .withPosition(positionRots)

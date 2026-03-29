@@ -15,6 +15,7 @@ import edu.wpi.first.util.CircularBuffer;
 import edu.wpi.first.wpilibj.Notifier;
 import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.Timer;
+import frc.robot.constants.SimConstants;
 import frc.robot.subsystems.drive.constants.SwerveConstants.CTRESwerve;
 import frc.robot.utils.closeables.ToClose;
 import frc.robot.utils.control.DeltaTime;
@@ -23,7 +24,6 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 public class SwerveIOSim implements SwerveIO {
-    private static final double SimUpdatePeriodSec = 0.005;
     private final DeltaTime deltaTime;
 
     private final Lock bufferLock;
@@ -81,7 +81,7 @@ public class SwerveIOSim implements SwerveIO {
                 () -> drivetrain.updateSimState(deltaTime.get(), RobotController.getBatteryVoltage())
         );
         ToClose.add(simUpdateNotifier);
-        simUpdateNotifier.startPeriodic(SimUpdatePeriodSec);
+        simUpdateNotifier.startPeriodic(SimConstants.SIM_UPDATE_PERIODIC_SEC);
     }
 
     @Override

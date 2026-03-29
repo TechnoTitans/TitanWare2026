@@ -20,15 +20,15 @@ import edu.wpi.first.units.measure.*;
 import edu.wpi.first.wpilibj.Notifier;
 import edu.wpi.first.wpilibj.simulation.SingleJointedArmSim;
 import frc.robot.constants.HardwareConstants;
+import frc.robot.constants.SimConstants;
 import frc.robot.utils.closeables.ToClose;
 import frc.robot.utils.control.DeltaTime;
 import frc.robot.utils.ctre.Phoenix6Utils;
 import frc.robot.utils.ctre.RefreshAll;
+import frc.robot.utils.sim.SimUtils;
 import frc.robot.utils.sim.motors.TalonFXSim;
 
 public class HoodIOSim implements HoodIO {
-    private static final double SIM_UPDATE_PERIOD_SEC = 0.005;
-
     private final DeltaTime deltaTime;
     private final HardwareConstants.HoodConstants constants;
 
@@ -51,13 +51,15 @@ public class HoodIOSim implements HoodIO {
 
         final DCMotor dcMotor = DCMotor.getKrakenX44Foc(1);
         final SingleJointedArmSim armSim = new SingleJointedArmSim(
-                LinearSystemId.createSingleJointedArmSystem(dcMotor,0.04, constants.gearing()),
+                LinearSystemId.createSingleJointedArmSystem(
+                        dcMotor,
+                        SimConstants.Hood.MOMENT_OF_INERTIA,
+                        constants.gearing()
+                ),
                 dcMotor,
                 constants.gearing(),
                 Units.inchesToMeters(8),
-//                Units.rotationsToRadians(constants.lowerLimitRots()),
                 0,
-//                Units.rotationsToRadians(constants.upperLimitRots()),
                 Units.degreesToRadians(90),
                 false,
                 0
@@ -67,7 +69,7 @@ public class HoodIOSim implements HoodIO {
                 motor,
                 constants.gearing(),
                 armSim::update,
-                armSim::setInputVoltage,
+                voltage -> armSim.setInputVoltage(SimUtils.addMotorFriction(voltage, 0.25)),
                 armSim::getAngleRads,
                 armSim::getVelocityRadPerSec
         );
@@ -98,7 +100,7 @@ public class HoodIOSim implements HoodIO {
                 "SimUpdate(%d)",
                 motor.getDeviceID()
         ));
-        simUpdateNotifier.startPeriodic(SIM_UPDATE_PERIOD_SEC);
+        simUpdateNotifier.startPeriodic(SimConstants.SIM_UPDATE_PERIODIC_SEC);
     }
 
     @Override
@@ -112,27 +114,27 @@ public class HoodIOSim implements HoodIO {
 
     @Override
     public void config() {
-        final TalonFXConfiguration talonFXConfiguration = new TalonFXConfiguration();
-        talonFXConfiguration.Slot0 = new Slot0Configs()
+        final TalonFXConfiguration motorConfig = new TalonFXConfiguration();
+        motorConfig.Slot0 = new Slot0Configs()
                 .withKS(0.3)
                 .withStaticFeedforwardSign(StaticFeedforwardSignValue.UseClosedLoopSign)
                 .withKP(300)
                 .withKD(0.1);
-        talonFXConfiguration.CurrentLimits.StatorCurrentLimit = 60;
-        talonFXConfiguration.CurrentLimits.StatorCurrentLimitEnable = true;
-        talonFXConfiguration.CurrentLimits.SupplyCurrentLimit = 45;
-        talonFXConfiguration.CurrentLimits.SupplyCurrentLowerLimit = 40;
-        talonFXConfiguration.CurrentLimits.SupplyCurrentLowerTime = 1.0;
-        talonFXConfiguration.CurrentLimits.SupplyCurrentLimitEnable = true;
-        talonFXConfiguration.Feedback.FeedbackSensorSource = FeedbackSensorSourceValue.RotorSensor;
-        talonFXConfiguration.Feedback.SensorToMechanismRatio = constants.gearing();
-        talonFXConfiguration.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
-        talonFXConfiguration.MotorOutput.NeutralMode = NeutralModeValue.Brake;
-        talonFXConfiguration.SoftwareLimitSwitch.ForwardSoftLimitThreshold = constants.upperLimitRots();
-        talonFXConfiguration.SoftwareLimitSwitch.ForwardSoftLimitEnable = true;
-        talonFXConfiguration.SoftwareLimitSwitch.ReverseSoftLimitThreshold = constants.lowerLimitRots();
-        talonFXConfiguration.SoftwareLimitSwitch.ReverseSoftLimitEnable = true;
-        Phoenix6Utils.tryUntilOk(motor, () -> motor.getConfigurator().apply(talonFXConfiguration));
+        motorConfig.CurrentLimits.StatorCurrentLimit = 60;
+        motorConfig.CurrentLimits.StatorCurrentLimitEnable = true;
+        motorConfig.CurrentLimits.SupplyCurrentLimit = 45;
+        motorConfig.CurrentLimits.SupplyCurrentLowerLimit = 40;
+        motorConfig.CurrentLimits.SupplyCurrentLowerTime = 1.0;
+        motorConfig.CurrentLimits.SupplyCurrentLimitEnable = true;
+        motorConfig.Feedback.FeedbackSensorSource = FeedbackSensorSourceValue.RotorSensor;
+        motorConfig.Feedback.SensorToMechanismRatio = constants.gearing();
+        motorConfig.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
+        motorConfig.MotorOutput.NeutralMode = NeutralModeValue.Brake;
+        motorConfig.SoftwareLimitSwitch.ForwardSoftLimitThreshold = constants.upperLimitRots();
+        motorConfig.SoftwareLimitSwitch.ForwardSoftLimitEnable = true;
+        motorConfig.SoftwareLimitSwitch.ReverseSoftLimitThreshold = constants.lowerLimitRots();
+        motorConfig.SoftwareLimitSwitch.ReverseSoftLimitEnable = true;
+        Phoenix6Utils.tryUntilOk(motor, () -> motor.getConfigurator().apply(motorConfig));
 
         BaseStatusSignal.setUpdateFrequencyForAll(
                 100,

@@ -18,9 +18,9 @@ public interface ShooterIO {
         public double followerTempCelsius = 0.0;
     }
 
-    default void updateInputs(final ShooterIOInputs inputs) {}
-
     default void config() {}
+
+    default void updateInputs(final ShooterIOInputs inputs) {}
 
     default void toFlywheelVelocity(final double velocityRotsPerSec) {}
 

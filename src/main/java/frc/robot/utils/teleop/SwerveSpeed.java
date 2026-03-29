@@ -1,6 +1,9 @@
 package frc.robot.utils.teleop;
 
 import edu.wpi.first.math.util.Units;
+import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.Commands;
+import frc.robot.utils.Container;
 
 public class SwerveSpeed {
     public enum Speeds {
@@ -26,15 +29,29 @@ public class SwerveSpeed {
         }
     }
 
-    private static Speeds swerveSpeed = Speeds.NORMAL;
+    private static Speeds SwerveSpeed = Speeds.NORMAL;
 
     private SwerveSpeed() {}
 
     public static Speeds getSwerveSpeed() {
-        return swerveSpeed;
+        return SwerveSpeed;
     }
 
-    public static void setSwerveSpeed(final Speeds swerveSpeed) {
-        SwerveSpeed.swerveSpeed = swerveSpeed;
+    public static Command toSwerveSpeed(final Speeds speeds) {
+        final Container<Speeds> speedsContainer = Container.of(SwerveSpeed);
+        return Commands.startEnd(
+                () -> {
+                    speedsContainer.set(SwerveSpeed);
+                    SwerveSpeed = speeds;
+                },
+                () -> SwerveSpeed = speedsContainer.get()
+        );
+    }
+
+    public static Command toSwerveSpeed(final Speeds speeds, final Speeds resetToSpeeds) {
+        return Commands.startEnd(
+                () -> SwerveSpeed = speeds,
+                () -> SwerveSpeed = resetToSpeeds
+        );
     }
 }

@@ -3,74 +3,90 @@ package frc.robot.subsystems.superstructure.turret;
 import com.ctre.phoenix6.SignalLogger;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.util.Units;
-import edu.wpi.first.units.CurrentUnit;
 import edu.wpi.first.units.VoltageUnit;
-import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.units.measure.Time;
 import edu.wpi.first.units.measure.Velocity;
 import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
-import edu.wpi.first.wpilibj2.command.SubsystemBase;
-import edu.wpi.first.wpilibj2.command.button.Trigger;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.constants.Constants;
 import frc.robot.constants.HardwareConstants;
-import frc.robot.utils.position.ChineseRemainder;
+import frc.robot.utils.commands.ext.SubsystemExt;
+import frc.robot.utils.commands.trigger.LoggedTrigger;
 import org.littletonrobotics.junction.Logger;
 
+import java.util.HashMap;
 import java.util.function.DoubleSupplier;
 
 import static edu.wpi.first.units.Units.*;
 
-public class Turret extends SubsystemBase {
+public class Turret extends SubsystemExt {
     protected static final String LogKey = "Turret";
-
-    private static final double PositionToleranceRots = 0.125;
+    private static final double PositionToleranceRots = 0.05;
     private static final double VelocityToleranceRotsPerSec = 0.25;
 
+    public enum Goal {
+        STOW(0),
+        NO_VISION(0.5);
+
+        private final double positionSetpointRots;
+
+        Goal(final double positionSetpointRots) {
+            this.positionSetpointRots = positionSetpointRots;
+        }
+    }
+
+    private enum InternalGoal {
+        NONE,
+        DEFAULT,
+        STOW(Goal.STOW),
+        NO_VISION(Goal.NO_VISION),
+        TRACKING;
+
+        public static final HashMap<Goal, InternalGoal> GoalToInternal = new HashMap<>();
+        static {
+            for (final InternalGoal goal : InternalGoal.values()) {
+                if (goal.goal != null) {
+                    GoalToInternal.put(goal.goal, goal);
+                }
+            }
+        }
+
+        public static InternalGoal fromGoal(final Goal goal) {
+            final InternalGoal internalGoal = GoalToInternal.get(goal);
+
+            return internalGoal == null ? DEFAULT : internalGoal;
+        }
+
+        public final Goal goal;
+
+        InternalGoal(final Goal goal) {
+            this.goal = goal;
+        }
+
+        InternalGoal() {
+            this(null);
+        }
+    }
+
     private final HardwareConstants.TurretConstants constants;
-    private final DoubleSupplier turretVelocitySupplier;
 
     private final TurretIO turretIO;
     private final TurretIOInputsAutoLogged inputs;
 
     private final SysIdRoutine voltageSysIdRoutine;
-//    private final SysIdRoutine torqueCurrentSysIdRoutine;
 
-    private Goal desiredGoal = Goal.TRACKING;
-    private Goal currentGoal = desiredGoal;
+    private InternalGoal desiredGoal = InternalGoal.STOW;
 
-    public final Trigger atSetpoint = new Trigger(this::atSetpoint);
+    private double positionSetpointRots = 0.0;
+    private double velocitySetpointRotsPerSec = 0.0;
 
-    public enum Goal {
-        STOW(0, false),
-        TRACKING(0, true);
+    public final LoggedTrigger atSetpoint;
 
-        private final boolean isDynamic;
-
-        private double positionSetpointRots;
-
-        Goal(final double positionSetpointRots, final boolean isDynamic) {
-            this.positionSetpointRots = positionSetpointRots;
-            this.isDynamic = isDynamic;
-        }
-
-        public void changeTurretPositionRots(final double desiredTurretPositionRots) {
-            if (isDynamic) {
-                this.positionSetpointRots = desiredTurretPositionRots;
-            }
-        }
-    }
-
-    public Turret(
-            final Constants.RobotMode mode,
-            final HardwareConstants.TurretConstants constants,
-            final DoubleSupplier turretVelocitySupplier
-    ) {
+    public Turret(final Constants.RobotMode mode, final HardwareConstants.TurretConstants constants) {
         this.constants = constants;
         this.turretIO = switch (mode) {
             case REAL -> new TurretIOReal(constants);
@@ -78,9 +94,19 @@ public class Turret extends SubsystemBase {
             case REPLAY, DISABLED -> new TurretIO() {};
         };
 
-        this.turretVelocitySupplier = turretVelocitySupplier;
-
         this.inputs = new TurretIOInputsAutoLogged();
+
+        final LoggedTrigger.Group group = LoggedTrigger.Group.from(LogKey);
+        this.atSetpoint = group.t("AtSetpoint", () -> MathUtil.isNear(
+                positionSetpointRots,
+                inputs.turretPositionRots,
+                PositionToleranceRots
+        ) && MathUtil.isNear(
+                velocitySetpointRotsPerSec,
+                inputs.turretVelocityRotsPerSec,
+                VelocityToleranceRotsPerSec
+        ));
+
         this.turretIO.config();
 
         this.voltageSysIdRoutine = makeVoltageSysIdRoutine(
@@ -88,23 +114,15 @@ public class Turret extends SubsystemBase {
                 Volts.of(2),
                 Seconds.of(6)
         );
-//        this.torqueCurrentSysIdRoutine = makeTorqueCurrentSysIdRoutine(
-//                Amps.of(2).per(Second),
-//                Amps.of(8),
-//                Seconds.of(6)
-//        );
 
-//        final Rotation2d absolutePosition = ChineseRemainder.findAbsolutePosition(
-//                constants.turretTooth(),
-//                inputs.primaryEncoderPositionRots,
-//                constants.primaryEncoderTooth(),
-//                inputs.secondaryEncoderPositionRots,
-//                constants.secondaryEncoderTooth()
-//        );
-//        turretIO.seedTurretPosition(absolutePosition);
-        turretIO.setPosition(0);
-//
-//        Logger.recordOutput(LogKey + "/CRTResult", absolutePosition);
+        final Rotation2d absolutePosition = CRT.findAbsolutePosition(
+                constants.turretTooth(),
+                inputs.primaryEncoderPositionRots,
+                constants.primaryEncoderTooth(),
+                inputs.secondaryEncoderPositionRots,
+                constants.secondaryEncoderTooth()
+        );
+        this.turretIO.seedTurretPosition(absolutePosition);
     }
 
     @Override
@@ -114,25 +132,21 @@ public class Turret extends SubsystemBase {
         turretIO.updateInputs(inputs);
         Logger.processInputs(LogKey, inputs);
 
-        if (desiredGoal != currentGoal) {
+        final InternalGoal currentGoal;
+        if (atSetpoint()) {
             currentGoal = desiredGoal;
-            turretIO.toTurretContinuousPosition(desiredGoal.positionSetpointRots, 0);
+        } else {
+            currentGoal = InternalGoal.NONE;
         }
 
-        if (desiredGoal.isDynamic) {
-            turretIO.toTurretContinuousPosition(
-                    desiredGoal.positionSetpointRots,
-                    Units.radiansToRotations(turretVelocitySupplier.getAsDouble())
-            );
-        }
+        Logger.recordOutput(LogKey + "/DesiredGoal", desiredGoal);
+        Logger.recordOutput(LogKey + "/CurrentGoal", currentGoal);
+        Logger.recordOutput(LogKey + "/AtSetpoint", atSetpoint);
+        Logger.recordOutput(LogKey + "/PositionSetpointRots", positionSetpointRots);
+        Logger.recordOutput(LogKey + "/VelocitySetpointRotsPerSec", velocitySetpointRotsPerSec);
 
-        Logger.recordOutput(LogKey + "/CurrentGoal", currentGoal.toString());
-        Logger.recordOutput(LogKey + "/DesiredGoal", desiredGoal.toString());
-        Logger.recordOutput(LogKey + "/DesiredGoal/PositionSetpointRots", desiredGoal.positionSetpointRots);
-
-        Logger.recordOutput(LogKey + "/Triggers/AtSetpoint", atSetpoint());
-        Logger.recordOutput(LogKey + "/Triggers/AtLowerLimit", atLowerLimit());
-        Logger.recordOutput(LogKey + "/Triggers/AtUpperLimit", atUpperLimit());
+        Logger.recordOutput(LogKey + "/AtUpperLimit", atUpperLimit());
+        Logger.recordOutput(LogKey + "/AtLowerLimit", atLowerLimit());
 
         Logger.recordOutput(
                 LogKey + "/PeriodicIOPeriodMs",
@@ -140,32 +154,57 @@ public class Turret extends SubsystemBase {
         );
     }
 
-    public Transform2d getOffsetFromCenter() {
-        return constants.offsetFromCenter();
+    public Command toGoal(final Goal goal) {
+        return startEnd(
+                () -> setDesiredGoal(goal),
+                () -> setDesiredGoal(Goal.STOW)
+        ).withName("ToGoal: " + goal);
     }
 
-    public Command setGoalCommand(final Goal goal) {
-        return runOnce(() -> setGoal(goal));
+    public Command setGoal(final Goal goal) {
+        return runOnce(() -> setDesiredGoal(goal))
+             .withName("SetGoal: " + goal);
     }
 
-    public void setGoal(final Goal goal) {
-        desiredGoal = goal;
-        Logger.recordOutput(LogKey + "/CurrentGoal", currentGoal);
-        Logger.recordOutput(LogKey + "/DesiredGoal", goal);
+    public Command runGoal(final Goal goal) {
+        return startIdle(() -> setDesiredGoal(goal))
+                .withName("RunGoal");
     }
 
-    public void updatePositionSetpoint(final double desiredTurretPosition) {
-        desiredGoal.changeTurretPositionRots(optimizeWrap(desiredTurretPosition));
+    public Command runPositionWithVelocity(final DoubleSupplier positionRots, final DoubleSupplier velocityRotsPerSec) {
+        return instantRun(
+                () -> desiredGoal = InternalGoal.TRACKING,
+                () -> setDesiredPositionWithVelocity(positionRots.getAsDouble(), velocityRotsPerSec.getAsDouble())
+        ).withName("RunPositionWithVelocity");
+    }
+
+    public Command voltageSysIdCommand() {
+        return makeSysIdCommand(voltageSysIdRoutine);
     }
 
     public Rotation2d getTurretPosition() {
         return Rotation2d.fromRotations(inputs.turretPositionRots);
     }
 
-    private boolean atSetpoint() {
-        return currentGoal == desiredGoal
-                && MathUtil.isNear(desiredGoal.positionSetpointRots, inputs.turretPositionRots, PositionToleranceRots)
-                && MathUtil.isNear(turretVelocitySupplier.getAsDouble(), inputs.turretVelocityRotsPerSec, VelocityToleranceRotsPerSec);
+    public boolean atSetpoint() {
+        return atSetpoint.getAsBoolean();
+    }
+
+    private void setDesiredGoal(final Goal goal) {
+        desiredGoal = InternalGoal.fromGoal(goal);
+        setDesiredPosition(desiredGoal.goal.positionSetpointRots);
+    }
+
+    private void setDesiredPosition(final double positionRots) {
+        positionSetpointRots = positionRots;
+        velocitySetpointRotsPerSec = 0;
+        turretIO.toTurretPosition(positionSetpointRots);
+    }
+
+    private void setDesiredPositionWithVelocity(final double positionRots, final double velocityRotsPerSec) {
+        positionSetpointRots = optimizeWrap(positionRots);
+        velocitySetpointRotsPerSec = velocityRotsPerSec;
+        turretIO.toTurretContinuousPosition(positionSetpointRots, velocityRotsPerSec);
     }
 
     private boolean atUpperLimit() {
@@ -235,28 +274,6 @@ public class Turret extends SubsystemBase {
         );
     }
 
-    private SysIdRoutine makeTorqueCurrentSysIdRoutine(
-            final Velocity<CurrentUnit> currentRampRate,
-            final Current stepCurrent,
-            final Time timeout
-    ) {
-        return new SysIdRoutine(
-                new SysIdRoutine.Config(
-                        Volts.per(Second).of(currentRampRate.baseUnitMagnitude()),
-                        Volts.of(stepCurrent.baseUnitMagnitude()),
-                        timeout,
-                        state -> SignalLogger.writeString(String.format("%s-state", LogKey), state.toString())
-                ),
-                new SysIdRoutine.Mechanism(
-                        voltageMeasure -> turretIO.toTurretTorqueCurrent(
-                                voltageMeasure.in(Volts)
-                        ),
-                        null,
-                        this
-                )
-        );
-    }
-
     private Command makeSysIdCommand(final SysIdRoutine sysIdRoutine) {
         return Commands.sequence(
                 sysIdRoutine.quasistatic(SysIdRoutine.Direction.kForward).until(this::atUpperLimit),
@@ -268,12 +285,4 @@ public class Turret extends SubsystemBase {
                 sysIdRoutine.dynamic(SysIdRoutine.Direction.kReverse).until(this::atLowerLimit)
         );
     }
-
-    public Command voltageSysIdCommand() {
-        return makeSysIdCommand(voltageSysIdRoutine);
-    }
-
-//    public Command torqueCurrentSysIdCommand() {
-//        return makeSysIdCommand(torqueCurrentSysIdRoutine);
-//    }
 }

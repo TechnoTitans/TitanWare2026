@@ -104,7 +104,7 @@ public class SwerveConstants {
             final int minBufferSize = (int) Math.ceil(Constants.LOOP_PERIOD_SECONDS * OdometryFreqHz);
             if (BufferSize < minBufferSize) {
                 throw new RuntimeException(String.format("OdometryBufferSize of %d is too small, expected size >= %d," +
-                        "since it must fit at least all states recorded within a loop cycle!",
+                                "since it must fit at least all states recorded within a loop cycle!",
                         BufferSize, minBufferSize));
             }
         }

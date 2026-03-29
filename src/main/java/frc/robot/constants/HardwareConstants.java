@@ -1,8 +1,5 @@
 package frc.robot.constants;
 
-import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.geometry.Transform2d;
-
 import java.util.HashMap;
 import java.util.Objects;
 
@@ -38,7 +35,7 @@ public class HardwareConstants {
     public record IntakeRollerConstants(
             CANBus CANBus,
             int motorID,
-            double rollerGearing
+            double gearing
     ) {}
 
     public static final IntakeRollerConstants INTAKE_ROLLER = new IntakeRollerConstants(
@@ -51,7 +48,7 @@ public class HardwareConstants {
             CANBus CANBus,
             int masterMotorID,
             int followerMotorID,
-            double slideGearing,
+            double gearing,
             double forwardLimitRots,
             double reverseLimitRots
     ) {}
@@ -68,7 +65,7 @@ public class HardwareConstants {
     public record SpindexerConstants(
             CANBus CANBus,
             int motorID,
-            double wheelGearing
+            double gearing
     ) {}
 
     public static final SpindexerConstants SPINDEXER = new SpindexerConstants(
@@ -80,13 +77,15 @@ public class HardwareConstants {
     public record FeederConstants(
             CANBus CANBus,
             int motorID,
-            double wheelGearing
+            int CANRangeID,
+            double gearing
     ) {}
 
 
     public static final FeederConstants FEEDER = new FeederConstants(
             CANBus.CANIVORE,
             18,
+            19,
             1.8667
     );
 
@@ -102,24 +101,22 @@ public class HardwareConstants {
             double primaryEncoderOffset,
             double secondaryEncoderOffset,
             double forwardLimitRots,
-            double reverseLimitRots,
-            Transform2d offsetFromCenter
+            double reverseLimitRots
     ) {}
 
     public static final TurretConstants TURRET = new TurretConstants(
             CANBus.CANIVORE,
-            19,
             20,
             21,
+            22,
             24,
             80,
             13,
             17,
-            -0.02124,
-            -0.02124,
+            -0.320,
+            0.340,
             0.75,
-            -0.25,
-            new Transform2d(-0.127, 0, Rotation2d.kZero)
+            -0.25
     );
     public record HoodConstants(
             CANBus CANBus,
@@ -131,7 +128,7 @@ public class HardwareConstants {
 
     public static final HoodConstants HOOD = new HoodConstants(
             CANBus.RIO,
-            22,
+            23,
             102,
             0.11,
             0
@@ -141,13 +138,27 @@ public class HardwareConstants {
             CANBus CANBus,
             int masterMotorID,
             int followerMotorID,
-            double wheelGearing
+            double gearing
     ) {}
 
     public static final ShooterConstants SHOOTER = new ShooterConstants(
             CANBus.RIO,
-            23,
             24,
+            25,
             2
+    );
+
+    public record HopperConstants(
+            CANBus CANBus,
+            int masterMotorID,
+            int followerMotorID,
+            double gearing
+    ) {}
+
+    public static final HopperConstants HOPPER = new HopperConstants(
+            CANBus.CANIVORE,
+            26,
+            27,
+            2.5
     );
 }

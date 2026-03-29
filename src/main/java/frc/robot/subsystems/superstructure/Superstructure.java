@@ -1,189 +1,196 @@
 package frc.robot.subsystems.superstructure;
 
-import edu.wpi.first.math.filter.Debouncer;
-import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.geometry.Transform2d;
-import edu.wpi.first.math.geometry.Translation2d;
-import edu.wpi.first.wpilibj.event.EventLoop;
+import edu.wpi.first.math.util.Units;
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
-import edu.wpi.first.wpilibj2.command.button.Trigger;
+import frc.robot.subsystems.superstructure.calculation.ShotCalculation;
 import frc.robot.subsystems.superstructure.hood.Hood;
 import frc.robot.subsystems.superstructure.shooter.Shooter;
 import frc.robot.subsystems.superstructure.turret.Turret;
+import frc.robot.utils.Container;
+import frc.robot.utils.commands.trigger.LoggedTrigger;
 import frc.robot.utils.subsystems.VirtualSubsystem;
 import org.littletonrobotics.junction.Logger;
 
+import java.util.HashMap;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 public class Superstructure extends VirtualSubsystem {
     protected static final String LogKey = "Superstructure";
 
-    private final Turret turret;
-    private final Hood hood;
-    private final Shooter shooter;
-
-    private Goal desiredGoal = Goal.TRACKING;
-    private Goal runningGoal = desiredGoal;
-
-    private final EventLoop eventLoop;
-
-    private final Trigger desiredGoalIsRunningGoal;
-    private final Trigger desiredGoalChanged;
-
-    public final Trigger atSetpoint;
-    public final Trigger atHoodSetpoint;
-    public final Trigger atShooterSetpoint;
-    public final Trigger atTurretSetpoint;
-
-    private final Supplier<ShotCalculator.ShotCalculation> shotCalculationSupplier;
-
     public enum Goal {
-        TRACKING(Turret.Goal.TRACKING, Hood.Goal.STOW, Shooter.Goal.TRACKING, true),
-        STATIC_SHOT_PREP(Turret.Goal.TRACKING, Hood.Goal.STOW, Shooter.Goal.TRACKING, false),
-        SHOOTING(Turret.Goal.TRACKING, Hood.Goal.SHOOTING, Shooter.Goal.TRACKING, true),
-        SHOOTING_STOW(Turret.Goal.STOW, Hood.Goal.STOW, Shooter.Goal.BASIC, false);
+        STOW(Turret.Goal.STOW, Hood.Goal.STOW, Shooter.Goal.IDLE),
+        NO_VISION(Turret.Goal.NO_VISION, Hood.Goal.NO_VISION, Shooter.Goal.NO_VISION);
 
         private final Turret.Goal turretGoal;
         private final Hood.Goal hoodGoal;
         private final Shooter.Goal shooterGoal;
 
-        private final boolean isDynamic;
-
-        Goal(
-                final Turret.Goal turretGoal,
-                final Hood.Goal hoodGoal,
-                final Shooter.Goal shooterGoal,
-                final boolean isDynamic
-        ) {
+        Goal(final Turret.Goal turretGoal, final Hood.Goal hoodGoal, final Shooter.Goal shooterGoal) {
             this.turretGoal = turretGoal;
             this.hoodGoal = hoodGoal;
             this.shooterGoal = shooterGoal;
-            this.isDynamic = isDynamic;
         }
     }
+
+    private enum InternalGoal {
+        NONE,
+        DEFAULT,
+        STOW(Goal.STOW),
+        NO_VISION(Goal.NO_VISION),
+        TRACKING,
+        TRACKING_HOOD_DOWN;
+
+        public static final HashMap<Goal, InternalGoal> GoalToInternal = new HashMap<>();
+        static {
+            for (final InternalGoal goal : InternalGoal.values()) {
+                if (goal.goal != null) {
+                    GoalToInternal.put(goal.goal, goal);
+                }
+            }
+        }
+
+        public static InternalGoal fromGoal(final Goal goal) {
+            final InternalGoal internalGoal = GoalToInternal.get(goal);
+
+            return internalGoal == null ? DEFAULT : internalGoal;
+        }
+
+        public final Goal goal;
+        InternalGoal(final Goal goal) {
+            this.goal = goal;
+        }
+
+        InternalGoal() {
+            this(null);
+        }
+    }
+
+    private final Turret turret;
+    private final Hood hood;
+    private final Shooter shooter;
+
+    private InternalGoal desiredGoal = InternalGoal.STOW;
+
+    public final LoggedTrigger atSetpoint;
+    public final LoggedTrigger safeForTrench;
 
     public Superstructure(
             final Turret turret,
             final Hood hood,
-            final Shooter shooter,
-            final Supplier<ShotCalculator.ShotCalculation> shotCalculationSupplier
+            final Shooter shooter
     ) {
         this.turret = turret;
         this.hood = hood;
         this.shooter = shooter;
 
-        this.eventLoop = new EventLoop();
-
-        this.desiredGoalIsRunningGoal = new Trigger(eventLoop, () -> desiredGoal == runningGoal);
-        this.desiredGoalChanged = new Trigger(eventLoop, () -> desiredGoal != runningGoal);
-
-        this.atTurretSetpoint = turret.atSetpoint;
-        this.atShooterSetpoint = shooter.atSetpoint;
-        this.atHoodSetpoint = hood.atSetpoint;
-
-        this.atSetpoint = turret.atSetpoint
-                .and(hood.atSetpoint)
+        this.atSetpoint = hood.atSetpoint
                 .and(shooter.atSetpoint)
-                .debounce(0.1, Debouncer.DebounceType.kFalling);
+                .and(turret.atSetpoint);
 
-        this.shotCalculationSupplier = shotCalculationSupplier;
-
-        turret.setGoal(desiredGoal.turretGoal);
-        hood.setGoal(desiredGoal.hoodGoal);
-        shooter.setGoal(desiredGoal.shooterGoal);
-    }
-
-    private Command runEnd(final Runnable run, final Runnable end) {
-        return Commands.runEnd(run, end, turret, hood);
-    }
-
-    private Command run(final Runnable run) {
-        return Commands.run(run, turret, hood);
+        this.safeForTrench = hood.safeForTrench;
     }
 
     @Override
     public void periodic() {
-        eventLoop.poll();
+        final double superstructurePeriodicUpdateStart = Timer.getFPGATimestamp();
 
-        if (desiredGoal.isDynamic) {
-            final ShotCalculator.ShotCalculation shotCalculation = shotCalculationSupplier.get();
-
-            turret.updatePositionSetpoint(shotCalculation.desiredTurretRotation().getRotations());
-            hood.updateShootingDesiredPosition(shotCalculation.desiredHoodRotationRots());
-            shooter.updateVelocitySetpoint(shotCalculation.desiredShooterVelocity());
+        final InternalGoal currentGoal;
+        if (atSetpoint.getAsBoolean()) {
+            currentGoal = desiredGoal;
+        } else {
+            currentGoal = InternalGoal.NONE;
         }
 
-        if (desiredGoal != runningGoal) {
-            turret.setGoal(desiredGoal.turretGoal);
-            hood.setGoal(desiredGoal.hoodGoal);
-            shooter.setGoal(desiredGoal.shooterGoal);
-
-            runningGoal = desiredGoal;
-        }
-
-        Logger.recordOutput(LogKey + "/RunningGoal", runningGoal);
         Logger.recordOutput(LogKey + "/DesiredGoal", desiredGoal);
+        Logger.recordOutput(LogKey + "/CurrentGoal", currentGoal);
+        Logger.recordOutput(LogKey + "/AtSetpoint", atSetpoint());
+        Logger.recordOutput(LogKey + "/SafeForTrench", safeForTrench);
 
-        Logger.recordOutput(LogKey + "/AtSetpoint", atSetpoint);
-
-        Logger.recordOutput(LogKey + "/Triggers/DesiredGoalIsRunningGoal", desiredGoalIsRunningGoal);
-        Logger.recordOutput(LogKey + "/Triggers/DesiredGoalChanged", desiredGoalChanged);
+        Logger.recordOutput(
+                LogKey + "/PeriodicIOPeriodMs",
+                Units.secondsToMilliseconds(Timer.getFPGATimestamp() - superstructurePeriodicUpdateStart)
+        );
     }
 
-    public Transform2d getOffsetFromCenter() {
-        return turret.getOffsetFromCenter();
+    public Command toGoal(final Goal goal) {
+        return Commands.sequence(
+                Commands.runOnce(() -> setDesiredGoal(goal)),
+                Commands.parallel(
+                        turret.toGoal(goal.turretGoal),
+                        hood.toGoal(goal.hoodGoal),
+                        shooter.toGoal(goal.shooterGoal)
+                )
+        )
+                .finallyDo(() -> setDesiredGoal(Goal.STOW))
+                .withName("ToGoal:" + goal);
     }
 
-    public Translation2d getTurretTranslation(final Pose2d robotPose) {
-        return robotPose.plus(getOffsetFromCenter()).getTranslation();
+    @SuppressWarnings("unused")
+    public Command setGoal(final Goal goal) {
+        return Commands.runOnce(() -> setDesiredGoal(goal))
+                .withName("SetGoal: " + goal);
+    }
+
+    public Command runParameters(final Supplier<ShotCalculation> shotCalculationSupplier) {
+        return runParametersWithHood(
+                shotCalculationSupplier,
+                cached -> hood.runPosition(
+                        () -> cached.get().shooterCalculation().hoodPositionRots()
+                )
+        ).withName("RunParametersWithHoodStowed");
+    }
+
+    public Command runParametersWithHoodStowed(final Supplier<ShotCalculation> shotCalculationSupplier) {
+        return runParametersWithHood(
+                shotCalculationSupplier,
+                cached -> hood.runGoal(Hood.Goal.STOW)
+        ).withName("RunParametersWithHoodStowed");
+    }
+
+    public boolean atSetpoint() {
+        return atSetpoint.getAsBoolean();
     }
 
     public double getShooterVelocityRotsPerSec() {
         return shooter.getVelocityRotsPerSec();
     }
 
-    public void updateStaticShotParameter(
-            final ShotCalculator.ShotCalculation shotCalculation
+    private Command runParametersWithHood(
+            final Supplier<ShotCalculation> shotCalculationSupplier,
+            final Function<Supplier<ShotCalculation>, Command> hoodCommand
     ) {
-        turret.updatePositionSetpoint(shotCalculation.desiredTurretRotation().getRotations());
-        hood.updateShootingDesiredPosition(shotCalculation.desiredHoodRotationRots());
-        shooter.updateVelocitySetpoint(shotCalculation.desiredShooterVelocity());
+        final Container<ShotCalculation> calculation = Container.empty();
+        final Supplier<ShotCalculation> cached = () -> {
+            if (calculation.hasValue()) {
+                return calculation.get();
+            }
+
+            final ShotCalculation newCalculation = shotCalculationSupplier.get();
+            calculation.set(newCalculation);
+            return newCalculation;
+        };
+
+        return Commands.parallel(
+                setInternalGoal(InternalGoal.TRACKING),
+                turret.runPositionWithVelocity(
+                        () -> cached.get().turretRotationRots(),
+                        () -> cached.get().turretSpeedRotsPerSec()
+                ),
+                hoodCommand.apply(cached),
+                shooter.runVelocity(() -> cached.get().shooterCalculation().shooterVelocityRotsPerSec()),
+                Commands.run(calculation::clear)
+        ).withName("RunParameters");
     }
 
-
-    public Trigger atSetpoint(final Goal goal) {
-        return atSetpoint(() -> goal);
+    private Command setInternalGoal(@SuppressWarnings("SameParameterValue") final InternalGoal goal) {
+        return Commands.runOnce(() -> desiredGoal = goal)
+                .withName("SetInternalGoal");
     }
 
-    public Command setGoalCommand(final Goal goal) {
-        return Commands.runOnce(() -> setDesiredGoal(goal)).withName("SetGoal: " + goal.toString());
-    }
-
-    public Command toGoal(final Supplier<Goal> goal) {
-        return Commands.startEnd(
-                () -> setDesiredGoal(goal.get()),
-                () -> setDesiredGoal(Goal.TRACKING)
-        ).withName("ToGoalSupplier");
-    }
-
-    public Command toGoal(final Goal goal) {
-        return Commands.startEnd(
-                () -> setDesiredGoal(goal),
-                () -> setDesiredGoal(Goal.TRACKING)
-        ).withName("ToGoal: " + goal.toString());
-    }
-
-    public Command runGoal(final Supplier<Goal> goalSupplier) {
-        return run(() -> setDesiredGoal(goalSupplier.get())).withName("RunGoalSupplier");
-    }
-
-    public Trigger atSetpoint(final Supplier<Goal> goalSupplier) {
-        return atSetpoint.and(() -> runningGoal == goalSupplier.get());
-    }
-
-    private void setDesiredGoal(final Goal desiredGoal) {
-        this.desiredGoal = desiredGoal;
-        eventLoop.poll();
+    private void setDesiredGoal(final Goal goal) {
+        desiredGoal = InternalGoal.fromGoal(goal);
     }
 }

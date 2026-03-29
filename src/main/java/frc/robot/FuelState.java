@@ -16,15 +16,16 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.constants.Constants;
 import frc.robot.constants.FieldConstants;
 import frc.robot.constants.PoseConstants;
+import frc.robot.constants.SimConstants;
 import frc.robot.subsystems.drive.Swerve;
-import frc.robot.subsystems.feeder.Feeder;
-import frc.robot.subsystems.intake.roller.IntakeRoller;
-import frc.robot.subsystems.superstructure.ShotCalculator;
+import frc.robot.subsystems.indexer.Indexer;
+import frc.robot.subsystems.intake.Intake;
 import frc.robot.subsystems.superstructure.Superstructure;
+import frc.robot.subsystems.superstructure.calculation.MovingShot;
 import frc.robot.utils.Container;
-import frc.robot.utils.commands.CommandsExt;
-import frc.robot.utils.commands.LoggedTrigger;
-import frc.robot.utils.commands.RobotModeLoggedTriggers;
+import frc.robot.utils.commands.ext.CommandsExt;
+import frc.robot.utils.commands.trigger.LoggedTrigger;
+import frc.robot.utils.commands.trigger.RobotModeLoggedTriggers;
 import frc.robot.utils.control.DeltaTime;
 import frc.robot.utils.subsystems.VirtualSubsystem;
 import org.littletonrobotics.junction.Logger;
@@ -41,12 +42,12 @@ public class FuelState extends VirtualSubsystem {
     private final Constants.RobotMode mode;
 
     private final Swerve swerve;
-    private final IntakeRoller intake;
-    private final Feeder indexer;
+    private final Intake intake;
+    private final Indexer indexer;
     private final Superstructure superstructure;
     private final ComponentsSolver componentsSolver;
 
-    private int simFuelCount = 100;
+    private int simFuelCount = 0;
     private final FuelCache fuelCache;
     private final LoggedTrigger hasSimFuel;
 
@@ -58,8 +59,8 @@ public class FuelState extends VirtualSubsystem {
     public FuelState(
             final Constants.RobotMode mode,
             final Swerve swerve,
-            final IntakeRoller intake,
-            final Feeder indexer,
+            final Intake intake,
+            final Indexer indexer,
             final Superstructure superstructure,
             final ComponentsSolver componentsSolver
     ) {
@@ -72,15 +73,15 @@ public class FuelState extends VirtualSubsystem {
         this.superstructure = superstructure;
         this.componentsSolver = componentsSolver;
 
-        this.hasSimFuel = group.t("hasSimFuel", () -> simFuelCount > 0);
-        this.hasFuel = group.t("hasFuel", () -> true)
+        this.hasSimFuel = group.t("HasSimFuel", () -> simFuelCount > 0);
+        this.hasFuel = group.t("HasFuel", indexer::isFeederTOFDetected)
                 .debounce(0.5, Debouncer.DebounceType.kFalling);
 
         configureStateTriggers();
         switch (mode) {
             case SIM, REPLAY -> {
                 this.fuelCache = new FuelCache(50, fuel -> {
-                    final Pose2d hubPose = new Pose2d(FieldConstants.getHubTarget(), Rotation2d.kZero);
+                    final Pose2d hubPose = FieldConstants.getHubPose();
                     if (isInsideHub(hubPose, fuel)) {
                         simScoredFuelCount++;
                         simTimeOfFlight = fuel.getTimeOfFlightSeconds();
@@ -117,7 +118,12 @@ public class FuelState extends VirtualSubsystem {
 
     public void setSimFuelCount(final int simFuelCount) {
         switch (mode) {
-            case SIM, REPLAY -> this.simFuelCount = simFuelCount;
+            case SIM, REPLAY -> {
+                this.simFuelCount = simFuelCount;
+                if (simFuelCount > 0) {
+                    indexer.setFeederTOFDetected(true);
+                }
+            }
         }
     }
 
@@ -127,7 +133,7 @@ public class FuelState extends VirtualSubsystem {
 
     private void configureStateTriggers() {
         intake.isIntaking.and(hasFuel.negate())
-                .whileTrue(CommandsExt.defaultCommand(indexer.toGoal(Feeder.Goal.FEED)));
+                .whileTrue(CommandsExt.defaultCommand(indexer.feed()));
     }
 
     private void configureSimTriggers() {
@@ -139,7 +145,7 @@ public class FuelState extends VirtualSubsystem {
         intake.isIntaking.whileTrue(setInterval(1 / fuelIntakePerSecond, () -> simFuelCount++));
 
         final double fuelFedPerSecond = 18;
-        indexer.isFeeding
+        indexer.isIndexing
                 .and(hasFuel)
                 .and(hasSimFuel)
                 .whileTrue(setInterval(
@@ -152,23 +158,35 @@ public class FuelState extends VirtualSubsystem {
                                             hoodComponentPose.getTranslation(),
                                             hoodComponentPose.getRotation()
                                     ))
-                                    .plus(PoseConstants.Hood.FuelExitOffset);
+                                    .plus(SimConstants.Hood.FuelExitOffset);
 
-                            final ChassisSpeeds turretFieldSpeeds = ShotCalculator.getTurretFieldSpeeds(
+                            final ChassisSpeeds turretFieldSpeeds = MovingShot.getTurretFieldSpeeds(
                                     robotPose,
-                                    superstructure.getTurretTranslation(robotPose),
+                                    robotPose.transformBy(PoseConstants.Turret.ROBOT_TO_TURRET_TRANSFORM_2D)
+                                            .getTranslation(),
                                     swerve.getFieldRelativeSpeeds()
                             );
 
                             fuelCache.spawn(
                                     hoodPose,
-                                    ShooterOmegaToBallVelocity
-                                            .get(superstructure.getShooterVelocityRotsPerSec()),
+                                    ShooterOmegaToBallVelocity.get(superstructure.getShooterVelocityRotsPerSec()),
                                     turretFieldSpeeds
                             );
                             simFuelCount = Math.max(simFuelCount - 1, 0);
                         }
                 ));
+
+        intake.isIntaking
+                .and(indexer.isIndexing)
+                .and(hasFuel.negate())
+                .and(hasSimFuel)
+                .onTrue(Commands.sequence(
+                        waitRand(random, 0.25, 0.5),
+                        Commands.runOnce(() -> indexer.setFeederTOFDetected(true))
+                ));
+        indexer.isIndexing
+                .and(hasSimFuel.negate())
+                .onTrue(Commands.runOnce(() -> indexer.setFeederTOFDetected(false)));
     }
 
     @SuppressWarnings("SameParameterValue")
@@ -228,10 +246,6 @@ public class FuelState extends VirtualSubsystem {
             }
 
             this.shouldDiscard = shouldDiscard;
-        }
-
-        public FuelCache(final int capacity) {
-            this(capacity, null);
         }
 
         public void spawn(
@@ -394,7 +408,7 @@ public class FuelState extends VirtualSubsystem {
 
     private static final InterpolatingDoubleTreeMap ShooterOmegaToBallVelocity = new InterpolatingDoubleTreeMap();
     private static double shooterSurfaceVelocity(final double shooterVelocityRotsPerSec) {
-        return shooterVelocityRotsPerSec * (Units.inchesToMeters(4) * Math.PI);
+        return shooterVelocityRotsPerSec * SimConstants.Shooter.WHEEL_CIRCUMFERENCE_METERS;
     }
     static {
         ShooterOmegaToBallVelocity.put(0d, 0d);
