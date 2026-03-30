@@ -43,7 +43,10 @@ public class Intake {
     public Command stow() {
         return Commands.parallel(
                 slide.setGoal(IntakeSlide.Goal.STOW),
-                rollers.setGoal(IntakeRollers.Goal.OFF)
+                Commands.sequence(
+                        Commands.waitUntil(slide.atSetpoint),
+                        rollers.setGoal(IntakeRollers.Goal.OFF)
+                )
         ).withName("StowIntake");
     }
 
