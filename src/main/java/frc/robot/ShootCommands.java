@@ -170,13 +170,14 @@ public class ShootCommands extends VirtualSubsystem {
                         deadline(
                                 indexer.feed()
                                         .onlyWhile(targetValid
-                                                .and(swerveReady)
-                                                .and(superstructure::atSetpoint))
+                                                .and(swerveReady))
                         )
                 ),
 //                        .onlyIf(fuelState.hasFuel)
 //                        .onlyWhile(fuelState.hasFuel
 //                                .or(intake.isIntaking)),
+                intake.stowFeed().asProxy()
+                        .unless(intake.isIntaking),
                 indexer.spinSpindexer().asProxy(),
                 SwerveSpeed.toSwerveSpeed(ShootAndScootSpeeds),
                 superstructure.runParameters(movingShot)
