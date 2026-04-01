@@ -49,8 +49,4 @@ public class Indexer {
     public boolean isFeederTOFDetected() {
         return feeder.isTOFDetected();
     }
-
-    public double getSpindexerFilteredCurrent() {
-        return spindexer.getFilteredCurrent();
-    }
 }

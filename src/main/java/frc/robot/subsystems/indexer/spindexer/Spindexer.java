@@ -1,6 +1,5 @@
 package frc.robot.subsystems.indexer.spindexer;
 
-import edu.wpi.first.math.filter.LinearFilter;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -26,26 +25,17 @@ public class Spindexer extends SubsystemExt {
     }
 
     private final SpindexerIO spindexerIO;
-    private final SpindexerIOInputsAutoLogged inputs;
+    private final SpindexerIOInputsAutoLogged inputs = new SpindexerIOInputsAutoLogged();
 
     private Goal desiredGoal = Goal.STOP;
     private double voltageSetpoint = 0.0;
-
-    private final LinearFilter currentFilter;
 
     public Spindexer(final Constants.RobotMode mode, final HardwareConstants.SpindexerConstants constants) {
         this.spindexerIO = switch (mode) {
             case REAL -> new SpindexerIOReal(constants);
             case SIM -> new SpindexerIOSim(constants);
-            case DISABLED, REPLAY -> new SpindexerIO() {};
+            case REPLAY, DISABLED -> new SpindexerIO() {};
         };
-
-        this.inputs = new SpindexerIOInputsAutoLogged();
-
-        this.currentFilter = LinearFilter.movingAverage(3);
-
-        this.spindexerIO.config();
-        this.spindexerIO.toWheelVoltage(voltageSetpoint);
     }
 
     @Override
@@ -74,10 +64,6 @@ public class Spindexer extends SubsystemExt {
     public Command setGoal(final Goal goal) {
         return Commands.runOnce(() -> setDesiredGoal(goal))
                 .withName("SetGoal:" + goal);
-    }
-
-    public double getFilteredCurrent() {
-        return currentFilter.calculate(inputs.wheelTorqueCurrentAmps);
     }
 
     private void setDesiredGoal(final Goal goal) {

@@ -1,6 +1,7 @@
 package frc.robot.subsystems.indexer.feeder;
 
 import com.ctre.phoenix6.BaseStatusSignal;
+import com.ctre.phoenix6.CANBus;
 import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.CANrangeConfiguration;
 import com.ctre.phoenix6.configs.Slot0Configs;
@@ -36,9 +37,9 @@ public class FeederIOSim implements FeederIO {
     private final TalonFX motor;
     private final TalonFXSim motorTalonFXSim;
 
-    private final CANrange CANRange;
-    private final CANrangeConfiguration CANRangeConfig;
-    private final CANrangeSimState CANRangeSimState;
+    private final CANrange canRange;
+    private final CANrangeConfiguration canRangeConfiguration;
+    private final CANrangeSimState canRangeSimState;
 
     private final StatusSignal<Angle> wheelPosition;
     private final StatusSignal<AngularVelocity> wheelVelocity;
@@ -46,7 +47,7 @@ public class FeederIOSim implements FeederIO {
     private final StatusSignal<Current> wheelTorqueCurrent;
     private final StatusSignal<Temperature> wheelDeviceTemp;
 
-    private final StatusSignal<Boolean> CANRangeDetected;
+    private final StatusSignal<Boolean> canRangeDetected;
 
     private final TorqueCurrentFOC torqueCurrentFOC;
 
@@ -54,10 +55,13 @@ public class FeederIOSim implements FeederIO {
         this.deltaTime = new DeltaTime(true);
         this.constants = constants;
 
-        this.motor = new TalonFX(constants.motorID(), constants.CANBus().toPhoenix6CANBus());
-        this.CANRange = new CANrange(constants.CANRangeID(), constants.CANBus().toPhoenix6CANBus());
-        this.CANRangeConfig = new CANrangeConfiguration();
-        this.CANRangeSimState = CANRange.getSimState();
+        final HardwareConstants.CANBus bus = constants.CANBus();
+        final CANBus p6Bus = bus.toPhoenix6CANBus();
+        this.motor = new TalonFX(constants.motorID(), p6Bus);
+        this.canRange = new CANrange(constants.CANRangeID(), p6Bus);
+
+        this.canRangeConfiguration = new CANrangeConfiguration();
+        this.canRangeSimState = canRange.getSimState();
 
         final DCMotor dcMotor = DCMotor.getKrakenX60Foc(1);
         final DCMotorSim dcMotorSim = new DCMotorSim(
@@ -80,19 +84,21 @@ public class FeederIOSim implements FeederIO {
         this.wheelTorqueCurrent = motor.getTorqueCurrent(false);
         this.wheelDeviceTemp = motor.getDeviceTemp(false);
 
-        this.CANRangeDetected = CANRange.getIsDetected(false);
+        this.canRangeDetected = canRange.getIsDetected(false);
 
         this.torqueCurrentFOC = new TorqueCurrentFOC(0);
 
         RefreshAll.add(
-                constants.CANBus(),
+                bus,
                 wheelPosition,
                 wheelVelocity,
                 wheelVoltage,
                 wheelTorqueCurrent,
                 wheelDeviceTemp,
-                CANRangeDetected
+                canRangeDetected
         );
+
+        config();
 
         final Notifier simUpdateNotifier = new Notifier(() -> {
             final double dt = deltaTime.get();
@@ -129,11 +135,11 @@ public class FeederIOSim implements FeederIO {
         motorConfig.Feedback.SensorToMechanismRatio = constants.gearing();
         Phoenix6Utils.tryUntilOk(motor, () -> motor.getConfigurator().apply(motorConfig));
 
-        CANRangeConfig.ProximityParams.ProximityThreshold = 0.4;
-        CANRangeConfig.ProximityParams.ProximityHysteresis = 0.01;
-        CANRangeConfig.ProximityParams.MinSignalStrengthForValidMeasurement = 2500;
-        CANRangeConfig.ToFParams.UpdateMode = UpdateModeValue.ShortRange100Hz;
-        Phoenix6Utils.tryUntilOk(CANRange, () -> CANRange.getConfigurator().apply(CANRangeConfig));
+        canRangeConfiguration.ProximityParams.ProximityThreshold = 0.4;
+        canRangeConfiguration.ProximityParams.ProximityHysteresis = 0.01;
+        canRangeConfiguration.ProximityParams.MinSignalStrengthForValidMeasurement = 2500;
+        canRangeConfiguration.ToFParams.UpdateMode = UpdateModeValue.ShortRange100Hz;
+        Phoenix6Utils.tryUntilOk(canRange, () -> canRange.getConfigurator().apply(canRangeConfiguration));
 
         BaseStatusSignal.setUpdateFrequencyForAll(
                 100,
@@ -141,7 +147,7 @@ public class FeederIOSim implements FeederIO {
                 wheelVelocity,
                 wheelVoltage,
                 wheelTorqueCurrent,
-                CANRangeDetected
+                canRangeDetected
         );
 
         BaseStatusSignal.setUpdateFrequencyForAll(
@@ -152,7 +158,7 @@ public class FeederIOSim implements FeederIO {
         ParentDevice.optimizeBusUtilizationForAll(
                 4,
                 motor,
-                CANRange
+                canRange
         );
 
         final TalonFXSimState wheelMotorSimState = motor.getSimState();
@@ -168,7 +174,7 @@ public class FeederIOSim implements FeederIO {
         inputs.wheelTorqueCurrentAmps = wheelTorqueCurrent.getValueAsDouble();
         inputs.wheelTempCelsius = wheelDeviceTemp.getValueAsDouble();
 
-        inputs.TOFDetected = CANRangeDetected.getValue();
+        inputs.tofDetected = canRangeDetected.getValue();
     }
 
     @Override
@@ -178,10 +184,10 @@ public class FeederIOSim implements FeederIO {
 
     @Override
     public void setTOFDetected(final boolean isDetected) {
-        final double threshold = CANRangeConfig.ProximityParams.ProximityThreshold;
-        final double hysteresis = CANRangeConfig.ProximityParams.ProximityHysteresis;
+        final double threshold = canRangeConfiguration.ProximityParams.ProximityThreshold;
+        final double hysteresis = canRangeConfiguration.ProximityParams.ProximityHysteresis;
 
-        CANRangeSimState.setDistance(isDetected
+        canRangeSimState.setDistance(isDetected
                 ? threshold - hysteresis - CloseEnoughMeters
                 : threshold + hysteresis + CloseEnoughMeters
         );

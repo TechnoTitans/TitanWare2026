@@ -74,15 +74,13 @@ public class Shooter extends SubsystemExt {
     }
 
     private final ShooterIO shooterIO;
-    private final ShooterIOInputsAutoLogged inputs;
-
-    private final SysIdRoutine flywheelTorqueCurrentSysIdRoutine;
+    private final ShooterIOInputsAutoLogged inputs = new ShooterIOInputsAutoLogged();
 
     private InternalGoal desiredGoal = InternalGoal.TRACKING;
-
     private double velocitySetpointRotsPerSec;
 
     public final LoggedTrigger atSetpoint;
+    private final SysIdRoutine flywheelTorqueCurrentSysIdRoutine;
 
     public Shooter(final Constants.RobotMode mode, final HardwareConstants.ShooterConstants constants) {
         this.shooterIO = switch (mode) {
@@ -90,8 +88,6 @@ public class Shooter extends SubsystemExt {
             case SIM -> new ShooterIOSimBangBang(constants);
             case REPLAY, DISABLED -> new ShooterIO() {};
         };
-
-        this.inputs = new ShooterIOInputsAutoLogged();
 
         final LoggedTrigger.Group group = LoggedTrigger.Group.from(LogKey);
         this.atSetpoint = group.t("AtSetpoint", () -> MathUtil.isNear(
@@ -106,9 +102,6 @@ public class Shooter extends SubsystemExt {
                 Seconds.of(10),
                 shooterIO::toFlywheelTorqueCurrent
         );
-
-        this.shooterIO.config();
-        this.shooterIO.toFlywheelVelocity(velocitySetpointRotsPerSec);
     }
 
     @Override

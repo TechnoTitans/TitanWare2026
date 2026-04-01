@@ -77,6 +77,8 @@ public class IntakeRollersIOSim implements IntakeRollersIO {
                 rollerDeviceTemp
         );
 
+        config();
+
         final Notifier simUpdateNotifier = new Notifier(() -> {
             final double dt = deltaTime.get();
             motorSim.update(dt);

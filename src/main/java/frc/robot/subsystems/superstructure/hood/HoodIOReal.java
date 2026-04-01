@@ -50,6 +50,8 @@ public class HoodIOReal implements HoodIO {
                 hoodTorqueCurrent,
                 hoodDeviceTemp
         );
+
+        config();
     }
 
     @Override
@@ -108,7 +110,7 @@ public class HoodIOReal implements HoodIO {
     }
 
     @Override
-    public void zeroMotor() {
-        Phoenix6Utils.tryUntilOk(hoodMotor, () -> hoodMotor.setPosition(0));
+    public void zero() {
+        Phoenix6Utils.tryUntilOk(hoodMotor, 10, () -> hoodMotor.setPosition(0));
     }
 }

@@ -113,7 +113,6 @@ public class IntakeSlide extends SubsystemExt {
     private TrapezoidProfile.State profileSetpoint = new TrapezoidProfile.State(0,0);
 
     private InternalGoal desiredGoal = InternalGoal.STOW;
-
     private double positionSetpointRots = 0.0;
 
     private HoldMode holdMode = HoldMode.HARD;
@@ -140,7 +139,7 @@ public class IntakeSlide extends SubsystemExt {
                 VelocityToleranceRotsPerSec
         ));
 
-        this.intakeSlideIO.zeroMotors();
+        this.intakeSlideIO.zero();
 
         final LoggedTrigger softModeTrigger = group.t("SoftMode", this::atSetpoint).debounce(0.1);
         softModeTrigger.onTrue(Commands.runOnce(() -> {

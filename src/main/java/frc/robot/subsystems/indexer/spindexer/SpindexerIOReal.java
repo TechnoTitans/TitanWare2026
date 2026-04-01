@@ -19,7 +19,7 @@ public class SpindexerIOReal implements SpindexerIO {
 
     private final TalonFX motor;
 
-    private final StatusSignal<Angle> wheelPositionRots;
+    private final StatusSignal<Angle> wheelPosition;
     private final StatusSignal<AngularVelocity> wheelVelocity;
     private final StatusSignal<Voltage> wheelVoltage;
     private final StatusSignal<Current> wheelTorqueCurrent;
@@ -32,7 +32,7 @@ public class SpindexerIOReal implements SpindexerIO {
 
         this.motor = new TalonFX(constants.motorID(), constants.CANBus().toPhoenix6CANBus());
 
-        this.wheelPositionRots = motor.getPosition(false);
+        this.wheelPosition = motor.getPosition(false);
         this.wheelVelocity = motor.getVelocity(false);
         this.wheelVoltage = motor.getMotorVoltage(false);
         this.wheelTorqueCurrent = motor.getTorqueCurrent(false);
@@ -42,12 +42,14 @@ public class SpindexerIOReal implements SpindexerIO {
 
         RefreshAll.add(
                 constants.CANBus(),
-                wheelPositionRots,
+                wheelPosition,
                 wheelVelocity,
                 wheelVoltage,
                 wheelTorqueCurrent,
                 wheelTemp
         );
+
+        config();
     }
 
     @Override
@@ -67,7 +69,7 @@ public class SpindexerIOReal implements SpindexerIO {
 
         BaseStatusSignal.setUpdateFrequencyForAll(
                 100,
-                wheelPositionRots,
+                wheelPosition,
                 wheelVelocity,
                 wheelVoltage,
                 wheelTorqueCurrent
@@ -86,7 +88,7 @@ public class SpindexerIOReal implements SpindexerIO {
 
     @Override
     public void updateInputs(final SpindexerIOInputs inputs) {
-        inputs.wheelPositionRots = wheelPositionRots.getValueAsDouble();
+        inputs.wheelPositionRots = wheelPosition.getValueAsDouble();
         inputs.wheelVelocityRotsPerSec = wheelVelocity.getValueAsDouble();
         inputs.wheelVoltage = wheelVoltage.getValueAsDouble();
         inputs.wheelTorqueCurrentAmps = wheelTorqueCurrent.getValueAsDouble();

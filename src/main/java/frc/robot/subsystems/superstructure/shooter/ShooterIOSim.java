@@ -1,6 +1,7 @@
 package frc.robot.subsystems.superstructure.shooter;
 
 import com.ctre.phoenix6.BaseStatusSignal;
+import com.ctre.phoenix6.CANBus;
 import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.Slot0Configs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
@@ -59,8 +60,10 @@ public class ShooterIOSim implements ShooterIO {
         this.deltaTime = new DeltaTime(true);
         this.constants = constants;
 
-        this.masterMotor = new TalonFX(constants.masterMotorID(), constants.CANBus().toPhoenix6CANBus());
-        this.followerMotor = new TalonFX(constants.followerMotorID(), constants.CANBus().toPhoenix6CANBus());
+        final HardwareConstants.CANBus bus = constants.CANBus();
+        final CANBus p6Bus = bus.toPhoenix6CANBus();
+        this.masterMotor = new TalonFX(constants.masterMotorID(), p6Bus);
+        this.followerMotor = new TalonFX(constants.followerMotorID(), p6Bus);
 
         final DCMotor dcMotor = DCMotor.getKrakenX60Foc(2);
         final DCMotorSim motorsSim = new DCMotorSim(
@@ -96,10 +99,10 @@ public class ShooterIOSim implements ShooterIO {
         this.velocityTorqueCurrentFOC = new VelocityTorqueCurrentFOC(0);
         this.voltageOut = new VoltageOut(0);
         this.torqueCurrentFOC = new TorqueCurrentFOC(0);
-        this.follower = new Follower(masterMotor.getDeviceID(), MotorAlignmentValue.Aligned);
+        this.follower = new Follower(masterMotor.getDeviceID(), MotorAlignmentValue.Opposed);
 
         RefreshAll.add(
-                constants.CANBus(),
+                bus,
                 masterPosition,
                 masterVelocity,
                 masterVoltage,
@@ -111,6 +114,8 @@ public class ShooterIOSim implements ShooterIO {
                 followerTorqueCurrent,
                 followerDeviceTemp
         );
+
+        config();
 
         final Notifier simUpdateNotifier = new Notifier(() -> {
             final double dt = deltaTime.get();
