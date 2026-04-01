@@ -53,11 +53,11 @@ public class TurretIOSim implements TurretIO {
     private final StatusSignal<Current> motorTorqueCurrent;
     private final StatusSignal<Temperature> motorDeviceTemp;
 
-    private final StatusSignal<Angle> primaryCANcoderPosition;
-    private final StatusSignal<Angle> primaryCANcoderAbsolutePosition;
+    private final StatusSignal<Angle> primaryEncoderPosition;
+    private final StatusSignal<Angle> primaryEncoderAbsolutePosition;
 
-    private final StatusSignal<Angle> secondaryCANcoderPosition;
-    private final StatusSignal<Angle> secondaryCANcoderAbsolutePosition;
+    private final StatusSignal<Angle> secondaryEncoderPosition;
+    private final StatusSignal<Angle> secondaryEncoderAbsolutePosition;
 
     private final PositionVoltage positionVoltage;
     private final MotionMagicExpoVoltage motionMagicExpoVoltage;
@@ -111,11 +111,11 @@ public class TurretIOSim implements TurretIO {
         this.motorTorqueCurrent = motor.getTorqueCurrent(false);
         this.motorDeviceTemp = motor.getDeviceTemp(false);
 
-        this.primaryCANcoderPosition = primaryCANcoder.getPosition(false);
-        this.primaryCANcoderAbsolutePosition = primaryCANcoder.getAbsolutePosition(false);
+        this.primaryEncoderPosition = primaryCANcoder.getPosition(false);
+        this.primaryEncoderAbsolutePosition = primaryCANcoder.getAbsolutePosition(false);
 
-        this.secondaryCANcoderPosition = secondaryCANcoder.getPosition(false);
-        this.secondaryCANcoderAbsolutePosition = secondaryCANcoder.getAbsolutePosition(false);
+        this.secondaryEncoderPosition = secondaryCANcoder.getPosition(false);
+        this.secondaryEncoderAbsolutePosition = secondaryCANcoder.getAbsolutePosition(false);
 
         RefreshAll.add(
                 bus,
@@ -124,10 +124,10 @@ public class TurretIOSim implements TurretIO {
                 motorVoltage,
                 motorTorqueCurrent,
                 motorDeviceTemp,
-                primaryCANcoderPosition,
-                primaryCANcoderAbsolutePosition,
-                secondaryCANcoderPosition,
-                secondaryCANcoderAbsolutePosition
+                primaryEncoderPosition,
+                primaryEncoderAbsolutePosition,
+                secondaryEncoderPosition,
+                secondaryEncoderAbsolutePosition
         );
 
         config();
@@ -203,8 +203,10 @@ public class TurretIOSim implements TurretIO {
                 motorVelocity,
                 motorVoltage,
                 motorTorqueCurrent,
-                primaryCANcoderPosition,
-                secondaryCANcoderPosition
+                primaryEncoderPosition,
+                primaryEncoderAbsolutePosition,
+                secondaryEncoderPosition,
+                secondaryEncoderAbsolutePosition
         );
 
         BaseStatusSignal.setUpdateFrequencyForAll(
@@ -243,11 +245,11 @@ public class TurretIOSim implements TurretIO {
         inputs.turretTorqueCurrentAmps = motorTorqueCurrent.getValueAsDouble();
         inputs.turretTempCelsius = motorDeviceTemp.getValueAsDouble();
 
-        inputs.primaryEncoderPositionRots = primaryCANcoderPosition.getValueAsDouble();
-        inputs.primaryEncoderAbsolutePositionRots = primaryCANcoderAbsolutePosition.getValueAsDouble();
+        inputs.primaryEncoderPositionRots = primaryEncoderPosition.getValueAsDouble();
+        inputs.primaryEncoderAbsolutePositionRots = primaryEncoderAbsolutePosition.getValueAsDouble();
 
-        inputs.secondaryEncoderPositionRots = secondaryCANcoderPosition.getValueAsDouble();
-        inputs.secondaryEncoderAbsolutePositionRots = secondaryCANcoderAbsolutePosition.getValueAsDouble();
+        inputs.secondaryEncoderPositionRots = secondaryEncoderPosition.getValueAsDouble();
+        inputs.secondaryEncoderAbsolutePositionRots = secondaryEncoderAbsolutePosition.getValueAsDouble();
     }
 
     @Override
