@@ -80,6 +80,8 @@ public class SpindexerIOSim implements SpindexerIO {
                 wheelTemperature
         );
 
+        config();
+
         final Notifier simUpdateNotifier = new Notifier(() -> {
             final double dt = deltaTime.get();
             wheelTalonFXSim.update(dt);

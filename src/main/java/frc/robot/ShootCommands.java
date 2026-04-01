@@ -1,5 +1,6 @@
 package frc.robot;
 
+import edu.wpi.first.math.filter.Debouncer;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
@@ -136,7 +137,15 @@ public class ShootCommands extends VirtualSubsystem {
                         waitUntil(targetValid.and(superstructure::atSetpoint)),
                         deadline(
                                 indexer.feed()
-                                        .onlyWhile(targetValid.and(superstructure::atSetpoint)),
+                                        .onlyWhile(targetValid
+                                                .and(superstructure.turretAtSetpoint
+                                                        .and(superstructure.hoodAtSetpoint)
+                                                        .and(superstructure.shooterAtSetpoint
+                                                                .debounce(
+                                                                        0.5,
+                                                                        Debouncer.DebounceType.kFalling
+                                                                )))
+                                        ),
                                 intake.stowFeed()
                         )
                 )
@@ -170,7 +179,17 @@ public class ShootCommands extends VirtualSubsystem {
                         deadline(
                                 indexer.feed()
                                         .onlyWhile(targetValid
-                                                .and(swerveReady))
+                                                .and(swerveReady)
+                                                .and(superstructure.turretAtSetpoint
+                                                        .and(superstructure.hoodAtSetpoint)
+                                                        .and(superstructure.shooterAtSetpoint
+                                                                .debounce(
+                                                                        0.5,
+                                                                        Debouncer.DebounceType.kFalling
+                                                                )))
+                                        ),
+                                intake.stowFeed().asProxy()
+                                        .unless(intake.isIntaking)
                         )
                 ),
 //                        .onlyIf(fuelState.hasFuel)

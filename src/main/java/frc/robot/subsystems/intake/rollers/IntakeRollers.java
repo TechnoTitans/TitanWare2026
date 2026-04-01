@@ -23,7 +23,7 @@ public class IntakeRollers extends SubsystemExt {
     }
 
     private final IntakeRollersIO intakeRollersIO;
-    private final IntakeRollerIOInputsAutoLogged inputs;
+    private final IntakeRollerIOInputsAutoLogged inputs = new IntakeRollerIOInputsAutoLogged();
 
     private Goal desiredGoal = Goal.OFF;
     private double voltageSetpoint = 0.0;
@@ -34,9 +34,6 @@ public class IntakeRollers extends SubsystemExt {
             case SIM -> new IntakeRollersIOSim(constants);
             case REPLAY, DISABLED -> new IntakeRollersIO() {};
         };
-
-        this.inputs = new IntakeRollerIOInputsAutoLogged();
-        this.intakeRollersIO.config();
     }
 
     @Override

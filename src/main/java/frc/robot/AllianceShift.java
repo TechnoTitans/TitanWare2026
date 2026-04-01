@@ -19,7 +19,7 @@ public enum AllianceShift {
         UNKNOWN
     }
 
-    public static final String AllianceShiftLogKey = "AllianceShift/";
+    public static final String LogKey = "AllianceShift";
 
     public HubStatus hubStatus() {
         if (this == AUTO || this == TRANSITION || this == ENDGAME) {

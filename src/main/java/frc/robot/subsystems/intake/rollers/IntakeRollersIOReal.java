@@ -48,6 +48,8 @@ public class IntakeRollersIOReal implements IntakeRollersIO {
                 rollerTorqueCurrent,
                 rollerDeviceTemp
         );
+
+        config();
     }
 
     @Override

@@ -11,7 +11,7 @@ public interface FeederIO {
         public double wheelTorqueCurrentAmps = 0.0;
         public double wheelTempCelsius = 0.0;
 
-        public boolean TOFDetected = false;
+        public boolean tofDetected = false;
     }
 
     default void config() {}

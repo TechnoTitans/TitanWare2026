@@ -29,7 +29,5 @@ public interface TurretIO {
 
     default void toTurretVoltage(final double volts) {}
 
-    default void setPosition(final double turretPositionRots) {}
-
     default void seedTurretPosition(final Rotation2d turretPositionRots) {}
 }

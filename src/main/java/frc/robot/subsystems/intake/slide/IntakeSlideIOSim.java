@@ -31,6 +31,10 @@ public class IntakeSlideIOSim implements IntakeSlideIO {
 
     private final DifferentialMechanism<TalonFX> diffMechanism;
 
+    private final MotionMagicExpoTorqueCurrentFOC averageMotionMagicExpoTorqueCurrent;
+    private final PositionTorqueCurrentFOC averagePositionTorqueCurrentFOC;
+    private final PositionTorqueCurrentFOC differentialPositionTorqueCurrentFOC;
+
     private final TalonFXSim masterSim;
     private final TalonFXSim followerSim;
 
@@ -50,17 +54,12 @@ public class IntakeSlideIOSim implements IntakeSlideIO {
     private final StatusSignal<AngularVelocity> averageVelocity;
     private final StatusSignal<Angle> differentialPosition;
 
-    private final MotionMagicExpoTorqueCurrentFOC averageMotionMagicExpoTorqueCurrent;
-    private final PositionTorqueCurrentFOC averagePositionTorqueCurrentFOC;
-    private final PositionTorqueCurrentFOC differentialPositionTorqueCurrentFOC;
-
-
     public IntakeSlideIOSim(final HardwareConstants.IntakeSlideConstants constants) {
         this.deltaTime = new DeltaTime(true);
 
-        this.averageMotionMagicExpoTorqueCurrent = new MotionMagicExpoTorqueCurrentFOC(0).withSlot(0);
-        this.averagePositionTorqueCurrentFOC = new PositionTorqueCurrentFOC(0).withSlot(1);
-        this.differentialPositionTorqueCurrentFOC = new PositionTorqueCurrentFOC(0).withSlot(2);
+        this.averageMotionMagicExpoTorqueCurrent = new MotionMagicExpoTorqueCurrentFOC(0);
+        this.averagePositionTorqueCurrentFOC = new PositionTorqueCurrentFOC(0);
+        this.differentialPositionTorqueCurrentFOC = new PositionTorqueCurrentFOC(0);
 
         final TalonFXConfiguration masterMotorConfig = new TalonFXConfiguration();
         // Average Slot
@@ -269,7 +268,7 @@ public class IntakeSlideIOSim implements IntakeSlideIO {
     }
 
     @Override
-    public void zeroMotors() {
+    public void zero() {
         Phoenix6Utils.tryUntilOk(diffMechanism.getLeader(), () -> diffMechanism.setPosition(0));
     }
 }

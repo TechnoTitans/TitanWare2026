@@ -78,6 +78,10 @@ public class Superstructure extends VirtualSubsystem {
     private InternalGoal desiredGoal = InternalGoal.STOW;
 
     public final LoggedTrigger atSetpoint;
+    public final LoggedTrigger turretAtSetpoint;
+    public final LoggedTrigger hoodAtSetpoint;
+    public final LoggedTrigger shooterAtSetpoint;
+
     public final LoggedTrigger safeForTrench;
 
     public Superstructure(
@@ -89,9 +93,12 @@ public class Superstructure extends VirtualSubsystem {
         this.hood = hood;
         this.shooter = shooter;
 
-        this.atSetpoint = hood.atSetpoint
-                .and(shooter.atSetpoint)
-                .and(turret.atSetpoint);
+        this.atSetpoint = turret.atSetpoint
+                .and(hood.atSetpoint)
+                .and(shooter.atSetpoint);
+        this.turretAtSetpoint = turret.atSetpoint;
+        this.hoodAtSetpoint = hood.atSetpoint;
+        this.shooterAtSetpoint = shooter.atSetpoint;
 
         this.safeForTrench = hood.safeForTrench;
     }
@@ -109,7 +116,7 @@ public class Superstructure extends VirtualSubsystem {
 
         Logger.recordOutput(LogKey + "/DesiredGoal", desiredGoal);
         Logger.recordOutput(LogKey + "/CurrentGoal", currentGoal);
-        Logger.recordOutput(LogKey + "/AtSetpoint", atSetpoint());
+        Logger.recordOutput(LogKey + "/AtSetpoint", atSetpoint);
         Logger.recordOutput(LogKey + "/SafeForTrench", safeForTrench);
 
         Logger.recordOutput(

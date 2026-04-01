@@ -1,6 +1,7 @@
 package frc.robot.subsystems.superstructure.shooter;
 
 import com.ctre.phoenix6.BaseStatusSignal;
+import com.ctre.phoenix6.CANBus;
 import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.Slot0Configs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
@@ -42,8 +43,10 @@ public class ShooterIORealBangBang implements ShooterIO {
     public ShooterIORealBangBang(final HardwareConstants.ShooterConstants constants) {
         this.constants = constants;
 
-        this.masterMotor = new TalonFX(constants.masterMotorID(), constants.CANBus().toPhoenix6CANBus());
-        this.followerMotor = new TalonFX(constants.followerMotorID(), constants.CANBus().toPhoenix6CANBus());
+        final HardwareConstants.CANBus bus = constants.CANBus();
+        final CANBus p6Bus = bus.toPhoenix6CANBus();
+        this.masterMotor = new TalonFX(constants.masterMotorID(), p6Bus);
+        this.followerMotor = new TalonFX(constants.followerMotorID(), p6Bus);
 
         this.velocityTorqueCurrentFOC = new VelocityTorqueCurrentFOC(0);
         this.torqueCurrentFOC = new TorqueCurrentFOC(0);
@@ -63,7 +66,7 @@ public class ShooterIORealBangBang implements ShooterIO {
         this.followerDeviceTemp = followerMotor.getDeviceTemp(false);
 
         RefreshAll.add(
-                constants.CANBus(),
+                bus,
                 masterPosition,
                 masterVelocity,
                 masterVoltage,
@@ -75,6 +78,8 @@ public class ShooterIORealBangBang implements ShooterIO {
                 followerTorqueCurrent,
                 followerDeviceTemp
         );
+
+        config();
     }
 
     @Override

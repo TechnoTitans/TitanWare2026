@@ -55,8 +55,6 @@ import java.util.Arrays;
 import java.util.Optional;
 import java.util.function.BooleanSupplier;
 
-import static frc.robot.AllianceShift.AllianceShiftLogKey;
-
 public class Robot extends LoggedRobot {
     private static final String LogKey = "Robot";
     private static final String AKitLogPath = "/U/logs";
@@ -343,10 +341,10 @@ public class Robot extends LoggedRobot {
 
         final AllianceShift allianceShift = AllianceShift.get(0);
         final AllianceShift offsetAllianceShift = AllianceShift.get(MatchTimeOffsetSeconds);
-        Logger.recordOutput(AllianceShiftLogKey + "Normal", allianceShift);
-        Logger.recordOutput(AllianceShiftLogKey + "Offset", offsetAllianceShift);
-        Logger.recordOutput(AllianceShiftLogKey + "NormalHubStatus", allianceShift.hubStatus());
-        Logger.recordOutput(AllianceShiftLogKey + "OffsetHubStatus", offsetAllianceShift.hubStatus());
+        Logger.recordOutput(AllianceShift.LogKey + "/Normal", allianceShift);
+        Logger.recordOutput(AllianceShift.LogKey + "/Offset", offsetAllianceShift);
+        Logger.recordOutput(AllianceShift.LogKey + "/NormalHubStatus", allianceShift.hubStatus());
+        Logger.recordOutput(AllianceShift.LogKey + "/OffsetHubStatus", offsetAllianceShift.hubStatus());
     }
 
     @Override
@@ -364,7 +362,6 @@ public class Robot extends LoggedRobot {
     @Override
     public void teleopPeriodic() {
         teleopEventLoop.poll();
-
     }
 
     @Override
@@ -399,8 +396,7 @@ public class Robot extends LoggedRobot {
     }
 
     @Override
-    public void simulationPeriodic() {
-    }
+    public void simulationPeriodic() {}
 
     public void configureStateTriggers() {
         teleopEnabled.whileTrue(CommandsExt.defaultCommand(shootCommands.trackTarget()));
@@ -415,13 +411,13 @@ public class Robot extends LoggedRobot {
                 driverController.getHID(), GenericHID.RumbleType.kBothRumble, 1, 1
         ));
 
-        disabled.onTrue(
-                Commands.parallel(
+        disabled
+                .onTrue(Commands.parallel(
                         ControllerUtils.rumbleForDurationCommand(
                                 driverController.getHID(), GenericHID.RumbleType.kBothRumble, 0, 0.5
                         ),
                         swerve.stopCommand()
-        ));
+                ));
     }
 
     public void configureAutos() {
@@ -480,7 +476,6 @@ public class Robot extends LoggedRobot {
                 autos::rightDoubleSweepContinuous,
                 Constants.CompetitionType.COMPETITION
         ));
-
     }
 
     public void configureButtonBindings(final EventLoop teleopEventLoop) {

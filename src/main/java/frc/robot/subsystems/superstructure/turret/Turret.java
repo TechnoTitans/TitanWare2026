@@ -73,19 +73,19 @@ public class Turret extends SubsystemExt {
         }
     }
 
+    @SuppressWarnings("FieldCanBeLocal")
+    private final LoggedTrigger.Group group = LoggedTrigger.Group.from(LogKey);
     private final HardwareConstants.TurretConstants constants;
 
     private final TurretIO turretIO;
-    private final TurretIOInputsAutoLogged inputs;
-
-    private final SysIdRoutine voltageSysIdRoutine;
+    private final TurretIOInputsAutoLogged inputs = new TurretIOInputsAutoLogged();
 
     private InternalGoal desiredGoal = InternalGoal.STOW;
-
     private double positionSetpointRots = 0.0;
     private double velocitySetpointRotsPerSec = 0.0;
 
     public final LoggedTrigger atSetpoint;
+    private final SysIdRoutine voltageSysIdRoutine;
 
     public Turret(final Constants.RobotMode mode, final HardwareConstants.TurretConstants constants) {
         this.constants = constants;
@@ -95,9 +95,6 @@ public class Turret extends SubsystemExt {
             case REPLAY, DISABLED -> new TurretIO() {};
         };
 
-        this.inputs = new TurretIOInputsAutoLogged();
-
-        final LoggedTrigger.Group group = LoggedTrigger.Group.from(LogKey);
         this.atSetpoint = group.t("AtSetpoint", () -> MathUtil.isNear(
                 positionSetpointRots,
                 inputs.turretPositionRots,

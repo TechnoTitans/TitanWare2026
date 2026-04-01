@@ -1,6 +1,7 @@
 package frc.robot.subsystems.superstructure.turret;
 
 import com.ctre.phoenix6.BaseStatusSignal;
+import com.ctre.phoenix6.CANBus;
 import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.CANcoderConfiguration;
 import com.ctre.phoenix6.configs.Slot0Configs;
@@ -22,53 +23,65 @@ import frc.robot.utils.ctre.RefreshAll;
 public class TurretIOReal implements TurretIO {
     private final HardwareConstants.TurretConstants constants;
 
-    private final TalonFX turretMotor;
+    private final TalonFX motor;
     private final CANcoder primaryEncoder;
     private final CANcoder secondaryEncoder;
 
-    private final StatusSignal<Angle> turretPosition;
-    private final StatusSignal<AngularVelocity> turretVelocity;
-    private final StatusSignal<Voltage> turretVoltage;
-    private final StatusSignal<Current> turretTorqueCurrent;
-    private final StatusSignal<Temperature> turretDeviceTemp;
+    private final StatusSignal<Angle> motorPosition;
+    private final StatusSignal<AngularVelocity> motorVelocity;
+    private final StatusSignal<Voltage> motorVoltage;
+    private final StatusSignal<Current> motorTorqueCurrent;
+    private final StatusSignal<Temperature> motorDeviceTemp;
 
     private final StatusSignal<Angle> primaryEncoderPosition;
+    private final StatusSignal<Angle> primaryEncoderAbsolutePosition;
+
     private final StatusSignal<Angle> secondaryEncoderPosition;
+    private final StatusSignal<Angle> secondaryEncoderAbsolutePosition;
 
     private final MotionMagicExpoVoltage motionMagicExpoVoltage;
     private final PositionVoltage positionVoltage;
     private final VoltageOut voltageOut;
 
-    public TurretIOReal(HardwareConstants.TurretConstants constants) {
+    public TurretIOReal(final HardwareConstants.TurretConstants constants) {
         this.constants = constants;
 
-        this.turretMotor = new TalonFX(constants.motorID(), constants.CANBus().toPhoenix6CANBus());
-        this.primaryEncoder = new CANcoder(constants.primaryCANcoderID(), constants.CANBus().toPhoenix6CANBus());
-        this.secondaryEncoder = new CANcoder(constants.secondaryCANcoderID(), constants.CANBus().toPhoenix6CANBus());
+        final HardwareConstants.CANBus bus = constants.CANBus();
+        final CANBus p6Bus = bus.toPhoenix6CANBus();
+        this.motor = new TalonFX(constants.motorID(), p6Bus);
+        this.primaryEncoder = new CANcoder(constants.primaryCANcoderID(), p6Bus);
+        this.secondaryEncoder = new CANcoder(constants.secondaryCANcoderID(), p6Bus);
 
-        this.turretPosition = turretMotor.getPosition(false);
-        this.turretVelocity = turretMotor.getVelocity(false);
-        this.turretVoltage = turretMotor.getMotorVoltage(false);
-        this.turretTorqueCurrent = turretMotor.getTorqueCurrent(false);
-        this.turretDeviceTemp = turretMotor.getDeviceTemp(false);
+        this.motorPosition = motor.getPosition(false);
+        this.motorVelocity = motor.getVelocity(false);
+        this.motorVoltage = motor.getMotorVoltage(false);
+        this.motorTorqueCurrent = motor.getTorqueCurrent(false);
+        this.motorDeviceTemp = motor.getDeviceTemp(false);
 
-        this.secondaryEncoderPosition = secondaryEncoder.getPosition(true);
-        this.primaryEncoderPosition = primaryEncoder.getPosition(true);
+        this.primaryEncoderPosition = primaryEncoder.getPosition(false);
+        this.primaryEncoderAbsolutePosition = primaryEncoder.getAbsolutePosition(false);
+
+        this.secondaryEncoderPosition = secondaryEncoder.getPosition(false);
+        this.secondaryEncoderAbsolutePosition = secondaryEncoder.getAbsolutePosition(false);
 
         this.motionMagicExpoVoltage = new MotionMagicExpoVoltage(0);
         this.positionVoltage = new PositionVoltage(0);
         this.voltageOut = new VoltageOut(0);
 
         RefreshAll.add(
-                constants.CANBus(),
-                turretPosition,
-                turretVelocity,
-                turretVoltage,
-                turretTorqueCurrent,
-                turretDeviceTemp,
+                bus,
+                motorPosition,
+                motorVelocity,
+                motorVoltage,
+                motorTorqueCurrent,
+                motorDeviceTemp,
+                primaryEncoderPosition,
+                primaryEncoderAbsolutePosition,
                 secondaryEncoderPosition,
-                primaryEncoderPosition
+                secondaryEncoderAbsolutePosition
         );
+
+        config();
     }
 
     @Override
@@ -102,7 +115,7 @@ public class TurretIOReal implements TurretIO {
         motorConfig.SoftwareLimitSwitch.ForwardSoftLimitEnable = true;
         motorConfig.SoftwareLimitSwitch.ReverseSoftLimitThreshold = constants.reverseLimitRots();
         motorConfig.SoftwareLimitSwitch.ReverseSoftLimitEnable = true;
-        Phoenix6Utils.tryUntilOk(turretMotor, () -> turretMotor.getConfigurator().apply(motorConfig));
+        Phoenix6Utils.tryUntilOk(motor, () -> motor.getConfigurator().apply(motorConfig));
 
         final CANcoderConfiguration primaryEncoderConfig = new CANcoderConfiguration();
         primaryEncoderConfig.MagnetSensor.MagnetOffset = constants.primaryCANcoderOffsetRots();
@@ -124,22 +137,24 @@ public class TurretIOReal implements TurretIO {
 
         BaseStatusSignal.setUpdateFrequencyForAll(
                 100,
-                turretPosition,
-                turretVelocity,
-                turretVoltage,
-                turretTorqueCurrent,
+                motorPosition,
+                motorVelocity,
+                motorVoltage,
+                motorTorqueCurrent,
                 primaryEncoderPosition,
-                secondaryEncoderPosition
+                primaryEncoderAbsolutePosition,
+                secondaryEncoderPosition,
+                secondaryEncoderAbsolutePosition
         );
 
         BaseStatusSignal.setUpdateFrequencyForAll(
                 4,
-                turretDeviceTemp
+                motorDeviceTemp
         );
 
         ParentDevice.optimizeBusUtilizationForAll(
                 4,
-                turretMotor,
+                motor,
                 primaryEncoder,
                 secondaryEncoder
         );
@@ -147,19 +162,22 @@ public class TurretIOReal implements TurretIO {
 
     @Override
     public void updateInputs(final TurretIOInputs inputs) {
-        inputs.turretPositionRots = turretPosition.getValueAsDouble();
-        inputs.turretVelocityRotsPerSec = turretVelocity.getValueAsDouble();
-        inputs.turretVoltage = turretVoltage.getValueAsDouble();
-        inputs.turretTorqueCurrentAmps = turretTorqueCurrent.getValueAsDouble();
-        inputs.turretTempCelsius = turretDeviceTemp.getValueAsDouble();
+        inputs.turretPositionRots = motorPosition.getValueAsDouble();
+        inputs.turretVelocityRotsPerSec = motorVelocity.getValueAsDouble();
+        inputs.turretVoltage = motorVoltage.getValueAsDouble();
+        inputs.turretTorqueCurrentAmps = motorTorqueCurrent.getValueAsDouble();
+        inputs.turretTempCelsius = motorDeviceTemp.getValueAsDouble();
 
         inputs.primaryEncoderPositionRots = primaryEncoderPosition.getValueAsDouble();
+        inputs.primaryEncoderAbsolutePositionRots = primaryEncoderAbsolutePosition.getValueAsDouble();
+
         inputs.secondaryEncoderPositionRots = secondaryEncoderPosition.getValueAsDouble();
+        inputs.secondaryEncoderAbsolutePositionRots = secondaryEncoderAbsolutePosition.getValueAsDouble();
     }
 
     @Override
     public void toTurretPosition(final double positionRots) {
-        turretMotor.setControl(
+        motor.setControl(
                 motionMagicExpoVoltage
                     .withPosition(positionRots)
                     .withSlot(0)
@@ -168,7 +186,7 @@ public class TurretIOReal implements TurretIO {
 
     @Override
     public void toTurretContinuousPosition(final double positionRots, final double velocityRotsPerSec) {
-        turretMotor.setControl(
+        motor.setControl(
                 positionVoltage
                         .withPosition(positionRots)
                         .withVelocity(velocityRotsPerSec)
@@ -178,17 +196,12 @@ public class TurretIOReal implements TurretIO {
 
     @Override
     public void toTurretVoltage(final double volts) {
-        turretMotor.setControl(voltageOut.withOutput(volts));
-    }
-
-    @Override
-    public void setPosition(final double turretPositionRots) {
-        Phoenix6Utils.tryUntilOk(turretMotor, () -> turretMotor.setPosition(turretPositionRots));
+        motor.setControl(voltageOut.withOutput(volts));
     }
 
     @Override
     public void seedTurretPosition(final Rotation2d turretPosition) {
         final double turretPositionRots = turretPosition.getRotations();
-        Phoenix6Utils.tryUntilOk(turretMotor, 10, () -> turretMotor.setPosition(turretPositionRots));
+        Phoenix6Utils.tryUntilOk(motor, 10, () -> motor.setPosition(turretPositionRots));
     }
 }

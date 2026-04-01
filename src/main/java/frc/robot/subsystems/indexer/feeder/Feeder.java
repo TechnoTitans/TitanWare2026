@@ -24,7 +24,7 @@ public class Feeder extends SubsystemExt {
     }
 
     private final FeederIO feederIO;
-    private final FeederIOInputsAutoLogged inputs;
+    private final FeederIOInputsAutoLogged inputs = new FeederIOInputsAutoLogged();
 
     private Goal desiredGoal = Goal.OFF;
     private double voltageSetpoint = 0.0;
@@ -33,14 +33,8 @@ public class Feeder extends SubsystemExt {
         this.feederIO = switch (mode) {
             case REAL -> new FeederIOReal(constants);
             case SIM -> new FeederIOSim(constants);
-            case DISABLED, REPLAY -> new FeederIO() {
-            };
+            case REPLAY, DISABLED -> new FeederIO() {};
         };
-
-        this.inputs = new FeederIOInputsAutoLogged();
-
-        this.feederIO.config();
-        this.feederIO.toWheelVoltage(desiredGoal.voltageSetpoint);
     }
 
     @Override
@@ -67,7 +61,7 @@ public class Feeder extends SubsystemExt {
     }
 
     public boolean isTOFDetected() {
-        return inputs.TOFDetected;
+        return inputs.tofDetected;
     }
 
     public void setTOFDetected(final boolean isDetected) {

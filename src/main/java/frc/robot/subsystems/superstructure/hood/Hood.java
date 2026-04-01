@@ -65,14 +65,14 @@ public class Hood extends SubsystemExt {
         }
     }
 
+    private final LoggedTrigger.Group group = LoggedTrigger.Group.from(LogKey);
+
     private final HoodIO hoodIO;
-    private final HoodIOInputsAutoLogged inputs;
+    private final HoodIOInputsAutoLogged inputs = new HoodIOInputsAutoLogged();
 
     private InternalGoal desiredGoal = InternalGoal.STOW;
-
     private double positionSetpointRots = 0.0;
 
-    private final LoggedTrigger.Group group = LoggedTrigger.Group.from(LogKey);
     public final LoggedTrigger atSetpoint;
     public final LoggedTrigger safeForTrench = group.t("SafeForTrench", () -> atGoal(Goal.STOW));
 
@@ -81,11 +81,9 @@ public class Hood extends SubsystemExt {
         this.hoodIO = switch (mode) {
             case REAL -> new HoodIOReal(constants);
             case SIM -> new HoodIOSim(constants);
-            case DISABLED, REPLAY -> new HoodIO() {
-            };
+            case REPLAY, DISABLED -> new HoodIO() {};
         };
-
-        this.inputs = new HoodIOInputsAutoLogged();
+        this.hoodIO.zero();
 
         this.atSetpoint = group.t("AtSetpoint", () -> MathUtil.isNear(
                 positionSetpointRots,
@@ -96,9 +94,6 @@ public class Hood extends SubsystemExt {
                 inputs.hoodVelocityRotsPerSec,
                 VelocityToleranceRotsPerSec
         ));
-
-        this.hoodIO.config();
-        this.hoodIO.zeroMotor();
     }
 
     @Override
