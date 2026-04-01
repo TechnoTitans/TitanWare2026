@@ -104,11 +104,12 @@ public class IntakeSlideIOSim implements IntakeSlideIO {
         followerConfig.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
         followerConfig.Feedback.SensorToMechanismRatio = constants.gearing();
 
+        final HardwareConstants.CANBus canBus = constants.CANBus();
         final DifferentialMotorConstants<TalonFXConfiguration> diffConstants =
                 new DifferentialMotorConstants<TalonFXConfiguration>()
-                        .withCANBusName(constants.CANBus().name)
-                        .withLeaderId(constants.masterMotorID())
-                        .withFollowerId(constants.followerMotorID())
+                        .withCANBusName(canBus.name)
+                        .withLeaderId(constants.masterMotorId())
+                        .withFollowerId(constants.followerMotorId())
                         .withAlignment(MotorAlignmentValue.Opposed)
                         .withSensorToDifferentialRatio(1)
                         .withClosedLoopRate(200)
@@ -179,7 +180,7 @@ public class IntakeSlideIOSim implements IntakeSlideIO {
         this.differentialPosition = diffMechanism.getDifferentialPosition(false);
 
         RefreshAll.add(
-                constants.CANBus(),
+                canBus,
                 masterPosition,
                 masterVelocity,
                 masterVoltage,

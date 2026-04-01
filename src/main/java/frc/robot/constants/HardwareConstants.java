@@ -37,7 +37,7 @@ public class HardwareConstants {
 
     public record IntakeRollerConstants(
             CANBus CANBus,
-            int motorID,
+            int motorId,
             double gearing
     ) {}
 
@@ -49,8 +49,8 @@ public class HardwareConstants {
 
     public record IntakeSlideConstants(
             CANBus CANBus,
-            int masterMotorID,
-            int followerMotorID,
+            int masterMotorId,
+            int followerMotorId,
             double gearing,
             double forwardLimitRots,
             double reverseLimitRots
@@ -67,7 +67,7 @@ public class HardwareConstants {
 
     public record SpindexerConstants(
             CANBus CANBus,
-            int motorID,
+            int motorId,
             double gearing
     ) {}
 
@@ -79,8 +79,8 @@ public class HardwareConstants {
 
     public record FeederConstants(
             CANBus CANBus,
-            int motorID,
-            int CANRangeID,
+            int motorId,
+            int CANRangeId,
             double gearing
     ) {}
 
@@ -94,9 +94,9 @@ public class HardwareConstants {
 
     public record TurretConstants(
             CANBus CANBus,
-            int motorID,
-            int primaryCANcoderID,
-            int secondaryCANcoderID,
+            int motorId,
+            int primaryCANcoderId,
+            int secondaryCANcoderId,
             double primaryCANcoderOffsetRots,
             double secondaryCANcoderOffsetRots,
             double forwardLimitRots,
@@ -155,8 +155,8 @@ public class HardwareConstants {
             20,
             21,
             22,
-            -0.320,
-            0.340,
+            -0.290283,
+            -0.637695,
             0.75,
             -0.25,
             10,
@@ -169,7 +169,7 @@ public class HardwareConstants {
 
     public record HoodConstants(
             CANBus CANBus,
-            int motorID,
+            int motorId,
             double gearing,
             double upperLimitRots,
             double lowerLimitRots
@@ -185,8 +185,8 @@ public class HardwareConstants {
 
     public record ShooterConstants(
             CANBus CANBus,
-            int masterMotorID,
-            int followerMotorID,
+            int masterMotorId,
+            int followerMotorId,
             double gearing
     ) {}
 
@@ -195,19 +195,5 @@ public class HardwareConstants {
             24,
             25,
             2
-    );
-
-    public record HopperConstants(
-            CANBus CANBus,
-            int masterMotorID,
-            int followerMotorID,
-            double gearing
-    ) {}
-
-    public static final HopperConstants HOPPER = new HopperConstants(
-            CANBus.CANIVORE,
-            26,
-            27,
-            2.5
     );
 }

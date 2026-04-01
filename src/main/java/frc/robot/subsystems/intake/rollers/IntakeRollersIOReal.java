@@ -30,7 +30,8 @@ public class IntakeRollersIOReal implements IntakeRollersIO {
     public IntakeRollersIOReal(final HardwareConstants.IntakeRollerConstants constants) {
         this.constants = constants;
 
-        this.motor = new TalonFX(constants.motorID(), constants.CANBus().toPhoenix6CANBus());
+        final HardwareConstants.CANBus canBus = constants.CANBus();
+        this.motor = new TalonFX(constants.motorId(), canBus.toPhoenix6CANBus());
 
         this.rollerPosition = motor.getPosition(false);
         this.rollerVelocity = motor.getVelocity(false);
@@ -41,7 +42,7 @@ public class IntakeRollersIOReal implements IntakeRollersIO {
         this.voltageOut = new VoltageOut(0);
 
         RefreshAll.add(
-                constants.CANBus(),
+                canBus,
                 rollerPosition,
                 rollerVelocity,
                 rollerVoltage,

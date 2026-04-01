@@ -69,9 +69,9 @@ public class TurretIOSim implements TurretIO {
 
         final HardwareConstants.CANBus bus = constants.CANBus();
         final CANBus p6Bus = bus.toPhoenix6CANBus();
-        this.motor = new TalonFX(constants.motorID(), p6Bus);
-        this.primaryCANcoder = new CANcoder(constants.primaryCANcoderID(), p6Bus);
-        this.secondaryCANcoder = new CANcoder(constants.secondaryCANcoderID(), p6Bus);
+        this.motor = new TalonFX(constants.motorId(), p6Bus);
+        this.primaryCANcoder = new CANcoder(constants.primaryCANcoderId(), p6Bus);
+        this.secondaryCANcoder = new CANcoder(constants.secondaryCANcoderId(), p6Bus);
 
         this.initialRandPosition = Rotation2d.fromRotations(
                 Math.random()

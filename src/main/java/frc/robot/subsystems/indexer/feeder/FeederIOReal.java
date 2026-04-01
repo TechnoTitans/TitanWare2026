@@ -36,8 +36,8 @@ public class FeederIOReal implements FeederIO {
 
         final HardwareConstants.CANBus bus = constants.CANBus();
         final CANBus p6Bus = bus.toPhoenix6CANBus();
-        this.motor = new TalonFX(constants.motorID(), p6Bus);
-        this.canRange = new CANrange(constants.CANRangeID(), p6Bus);
+        this.motor = new TalonFX(constants.motorId(), p6Bus);
+        this.canRange = new CANrange(constants.CANRangeId(), p6Bus);
 
         this.wheelPosition = motor.getPosition(false);
         this.wheelVelocity = motor.getVelocity(false);
@@ -79,7 +79,7 @@ public class FeederIOReal implements FeederIO {
         motorConfig.CurrentLimits.SupplyCurrentLowerTime = 1.0;
         motorConfig.CurrentLimits.SupplyCurrentLimitEnable = true;
         motorConfig.MotorOutput.NeutralMode = NeutralModeValue.Coast;
-        motorConfig.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
+        motorConfig.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
         motorConfig.Feedback.FeedbackSensorSource = FeedbackSensorSourceValue.RotorSensor;
         motorConfig.Feedback.SensorToMechanismRatio = constants.gearing();
         Phoenix6Utils.tryUntilOk(motor, () -> motor.getConfigurator().apply(motorConfig));

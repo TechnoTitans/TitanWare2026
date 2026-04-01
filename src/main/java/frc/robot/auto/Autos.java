@@ -312,7 +312,7 @@ public class Autos {
         routine.active().whileTrue(
                 Commands.parallel(
                         intake.intake(),
-                        ferryShotWhileMoving(FieldConstants.getFerryLeft())
+                        ferryShotWhileMoving(FieldConstants.getFerryRight())
                 )
         );
 
@@ -332,7 +332,7 @@ public class Autos {
         routine.active().whileTrue(
                 Commands.parallel(
                         intake.intake(),
-                        ferryShotWhileMoving(FieldConstants.getFerryRight())
+                        ferryShotWhileMoving(FieldConstants.getFerryLeft())
                 )
         );
 

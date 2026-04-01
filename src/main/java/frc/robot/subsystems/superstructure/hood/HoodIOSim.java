@@ -47,7 +47,8 @@ public class HoodIOSim implements HoodIO {
         this.deltaTime = new DeltaTime(true);
         this.constants = constants;
 
-        this.motor = new TalonFX(constants.motorID(), constants.CANBus().toPhoenix6CANBus());
+        final HardwareConstants.CANBus canBus = constants.CANBus();
+        this.motor = new TalonFX(constants.motorId(), canBus.toPhoenix6CANBus());
 
         final DCMotor dcMotor = DCMotor.getKrakenX44Foc(1);
         final SingleJointedArmSim armSim = new SingleJointedArmSim(
@@ -83,7 +84,7 @@ public class HoodIOSim implements HoodIO {
         this.motorDeviceTemp = motor.getDeviceTemp(false);
 
         RefreshAll.add(
-                constants.CANBus(),
+                canBus,
                 motorPosition,
                 motorVelocity,
                 motorVoltage,

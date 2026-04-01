@@ -44,7 +44,8 @@ public class SpindexerIOSim implements SpindexerIO {
         this.deltaTime = new DeltaTime(true);
         this.constants = constants;
 
-        this.motor = new TalonFX(constants.motorID(), constants.CANBus().toPhoenix6CANBus());
+        final HardwareConstants.CANBus canBus = constants.CANBus();
+        this.motor = new TalonFX(constants.motorId(), canBus.toPhoenix6CANBus());
 
         final DCMotorSim dcMotorSim = new DCMotorSim(
                 LinearSystemId.createDCMotorSystem(
@@ -72,7 +73,7 @@ public class SpindexerIOSim implements SpindexerIO {
         this.voltageOut = new VoltageOut(0);
 
         RefreshAll.add(
-                constants.CANBus(),
+                canBus,
                 wheelPosition,
                 wheelVelocity,
                 wheelVoltage,

@@ -48,9 +48,9 @@ public class TurretIOReal implements TurretIO {
 
         final HardwareConstants.CANBus bus = constants.CANBus();
         final CANBus p6Bus = bus.toPhoenix6CANBus();
-        this.motor = new TalonFX(constants.motorID(), p6Bus);
-        this.primaryEncoder = new CANcoder(constants.primaryCANcoderID(), p6Bus);
-        this.secondaryEncoder = new CANcoder(constants.secondaryCANcoderID(), p6Bus);
+        this.motor = new TalonFX(constants.motorId(), p6Bus);
+        this.primaryEncoder = new CANcoder(constants.primaryCANcoderId(), p6Bus);
+        this.secondaryEncoder = new CANcoder(constants.secondaryCANcoderId(), p6Bus);
 
         this.motorPosition = motor.getPosition(false);
         this.motorVelocity = motor.getVelocity(false);
@@ -108,7 +108,8 @@ public class TurretIOReal implements TurretIO {
         motorConfig.CurrentLimits.SupplyCurrentLowerTime = 2.0;
         motorConfig.CurrentLimits.SupplyCurrentLimitEnable = true;
         motorConfig.Feedback.FeedbackSensorSource = FeedbackSensorSourceValue.RotorSensor;
-        motorConfig.Feedback.SensorToMechanismRatio = constants.motorToGearboxGearing();
+        motorConfig.Feedback.SensorToMechanismRatio = constants.motorToGearboxGearing()
+                * constants.gearboxToTurretGearing();
         motorConfig.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
         motorConfig.MotorOutput.NeutralMode = NeutralModeValue.Brake;
         motorConfig.SoftwareLimitSwitch.ForwardSoftLimitThreshold = constants.forwardLimitRots();

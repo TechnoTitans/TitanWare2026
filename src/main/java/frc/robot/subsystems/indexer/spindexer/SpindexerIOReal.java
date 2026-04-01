@@ -30,7 +30,8 @@ public class SpindexerIOReal implements SpindexerIO {
     public SpindexerIOReal(final HardwareConstants.SpindexerConstants constants) {
         this.constants = constants;
 
-        this.motor = new TalonFX(constants.motorID(), constants.CANBus().toPhoenix6CANBus());
+        final HardwareConstants.CANBus canBus = constants.CANBus();
+        this.motor = new TalonFX(constants.motorId(), canBus.toPhoenix6CANBus());
 
         this.wheelPosition = motor.getPosition(false);
         this.wheelVelocity = motor.getVelocity(false);
@@ -41,7 +42,7 @@ public class SpindexerIOReal implements SpindexerIO {
         this.voltageOut = new VoltageOut(0);
 
         RefreshAll.add(
-                constants.CANBus(),
+                canBus,
                 wheelPosition,
                 wheelVelocity,
                 wheelVoltage,

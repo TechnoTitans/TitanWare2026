@@ -32,7 +32,8 @@ public class HoodIOReal implements HoodIO {
     public HoodIOReal(final HardwareConstants.HoodConstants constants) {
         this.constants = constants;
 
-        this.hoodMotor = new TalonFX(constants.motorID(), constants.CANBus().toPhoenix6CANBus());
+        final HardwareConstants.CANBus canBus = constants.CANBus();
+        this.hoodMotor = new TalonFX(constants.motorId(), canBus.toPhoenix6CANBus());
 
         this.hoodPosition = hoodMotor.getPosition(false);
         this.hoodVelocity = hoodMotor.getVelocity(false);
@@ -43,7 +44,7 @@ public class HoodIOReal implements HoodIO {
         this.positionVoltage = new PositionVoltage(0);
 
         RefreshAll.add(
-                constants.CANBus(),
+                canBus,
                 hoodPosition,
                 hoodVelocity,
                 hoodVoltage,

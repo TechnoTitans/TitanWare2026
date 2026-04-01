@@ -57,8 +57,8 @@ public class FeederIOSim implements FeederIO {
 
         final HardwareConstants.CANBus bus = constants.CANBus();
         final CANBus p6Bus = bus.toPhoenix6CANBus();
-        this.motor = new TalonFX(constants.motorID(), p6Bus);
-        this.canRange = new CANrange(constants.CANRangeID(), p6Bus);
+        this.motor = new TalonFX(constants.motorId(), p6Bus);
+        this.canRange = new CANrange(constants.CANRangeId(), p6Bus);
 
         this.canRangeConfiguration = new CANrangeConfiguration();
         this.canRangeSimState = canRange.getSimState();
@@ -162,7 +162,7 @@ public class FeederIOSim implements FeederIO {
         );
 
         final TalonFXSimState wheelMotorSimState = motor.getSimState();
-        wheelMotorSimState.Orientation = ChassisReference.Clockwise_Positive;
+        wheelMotorSimState.Orientation = ChassisReference.CounterClockwise_Positive;
         wheelMotorSimState.setMotorType(TalonFXSimState.MotorType.KrakenX60);
     }
 

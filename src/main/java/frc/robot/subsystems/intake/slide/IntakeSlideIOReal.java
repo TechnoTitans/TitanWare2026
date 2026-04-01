@@ -85,11 +85,12 @@ public class IntakeSlideIOReal implements IntakeSlideIO {
         followerConfiguration.Feedback.FeedbackSensorSource = FeedbackSensorSourceValue.RotorSensor;
         followerConfiguration.Feedback.SensorToMechanismRatio = constants.gearing();
 
+        final HardwareConstants.CANBus canBus = constants.CANBus();
         final DifferentialMotorConstants<TalonFXConfiguration> differentialConstants =
                 new DifferentialMotorConstants<>();
-        differentialConstants.LeaderId = constants.masterMotorID();
-        differentialConstants.FollowerId = constants.followerMotorID();
-        differentialConstants.CANBusName = constants.CANBus().name;
+        differentialConstants.LeaderId = constants.masterMotorId();
+        differentialConstants.FollowerId = constants.followerMotorId();
+        differentialConstants.CANBusName = canBus.name;
         differentialConstants.Alignment = MotorAlignmentValue.Opposed;
         differentialConstants.SensorToDifferentialRatio = 1;
         differentialConstants.ClosedLoopRate = 200;
@@ -119,7 +120,7 @@ public class IntakeSlideIOReal implements IntakeSlideIO {
         this.differentialPosition = diffMechanism.getDifferentialPosition(false);
 
         RefreshAll.add(
-                constants.CANBus(),
+                canBus,
                 masterPosition,
                 masterVelocity,
                 masterVoltage,

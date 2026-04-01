@@ -45,8 +45,8 @@ public class ShooterIORealBangBang implements ShooterIO {
 
         final HardwareConstants.CANBus bus = constants.CANBus();
         final CANBus p6Bus = bus.toPhoenix6CANBus();
-        this.masterMotor = new TalonFX(constants.masterMotorID(), p6Bus);
-        this.followerMotor = new TalonFX(constants.followerMotorID(), p6Bus);
+        this.masterMotor = new TalonFX(constants.masterMotorId(), p6Bus);
+        this.followerMotor = new TalonFX(constants.followerMotorId(), p6Bus);
 
         this.velocityTorqueCurrentFOC = new VelocityTorqueCurrentFOC(0);
         this.torqueCurrentFOC = new TorqueCurrentFOC(0);
