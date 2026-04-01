@@ -31,7 +31,10 @@ public class Intake {
                         () -> intaking = false
                 ),
                 slide.setGoal(IntakeSlide.Goal.EXTEND),
-                rollers.toGoal(IntakeRollers.Goal.INTAKE)
+                Commands.sequence(
+                        Commands.waitUntil(() -> slide.atGoal(IntakeSlide.Goal.EXTEND)),
+                        rollers.toGoal(IntakeRollers.Goal.INTAKE)
+                )
         ).withName("Intake");
     }
 
@@ -43,10 +46,7 @@ public class Intake {
     public Command stow() {
         return Commands.parallel(
                 slide.setGoal(IntakeSlide.Goal.STOW),
-                Commands.sequence(
-                        Commands.waitUntil(slide.atSetpoint),
-                        rollers.setGoal(IntakeRollers.Goal.OFF)
-                )
+                rollers.setGoal(IntakeRollers.Goal.OFF)
         ).withName("StowIntake");
     }
 

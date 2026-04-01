@@ -191,13 +191,10 @@ public class ShootCommands extends VirtualSubsystem {
                                 intake.stowFeed().asProxy()
                                         .unless(intake.isIntaking)
                         )
-                ),
-//                        .onlyIf(fuelState.hasFuel)
-//                        .onlyWhile(fuelState.hasFuel
-//                                .or(intake.isIntaking)),
-                intake.stowFeed().asProxy()
-                        .unless(intake.isIntaking),
-                indexer.spinSpindexer().asProxy(),
+                )
+                        .onlyIf(fuelState.hasFuel)
+                        .onlyWhile(fuelState.hasFuel
+                                .or(intake.isIntaking)),
                 SwerveSpeed.toSwerveSpeed(ShootAndScootSpeeds),
                 superstructure.runParameters(movingShot)
         ).withName("Shoot");

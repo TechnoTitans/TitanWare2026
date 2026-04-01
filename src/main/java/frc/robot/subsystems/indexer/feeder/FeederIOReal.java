@@ -7,7 +7,6 @@ import com.ctre.phoenix6.configs.CANrangeConfiguration;
 import com.ctre.phoenix6.configs.Slot0Configs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.TorqueCurrentFOC;
-import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.CANrange;
 import com.ctre.phoenix6.hardware.ParentDevice;
 import com.ctre.phoenix6.hardware.TalonFX;
@@ -31,7 +30,6 @@ public class FeederIOReal implements FeederIO {
     private final StatusSignal<Boolean> canRangeDetected;
 
     private final TorqueCurrentFOC torqueCurrentFOC;
-    private final VoltageOut voltageOut;
 
     public FeederIOReal(final HardwareConstants.FeederConstants constants) {
         this.constants = constants;
@@ -49,7 +47,6 @@ public class FeederIOReal implements FeederIO {
         this.canRangeDetected = canRange.getIsDetected(false);
 
         this.torqueCurrentFOC = new TorqueCurrentFOC(0);
-        this.voltageOut = new VoltageOut(0);
 
         RefreshAll.add(
                 bus,
@@ -82,7 +79,7 @@ public class FeederIOReal implements FeederIO {
         motorConfig.CurrentLimits.SupplyCurrentLowerTime = 1.0;
         motorConfig.CurrentLimits.SupplyCurrentLimitEnable = true;
         motorConfig.MotorOutput.NeutralMode = NeutralModeValue.Coast;
-        motorConfig.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
+        motorConfig.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
         motorConfig.Feedback.FeedbackSensorSource = FeedbackSensorSourceValue.RotorSensor;
         motorConfig.Feedback.SensorToMechanismRatio = constants.gearing();
         Phoenix6Utils.tryUntilOk(motor, () -> motor.getConfigurator().apply(motorConfig));
@@ -129,10 +126,5 @@ public class FeederIOReal implements FeederIO {
     @Override
     public void toWheelTorqueCurrent(final double torqueCurrentAmps) {
         motor.setControl(torqueCurrentFOC.withOutput(torqueCurrentAmps));
-    }
-
-    @Override
-    public void toWheelVoltage(final double volts) {
-        motor.setControl(voltageOut.withOutput(volts));
     }
 }

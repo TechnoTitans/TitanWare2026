@@ -20,7 +20,5 @@ public interface FeederIO {
 
     default void toWheelTorqueCurrent(final double torqueCurrentAmps) {}
 
-    default void toWheelVoltage(final double volts) {}
-
     default void setTOFDetected(final boolean isDetected) {}
 }

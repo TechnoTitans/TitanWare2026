@@ -26,8 +26,8 @@ import static edu.wpi.first.units.Units.*;
 
 public class Turret extends SubsystemExt {
     protected static final String LogKey = "Turret";
-    private static final double PositionToleranceRots = 0.03;
-    private static final double VelocityToleranceRotsPerSec = 0.1;
+    private static final double PositionToleranceRots = 0.05;
+    private static final double VelocityToleranceRotsPerSec = 0.25;
 
     public enum Goal {
         STOW(0),
@@ -84,6 +84,8 @@ public class Turret extends SubsystemExt {
     private double positionSetpointRots = 0.0;
     private double velocitySetpointRotsPerSec = 0.0;
 
+    private boolean positionSeeded = false;
+
     public final LoggedTrigger atSetpoint;
     private final SysIdRoutine voltageSysIdRoutine;
 
@@ -105,8 +107,6 @@ public class Turret extends SubsystemExt {
                 VelocityToleranceRotsPerSec
         ));
 
-        this.turretIO.config();
-
         this.voltageSysIdRoutine = makeVoltageSysIdRoutine(
                 Volts.of(0.5).per(Second),
                 Volts.of(2),
@@ -120,6 +120,19 @@ public class Turret extends SubsystemExt {
 
         turretIO.updateInputs(inputs);
         Logger.processInputs(LogKey, inputs);
+
+        if (!positionSeeded && MathUtil.isNear(0, inputs.turretVelocityRotsPerSec, 1e-3)) {
+            final Rotation2d position = CRT.solve(
+                    constants.drivenTurretGearTeeth(),
+                    inputs.primaryEncoderAbsolutePositionRots,
+                    constants.primaryCANcoderGearTeeth(),
+                    inputs.secondaryEncoderAbsolutePositionRots,
+                    constants.secondaryCANcoderGearTeeth(),
+                    constants.forwardLimitRots()
+            );
+            turretIO.seedTurretPosition(position);
+            positionSeeded = true;
+        }
 
         final InternalGoal currentGoal;
         if (atSetpoint()) {
@@ -152,7 +165,7 @@ public class Turret extends SubsystemExt {
 
     public Command setGoal(final Goal goal) {
         return runOnce(() -> setDesiredGoal(goal))
-             .withName("SetGoal: " + goal);
+                .withName("SetGoal: " + goal);
     }
 
     public Command runGoal(final Goal goal) {

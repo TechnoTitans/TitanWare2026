@@ -30,12 +30,9 @@ public class Indexer {
                         () -> indexing = true,
                         () -> indexing = false
                 ),
+                spindexer.toGoal(Spindexer.Goal.FEED),
                 feeder.toGoal(Feeder.Goal.FEED)
         ).withName("Feed");
-    }
-
-    public Command spinSpindexer() {
-        return spindexer.toGoal(Spindexer.Goal.FEED);
     }
 
     public Command backOut() {
