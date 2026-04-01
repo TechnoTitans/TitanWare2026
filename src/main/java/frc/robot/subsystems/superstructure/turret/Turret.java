@@ -165,7 +165,7 @@ public class Turret extends SubsystemExt {
 
     public Command setGoal(final Goal goal) {
         return runOnce(() -> setDesiredGoal(goal))
-             .withName("SetGoal: " + goal);
+                .withName("SetGoal: " + goal);
     }
 
     public Command runGoal(final Goal goal) {

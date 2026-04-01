@@ -42,7 +42,7 @@ public class HardwareConstants {
     ) {}
 
     public static final IntakeRollerConstants INTAKE_ROLLER = new IntakeRollerConstants(
-            CANBus.CANIVORE,
+            CANBus.RIO,
             14,
             5.0 / 3
     );
@@ -74,7 +74,7 @@ public class HardwareConstants {
     public static final SpindexerConstants SPINDEXER = new SpindexerConstants(
             CANBus.CANIVORE,
             17,
-            2
+            10
     );
 
     public record FeederConstants(
@@ -89,7 +89,7 @@ public class HardwareConstants {
             CANBus.CANIVORE,
             18,
             19,
-            1.8667
+            1.5
     );
 
     public record TurretConstants(

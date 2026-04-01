@@ -15,7 +15,7 @@ public class Spindexer extends SubsystemExt {
     public enum Goal {
         BACK_OUT(-6),
         STOP(0),
-        FEED(6);
+        FEED(10);
 
         private final double volts;
 

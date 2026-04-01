@@ -18,16 +18,16 @@ public record ShotParameters(
     static {
         switch (Constants.CURRENT_MODE) {
             case REAL, REPLAY, DISABLED -> {
-                ShotMap.put(1.30, new Shooter(28, 0));
-                ShotMap.put(2.07, new Shooter(32, 0.005));
-                ShotMap.put(2.42, new Shooter(32, 0.008));
-                ShotMap.put(2.67, new Shooter(33, 0.01));
-                ShotMap.put(3.07, new Shooter(35, 0.012));
-                ShotMap.put(3.60, new Shooter(36, 0.014));
-                ShotMap.put(4.54, new Shooter(40, 0.021));
-                ShotMap.put(5.18, new Shooter(43, 0.025));
-                ShotMap.put(5.84, new Shooter(44, 0.027));
-                ShotMap.put(6.16, new Shooter(44, 0.041));
+                ShotMap.put(1.30, new Shooter(27.5, 0));
+                ShotMap.put(2.07, new Shooter(30, 0.005));
+                ShotMap.put(2.42, new Shooter(31, 0.008));
+                ShotMap.put(2.67, new Shooter(32, 0.01));
+                ShotMap.put(3.07, new Shooter(33.5, 0.012));
+                ShotMap.put(3.60, new Shooter(34, 0.014));
+                ShotMap.put(4.54, new Shooter(38, 0.023));
+                ShotMap.put(5.18, new Shooter(38.5, 0.035));
+                ShotMap.put(5.84, new Shooter(40, 0.038));
+                ShotMap.put(6.16, new Shooter(40, 0.041));
             }
             case SIM -> {
                 ShotMap.put(1.3, new Shooter(21, 0));
@@ -49,13 +49,12 @@ public record ShotParameters(
     static {
         switch (Constants.CURRENT_MODE) {
             case REAL, REPLAY, DISABLED -> {
-                // TODO: redo
-                TimeOfFlightMap.put(1.989, 1.2);
-                TimeOfFlightMap.put(2.209, 1.3);
-                TimeOfFlightMap.put(2.823, 1.4);
-                TimeOfFlightMap.put(3.17, 1.5);
-                TimeOfFlightMap.put(3.664d, 1.6);
-                TimeOfFlightMap.put(4.643, 1.7);
+                TimeOfFlightMap.put(1.647, 1.08);
+                TimeOfFlightMap.put(2.246, 1.05);
+                TimeOfFlightMap.put(3.252, 1.35);
+                TimeOfFlightMap.put(3.991, 1.34);
+                TimeOfFlightMap.put(4.8, 1.4);
+                TimeOfFlightMap.put(5.322, 1.47);
             }
             case SIM -> {
                 TimeOfFlightMap.put(1.31, 1.06);
