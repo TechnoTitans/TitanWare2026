@@ -1,6 +1,7 @@
 package frc.robot.subsystems.vision;
 
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
+import edu.wpi.first.apriltag.AprilTagFields;
 import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.Vector;
 import edu.wpi.first.math.geometry.*;
@@ -39,14 +40,16 @@ public class PhotonVision extends VirtualSubsystem {
     private final double maxAngularVelocity = SwerveConstants.Config.maxAngularVelocityRadsPerSec();
 
     public static final AprilTagFieldLayout apriltagFieldLayout;
-    static {
+    public static AprilTagFieldLayout loadApriltagFieldLayout() {
         try {
-            apriltagFieldLayout = new AprilTagFieldLayout(
-                    Filesystem.getDeployDirectory().getPath() + "/2026-rebuilt-hub.json");
-        } catch (IOException e) {
-            throw new RuntimeException(e);
+            return new AprilTagFieldLayout(
+                    Filesystem.getDeployDirectory().getPath() + "/2026-rebuilt-hubs.json");
+        } catch (final IOException e) {
+            return AprilTagFieldLayout.loadField(AprilTagFields.k2026RebuiltWelded);
         }
-
+    }
+    static {
+        apriltagFieldLayout = loadApriltagFieldLayout();
         apriltagFieldLayout.setOrigin(AprilTagFieldLayout.OriginPosition.kBlueAllianceWallRightSide);
     }
 
