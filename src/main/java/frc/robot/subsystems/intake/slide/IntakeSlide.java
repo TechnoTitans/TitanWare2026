@@ -23,7 +23,7 @@ public class IntakeSlide extends SubsystemExt {
 
     public enum Goal {
         STOW(0, GoalBehavior.expo()),
-        SHOOTING(0, GoalBehavior.withVelocity(0.5, 0.5)),
+        SHOOTING(0, GoalBehavior.withVelocity(0.6, 0.7)),
         EXTEND(3.4, GoalBehavior.expo());
 
         private final double positionRots;
