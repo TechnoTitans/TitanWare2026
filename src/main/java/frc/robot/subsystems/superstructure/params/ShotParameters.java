@@ -49,13 +49,12 @@ public record ShotParameters(
     static {
         switch (Constants.CURRENT_MODE) {
             case REAL, REPLAY, DISABLED -> {
-                // TODO: redo
-                TimeOfFlightMap.put(1.989, 1.2);
-                TimeOfFlightMap.put(2.209, 1.3);
-                TimeOfFlightMap.put(2.823, 1.4);
-                TimeOfFlightMap.put(3.17, 1.5);
-                TimeOfFlightMap.put(3.664d, 1.6);
-                TimeOfFlightMap.put(4.643, 1.7);
+                TimeOfFlightMap.put(1.647, 1.08);
+                TimeOfFlightMap.put(2.246, 1.05);
+                TimeOfFlightMap.put(3.252, 1.35);
+                TimeOfFlightMap.put(3.991, 1.34);
+                TimeOfFlightMap.put(4.8, 1.4);
+                TimeOfFlightMap.put(5.322, 1.47);
             }
             case SIM -> {
                 TimeOfFlightMap.put(1.31, 1.06);
