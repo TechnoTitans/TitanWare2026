@@ -1,6 +1,7 @@
 package frc.robot.subsystems.superstructure.turret;
 
 import com.ctre.phoenix6.BaseStatusSignal;
+import com.ctre.phoenix6.CANBus;
 import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.CANcoderConfiguration;
 import com.ctre.phoenix6.configs.Slot0Configs;
@@ -16,12 +17,10 @@ import com.ctre.phoenix6.signals.*;
 import com.ctre.phoenix6.sim.CANcoderSimState;
 import com.ctre.phoenix6.sim.ChassisReference;
 import com.ctre.phoenix6.sim.TalonFXSimState;
-import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.system.plant.LinearSystemId;
 import edu.wpi.first.units.measure.*;
-import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Notifier;
 import edu.wpi.first.wpilibj.simulation.DCMotorSim;
 import frc.robot.constants.HardwareConstants;
@@ -38,219 +37,244 @@ public class TurretIOSim implements TurretIO {
     private final DeltaTime deltaTime;
     private final HardwareConstants.TurretConstants constants;
 
-    private final TalonFX turretMotor;
-    private final CANcoder primaryEncoder;
-    private final CANcoder secondaryEncoder;
+    private final TalonFX motor;
+    private final CANcoder primaryCANcoder;
+    private final CANcoder secondaryCANcoder;
 
-    private final TalonFXSim turretTalonFXSim;
+    private final DCMotorSim dcMotorSim;
+    private final Rotation2d initialRandPosition;
 
-    private final StatusSignal<Angle> turretPosition;
-    private final StatusSignal<AngularVelocity> turretVelocity;
-    private final StatusSignal<Voltage> turretVoltage;
-    private final StatusSignal<Current> turretTorqueCurrent;
-    private final StatusSignal<Temperature> turretDeviceTemp;
+    private final TalonFXSim motorSim;
+    private final SimTurretCANcoders simCANcoders;
 
-    private final StatusSignal<Angle> primaryEncoderPosition;
-    private final StatusSignal<Angle> secondaryEncoderPosition;
+    private final StatusSignal<Angle> motorPosition;
+    private final StatusSignal<AngularVelocity> motorVelocity;
+    private final StatusSignal<Voltage> motorVoltage;
+    private final StatusSignal<Current> motorTorqueCurrent;
+    private final StatusSignal<Temperature> motorDeviceTemp;
 
-    private final MotionMagicExpoVoltage motionMagicExpoVoltage;
+    private final StatusSignal<Angle> primaryCANcoderPosition;
+    private final StatusSignal<Angle> primaryCANcoderAbsolutePosition;
+
+    private final StatusSignal<Angle> secondaryCANcoderPosition;
+    private final StatusSignal<Angle> secondaryCANcoderAbsolutePosition;
+
     private final PositionVoltage positionVoltage;
+    private final MotionMagicExpoVoltage motionMagicExpoVoltage;
     private final VoltageOut voltageOut;
 
     public TurretIOSim(final HardwareConstants.TurretConstants constants) {
         this.deltaTime = new DeltaTime(true);
         this.constants = constants;
 
-        this.turretMotor = new TalonFX(constants.turretMotorID(), constants.CANBus().toPhoenix6CANBus());
-        this.primaryEncoder = new CANcoder(constants.primaryEncoderID(), constants.CANBus().toPhoenix6CANBus());
-        this.secondaryEncoder = new CANcoder(constants.secondaryEncoderID(), constants.CANBus().toPhoenix6CANBus());
+        final HardwareConstants.CANBus bus = constants.CANBus();
+        final CANBus p6Bus = bus.toPhoenix6CANBus();
+        this.motor = new TalonFX(constants.motorID(), p6Bus);
+        this.primaryCANcoder = new CANcoder(constants.primaryCANcoderID(), p6Bus);
+        this.secondaryCANcoder = new CANcoder(constants.secondaryCANcoderID(), p6Bus);
 
+        this.initialRandPosition = Rotation2d.fromRotations(
+                Math.random()
+                        * (constants.forwardLimitRots() - constants.reverseLimitRots())
+                        + constants.reverseLimitRots()
+        );
+
+        final double motorToTurretGearing = constants.motorToGearboxGearing() * constants.gearboxToTurretGearing();
         final DCMotor dcMotor = DCMotor.getKrakenX60Foc(1);
-        final DCMotorSim turretSim = new DCMotorSim(
+        this.dcMotorSim = new DCMotorSim(
                 LinearSystemId.createDCMotorSystem(
                         dcMotor,
-                        SimConstants.Turret.MOMENT_OF_INERTIA,
-                        constants.motorToTurretGearing()
+                        0.0977,
+                        motorToTurretGearing
                 ),
                 dcMotor
         );
+        this.dcMotorSim.setState(initialRandPosition.getRadians(), 0);
 
-        this.turretTalonFXSim = new TalonFXSim(
-                turretMotor,
-                constants.motorToTurretGearing(),
-                turretSim::update,
-                voltage -> turretSim.setInputVoltage(SimUtils.addMotorFriction(voltage, 0.25)),
-                turretSim::getAngularPositionRad,
-                turretSim::getAngularVelocityRadPerSec
+        this.motorSim = new TalonFXSim(
+                motor,
+                motorToTurretGearing,
+                dcMotorSim::update,
+                voltage -> dcMotorSim.setInputVoltage(SimUtils.addMotorFriction(voltage, 0.25)),
+                dcMotorSim::getAngularPositionRad,
+                dcMotorSim::getAngularVelocityRadPerSec
         );
-        this.turretTalonFXSim.attachFeedbackSensor(new SimTurretCANcoders(constants, primaryEncoder, secondaryEncoder));
+        this.simCANcoders = new SimTurretCANcoders(constants, primaryCANcoder, secondaryCANcoder);
 
-        this.turretPosition = turretMotor.getPosition(false);
-        this.turretVelocity = turretMotor.getVelocity(false);
-        this.turretVoltage = turretMotor.getMotorVoltage(false);
-        this.turretTorqueCurrent = turretMotor.getTorqueCurrent(false);
-        this.turretDeviceTemp = turretMotor.getDeviceTemp(false);
-
-        this.primaryEncoderPosition = primaryEncoder.getPosition(true);
-        this.secondaryEncoderPosition = secondaryEncoder.getPosition(true);
-
-        this.motionMagicExpoVoltage = new MotionMagicExpoVoltage(0);
         this.positionVoltage = new PositionVoltage(0);
+        this.motionMagicExpoVoltage = new MotionMagicExpoVoltage(0);
         this.voltageOut = new VoltageOut(0);
 
+        this.motorPosition = motor.getPosition(false);
+        this.motorVelocity = motor.getVelocity(false);
+        this.motorVoltage = motor.getMotorVoltage(false);
+        this.motorTorqueCurrent = motor.getTorqueCurrent(false);
+        this.motorDeviceTemp = motor.getDeviceTemp(false);
+
+        this.primaryCANcoderPosition = primaryCANcoder.getPosition(false);
+        this.primaryCANcoderAbsolutePosition = primaryCANcoder.getAbsolutePosition(false);
+
+        this.secondaryCANcoderPosition = secondaryCANcoder.getPosition(false);
+        this.secondaryCANcoderAbsolutePosition = secondaryCANcoder.getAbsolutePosition(false);
+
         RefreshAll.add(
-                constants.CANBus(),
-                turretPosition,
-                turretVelocity,
-                turretVoltage,
-                turretTorqueCurrent,
-                turretDeviceTemp
+                bus,
+                motorPosition,
+                motorVelocity,
+                motorVoltage,
+                motorTorqueCurrent,
+                motorDeviceTemp,
+                primaryCANcoderPosition,
+                primaryCANcoderAbsolutePosition,
+                secondaryCANcoderPosition,
+                secondaryCANcoderAbsolutePosition
         );
+
+        config();
 
         final Notifier simUpdateNotifier = new Notifier(() -> {
             final double dt = deltaTime.get();
-            turretTalonFXSim.update(dt);
+            motorSim.update(dt);
         });
         ToClose.add(simUpdateNotifier);
         simUpdateNotifier.setName(String.format(
                 "SimUpdate(%d)",
-                turretMotor.getDeviceID()
+                motor.getDeviceID()
         ));
         simUpdateNotifier.startPeriodic(SimConstants.SIM_UPDATE_PERIODIC_SEC);
     }
 
     @Override
     public void config() {
-        final TalonFXConfiguration motorConfig = new TalonFXConfiguration();
-        motorConfig.Slot0 = new Slot0Configs()
-                .withKS(0.24265)
+        final TalonFXConfiguration motorConfiguration = new TalonFXConfiguration();
+        motorConfiguration.Slot0 = new Slot0Configs()
+                .withKS(0.25)
                 .withStaticFeedforwardSign(StaticFeedforwardSignValue.UseClosedLoopSign)
-                .withKV(5)
-                .withKA(0.14961)
-                .withKP(50)
-                .withKD(3);
-        motorConfig.Slot1 = new Slot1Configs()
-                .withKS(0.24265)
-                .withStaticFeedforwardSign(StaticFeedforwardSignValue.UseClosedLoopSign)
-                .withKV(3.067)
-                .withKA(0.14961)
-                .withKP(50)
+                .withKV(5.248)
+                .withKA(0.0088)
+                .withKP(103.385)
+                .withKD(5.169);
+        motorConfiguration.Slot1 = new Slot1Configs()
+                .withKS(0)
+                .withStaticFeedforwardSign(StaticFeedforwardSignValue.UseVelocitySign)
+                .withKV(0)
+                .withKA(0)
+                .withKP(80)
                 .withKD(4);
-        motorConfig.CurrentLimits.StatorCurrentLimit = 60;
-        motorConfig.CurrentLimits.StatorCurrentLimitEnable = true;
-        motorConfig.CurrentLimits.SupplyCurrentLimit = 55;
-        motorConfig.CurrentLimits.SupplyCurrentLowerLimit = 40;
-        motorConfig.CurrentLimits.SupplyCurrentLowerTime = 2.0;
-        motorConfig.CurrentLimits.SupplyCurrentLimitEnable = true;
-        motorConfig.Feedback.FeedbackSensorSource = FeedbackSensorSourceValue.RotorSensor;
-        motorConfig.Feedback.SensorToMechanismRatio = constants.motorToTurretGearing();
-        motorConfig.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
-        motorConfig.MotorOutput.NeutralMode = NeutralModeValue.Brake;
-        motorConfig.SoftwareLimitSwitch.ForwardSoftLimitThreshold = constants.forwardLimitRots();
-        motorConfig.SoftwareLimitSwitch.ForwardSoftLimitEnable = true;
-        motorConfig.SoftwareLimitSwitch.ReverseSoftLimitThreshold = constants.reverseLimitRots();
-        motorConfig.SoftwareLimitSwitch.ReverseSoftLimitEnable = true;
-        Phoenix6Utils.tryUntilOk(turretMotor, () -> turretMotor.getConfigurator().apply(motorConfig));
+        motorConfiguration.MotionMagic.MotionMagicCruiseVelocity = 0;
+        motorConfiguration.MotionMagic.MotionMagicExpo_kV = 0.12;
+        motorConfiguration.MotionMagic.MotionMagicExpo_kA = 0.1;
+        motorConfiguration.TorqueCurrent.PeakForwardTorqueCurrent = 60;
+        motorConfiguration.TorqueCurrent.PeakReverseTorqueCurrent = -60;
+        motorConfiguration.CurrentLimits.StatorCurrentLimit = 60;
+        motorConfiguration.CurrentLimits.StatorCurrentLimitEnable = true;
+        motorConfiguration.Feedback.FeedbackSensorSource = FeedbackSensorSourceValue.RotorSensor;
+        motorConfiguration.Feedback.SensorToMechanismRatio = constants.motorToGearboxGearing()
+                * constants.gearboxToTurretGearing();
+        motorConfiguration.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
+        motorConfiguration.MotorOutput.NeutralMode = NeutralModeValue.Brake;
+        motorConfiguration.SoftwareLimitSwitch.ForwardSoftLimitThreshold = constants.forwardLimitRots();
+        motorConfiguration.SoftwareLimitSwitch.ForwardSoftLimitEnable = true;
+        motorConfiguration.SoftwareLimitSwitch.ReverseSoftLimitThreshold = constants.reverseLimitRots();
+        motorConfiguration.SoftwareLimitSwitch.ReverseSoftLimitEnable = true;
+        Phoenix6Utils.tryUntilOk(motor, () -> motor.getConfigurator().apply(motorConfiguration));
 
-        final CANcoderConfiguration primaryEncoderConfig = new CANcoderConfiguration();
-        primaryEncoderConfig.MagnetSensor.MagnetOffset = constants.primaryEncoderOffset();
-        primaryEncoderConfig.MagnetSensor.SensorDirection = SensorDirectionValue.Clockwise_Positive;
-        Phoenix6Utils.tryUntilOk(primaryEncoder,
-                () -> primaryEncoder.getConfigurator().apply(primaryEncoderConfig));
+        final CANcoderConfiguration primaryCANcoderConfiguration = new CANcoderConfiguration();
+        primaryCANcoderConfiguration.MagnetSensor.SensorDirection = SensorDirectionValue.Clockwise_Positive;
+        primaryCANcoderConfiguration.MagnetSensor.AbsoluteSensorDiscontinuityPoint = 1;
+        primaryCANcoderConfiguration.MagnetSensor.MagnetOffset = 0;
+        Phoenix6Utils.tryUntilOk(
+                primaryCANcoder,
+                () -> primaryCANcoder.getConfigurator().apply(primaryCANcoderConfiguration)
+        );
 
-        final CANcoderConfiguration secondaryEncoderConfig = new CANcoderConfiguration();
-        secondaryEncoderConfig.MagnetSensor.MagnetOffset = constants.secondaryEncoderOffset();
-        secondaryEncoderConfig.MagnetSensor.SensorDirection = SensorDirectionValue.CounterClockwise_Positive;
-        Phoenix6Utils.tryUntilOk(secondaryEncoder,
-                () -> secondaryEncoder.getConfigurator().apply(secondaryEncoderConfig));
+        final CANcoderConfiguration secondaryCANcoderConfiguration = new CANcoderConfiguration();
+        secondaryCANcoderConfiguration.MagnetSensor.SensorDirection = SensorDirectionValue.CounterClockwise_Positive;
+        secondaryCANcoderConfiguration.MagnetSensor.AbsoluteSensorDiscontinuityPoint = 1;
+        secondaryCANcoderConfiguration.MagnetSensor.MagnetOffset = 0;
+        Phoenix6Utils.tryUntilOk(
+                secondaryCANcoder,
+                () -> secondaryCANcoder.getConfigurator().apply(secondaryCANcoderConfiguration)
+        );
 
         BaseStatusSignal.setUpdateFrequencyForAll(
                 100,
-                turretPosition,
-                turretVelocity,
-                turretVoltage,
-                turretTorqueCurrent,
-                primaryEncoderPosition,
-                secondaryEncoderPosition
+                motorPosition,
+                motorVelocity,
+                motorVoltage,
+                motorTorqueCurrent,
+                primaryCANcoderPosition,
+                secondaryCANcoderPosition
         );
 
         BaseStatusSignal.setUpdateFrequencyForAll(
                 4,
-                turretDeviceTemp
+                motorDeviceTemp
         );
 
         ParentDevice.optimizeBusUtilizationForAll(
                 4,
-                turretMotor,
-                primaryEncoder,
-                secondaryEncoder
+                motor,
+                primaryCANcoder,
+                secondaryCANcoder
         );
 
-        final TalonFXSimState motorSimState = turretMotor.getSimState();
+        final TalonFXSimState motorSimState = motor.getSimState();
         motorSimState.Orientation = ChassisReference.Clockwise_Positive;
         motorSimState.setMotorType(TalonFXSimState.MotorType.KrakenX60);
 
-        primaryEncoder.getSimState().Orientation = ChassisReference.CounterClockwise_Positive;
-        secondaryEncoder.getSimState().Orientation = ChassisReference.CounterClockwise_Positive;
+        final CANcoderSimState primaryCANcoderSimState = primaryCANcoder.getSimState();
+        primaryCANcoderSimState.Orientation = ChassisReference.Clockwise_Positive;
+        primaryCANcoderSimState.SensorOffset = 0;
+
+        final CANcoderSimState secondaryCANcoderSimState = secondaryCANcoder.getSimState();
+        secondaryCANcoderSimState.Orientation = ChassisReference.CounterClockwise_Positive;
+        secondaryCANcoderSimState.SensorOffset = 0;
+
+        simCANcoders.setRawPosition(initialRandPosition.getRotations());
+        motorSim.attachFeedbackSensor(simCANcoders);
     }
 
     @Override
     public void updateInputs(final TurretIOInputs inputs) {
-        inputs.turretPositionRots = turretPosition.getValueAsDouble();
-        inputs.turretVelocityRotsPerSec = turretVelocity.getValueAsDouble();
-        inputs.turretVoltage = turretVoltage.getValueAsDouble();
-        inputs.turretTorqueCurrentAmps = turretTorqueCurrent.getValueAsDouble();
-        inputs.turretTempCelsius = turretDeviceTemp.getValueAsDouble();
+        inputs.turretPositionRots = motorPosition.getValueAsDouble();
+        inputs.turretVelocityRotsPerSec = motorVelocity.getValueAsDouble();
+        inputs.turretVoltage = motorVoltage.getValueAsDouble();
+        inputs.turretTorqueCurrentAmps = motorTorqueCurrent.getValueAsDouble();
+        inputs.turretTempCelsius = motorDeviceTemp.getValueAsDouble();
 
-        inputs.primaryEncoderPositionRots = primaryEncoderPosition.getValueAsDouble();
-        inputs.secondaryEncoderPositionRots = secondaryEncoderPosition.getValueAsDouble();
-    }
+        inputs.primaryEncoderPositionRots = primaryCANcoderPosition.getValueAsDouble();
+        inputs.primaryEncoderAbsolutePositionRots = primaryCANcoderAbsolutePosition.getValueAsDouble();
 
-    @Override
-    public void toTurretPosition(final double positionRots) {
-        turretMotor.setControl(
-                motionMagicExpoVoltage
-                        .withPosition(positionRots)
-                        .withSlot(0)
-        );
-    }
-
-    @Override
-    public void toTurretContinuousPosition(final double positionRots, final double velocityRotsPerSec) {
-        turretMotor.setControl(
-                positionVoltage
-                        .withPosition(positionRots)
-                        .withVelocity(velocityRotsPerSec)
-                        .withSlot(1)
-        );
-    }
-
-    @Override
-    public void toTurretVoltage(final double volts) {
-        turretMotor.setControl(voltageOut.withOutput(volts));
+        inputs.secondaryEncoderPositionRots = secondaryCANcoderPosition.getValueAsDouble();
+        inputs.secondaryEncoderAbsolutePositionRots = secondaryCANcoderAbsolutePosition.getValueAsDouble();
     }
 
     @Override
     public void seedTurretPosition(final Rotation2d turretPosition) {
         final double turretPositionRots = turretPosition.getRotations();
-        final double primaryGearing = constants.primaryEncoderTooth();
-        final double primaryAbsolutePosition = primaryEncoder.getAbsolutePosition().getValueAsDouble() * primaryGearing;
-
-        if (!MathUtil.isNear(primaryAbsolutePosition, turretPositionRots, 1e-6, 0, 1)) {
-            DriverStation.reportError(String.format(
-                    "Failed to seed turret position! Expected integer increment in position from: %.3f to %.3f",
-                    Math.min(primaryAbsolutePosition, turretPositionRots),
-                    Math.max(primaryAbsolutePosition, turretPositionRots)
-            ), true);
-            return;
-        }
-
-        Phoenix6Utils.tryUntilOk(turretMotor, () -> turretMotor.setPosition(turretPosition.getRotations()));
+        Phoenix6Utils.tryUntilOk(motor, 10, () -> motor.setPosition(turretPositionRots));
     }
 
     @Override
-    public void setPosition(final double turretPositionRots) {
-        Phoenix6Utils.reportIfNotOk(turretMotor, turretMotor.setPosition(turretPositionRots));
+    public void toTurretContinuousPosition(double positionRots, double velocityRotsPerSec) {
+        motor.setControl(positionVoltage
+                .withSlot(0)
+                .withPosition(positionRots)
+                .withVelocity(velocityRotsPerSec)
+        );
+    }
+
+    @Override
+    public void toTurretPosition(final double turretPositionRots) {
+        motor.setControl(motionMagicExpoVoltage
+                .withSlot(1)
+                .withPosition(turretPositionRots));
+    }
+
+    @Override
+    public void toTurretVoltage(final double turretVolts) {
+        motor.setControl(voltageOut.withOutput(turretVolts));
     }
 
     private static class SimTurretCANcoders implements SimFeedbackSensor {
@@ -283,29 +307,41 @@ public class TurretIOSim implements TurretIO {
 
         @Override
         public void setRawPosition(final double rotations) {
-            Phoenix6Utils.reportIfNotOk(primaryCANcoder,
-                    primarySimState.setRawPosition(rotations / constants.primaryEncoderTooth()));
+            Phoenix6Utils.reportIfNotOk(
+                    primaryCANcoder,
+                    primarySimState.setRawPosition(rotations / constants.primaryCANcoderGearing())
+            );
 
-            Phoenix6Utils.reportIfNotOk(secondaryCANcoder,
-                    secondarySimState.setRawPosition(rotations / constants.secondaryEncoderTooth()));
+            Phoenix6Utils.reportIfNotOk(
+                    secondaryCANcoder,
+                    secondarySimState.setRawPosition(rotations / constants.secondaryCANcoderGearing())
+            );
         }
 
         @Override
         public void addPosition(final double deltaRotations) {
-            Phoenix6Utils.reportIfNotOk(primaryCANcoder,
-                    primarySimState.addPosition(deltaRotations / constants.primaryEncoderTooth()));
+            Phoenix6Utils.reportIfNotOk(
+                    primaryCANcoder,
+                    primarySimState.addPosition(deltaRotations / constants.primaryCANcoderGearing())
+            );
 
-            Phoenix6Utils.reportIfNotOk(secondaryCANcoder,
-                    secondarySimState.addPosition(deltaRotations / constants.secondaryEncoderTooth()));
+            Phoenix6Utils.reportIfNotOk(
+                    secondaryCANcoder,
+                    secondarySimState.addPosition(deltaRotations / constants.secondaryCANcoderGearing())
+            );
         }
 
         @Override
         public void setVelocity(final double rotationsPerSec) {
-            Phoenix6Utils.reportIfNotOk(primaryCANcoder,
-                    primarySimState.setVelocity(rotationsPerSec / constants.primaryEncoderTooth()));
+            Phoenix6Utils.reportIfNotOk(
+                    primaryCANcoder,
+                    primarySimState.setVelocity(rotationsPerSec / constants.primaryCANcoderGearing())
+            );
 
-            Phoenix6Utils.reportIfNotOk(secondaryCANcoder,
-                    secondarySimState.setVelocity(rotationsPerSec / constants.secondaryEncoderTooth()));
+            Phoenix6Utils.reportIfNotOk(
+                    secondaryCANcoder,
+                    secondarySimState.setVelocity(rotationsPerSec / constants.secondaryCANcoderGearing())
+            );
         }
     }
 }

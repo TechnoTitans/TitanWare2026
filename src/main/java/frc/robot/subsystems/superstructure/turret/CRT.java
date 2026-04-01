@@ -1,81 +1,64 @@
 package frc.robot.subsystems.superstructure.turret;
+
+import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.wpilibj.DriverStation;
 
 public class CRT {
-    private static final long CRT_RESOLUTION = 1_000_000;
+    public static long[] bezout(final long a, final long b) {
+        long old_r = a, r = b;
+        long old_s = 1, s = 0;
+        long old_t = 0, t = 1;
 
-    private static long[] egcd(final long a, final long b) {
-        long ma = a;
-        long mb = b;
+        while (r != 0) {
+            long quotient = old_r / r;
 
-        long x = 0;
-        long y = 1;
-        long lastX = 1, lastY = 0;
+            long temp_r = r;
+            r = old_r - quotient * r;
+            old_r = temp_r;
 
-        int i = 0;
-        while (mb != 0) {
-            if (i > 100) {
-                throw new RuntimeException("EGCD exceeded iteration limit");
-            }
+            long temp_s = s;
+            s = old_s - quotient * s;
+            old_s = temp_s;
 
-            final long f = ma / mb;
-            final long remainder = ma % mb;
-            ma = mb;
-            mb = remainder;
-
-            final long tx = x;
-            x = lastX - (f * x);
-            lastX = tx;
-
-            final long ty = y;
-            y = lastY - (f * y);
-            lastY = ty;
-
-            i++;
+            long temp_t = t;
+            t = old_t - quotient * t;
+            old_t = temp_t;
         }
 
-        return new long[] {ma, lastX, lastY};
+        return new long[]{old_s, old_t, old_r};
     }
 
-    private static long crt(final long a, final long m, final long b, final long n) {
-        final long[] vals = egcd(m, n);
-        final long g = vals[0];
-        final long x = vals[1];
-
-        if ((a - b) % g != 0) {
-            DriverStation.reportError("No solutions exist for the given inputs.", true);
-            return 0;
-//            throw new IllegalArgumentException("No solutions exist for the given inputs.");
-        }
-
-        final long lcm = (m / g) * n;
-        final long k = ((b - a) / g) % (n / g);
-        final long t = (a + m * (k * x % (n / g))) % lcm;
-        if (t < 0) {
-            return t + lcm;
-        }
-
-        return t;
-    }
-
-    public static Rotation2d findAbsolutePosition(
+    public static Rotation2d solve(
             final int outputGearTeeth,
             final double absolutePosition0,
             final int gearTeeth0,
             final double absolutePosition1,
-            final int gearTeeth1
+            final int gearTeeth1,
+            final double upperBound
     ) {
-        final long scale0 = gearTeeth0 * CRT_RESOLUTION;
-        final long scale1 = gearTeeth1 * CRT_RESOLUTION;
+        final long[] bez = bezout(gearTeeth0, gearTeeth1);
+        final long u = bez[0];
+        final long v = bez[1];
+        final long gcd = bez[2];
 
-        final long round0 = Math.round(absolutePosition0 * scale0);
-        final long round1 = Math.round(absolutePosition1 * scale1);
+        double a = absolutePosition0 * gearTeeth0;
+        double b = absolutePosition1 * gearTeeth1;
 
-        final double outputScale = outputGearTeeth * CRT_RESOLUTION;
+        final double offset = MathUtil.inputModulus(a - b, -0.5, 0.5);
+        a -= 0.5 * offset;
+        b += 0.5 * offset;
 
-        return Rotation2d.fromRotations(
-                crt(round0, scale0, round1, scale1) / outputScale
+        final double q = ((double)gearTeeth0 * gearTeeth1) / gcd;
+        final double x = ((a * v * gearTeeth1) + (b * u * gearTeeth0)) / gcd;
+
+        final double pos = (x % q) / outputGearTeeth;
+        final double period = ((double) gearTeeth0 * gearTeeth1 / gcd) / outputGearTeeth;
+        final double wrappedPos = MathUtil.inputModulus(
+                pos,
+                upperBound - period,
+                upperBound
         );
+
+        return Rotation2d.fromRotations(wrappedPos);
     }
 }
