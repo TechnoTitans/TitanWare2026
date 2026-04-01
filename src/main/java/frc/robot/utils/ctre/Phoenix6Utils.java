@@ -79,22 +79,30 @@ public class Phoenix6Utils {
         }
     }
 
-    public static StatusCode tryUntilOk(final ParentDevice device, final Supplier<StatusCode> apply) {
+    public static StatusCode tryUntilOk(
+            final ParentDevice device,
+            final int maxAttempts,
+            final Supplier<StatusCode> apply
+    ) {
         StatusCode status = StatusCode.OK;
-        for (int i = 0; i < MaxAttempts; i++) {
+        for (int i = 0; i < maxAttempts; i++) {
             status = apply.get();
             if (status.isOK()) {
                 return status;
-            } else if (i < MaxAttempts - 1) {
+            } else if (i < maxAttempts - 1) {
                 DriverStation.reportWarning(String.format(
                         "Attempt %d on device %d: %s",
                         i + 2, device.getDeviceID(), status.getName()
-                ), false);
+                ), true);
             }
         }
 
         reportIfNotOk(device, status);
         return status;
+    }
+
+    public static StatusCode tryUntilOk(final ParentDevice device, final Supplier<StatusCode> apply) {
+        return tryUntilOk(device, MaxAttempts, apply);
     }
 
     public static void reportIfNotOk(final ParentDevice device, final StatusCode statusCode) {
@@ -105,7 +113,7 @@ public class Phoenix6Utils {
                             device.getDeviceID(),
                             statusCode.getName()
                     ),
-                    false
+                    true
             );
         }
     }

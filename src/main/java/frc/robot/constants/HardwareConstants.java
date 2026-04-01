@@ -92,35 +92,78 @@ public class HardwareConstants {
             1.8667
     );
 
-    public record TurretConstants (
+    public record TurretConstants(
             CANBus CANBus,
-            int turretMotorID,
-            int primaryEncoderID,
-            int secondaryEncoderID,
-            double motorToTurretGearing,
-            int turretTooth,
-            int primaryEncoderTooth,
-            int secondaryEncoderTooth,
-            double primaryEncoderOffset,
-            double secondaryEncoderOffset,
+            int motorID,
+            int primaryCANcoderID,
+            int secondaryCANcoderID,
+            double primaryCANcoderOffsetRots,
+            double secondaryCANcoderOffsetRots,
             double forwardLimitRots,
             double reverseLimitRots,
+            int drivingGearTeeth,
+            int drivenTurretGearTeeth,
+            int primaryCANcoderGearTeeth,
+            int secondaryCANcoderGearTeeth,
+            double motorToGearboxGearing,
+            double gearboxToTurretGearing,
+            double primaryCANcoderGearing,
+            double secondaryCANcoderGearing,
             Transform2d offsetFromCenter
-    ) {}
+    ) {
+        public TurretConstants(
+                CANBus CANBus,
+                int motorId,
+                int primaryCANcoderId,
+                int secondaryCANcoderId,
+                double primaryCANcoderOffsetRots,
+                double secondaryCANcoderOffsetRots,
+                double forwardLimitRots,
+                double reverseLimitRots,
+                int drivingGearTeeth,
+                int drivenTurretGearTeeth,
+                int primaryCANcoderGearTeeth,
+                int secondaryCANcoderGearTeeth,
+                double motorToGearboxGearing,
+                Transform2d offsetFromCenter
+        ) {
+            this(
+                    CANBus,
+                    motorId,
+                    primaryCANcoderId,
+                    secondaryCANcoderId,
+                    primaryCANcoderOffsetRots,
+                    secondaryCANcoderOffsetRots,
+                    forwardLimitRots,
+                    reverseLimitRots,
+                    drivingGearTeeth,
+                    drivenTurretGearTeeth,
+                    primaryCANcoderGearTeeth,
+                    secondaryCANcoderGearTeeth,
+                    motorToGearboxGearing,
+                    ((double) drivenTurretGearTeeth) / drivingGearTeeth,
+                    ((double) primaryCANcoderGearTeeth) / drivenTurretGearTeeth,
+                    ((double) primaryCANcoderGearTeeth) / drivenTurretGearTeeth
+                            * ((double) secondaryCANcoderGearTeeth) / primaryCANcoderGearTeeth,
+                    offsetFromCenter
+            );
+        }
+    }
 
     public static final TurretConstants TURRET = new TurretConstants(
             CANBus.CANIVORE,
             20,
             21,
             22,
-            24,
-            80,
-            13,
-            17,
             -0.320,
             0.340,
             0.75,
             -0.25,
+            10,
+            80,
+            13,
+            17,
+            36.0 / 12.0,
             new Transform2d(-0.127, 0, Rotation2d.kZero)
     );
 

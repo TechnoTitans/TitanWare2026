@@ -14,7 +14,9 @@ public interface TurretIO {
         public double turretTempCelsius = 0.0;
 
         public double primaryEncoderPositionRots = 0.0;
+        public double primaryEncoderAbsolutePositionRots = 0.0;
         public double secondaryEncoderPositionRots = 0.0;
+        public double secondaryEncoderAbsolutePositionRots = 0.0;
     }
 
     default void config() {}

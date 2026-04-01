@@ -85,6 +85,8 @@ public class Turret extends SubsystemExt {
     private double positionSetpointRots = 0.0;
     private double velocitySetpointRotsPerSec = 0.0;
 
+    private boolean positionSeeded = false;
+
     public final LoggedTrigger atSetpoint;
 
     public Turret(final Constants.RobotMode mode, final HardwareConstants.TurretConstants constants) {
@@ -108,22 +110,11 @@ public class Turret extends SubsystemExt {
                 VelocityToleranceRotsPerSec
         ));
 
-        this.turretIO.config();
-
         this.voltageSysIdRoutine = makeVoltageSysIdRoutine(
                 Volts.of(0.5).per(Second),
                 Volts.of(2),
                 Seconds.of(6)
         );
-
-        final Rotation2d absolutePosition = CRT.findAbsolutePosition(
-                constants.turretTooth(),
-                inputs.primaryEncoderPositionRots,
-                constants.primaryEncoderTooth(),
-                inputs.secondaryEncoderPositionRots,
-                constants.secondaryEncoderTooth()
-        );
-        this.turretIO.seedTurretPosition(absolutePosition);
     }
 
     @Override
@@ -132,6 +123,19 @@ public class Turret extends SubsystemExt {
 
         turretIO.updateInputs(inputs);
         Logger.processInputs(LogKey, inputs);
+
+        if (!positionSeeded && MathUtil.isNear(0, inputs.turretVelocityRotsPerSec, 1e-3)) {
+            final Rotation2d position = CRT.solve(
+                    constants.drivenTurretGearTeeth(),
+                    inputs.primaryEncoderAbsolutePositionRots,
+                    constants.primaryCANcoderGearTeeth(),
+                    inputs.secondaryEncoderAbsolutePositionRots,
+                    constants.secondaryCANcoderGearTeeth(),
+                    constants.forwardLimitRots()
+            );
+            turretIO.seedTurretPosition(position);
+            positionSeeded = true;
+        }
 
         final InternalGoal currentGoal;
         if (atSetpoint()) {

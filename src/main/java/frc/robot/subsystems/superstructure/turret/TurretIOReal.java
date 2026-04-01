@@ -13,10 +13,8 @@ import com.ctre.phoenix6.hardware.CANcoder;
 import com.ctre.phoenix6.hardware.ParentDevice;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.*;
-import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.units.measure.*;
-import edu.wpi.first.wpilibj.DriverStation;
 import frc.robot.constants.HardwareConstants;
 import frc.robot.utils.ctre.Phoenix6Utils;
 import frc.robot.utils.ctre.RefreshAll;
@@ -44,9 +42,9 @@ public class TurretIOReal implements TurretIO {
     public TurretIOReal(HardwareConstants.TurretConstants constants) {
         this.constants = constants;
 
-        this.turretMotor = new TalonFX(constants.turretMotorID(), constants.CANBus().toPhoenix6CANBus());
-        this.primaryEncoder = new CANcoder(constants.primaryEncoderID(), constants.CANBus().toPhoenix6CANBus());
-        this.secondaryEncoder = new CANcoder(constants.secondaryEncoderID(), constants.CANBus().toPhoenix6CANBus());
+        this.turretMotor = new TalonFX(constants.motorID(), constants.CANBus().toPhoenix6CANBus());
+        this.primaryEncoder = new CANcoder(constants.primaryCANcoderID(), constants.CANBus().toPhoenix6CANBus());
+        this.secondaryEncoder = new CANcoder(constants.secondaryCANcoderID(), constants.CANBus().toPhoenix6CANBus());
 
         this.turretPosition = turretMotor.getPosition(false);
         this.turretVelocity = turretMotor.getVelocity(false);
@@ -97,7 +95,7 @@ public class TurretIOReal implements TurretIO {
         motorConfig.CurrentLimits.SupplyCurrentLowerTime = 2.0;
         motorConfig.CurrentLimits.SupplyCurrentLimitEnable = true;
         motorConfig.Feedback.FeedbackSensorSource = FeedbackSensorSourceValue.RotorSensor;
-        motorConfig.Feedback.SensorToMechanismRatio = constants.motorToTurretGearing();
+        motorConfig.Feedback.SensorToMechanismRatio = constants.motorToGearboxGearing();
         motorConfig.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
         motorConfig.MotorOutput.NeutralMode = NeutralModeValue.Brake;
         motorConfig.SoftwareLimitSwitch.ForwardSoftLimitThreshold = constants.forwardLimitRots();
@@ -107,16 +105,22 @@ public class TurretIOReal implements TurretIO {
         Phoenix6Utils.tryUntilOk(turretMotor, () -> turretMotor.getConfigurator().apply(motorConfig));
 
         final CANcoderConfiguration primaryEncoderConfig = new CANcoderConfiguration();
-        primaryEncoderConfig.MagnetSensor.MagnetOffset = constants.primaryEncoderOffset();
+        primaryEncoderConfig.MagnetSensor.MagnetOffset = constants.primaryCANcoderOffsetRots();
         primaryEncoderConfig.MagnetSensor.SensorDirection = SensorDirectionValue.Clockwise_Positive;
-        Phoenix6Utils.tryUntilOk(primaryEncoder,
-                () -> primaryEncoder.getConfigurator().apply(primaryEncoderConfig));
+        primaryEncoderConfig.MagnetSensor.AbsoluteSensorDiscontinuityPoint = 1;
+        Phoenix6Utils.tryUntilOk(
+                primaryEncoder,
+                () -> primaryEncoder.getConfigurator().apply(primaryEncoderConfig)
+        );
 
         final CANcoderConfiguration secondaryEncoderConfig = new CANcoderConfiguration();
-        secondaryEncoderConfig.MagnetSensor.MagnetOffset = constants.secondaryEncoderOffset();
+        secondaryEncoderConfig.MagnetSensor.MagnetOffset = constants.secondaryCANcoderOffsetRots();
         secondaryEncoderConfig.MagnetSensor.SensorDirection = SensorDirectionValue.CounterClockwise_Positive;
-        Phoenix6Utils.tryUntilOk(secondaryEncoder,
-                () -> secondaryEncoder.getConfigurator().apply(secondaryEncoderConfig));
+        secondaryEncoderConfig.MagnetSensor.AbsoluteSensorDiscontinuityPoint = 1;
+        Phoenix6Utils.tryUntilOk(
+                secondaryEncoder,
+                () -> secondaryEncoder.getConfigurator().apply(secondaryEncoderConfig)
+        );
 
         BaseStatusSignal.setUpdateFrequencyForAll(
                 100,
@@ -185,19 +189,6 @@ public class TurretIOReal implements TurretIO {
     @Override
     public void seedTurretPosition(final Rotation2d turretPosition) {
         final double turretPositionRots = turretPosition.getRotations();
-        final double primaryGearing = constants.primaryEncoderTooth();
-        final double primaryAbsolutePosition = primaryEncoder.getAbsolutePosition().getValueAsDouble() * primaryGearing;
-
-        if (!MathUtil.isNear(primaryAbsolutePosition, turretPositionRots, 1e-6, 0, 1)) {
-            DriverStation.reportError(String.format(
-                    "Failed to seed turret position! Expected integer increment in position from: %.3f to %.3f",
-                    Math.min(primaryAbsolutePosition, turretPositionRots),
-                    Math.max(primaryAbsolutePosition, turretPositionRots)
-            ), true);
-            return;
-        }
-
-        Phoenix6Utils.tryUntilOk(turretMotor, () -> turretMotor.setPosition(turretPosition.getRotations()));
+        Phoenix6Utils.tryUntilOk(turretMotor, 10, () -> turretMotor.setPosition(turretPositionRots));
     }
-
 }
