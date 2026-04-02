@@ -300,6 +300,7 @@ public class Autos {
         return routine;
     }
 
+    //Right and Left ferry positions are swapped
     public AutoRoutine leftFerryClean() {
         final AutoRoutine routine = autoFactory.newRoutine("LeftFerryClean");
         final AutoTrajectory ferryAndClean = routine.trajectory("LeftFerryAndClean");
@@ -310,9 +311,18 @@ public class Autos {
         ));
 
         routine.active().whileTrue(
-                Commands.parallel(
+                parallel(
                         intake.intake(),
-                        ferryShotWhileMoving(FieldConstants.getFerryRight())
+                        sequence(
+                                waitUntil(targetIsHub.negate()
+                                        .and(turretSafe)),
+                                ferryShootWhileMoving(FieldConstants.getFerryRight())
+                                        .until(targetIsHub.or(turretSafe.negate())),
+                                superstructure.runParametersWithHoodStowed(movingShot)
+                                        .until(targetIsHub.and(turretSafe)),
+                                shootWhileMoving()
+                        ),
+                        Commands.run(() -> Logger.recordOutput(LogKey + "TurretSafe", turretSafe))
                 )
         );
 
@@ -330,9 +340,17 @@ public class Autos {
         routine.active().onTrue(runStartingTrajectory(ferryAndClean));
 
         routine.active().whileTrue(
-                Commands.parallel(
+                parallel(
                         intake.intake(),
-                        ferryShotWhileMoving(FieldConstants.getFerryLeft())
+                        sequence(
+                                waitUntil(targetIsHub.negate()
+                                        .and(turretSafe)),
+                                ferryShootWhileMoving(FieldConstants.getFerryLeft())
+                                        .until(targetIsHub.or(turretSafe.negate())),
+                                superstructure.runParametersWithHoodStowed(movingShot)
+                                        .until(targetIsHub.and(turretSafe)),
+                                shootWhileMoving()
+                        )
                 )
         );
 
@@ -540,7 +558,7 @@ public class Autos {
                 .withName("ShootStatic");
     }
 
-    private Command ferryShotWhileMoving(final Pose2d ferryTo) {
+    private Command ferryShootWhileMoving(final Pose2d ferryPose) {
         return deadline(
                 repeatingSequence(
                         waitUntil(superstructure::atSetpoint),
@@ -548,7 +566,7 @@ public class Autos {
                                 .onlyWhile(superstructure::atSetpoint)
                 ).onlyWhile(fuelState.hasFuel
                         .or(intake.isIntaking)),
-                superstructure.runParameters(movingParameters(() -> ferryTo))
+                superstructure.runParameters(movingParameters(() -> ferryPose))
         ).withName("FerryShotWhileMoving");
     }
 

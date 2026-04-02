@@ -212,7 +212,7 @@ public class FuelState extends VirtualSubsystem {
                     tContainer.set(t);
                 },
                 deltaTime::reset
-        );
+        ).withName("SetInterval");
     }
 
     private static final double HubRadiusMeters = 0.615;
