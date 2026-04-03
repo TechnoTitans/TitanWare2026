@@ -89,12 +89,12 @@ public class FeederIOReal implements FeederIO {
         motorConfig.Feedback.SensorToMechanismRatio = constants.gearing();
         Phoenix6Utils.tryUntilOk(motor, () -> motor.getConfigurator().apply(motorConfig));
 
-        final CANrangeConfiguration canRangeConfig = new CANrangeConfiguration();
-        canRangeConfig.ProximityParams.ProximityThreshold = 0.4;
-        canRangeConfig.ProximityParams.ProximityHysteresis = 0.01;
-        canRangeConfig.ProximityParams.MinSignalStrengthForValidMeasurement = 2500;
-        canRangeConfig.ToFParams.UpdateMode = UpdateModeValue.ShortRange100Hz;
-        Phoenix6Utils.tryUntilOk(canRange, () -> canRange.getConfigurator().apply(canRangeConfig));
+        final CANrangeConfiguration canRangeConfiguration = new CANrangeConfiguration();
+        canRangeConfiguration.ProximityParams.ProximityThreshold = 0.05;
+        canRangeConfiguration.ProximityParams.ProximityHysteresis = 0.02;
+        canRangeConfiguration.ProximityParams.MinSignalStrengthForValidMeasurement = 2500;
+        canRangeConfiguration.ToFParams.UpdateMode = UpdateModeValue.ShortRange100Hz;
+        Phoenix6Utils.tryUntilOk(canRange, () -> canRange.getConfigurator().apply(canRangeConfiguration));
 
         BaseStatusSignal.setUpdateFrequencyForAll(
                 100,
