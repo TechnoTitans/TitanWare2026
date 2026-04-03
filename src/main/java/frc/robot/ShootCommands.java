@@ -195,7 +195,8 @@ public class ShootCommands extends VirtualSubsystem {
 //                        .onlyIf(fuelState.hasFuel)
 //                        .onlyWhile(fuelState.hasFuel
 //                                .or(intake.isIntaking)),
-                SwerveSpeed.toSwerveSpeed(ShootAndScootSpeeds),
+                SwerveSpeed.toSwerveSpeed(ShootAndScootSpeeds)
+                        .onlyWhile(() -> targetSupplier.get() == Target.HUB),
                 superstructure.runParameters(movingShot)
         ).withName("Shoot");
     }

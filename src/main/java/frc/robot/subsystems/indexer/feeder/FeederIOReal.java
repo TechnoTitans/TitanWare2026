@@ -27,6 +27,8 @@ public class FeederIOReal implements FeederIO {
     private final StatusSignal<Voltage> wheelVoltage;
     private final StatusSignal<Current> wheelTorqueCurrent;
     private final StatusSignal<Temperature> wheelDeviceTemp;
+
+    private final StatusSignal<Distance> canRangeDistance;
     private final StatusSignal<Boolean> canRangeDetected;
 
     private final TorqueCurrentFOC torqueCurrentFOC;
@@ -44,6 +46,8 @@ public class FeederIOReal implements FeederIO {
         this.wheelVoltage = motor.getMotorVoltage(false);
         this.wheelTorqueCurrent = motor.getTorqueCurrent(false);
         this.wheelDeviceTemp = motor.getDeviceTemp(false);
+
+        this.canRangeDistance = canRange.getDistance(false);
         this.canRangeDetected = canRange.getIsDetected(false);
 
         this.torqueCurrentFOC = new TorqueCurrentFOC(0);
@@ -55,6 +59,7 @@ public class FeederIOReal implements FeederIO {
                 wheelVoltage,
                 wheelTorqueCurrent,
                 wheelDeviceTemp,
+                canRangeDistance,
                 canRangeDetected
         );
 
@@ -97,6 +102,7 @@ public class FeederIOReal implements FeederIO {
                 wheelVelocity,
                 wheelVoltage,
                 wheelTorqueCurrent,
+                canRangeDistance,
                 canRangeDetected
         );
 
@@ -120,6 +126,7 @@ public class FeederIOReal implements FeederIO {
         inputs.wheelTorqueCurrentAmps = wheelTorqueCurrent.getValueAsDouble();
         inputs.wheelTempCelsius = wheelDeviceTemp.getValueAsDouble();
 
+        inputs.tofDistance = canRangeDistance.getValueAsDouble();
         inputs.tofDetected = canRangeDetected.getValue();
     }
 
