@@ -33,7 +33,7 @@ public class Intake {
                 slide.setGoal(IntakeSlide.Goal.EXTEND),
                 Commands.sequence(
                         Commands.waitUntil(() -> slide.atGoal(IntakeSlide.Goal.EXTEND))
-                                .withTimeout(3),
+                                .withTimeout(0.5),
                         rollers.toGoal(IntakeRollers.Goal.INTAKE)
                 )
         ).withName("Intake");
