@@ -197,7 +197,15 @@ public class ShootCommands extends VirtualSubsystem {
                                                 .onlyWhile(targetValid
                                                         .and(swerveReady)
                                                         .and(superstructure.turretAtSetpoint
-                                                                .and(superstructure.hoodAtSetpoint)
+                                                                .debounce(
+                                                                        0.025,
+                                                                        Debouncer.DebounceType.kFalling
+                                                                )
+                                                                .and(superstructure.hoodAtSetpoint
+                                                                        .debounce(
+                                                                                0.05,
+                                                                                Debouncer.DebounceType.kFalling
+                                                                        ))
                                                                 .and(superstructure.shooterAtSetpoint
                                                                         .debounce(
                                                                                 0.5,
