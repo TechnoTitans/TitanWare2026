@@ -54,7 +54,12 @@ public class Intake {
     public Command stowFeed() {
         return Commands.parallel(
                 slide.toGoalHold(IntakeSlide.Goal.SHOOTING),
-                rollers.toGoal(IntakeRollers.Goal.OFF)
+                Commands.repeatingSequence(
+                        rollers.setGoal(IntakeRollers.Goal.FEED_PULSE),
+                        Commands.waitSeconds(0.5),
+                        rollers.setGoal(IntakeRollers.Goal.OFF),
+                        Commands.waitSeconds(0.5)
+                )
         ).withName("StowFeedIntake");
     }
 }

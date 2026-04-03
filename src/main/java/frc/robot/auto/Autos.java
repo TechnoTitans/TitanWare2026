@@ -3,6 +3,7 @@ package frc.robot.auto;
 import choreo.auto.AutoFactory;
 import choreo.auto.AutoRoutine;
 import choreo.auto.AutoTrajectory;
+import choreo.trajectory.SwerveSample;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.IterativeRobotBase;
@@ -12,6 +13,7 @@ import edu.wpi.first.wpilibj.event.EventLoop;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
+import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.FuelState;
 import frc.robot.Robot;
 import frc.robot.ShootCommands;
@@ -74,6 +76,10 @@ public class Autos {
         this.autoFactory = new AutoFactory(
                 swerve::getPose,
                 photonVision::resetPose,
+//                sample -> {
+//                    System.out.println("running...");
+//                    swerve.followChoreoSample((SwerveSample) sample);
+//                },
                 swerve::followChoreoSample,
                 true,
                 swerve,
@@ -555,20 +561,72 @@ public class Autos {
         return routine;
     }
 
+    public AutoRoutine rightDoubleSweepBumpFullWidth() {
+        final AutoRoutine routine = autoFactory.newRoutine("RightDoubleSweepBumpFullWidth");
+        final AutoTrajectory firstSweep = routine.trajectory("RightFirstSweepContinuous");
+        final AutoTrajectory transition = routine.trajectory("RightShootingTransitionFast");
+        final AutoTrajectory secondSweep = routine.trajectory("RightSweepContinuousFullWidth");
+
+        routine.active().onTrue(parallel(
+                runStartingTrajectory(firstSweep),
+                runOnce(fuelState::setSimFuelPreloaded)
+        ));
+
+
+        firstSweep.active().whileTrue(
+                intakeFromTrench(
+                        staticParametersFromFinalPose(firstSweep),
+                        staticShot
+                )
+        );
+
+        firstSweep.done().onTrue(
+                sequence(
+                        waitUntil(targetIsHub),
+                        shootStatic(),
+                        transition.cmd()
+                )
+        );
+
+        transition.done().onTrue(
+                deadline(
+                        secondSweep.cmd()
+                                .asProxy(),
+                        superstructure.runParametersWithHoodStowed(movingShot)
+                                .asProxy()
+                )
+        );
+
+        secondSweep.active().whileTrue(
+                intakeFromTrench(
+                        staticParametersFromFinalPose(secondSweep),
+                        staticShot
+                )
+        );
+
+        secondSweep.done().onTrue(
+                sequence(
+                        waitUntil(targetIsHub),
+                        shootStatic(),
+                        transition.cmd()
+                )
+        );
+
+        transition.done().onTrue(
+                deadline(
+                        secondSweep.cmd()
+                                .asProxy(),
+                        superstructure.runParametersWithHoodStowed(movingShot)
+                                .asProxy()
+                )
+        );
+
+        return routine;
+    }
+
     public Command warmup() {
         final AutoRoutine routine = autoFactory.newRoutine("Doohickey");
         final AutoTrajectory doohickey = routine.trajectory("Doohickey");
-
-        routine.active()
-                .whileTrue(run(() -> {
-                    if (DriverStation.isEnabled()) {
-                        routine.kill();
-                    }
-                }))
-                .onTrue(parallel(
-                        runStartingTrajectory(doohickey)
-//                        runOnce(fuelState::setSimFuelPreloaded)
-                ));
 
 //        doohickey.active().whileTrue(Commands.parallel(
 //                intakeFromTrench(
@@ -607,6 +665,24 @@ public class Autos {
         }
 
         final EventLoop loop = routine.loop();
+        final LoggedTrigger.Group routineGroup = LoggedTrigger.Group.from("Doohickey", loop);
+        final LoggedTrigger routineActive = routineGroup.t("RoutineActive", () -> {
+            try {
+                return (boolean) isActiveField.get(routine);
+            } catch (IllegalAccessException e) {
+                // drop
+                return false;
+            }
+        });
+
+        final Command warmupCommand = doohickey.cmd();
+        routineActive
+                .onTrue(parallel(
+                        warmupCommand
+//                        runStartingTrajectory(doohickey)
+//                        runOnce(fuelState::setSimFuelPreloaded)
+                ).ignoringDisable(true));
+
         return run(() -> {
             try {
                 pollCountField.set(routine, ((int) pollCountField.get(routine)) + 1);
@@ -617,7 +693,11 @@ public class Autos {
                 // drop
             }
         })
-                .finallyDo(routine::reset)
+                .ignoringDisable(true)
+                .finallyDo(() -> {
+                    warmupCommand.cancel();
+                    routine.reset();
+                })
                 .withTimeout(20);
     }
 

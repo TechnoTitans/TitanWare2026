@@ -466,20 +466,20 @@ public class Robot extends LoggedRobot {
 
     public void configureAutos() {
         autonomousEnabled.whileTrue(Commands.deferredProxy(() -> autoChooser.getSelected().cmd()));
-        CommandScheduler.getInstance().schedule(
-                Commands.parallel(
-                        Commands.runOnce(() -> attemptedAutoWarmup = true),
-                        autos.warmup()
-                                .finallyDo(interrupted -> {
+//        CommandScheduler.getInstance().schedule(
+//                Commands.parallel(
+//                        Commands.runOnce(() -> attemptedAutoWarmup = true),
+//                        autos.warmup()
+//                                .finallyDo(interrupted -> {
 //                                    if (!interrupted) {
-                                        autoIsHot = true;
+//                                        autoIsHot = true;
 //                                    }
-                                })
-                )
-                        .onlyIf(disabled)
-                        .onlyWhile(disabled)
-                        .ignoringDisable(true)
-        );
+//                                })
+//                )
+//                        .onlyIf(disabled)
+//                        .onlyWhile(disabled)
+//                        .ignoringDisable(true)
+//        );
 
         autoChooser.addAutoOption(new AutoOption(
                 "OnlyShootPreload",
@@ -538,6 +538,12 @@ public class Robot extends LoggedRobot {
         autoChooser.addAutoOption(new AutoOption(
                 "RightDoubleSweepBump",
                 autos::rightDoubleSweepBump,
+                Constants.CompetitionType.COMPETITION
+        ));
+
+        autoChooser.addAutoOption(new AutoOption(
+                "RightDoubleSweepBumpFullWidth",
+                autos::rightDoubleSweepBumpFullWidth,
                 Constants.CompetitionType.COMPETITION
         ));
     }
