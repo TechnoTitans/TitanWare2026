@@ -210,8 +210,7 @@ public class Robot extends LoggedRobot {
     private final LoggedTrigger hubActive =
             group.t("HubActive", () -> AllianceShift.get(MatchTimeOffsetSeconds).hubStatus() == AllianceShift.HubStatus.ACTIVE);
 
-    @Override
-    public void robotInit() {
+    public Robot() {
         if ((RobotBase.isReal() && Constants.CURRENT_MODE != Constants.RobotMode.REAL) ||
                 (RobotBase.isSimulation() && Constants.CURRENT_MODE == Constants.RobotMode.REAL)) {
             DriverStation.reportWarning(
