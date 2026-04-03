@@ -3,6 +3,7 @@ package frc.robot.subsystems.indexer.spindexer;
 import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
+import com.ctre.phoenix6.controls.TorqueCurrentFOC;
 import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.ParentDevice;
 import com.ctre.phoenix6.hardware.TalonFX;
@@ -39,6 +40,7 @@ public class SpindexerIOSim implements SpindexerIO {
     private final StatusSignal<Temperature> wheelTemperature;
 
     private final VoltageOut voltageOut;
+    private final TorqueCurrentFOC torqueCurrentFOC;
 
     public SpindexerIOSim(final HardwareConstants.SpindexerConstants constants) {
         this.deltaTime = new DeltaTime(true);
@@ -71,6 +73,7 @@ public class SpindexerIOSim implements SpindexerIO {
         this.wheelTemperature = motor.getDeviceTemp(false);
 
         this.voltageOut = new VoltageOut(0);
+        this.torqueCurrentFOC = new TorqueCurrentFOC(0);
 
         RefreshAll.add(
                 canBus,
@@ -145,5 +148,10 @@ public class SpindexerIOSim implements SpindexerIO {
     @Override
     public void toWheelVoltage(final double volts) {
         motor.setControl(voltageOut.withOutput(volts));
+    }
+
+    @Override
+    public void toWheelTorqueCurrent(final double torqueCurrentAmps) {
+        motor.setControl(torqueCurrentFOC.withOutput(torqueCurrentAmps));
     }
 }

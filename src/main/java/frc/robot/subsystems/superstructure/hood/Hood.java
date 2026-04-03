@@ -17,7 +17,7 @@ import java.util.function.DoubleSupplier;
 public class Hood extends SubsystemExt {
     protected static final String LogKey = "Hood";
     private static final double PositionToleranceRots = 0.01;
-    private static final double VelocityToleranceRotsPerSec = 0.05;
+    private static final double VelocityToleranceRotsPerSec = 0.1;
 
     private final HardwareConstants.HoodConstants constants;
 

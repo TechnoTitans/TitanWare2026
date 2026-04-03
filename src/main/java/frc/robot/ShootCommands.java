@@ -171,6 +171,12 @@ public class ShootCommands extends VirtualSubsystem {
                         <= ShootAndScootSpeeds.getTranslationSpeed() + ShootAndScootTolerance
         );
 
+        final Supplier<SwerveSpeed.Speeds> swerveSpeedsSupplier =
+                () -> switch (targetSupplier.get()) {
+                    case HUB -> SwerveSpeed.Speeds.SHOOTING;
+                    case FERRY, FERRY_BLOCKED -> SwerveSpeed.Speeds.FERRYING;
+                };
+
         return deadline(
                 repeatingSequence(
                         waitUntil(targetValid
@@ -195,8 +201,7 @@ public class ShootCommands extends VirtualSubsystem {
 //                        .onlyIf(fuelState.hasFuel)
 //                        .onlyWhile(fuelState.hasFuel
 //                                .or(intake.isIntaking)),
-                SwerveSpeed.toSwerveSpeed(ShootAndScootSpeeds)
-                        .onlyWhile(() -> targetSupplier.get() == Target.HUB),
+                SwerveSpeed.toSwerveSpeed(swerveSpeedsSupplier),
                 superstructure.runParameters(movingShot)
         ).withName("Shoot");
     }

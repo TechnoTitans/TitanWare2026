@@ -387,6 +387,18 @@ public class Robot extends LoggedRobot {
                         .withInterruptBehavior(Command.InterruptionBehavior.kCancelIncoming)
         );
 
+        driverController.a(testEventLoop).whileTrue(
+                feeder.wheelTorqueCurrentSysIdCommand()
+        );
+
+        driverController.b(testEventLoop).whileTrue(
+                spindexer.wheelTorqueCurrentSysIdCommand()
+        );
+
+        driverController.povUpRight().whileTrue(
+                intakeRollers.rollersTorqueCurrentSysIdCommand()
+        );
+
         driverController.leftBumper(testEventLoop).onTrue(Commands.runOnce(SignalLogger::stop));
     }
 

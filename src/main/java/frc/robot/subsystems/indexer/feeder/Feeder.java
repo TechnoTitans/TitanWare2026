@@ -1,12 +1,23 @@
 package frc.robot.subsystems.indexer.feeder;
 
+import com.ctre.phoenix6.SignalLogger;
 import edu.wpi.first.math.util.Units;
+import edu.wpi.first.units.CurrentUnit;
+import edu.wpi.first.units.measure.Current;
+import edu.wpi.first.units.measure.Time;
+import edu.wpi.first.units.measure.Velocity;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.Commands;
+import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.constants.Constants;
 import frc.robot.constants.HardwareConstants;
 import frc.robot.utils.commands.ext.SubsystemExt;
 import org.littletonrobotics.junction.Logger;
+
+import java.util.function.Consumer;
+
+import static edu.wpi.first.units.Units.*;
 
 public class Feeder extends SubsystemExt {
     protected static final String LogKey = "Feeder";
@@ -29,12 +40,21 @@ public class Feeder extends SubsystemExt {
     private Goal desiredGoal = Goal.OFF;
     private double torqueCurrentSetpointAmps = 0.0;
 
+    private final SysIdRoutine wheelTorqueCurrentSysIdRoutine;
+
     public Feeder(final Constants.RobotMode mode, final HardwareConstants.FeederConstants constants) {
         this.feederIO = switch (mode) {
             case REAL -> new FeederIOReal(constants);
             case SIM -> new FeederIOSim(constants);
             case REPLAY, DISABLED -> new FeederIO() {};
         };
+
+        this.wheelTorqueCurrentSysIdRoutine = makeTorqueCurrentSysIdRoutine(
+                Amps.of(4).per(Second),
+                Amp.of(40),
+                Seconds.of(10),
+                feederIO::toWheelTorqueCurrent
+        );
     }
 
     @Override
@@ -60,6 +80,10 @@ public class Feeder extends SubsystemExt {
         ).withName("ToGoal: " + goal);
     }
 
+    public Command wheelTorqueCurrentSysIdCommand() {
+        return makeWheelSysIdCommand(wheelTorqueCurrentSysIdRoutine);
+    }
+
     public boolean isTOFDetected() {
         return inputs.tofDetected;
     }
@@ -76,5 +100,41 @@ public class Feeder extends SubsystemExt {
     private void setDesiredTorqueCurrent(final double torqueCurrentAmps) {
         torqueCurrentSetpointAmps = torqueCurrentAmps;
         feederIO.toWheelTorqueCurrent(torqueCurrentAmps);
+    }
+
+    private SysIdRoutine makeTorqueCurrentSysIdRoutine(
+            final Velocity<CurrentUnit> currentRampRate,
+            final Current stepCurrent,
+            final Time timeout,
+            final Consumer<Double> torqueCurrentConsumer
+    ) {
+        return new SysIdRoutine(
+                new SysIdRoutine.Config(
+                        Volts.per(Second).of(currentRampRate.baseUnitMagnitude()),
+                        Volts.of(stepCurrent.baseUnitMagnitude()),
+                        timeout,
+                        state -> SignalLogger.writeString(String.format("%s-state", LogKey), state.toString())
+                ),
+                new SysIdRoutine.Mechanism(
+                        voltageMeasure -> torqueCurrentConsumer.accept(voltageMeasure.in(Volts)),
+                        null,
+                        this
+                )
+        );
+    }
+
+    private Command makeWheelSysIdCommand(final SysIdRoutine sysIdRoutine) {
+        return Commands.sequence(
+                sysIdRoutine.quasistatic(SysIdRoutine.Direction.kForward).withTimeout(5),
+                Commands.waitUntil(() -> Math.abs(inputs.wheelVelocityRotsPerSec) < 0.5),
+                Commands.waitSeconds(1),
+                sysIdRoutine.quasistatic(SysIdRoutine.Direction.kReverse).withTimeout(5),
+                Commands.waitUntil(() -> Math.abs(inputs.wheelVelocityRotsPerSec) < 0.5),
+                Commands.waitSeconds(1),
+                sysIdRoutine.dynamic(SysIdRoutine.Direction.kForward).withTimeout(5),
+                Commands.waitUntil(() -> Math.abs(inputs.wheelVelocityRotsPerSec) < 0.5),
+                Commands.waitSeconds(1),
+                sysIdRoutine.dynamic(SysIdRoutine.Direction.kReverse).withTimeout(5)
+        );
     }
 }
