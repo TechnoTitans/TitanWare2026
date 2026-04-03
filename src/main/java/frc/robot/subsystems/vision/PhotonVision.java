@@ -338,7 +338,23 @@ public class PhotonVision extends VirtualSubsystem {
                 final List<PhotonTrackedTarget> targetsUsed = visionUpdate.targetsUsed();
                 for (int i = 0; i < apriltagIds.length; i++) {
                     final int fiducialId = targetsUsed.get(i).getFiducialId();
+
+                    final Optional<Pose3d> tagPose = apriltagFieldLayout.getTagPose(fiducialId);
+                    if (tagPose.isEmpty()) {
+                        System.out.printf(
+                                "Empty pose for: %d%n" +
+                                        "Result: %s%n" +
+                                        "Tags used: %s%n%n",
+                                fiducialId,
+                                visionResult.result().toString(),
+                                Arrays.toString(visionUpdate.targetsUsed()
+                                        .stream()
+                                        .map(update -> update.fiducialId)
+                                        .toArray())
+                        );
+                    }
                     final Pose3d tagPose3d = apriltagFieldLayout.getTagPose(fiducialId).orElseGet(Pose3d::new);
+
                     final Pose2d tagPose2d = tagPose3d.toPose2d();
 
                     apriltagIds[i] = fiducialId;

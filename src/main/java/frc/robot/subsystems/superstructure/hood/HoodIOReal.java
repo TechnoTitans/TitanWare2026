@@ -59,9 +59,9 @@ public class HoodIOReal implements HoodIO {
     public void config() {
         final TalonFXConfiguration motorConfig = new TalonFXConfiguration();
         motorConfig.Slot0 = new Slot0Configs()
-                .withKS(0.3)
+                .withKS(0.5)
                 .withStaticFeedforwardSign(StaticFeedforwardSignValue.UseClosedLoopSign)
-                .withKP(300)
+                .withKP(320)
                 .withKD(0.1);
         motorConfig.CurrentLimits.StatorCurrentLimit = 40;
         motorConfig.CurrentLimits.StatorCurrentLimitEnable = true;

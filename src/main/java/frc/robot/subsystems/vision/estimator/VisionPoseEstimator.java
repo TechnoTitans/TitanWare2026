@@ -16,6 +16,8 @@ import org.photonvision.estimation.TargetModel;
 import org.photonvision.estimation.VisionEstimation;
 import org.photonvision.targeting.*;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
@@ -25,7 +27,7 @@ public class VisionPoseEstimator {
 
     private VisionPoseEstimator() {}
 
-    private static VisionResult constrainedPnpStrategy(
+    private static VisionResult[] constrainedPnpStrategy(
             final AprilTagFieldLayout fieldLayout,
             final Transform3d robotToCamera,
             final int resolutionWidthPx,
@@ -42,13 +44,15 @@ public class VisionPoseEstimator {
             final Optional<MultiTargetPNPResult> maybeMultiTargetResult = result.multitagResult;
             //noinspection OptionalIsPresent
             if (maybeMultiTargetResult.isPresent()) {
-                return multitag(
-                        fieldLayout,
-                        robotToCamera,
-                        timestamp,
-                        result,
-                        maybeMultiTargetResult.get()
-                );
+                return new VisionResult[] {
+                        multitag(
+                                fieldLayout,
+                                robotToCamera,
+                                timestamp,
+                                result,
+                                maybeMultiTargetResult.get()
+                        )
+                };
             } else {
                 return singleTag(
                         fieldLayout,
@@ -71,7 +75,7 @@ public class VisionPoseEstimator {
         } else {
             // HACK - use fallback strategy to gimme a seed pose
             // TODO - make sure nested update doesn't break state
-            final VisionResult maybeSingleTag = singleTag(
+            final VisionResult[] singleTagResults = singleTag(
                     fieldLayout,
                     robotToCamera,
                     resolutionWidthPx,
@@ -80,12 +84,22 @@ public class VisionPoseEstimator {
                     result
             );
 
-            final Optional<VisionResult.VisionUpdate> visionUpdate = maybeSingleTag.visionUpdate();
-            if (visionUpdate.isEmpty()) {
-                return VisionResult.invalid(VisionResult.Result.CONSTRAINED_PNP_NO_SEED_POSE);
+
+            VisionResult.VisionUpdate update = null;
+            for (final VisionResult singleTagResult : singleTagResults) {
+                final Optional<VisionResult.VisionUpdate> visionUpdate = singleTagResult.visionUpdate();
+                if (visionUpdate.isPresent()) {
+                    update = visionUpdate.get();
+                    break;
+                }
             }
 
-            fieldToRobotSeed = visionUpdate.get().estimatedPose();
+            if (update == null) {
+                return new VisionResult[] {
+                        VisionResult.invalid(VisionResult.Result.CONSTRAINED_PNP_NO_SEED_POSE)
+                };
+            }
+            fieldToRobotSeed = update.estimatedPose();
         }
 
         final Rotation2d heading = maybeRobotPose.orElseThrow().getRotation();
@@ -125,15 +139,17 @@ public class VisionPoseEstimator {
         }
 
         final Pose3d best = Pose3d.kZero.plus(pnpResult.get().best); // field-to-robot
-        return VisionResult.valid(
-                VisionResult.Result.CONSTRAINED_PNP_RESULT,
-                new VisionResult.VisionUpdate(
-                        best,
-                        Pose3d.kZero,
-                        timestamp,
-                        result.getTargets()
+        return new VisionResult[] {
+                VisionResult.valid(
+                        VisionResult.Result.CONSTRAINED_PNP_RESULT,
+                        new VisionResult.VisionUpdate(
+                                best,
+                                Pose3d.kZero,
+                                timestamp,
+                                result.getTargets()
+                        )
                 )
-        );
+        };
     }
 
     private static VisionResult multitag(
@@ -149,18 +165,26 @@ public class VisionPoseEstimator {
                         .plus(best) // field-to-camera
                         .relativeTo(fieldLayout.getOrigin())
                         .plus(robotToCamera.inverse()); // field-to-robot
+
+        final List<PhotonTrackedTarget> targetsUsed = new ArrayList<>();
+        for (final PhotonTrackedTarget target : pipelineResult.getTargets()) {
+            if (result.fiducialIDsUsed.contains((short) target.getFiducialId())) {
+                targetsUsed.add(target);
+            }
+        }
+
         return VisionResult.valid(
                 VisionResult.Result.MULTI_TARGET_RESULT,
                 new VisionResult.VisionUpdate(
                         bestPose,
                         Pose3d.kZero,
                         timestamp,
-                        pipelineResult.getTargets()
+                        targetsUsed
                 )
         );
     }
 
-    private static VisionResult singleTag(
+    private static VisionResult[] singleTag(
             final AprilTagFieldLayout fieldLayout,
             final Transform3d robotToCamera,
             final int resolutionWidthPx,
@@ -169,93 +193,106 @@ public class VisionPoseEstimator {
             final PhotonPipelineResult pipelineResult
     ) {
         final double timestamp = pipelineResult.getTimestampSeconds();
-        final PhotonTrackedTarget target = pipelineResult.getTargets().get(0);
 
-        final Optional<Pose3d> maybeTagPose = fieldLayout.getTagPose(target.getFiducialId());
-        if (maybeTagPose.isEmpty()) {
-            return VisionResult.invalid(VisionResult.Result.SINGLE_TARGET_INVALID_TAG);
-        }
+        final List<PhotonTrackedTarget> targets = pipelineResult.getTargets();
+        final int nTargets = targets.size();
 
-        final Set<Integer> oppositeReefTagIds = Robot.IsRedAlliance.getAsBoolean()
-                ? FieldConstants.BLUE_APRILTAG_IDS
-                : FieldConstants.RED_APRILTAG_IDS;
-        if (oppositeReefTagIds.contains(target.getFiducialId())) {
-            return VisionResult.invalid(VisionResult.Result.SINGLE_TARGET_OPPOSITE_SIDE);
-        }
+        final VisionResult[] results = new VisionResult[nTargets];
+        targets: for (int i = 0; i < nTargets; i++) {
+            final PhotonTrackedTarget target = targets.get(i);
+            final Optional<Pose3d> maybeTagPose = fieldLayout.getTagPose(target.getFiducialId());
+            if (maybeTagPose.isEmpty()) {
+                results[i] = VisionResult.invalid(VisionResult.Result.SINGLE_TARGET_INVALID_TAG);
+                continue;
+            }
 
-        for (final TargetCorner targetCorner : target.detectedCorners) {
-            final double x = targetCorner.x;
-            final double y = targetCorner.y;
+            final Set<Integer> oppositeAllianceTags = Robot.IsRedAlliance.getAsBoolean()
+                    ? FieldConstants.BLUE_APRILTAG_IDS
+                    : FieldConstants.RED_APRILTAG_IDS;
+            if (oppositeAllianceTags.contains(target.getFiducialId())) {
+                results[i] = VisionResult.invalid(VisionResult.Result.SINGLE_TARGET_OPPOSITE_SIDE);
+                continue;
+            }
 
-            if (MathUtil.isNear(0, x, EdgeTolerancePixels)
-                    || MathUtil.isNear(resolutionWidthPx, x, EdgeTolerancePixels)
-                    || MathUtil.isNear(0, y, EdgeTolerancePixels)
-                    || MathUtil.isNear(resolutionHeightPx, y, EdgeTolerancePixels)) {
-                return VisionResult.invalid(VisionResult.Result.SINGLE_TARGET_CUTOFF_CORNER);
+            for (final TargetCorner targetCorner : target.detectedCorners) {
+                final double x = targetCorner.x;
+                final double y = targetCorner.y;
+
+                if (MathUtil.isNear(0, x, EdgeTolerancePixels)
+                        || MathUtil.isNear(resolutionWidthPx, x, EdgeTolerancePixels)
+                        || MathUtil.isNear(0, y, EdgeTolerancePixels)
+                        || MathUtil.isNear(resolutionHeightPx, y, EdgeTolerancePixels)) {
+                    results[i] = VisionResult.invalid(VisionResult.Result.SINGLE_TARGET_CUTOFF_CORNER);
+                    continue targets;
+                }
+            }
+
+            final Pose3d tagPose = maybeTagPose.get();
+            final Pose3d cameraPose0 = tagPose.transformBy(target.getBestCameraToTarget().inverse());
+            final Pose3d cameraPose1 = tagPose.transformBy(target.getAlternateCameraToTarget().inverse());
+
+            final Pose3d robotPose0 = cameraPose0.transformBy(robotToCamera.inverse());
+            final Pose3d robotPose1 = cameraPose1.transformBy(robotToCamera.inverse());
+
+            if (target.getPoseAmbiguity() < Constants.Vision.MAX_ACCEPT_BEST_POSE_AMBIGUITY) {
+                results[i] = VisionResult.valid(
+                        VisionResult.Result.SINGLE_TARGET_RESULT,
+                        new VisionResult.VisionUpdate(
+                                robotPose0,
+                                Pose3d.kZero,
+                                timestamp,
+                                List.of(target)
+                        )
+                );
+                continue;
+            }
+
+            final Optional<Pose2d> maybePose = poseAtTimestamp.apply(timestamp);
+            if (maybePose.isEmpty()) {
+                results[i] = VisionResult.invalid(VisionResult.Result.SINGLE_TARGET_AMBIGUOUS_NO_POSE);
+                continue;
+            }
+
+            final Pose2d robotPose = maybePose.get();
+            final double yawDifference0 = robotPose0
+                    .getRotation()
+                    .toRotation2d()
+                    .minus(robotPose.getRotation())
+                    .getRadians();
+            final double yawDifference1 = robotPose1
+                    .getRotation()
+                    .toRotation2d()
+                    .minus(robotPose.getRotation())
+                    .getRadians();
+
+            if (Math.abs(MathUtil.angleModulus(yawDifference0)) < Math.abs(MathUtil.angleModulus(yawDifference1))) {
+                results[i] = VisionResult.valid(
+                        VisionResult.Result.SINGLE_TARGET_DISAMBIGUATE_POSE0_RESULT,
+                        new VisionResult.VisionUpdate(
+                                robotPose0,
+                                robotPose1,
+                                timestamp,
+                                List.of(target)
+                        )
+                );
+            } else {
+                results[i] = VisionResult.valid(
+                        VisionResult.Result.SINGLE_TARGET_DISAMBIGUATE_POSE1_RESULT,
+                        new VisionResult.VisionUpdate(
+                                robotPose1,
+                                robotPose0,
+                                timestamp,
+                                List.of(target)
+                        )
+                );
             }
         }
 
-        final Pose3d tagPose = maybeTagPose.get();
-        final Pose3d cameraPose0 = tagPose.transformBy(target.getBestCameraToTarget().inverse());
-        final Pose3d cameraPose1 = tagPose.transformBy(target.getAlternateCameraToTarget().inverse());
-
-        final Pose3d robotPose0 = cameraPose0.transformBy(robotToCamera.inverse());
-        final Pose3d robotPose1 = cameraPose1.transformBy(robotToCamera.inverse());
-
-        if (target.getPoseAmbiguity() < Constants.Vision.MAX_ACCEPT_BEST_POSE_AMBIGUITY) {
-            return VisionResult.valid(
-                    VisionResult.Result.SINGLE_TARGET_RESULT,
-                    new VisionResult.VisionUpdate(
-                            robotPose0,
-                            Pose3d.kZero,
-                            timestamp,
-                            pipelineResult.getTargets()
-                    )
-            );
-        }
-
-        final Optional<Pose2d> maybePose = poseAtTimestamp.apply(timestamp);
-        if (maybePose.isEmpty()) {
-            return VisionResult.invalid(VisionResult.Result.SINGLE_TARGET_AMBIGUOUS_NO_POSE);
-        }
-
-        final Pose2d robotPose = maybePose.get();
-        final double yawDifference0 = robotPose0
-                .getRotation()
-                .toRotation2d()
-                .minus(robotPose.getRotation())
-                .getRadians();
-        final double yawDifference1 = robotPose1
-                .getRotation()
-                .toRotation2d()
-                .minus(robotPose.getRotation())
-                .getRadians();
-
-        if (Math.abs(MathUtil.angleModulus(yawDifference0)) < Math.abs(MathUtil.angleModulus(yawDifference1))) {
-            return VisionResult.valid(
-                    VisionResult.Result.SINGLE_TARGET_DISAMBIGUATE_POSE0_RESULT,
-                    new VisionResult.VisionUpdate(
-                            robotPose0,
-                            robotPose1,
-                            timestamp,
-                            pipelineResult.getTargets()
-                    )
-            );
-        } else {
-            return VisionResult.valid(
-                    VisionResult.Result.SINGLE_TARGET_DISAMBIGUATE_POSE1_RESULT,
-                    new VisionResult.VisionUpdate(
-                            robotPose1,
-                            robotPose0,
-                            timestamp,
-                            pipelineResult.getTargets()
-                    )
-            );
-        }
+        return results;
     }
 
     @SuppressWarnings("unused")
-    public static VisionResult update(
+    public static VisionResult[] update(
             final AprilTagFieldLayout fieldLayout,
             final Function<Double, Optional<Pose2d>> poseAtTimestamp,
             final VisionIO.VisionIOInputs inputs,
@@ -265,24 +302,30 @@ public class VisionPoseEstimator {
 
         // Time in the past -- give up, since the following if expects times > 0
         if (timestamp < 0) {
-            return VisionResult.invalid(VisionResult.Result.NEGATIVE_TIMESTAMP);
+            return new VisionResult[] {
+                    VisionResult.invalid(VisionResult.Result.NEGATIVE_TIMESTAMP)
+            };
         }
 
         // If no targets seen, trivial case -- return empty result
         if (!pipelineResult.hasTargets()) {
-            return VisionResult.invalid(VisionResult.Result.NO_TARGETS);
+            return new VisionResult[] {
+                    VisionResult.invalid(VisionResult.Result.NO_TARGETS)
+            };
         }
 
         final Optional<MultiTargetPNPResult> maybeMultitagResult = pipelineResult.multitagResult;
         //noinspection OptionalIsPresent
         if (maybeMultitagResult.isPresent()) {
-            return multitag(
-                    fieldLayout,
-                    inputs.robotToCamera,
-                    timestamp,
-                    pipelineResult,
-                    maybeMultitagResult.get()
-            );
+            return new VisionResult[] {
+                    multitag(
+                            fieldLayout,
+                            inputs.robotToCamera,
+                            timestamp,
+                            pipelineResult,
+                            maybeMultitagResult.get()
+                    )
+            };
         } else {
             return singleTag(
                     fieldLayout,

@@ -92,11 +92,11 @@ public class ShooterIORealBangBang implements ShooterIO {
                 .withKA(0)
                 .withKP(9999)
                 .withKD(0);
-        motorConfig.TorqueCurrent.PeakForwardTorqueCurrent = 80;
+        motorConfig.TorqueCurrent.PeakForwardTorqueCurrent = 90;
         motorConfig.TorqueCurrent.PeakReverseTorqueCurrent = 0;
-        motorConfig.CurrentLimits.StatorCurrentLimit = 80;
+        motorConfig.CurrentLimits.StatorCurrentLimit = 90;
         motorConfig.CurrentLimits.StatorCurrentLimitEnable = true;
-        motorConfig.CurrentLimits.SupplyCurrentLimit = 75;
+        motorConfig.CurrentLimits.SupplyCurrentLimit = 85;
         motorConfig.CurrentLimits.SupplyCurrentLowerLimit = 60;
         motorConfig.CurrentLimits.SupplyCurrentLowerTime = 2.5;
         motorConfig.CurrentLimits.SupplyCurrentLimitEnable = true;

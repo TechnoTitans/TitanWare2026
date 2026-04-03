@@ -18,9 +18,7 @@ import org.photonvision.PhotonCamera;
 import org.photonvision.PhotonPoseEstimator;
 import org.photonvision.targeting.PhotonPipelineResult;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.function.Function;
 
 public class RealVisionRunner implements PhotonVisionRunner {
@@ -134,25 +132,23 @@ public class RealVisionRunner implements PhotonVisionRunner {
             );
 
             final PhotonPipelineResult[] pipelineResults = inputs.pipelineResults;
-            final int nPipelineResults = pipelineResults.length;
-            final VisionResult[] visionResults = new VisionResult[pipelineResults.length];
+            final List<VisionResult> visionResults = new ArrayList<>();
 
-            for (int i = 0; i < nPipelineResults; i++) {
-                final PhotonPipelineResult pipelineResult = pipelineResults[i];
-                final VisionResult visionResult = VisionPoseEstimator.update(
+            for (final PhotonPipelineResult pipelineResult : pipelineResults) {
+                final VisionResult[] visionResult = VisionPoseEstimator.update(
                         aprilTagFieldLayout,
                         poseAtTimestamp,
                         inputs,
                         pipelineResult
                 );
 
-                visionResults[i] = visionResult;
+                visionResults.addAll(List.of(visionResult));
             }
 
             // TODO: does this actually fix anything?
             visionResultsByVisionIO.put(
                     visionIO,
-                    visionResults
+                    visionResults.toArray(VisionResult[]::new)
             );
         }
     }

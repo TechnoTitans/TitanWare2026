@@ -514,6 +514,12 @@ public class Robot extends LoggedRobot {
                 autos::rightDoubleSweepContinuous,
                 Constants.CompetitionType.COMPETITION
         ));
+
+        autoChooser.addAutoOption(new AutoOption(
+                "RightDoubleSweepBump",
+                autos::rightDoubleSweepBump,
+                Constants.CompetitionType.COMPETITION
+        ));
     }
 
     public void configureButtonBindings(final EventLoop teleopEventLoop) {
@@ -550,7 +556,7 @@ public class Robot extends LoggedRobot {
                 .onTrue(intake.stow());
 
         coController.rightTrigger(0.5, teleopEventLoop)
-                .whileTrue(shootCommands.shoot())
+                .whileTrue(shootCommands.stopAndShoot())
                 .onFalse(intake.deploy());
 
         coController.b(teleopEventLoop)

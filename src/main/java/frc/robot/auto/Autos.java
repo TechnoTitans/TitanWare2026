@@ -486,6 +486,69 @@ public class Autos {
         return routine;
     }
 
+    public AutoRoutine rightDoubleSweepBump() {
+        final AutoRoutine routine = autoFactory.newRoutine("RightDoubleSweepBump");
+        final AutoTrajectory firstSweep = routine.trajectory("RightFirstSweepContinuous");
+        final AutoTrajectory transition = routine.trajectory("RightShootingTransitionFast");
+        final AutoTrajectory secondSweep = routine.trajectory("RightSweepContinuous");
+
+        routine.active().onTrue(parallel(
+                runStartingTrajectory(firstSweep),
+                runOnce(fuelState::setSimFuelPreloaded)
+        ));
+
+
+        firstSweep.active().whileTrue(
+                intakeFromTrench(
+                        staticParametersFromFinalPose(firstSweep),
+                        staticShot
+                )
+        );
+
+        firstSweep.done().onTrue(
+                sequence(
+                        waitUntil(targetIsHub),
+                        shootStatic(),
+                        transition.cmd()
+                )
+        );
+
+        transition.done().onTrue(
+                deadline(
+                        secondSweep.cmd()
+                                .asProxy(),
+                        superstructure.runParametersWithHoodStowed(movingShot)
+                                .asProxy()
+                )
+        );
+
+        secondSweep.active().whileTrue(
+                intakeFromTrench(
+                        staticParametersFromFinalPose(secondSweep),
+                        staticShot
+                )
+        );
+
+        secondSweep.done().onTrue(
+                sequence(
+                        waitUntil(targetIsHub),
+                        shootStatic(),
+                        transition.cmd()
+                )
+        );
+
+        transition.done().onTrue(
+                deadline(
+                        secondSweep.cmd()
+                                .asProxy(),
+                        superstructure.runParametersWithHoodStowed(movingShot)
+                                .asProxy()
+                )
+        );
+
+        return routine;
+    }
+
     private Command runStartingTrajectory(final AutoTrajectory startingTrajectory) {
         return Commands.sequence(
                 startingTrajectory.resetOdometry(),
@@ -550,7 +613,7 @@ public class Autos {
                                 intake.stowFeed()
                         )
                 )
-                        .onlyWhile(fuelState.hasFuel),
+                        .withTimeout(6),
                 superstructure.runParameters(staticShot)
                         .onlyIf(turretSafe),
                 swerve.runWheelXCommand()
