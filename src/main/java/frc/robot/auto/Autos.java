@@ -4,6 +4,11 @@ import choreo.auto.AutoFactory;
 import choreo.auto.AutoRoutine;
 import choreo.auto.AutoTrajectory;
 import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.IterativeRobotBase;
+import edu.wpi.first.wpilibj.Timer;
+import edu.wpi.first.wpilibj.Watchdog;
+import edu.wpi.first.wpilibj.event.EventLoop;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
@@ -23,6 +28,7 @@ import frc.robot.subsystems.vision.PhotonVision;
 import frc.robot.utils.commands.trigger.LoggedTrigger;
 import org.littletonrobotics.junction.Logger;
 
+import java.lang.reflect.Field;
 import java.util.function.Supplier;
 
 import static edu.wpi.first.wpilibj2.command.Commands.*;
@@ -547,6 +553,72 @@ public class Autos {
         );
 
         return routine;
+    }
+
+    public Command warmup() {
+        final AutoRoutine routine = autoFactory.newRoutine("Doohickey");
+        final AutoTrajectory doohickey = routine.trajectory("Doohickey");
+
+        routine.active()
+                .whileTrue(run(() -> {
+                    if (DriverStation.isEnabled()) {
+                        routine.kill();
+                    }
+                }))
+                .onTrue(parallel(
+                        runStartingTrajectory(doohickey)
+//                        runOnce(fuelState::setSimFuelPreloaded)
+                ));
+
+//        doohickey.active().whileTrue(Commands.parallel(
+//                intakeFromTrench(
+//                        staticParametersFromFinalPose(doohickey),
+//                        staticShot
+//                ),
+//                Commands.run(() -> System.out.println("running"))
+//        ));
+//
+//        doohickey.done().onTrue(
+//                sequence(
+//                        waitUntil(targetIsHub),
+//                        shootStatic()
+//                )
+//        );
+
+        final Field pollCountField;
+        final Field cycleTimestampField;
+        final Field isActiveField;
+        try {
+            pollCountField = AutoRoutine.class.getDeclaredField("pollCount");
+            pollCountField.setAccessible(true);
+
+            cycleTimestampField = AutoRoutine.class.getDeclaredField("cycleTimestamp");
+            cycleTimestampField.setAccessible(true);
+
+            isActiveField = AutoRoutine.class.getDeclaredField("isActive");
+            isActiveField.setAccessible(true);
+        } catch (final Exception err) {
+            DriverStation.reportWarning(
+                    String.format("Could not access AutoRoutine fields\nReason: %s", err),
+                    true
+            );
+
+            return Commands.none();
+        }
+
+        final EventLoop loop = routine.loop();
+        return run(() -> {
+            try {
+                pollCountField.set(routine, ((int) pollCountField.get(routine)) + 1);
+                cycleTimestampField.set(routine, Timer.getTimestamp());
+                loop.poll();
+                isActiveField.set(routine, true);
+            } catch (final IllegalAccessException e) {
+                // drop
+            }
+        })
+                .finallyDo(routine::reset)
+                .withTimeout(20);
     }
 
     private Command runStartingTrajectory(final AutoTrajectory startingTrajectory) {
