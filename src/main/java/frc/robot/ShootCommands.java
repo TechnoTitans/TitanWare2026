@@ -5,6 +5,7 @@ import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.constants.FieldConstants;
 import frc.robot.subsystems.drive.Swerve;
 import frc.robot.subsystems.indexer.Indexer;
@@ -19,6 +20,7 @@ import frc.robot.utils.subsystems.VirtualSubsystem;
 import frc.robot.utils.teleop.SwerveSpeed;
 import org.littletonrobotics.junction.Logger;
 
+import java.util.Map;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
@@ -26,8 +28,7 @@ import static edu.wpi.first.wpilibj2.command.Commands.*;
 
 public class ShootCommands extends VirtualSubsystem {
     protected static final String LogKey = "ShootCommands";
-    private static final SwerveSpeed.Speeds ShootAndScootSpeeds = SwerveSpeed.Speeds.SHOOTING;
-    private static final double ShootAndScootTolerance = 0.25;
+    private static final double SwerveSpeedTolerance = 0.25;
 
     public enum Target {
         HUB,
@@ -98,6 +99,12 @@ public class ShootCommands extends VirtualSubsystem {
     }
 
     public Command trackTarget() {
+        final Supplier<SwerveSpeed.Speeds> swerveSpeedsSupplier =
+                () -> switch (targetSupplier.get()) {
+                    case HUB -> SwerveSpeed.Speeds.SHOOTING;
+                    case FERRY, FERRY_BLOCKED -> SwerveSpeed.Speeds.FERRYING;
+                };
+
         final Supplier<ShotParameters> staticParametersSupplier = staticShotProvider.parametersSupplier(
                 swerve::getPose,
                 superstructure::getRobotToTurret,
@@ -108,11 +115,12 @@ public class ShootCommands extends VirtualSubsystem {
                 swerve::getPose,
                 superstructure::getRobotToTurret,
                 () -> {
+                    final SwerveSpeed.Speeds speeds = swerveSpeedsSupplier.get();
                     final ChassisSpeeds robotSpeeds = swerve.getRobotRelativeSpeeds();
                     final double linearSpeed = Math.hypot(robotSpeeds.vxMetersPerSecond, robotSpeeds.vyMetersPerSecond);
                     return robotSpeeds
                             .div(linearSpeed)
-                            .times(Math.min(linearSpeed, ShootAndScootSpeeds.getTranslationSpeed()));
+                            .times(Math.min(linearSpeed, speeds.getTranslationSpeed()));
                 },
                 targetPoseSupplier
         );
@@ -165,17 +173,17 @@ public class ShootCommands extends VirtualSubsystem {
                     case FERRY_BLOCKED -> false;
                 }
         );
-        final LoggedTrigger swerveReady = group.t(
-                "SwerveReady",
-                () -> linearSpeed(swerve.getFieldRelativeSpeeds())
-                        <= ShootAndScootSpeeds.getTranslationSpeed() + ShootAndScootTolerance
-        );
 
         final Supplier<SwerveSpeed.Speeds> swerveSpeedsSupplier =
                 () -> switch (targetSupplier.get()) {
                     case HUB -> SwerveSpeed.Speeds.SHOOTING;
                     case FERRY, FERRY_BLOCKED -> SwerveSpeed.Speeds.FERRYING;
                 };
+        final LoggedTrigger swerveReady = group.t(
+                "SwerveReady",
+                () -> linearSpeed(swerve.getFieldRelativeSpeeds())
+                        <= swerveSpeedsSupplier.get().getTranslationSpeed() + SwerveSpeedTolerance
+        );
 
         return deadline(
                 repeatingSequence(
@@ -183,24 +191,36 @@ public class ShootCommands extends VirtualSubsystem {
                                 .and(swerveReady)
                                 .and(superstructure::atSetpoint)),
                         deadline(
-                                indexer.feed()
-                                        .onlyWhile(targetValid
-                                                .and(swerveReady)
-                                                .and(superstructure.turretAtSetpoint
-                                                        .and(superstructure.hoodAtSetpoint)
-                                                        .and(superstructure.shooterAtSetpoint
-                                                                .debounce(
-                                                                        0.5,
-                                                                        Debouncer.DebounceType.kFalling
-                                                                )))
-                                        ),
+                                Commands.select(Map.of(
+                                        Target.HUB,
+                                        indexer.feed()
+                                                .onlyWhile(targetValid
+                                                        .and(swerveReady)
+                                                        .and(superstructure.turretAtSetpoint
+                                                                .and(superstructure.hoodAtSetpoint)
+                                                                .and(superstructure.shooterAtSetpoint
+                                                                        .debounce(
+                                                                                0.5,
+                                                                                Debouncer.DebounceType.kFalling
+                                                                        )))),
+                                        Target.FERRY,
+                                        indexer.feed()
+                                                .onlyWhile(targetValid
+                                                        .and(swerveReady)
+                                                        .and(superstructure.atSetpoint.debounce(
+                                                                0.5,
+                                                                Debouncer.DebounceType.kFalling
+                                                        ))),
+                                        Target.FERRY_BLOCKED,
+                                        Commands.none()
+                                ), targetSupplier),
                                 intake.stowFeed().asProxy()
                                         .unless(intake.isIntaking)
                         )
-                ),
-//                        .onlyIf(fuelState.hasFuel)
-//                        .onlyWhile(fuelState.hasFuel
-//                                .or(intake.isIntaking)),
+                )
+                        .onlyIf(fuelState.hasFuel)
+                        .onlyWhile(fuelState.hasFuel
+                                .or(intake.isIntaking)),
                 SwerveSpeed.toSwerveSpeed(swerveSpeedsSupplier),
                 superstructure.runParameters(movingShot)
         ).withName("Shoot");
