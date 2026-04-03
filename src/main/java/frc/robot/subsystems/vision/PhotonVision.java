@@ -92,8 +92,8 @@ public class PhotonVision extends VirtualSubsystem {
                     PhotonVision.makeVisionIOInputsMap(
                             new RealVisionRunner.VisionIOApriltagReal(TitanCamera.PHOTON_FH_APRILTAG),
                             new RealVisionRunner.VisionIOApriltagReal(TitanCamera.PHOTON_BC_APRILTAG),
-                            new RealVisionRunner.VisionIOApriltagReal(TitanCamera.PHOTON_BL_APRILTAG),
-                            new RealVisionRunner.VisionIOApriltagReal(TitanCamera.PHOTON_BR_APRILTAG)
+                            new RealVisionRunner.VisionIOApriltagReal(TitanCamera.PHOTON_BL_APRILTAG)
+//                            new RealVisionRunner.VisionIOApriltagReal(TitanCamera.PHOTON_BR_APRILTAG)
                     )
             );
             case SIM -> {

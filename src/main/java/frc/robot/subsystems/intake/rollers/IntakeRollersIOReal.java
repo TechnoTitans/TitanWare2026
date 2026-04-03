@@ -59,9 +59,9 @@ public class IntakeRollersIOReal implements IntakeRollersIO {
     @Override
     public void config() {
         final TalonFXConfiguration motorConfig = new TalonFXConfiguration();
-        motorConfig.CurrentLimits.StatorCurrentLimit = 60;
+        motorConfig.CurrentLimits.StatorCurrentLimit = 70;
         motorConfig.CurrentLimits.StatorCurrentLimitEnable = true;
-        motorConfig.CurrentLimits.SupplyCurrentLimit = 60;
+        motorConfig.CurrentLimits.SupplyCurrentLimit = 70;
         motorConfig.CurrentLimits.SupplyCurrentLowerLimit = 40;
         motorConfig.CurrentLimits.SupplyCurrentLowerTime = 2.5;
         motorConfig.CurrentLimits.SupplyCurrentLimitEnable = true;
