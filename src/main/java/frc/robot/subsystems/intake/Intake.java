@@ -1,5 +1,6 @@
 package frc.robot.subsystems.intake;
 
+import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.subsystems.intake.rollers.IntakeRollers;
@@ -55,9 +56,20 @@ public class Intake {
         return Commands.parallel(
                 Commands.repeatingSequence(
                         slide.toGoalHold(IntakeSlide.Goal.SHOOTING)
-                                .until(() -> slide.atGoal(IntakeSlide.Goal.SHOOTING)),
+                                .until(() ->
+                                        MathUtil.isNear(
+                                                IntakeSlide.Goal.SHOOTING.positionRots,
+                                                slide.getPosition().getRotations(),
+                                                0.5
+                                        ) && MathUtil.isNear(
+                                                0,
+                                                slide.getVelocityRotsPerSec(),
+                                                0.05
+                                        )
+                                ),
                         slide.setGoal(IntakeSlide.Goal.EXTEND),
                         Commands.waitUntil(slide.atSetpoint)
+                                .withTimeout(2)
                 ),
                 Commands.repeatingSequence(
                         rollers.setGoal(IntakeRollers.Goal.FEED_PULSE),

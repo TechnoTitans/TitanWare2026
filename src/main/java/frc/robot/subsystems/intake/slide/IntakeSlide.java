@@ -18,15 +18,15 @@ import java.util.HashMap;
 
 public class IntakeSlide extends SubsystemExt {
     protected static final String LogKey = "IntakeSlide";
-    private static final double PositionToleranceRots = 0.1;
-    private static final double VelocityToleranceRotsPerSec = 0.02;
+    private static final double PositionToleranceRots = 0.2;
+    private static final double VelocityToleranceRotsPerSec = 0.04;
 
     public enum Goal {
         STOW(0, GoalBehavior.expo()),
-        SHOOTING(0, GoalBehavior.withVelocity(0.6, 0.7)),
+        SHOOTING(0, GoalBehavior.withVelocity(0.7, 0.7)),
         EXTEND(3.4, GoalBehavior.expo());
 
-        private final double positionRots;
+        public final double positionRots;
         private final GoalBehavior behavior;
 
         Goal(final double positionRots, final GoalBehavior behavior) {
@@ -129,15 +129,7 @@ public class IntakeSlide extends SubsystemExt {
         };
 
         final LoggedTrigger.Group group = LoggedTrigger.Group.from(LogKey);
-        this.atSetpoint = group.t("AtSetpoint", () -> MathUtil.isNear(
-                positionSetpointRots,
-                inputs.averagePositionRots,
-                PositionToleranceRots
-        ) && MathUtil.isNear(
-                0,
-                inputs.averageVelocityRotsPerSec,
-                VelocityToleranceRotsPerSec
-        ));
+        this.atSetpoint = group.t("AtSetpoint", () -> atPosition(positionSetpointRots));
 
         this.intakeSlideIO.zero();
 
@@ -209,13 +201,17 @@ public class IntakeSlide extends SubsystemExt {
                 .withName("SetGoal: " + goal);
     }
 
-    public Rotation2d getIntakeSlidePositionRots() {
+    public Rotation2d getPosition() {
         return Rotation2d.fromRotations(inputs.averagePositionRots);
+    }
+
+    public double getVelocityRotsPerSec() {
+        return inputs.averageVelocityRotsPerSec;
     }
 
     public boolean atGoal(final Goal goal) {
         return desiredGoal == InternalGoal.fromGoal(goal)
-                && MathUtil.isNear(goal.positionRots, inputs.averagePositionRots, PositionToleranceRots);
+                && atPosition(goal.positionRots);
     }
 
     private void setDesiredGoal(final Goal goal) {
@@ -247,6 +243,18 @@ public class IntakeSlide extends SubsystemExt {
     private void setDesiredPositionWithVelocity(final double positionRots, final double velocityRotsPerSec) {
         positionSetpointRots = positionRots;
         intakeSlideIO.toSlidePositionWithVelocity(positionRots, velocityRotsPerSec);
+    }
+
+    private boolean atPosition(final double positionSetpoint) {
+        return MathUtil.isNear(
+                positionSetpoint,
+                inputs.averagePositionRots,
+                PositionToleranceRots
+        ) && MathUtil.isNear(
+                0,
+                inputs.averageVelocityRotsPerSec,
+                VelocityToleranceRotsPerSec
+        );
     }
 
     private boolean atSetpoint() {

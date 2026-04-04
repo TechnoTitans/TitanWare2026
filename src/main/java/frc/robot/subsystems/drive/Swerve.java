@@ -105,6 +105,10 @@ public class Swerve extends SubsystemExt {
             .withDesaturateWheelSpeeds(true)
             .withCenterOfRotation(Config.centerOfRotationMeters());
 
+    private final SwerveRequest.PointWheelsAt pointWheelsAt = new SwerveRequest.PointWheelsAt()
+            .withDriveRequestType(SwerveModule.DriveRequestType.OpenLoopVoltage)
+            .withSteerRequestType(SwerveModule.SteerRequestType.Position);
+
     private final SwerveRequest.SysIdSwerveTranslation sysIdTranslationVoltage =
             new SwerveRequest.SysIdSwerveTranslation();
 
@@ -835,6 +839,12 @@ public class Swerve extends SubsystemExt {
     public Command runWheelXCommand() {
         return run(this::wheelX)
                 .withName("RunWheelX");
+    }
+
+    // TODO: temp
+    public void stoppedZero() {
+        stop();
+        applyRequest(pointWheelsAt.withModuleDirection(Rotation2d.kZero));
     }
 
     public LoggedTrigger atPoseTrigger(final Supplier<Pose2d> targetPoseSupplier) {

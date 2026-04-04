@@ -147,7 +147,7 @@ public class Robot extends LoggedRobot {
     private final ComponentsSolver componentsSolver = new ComponentsSolver(
             turret::getTurretPosition,
             hood::getHoodPosition,
-            intakeSlide::getIntakeSlidePositionRots
+            intakeSlide::getPosition
     );
 
     private final FuelState fuelState = new FuelState(
@@ -401,9 +401,13 @@ public class Robot extends LoggedRobot {
 //        driverController.b(testEventLoop)
 //                .whileTrue(swerve.linearTorqueCurrentSysIdDynamicCommand(SysIdRoutine.Direction.kReverse));
 
+//        driverController.x(testEventLoop).whileTrue(
+//                turret.voltageSysIdCommand()
+//                        .withInterruptBehavior(Command.InterruptionBehavior.kCancelIncoming)
+//        );
+
         driverController.x(testEventLoop).whileTrue(
-                turret.voltageSysIdCommand()
-                        .withInterruptBehavior(Command.InterruptionBehavior.kCancelIncoming)
+                swerve.wheelRadiusCharacterization()
         );
 
         driverController.y(testEventLoop).whileTrue(
@@ -458,20 +462,20 @@ public class Robot extends LoggedRobot {
 
     public void configureAutos() {
         autonomousEnabled.whileTrue(Commands.deferredProxy(() -> autoChooser.getSelected().cmd()));
-//        CommandScheduler.getInstance().schedule(
-//                Commands.parallel(
-//                        Commands.runOnce(() -> attemptedAutoWarmup = true),
-//                        autos.warmup()
-//                                .finallyDo(interrupted -> {
-//                                    if (!interrupted) {
-//                                        autoIsHot = true;
-//                                    }
-//                                })
-//                )
-//                        .onlyIf(disabled)
-//                        .onlyWhile(disabled)
-//                        .ignoringDisable(true)
-//        );
+        CommandScheduler.getInstance().schedule(
+                Commands.parallel(
+                                Commands.runOnce(() -> attemptedAutoWarmup = true),
+                                autos.warmup()
+                                        .finallyDo(interrupted -> {
+                                            if (!interrupted) {
+                                                autoIsHot = true;
+                                            }
+                                        })
+                        )
+                        .onlyIf(disabled)
+                        .onlyWhile(disabled)
+                        .ignoringDisable(true)
+        );
 
         autoChooser.addAutoOption(new AutoOption(
                 "OnlyShootPreload",
@@ -530,6 +534,12 @@ public class Robot extends LoggedRobot {
         autoChooser.addAutoOption(new AutoOption(
                 "RightDoubleSweepBump",
                 autos::rightDoubleSweepBump,
+                Constants.CompetitionType.COMPETITION
+        ));
+
+        autoChooser.addAutoOption(new AutoOption(
+                "LeftDoubleSweepBumpFullWidth",
+                autos::leftDoubleSweepBumpFullWidth,
                 Constants.CompetitionType.COMPETITION
         ));
 

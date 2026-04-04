@@ -32,11 +32,11 @@ public record ShotParameters(
                 HubShotMap.put(5.84, new Shooter(40, 0.038));
                 HubShotMap.put(6.16, new Shooter(40, 0.041));
 
-                FerryShotMap.put(2.0, new Shooter(32, 0.1));
-                FerryShotMap.put(3.0, new Shooter(32, 0.1));
-                FerryShotMap.put(4.0, new Shooter(33, 0.08));
-                FerryShotMap.put(5.0, new Shooter(34, 0.07));
-                FerryShotMap.put(6.0, new Shooter(36, 0.06));
+                FerryShotMap.put(2.0, new Shooter(34, 0.1));
+                FerryShotMap.put(3.0, new Shooter(34, 0.1));
+                FerryShotMap.put(4.0, new Shooter(35, 0.08));
+                FerryShotMap.put(5.0, new Shooter(36, 0.07));
+                FerryShotMap.put(6.0, new Shooter(39, 0.06));
             }
             case SIM -> {
                 HubShotMap.put(1.3, new Shooter(21, 0));
