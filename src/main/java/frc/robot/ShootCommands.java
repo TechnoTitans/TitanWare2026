@@ -74,6 +74,7 @@ public class ShootCommands extends VirtualSubsystem {
                 swerve::getPose,
                 superstructure::getRobotToTurret,
                 swerve::getRobotRelativeSpeeds,
+                targetSupplier,
                 targetPoseSupplier
         );
 
@@ -82,6 +83,7 @@ public class ShootCommands extends VirtualSubsystem {
                 swerve::getPose,
                 superstructure::getRobotToTurret,
                 swerve::getRobotRelativeSpeeds,
+                targetSupplier,
                 targetPoseSupplier
         );
     }
@@ -89,6 +91,11 @@ public class ShootCommands extends VirtualSubsystem {
     @Override
     public void periodic() {
         Logger.recordOutput(LogKey + "/Target", targetSupplier.get());
+        Logger.recordOutput(
+                LogKey + "/DistanceToTarget",
+                superstructure.getTurretTranslation(swerve.getPose())
+                        .getDistance(targetPoseSupplier.get().getTranslation())
+        );
     }
 
     public static double linearSpeed(final ChassisSpeeds speeds) {
@@ -109,6 +116,7 @@ public class ShootCommands extends VirtualSubsystem {
                 swerve::getPose,
                 superstructure::getRobotToTurret,
                 swerve::getRobotRelativeSpeeds,
+                targetSupplier,
                 targetPoseSupplier
         );
         final Supplier<ShotParameters> movingTOFParametersSupplier = movingShotProvider.parametersSupplier(
@@ -122,6 +130,7 @@ public class ShootCommands extends VirtualSubsystem {
                             .div(linearSpeed)
                             .times(Math.min(linearSpeed, speeds.getTranslationSpeed()));
                 },
+                targetSupplier,
                 targetPoseSupplier
         );
 
@@ -197,10 +206,10 @@ public class ShootCommands extends VirtualSubsystem {
                                                 .onlyWhile(targetValid
                                                         .and(swerveReady)
                                                         .and(superstructure.turretAtSetpoint
-                                                                .debounce(
-                                                                        0.025,
-                                                                        Debouncer.DebounceType.kFalling
-                                                                )
+//                                                                .debounce(
+//                                                                        0.02,
+//                                                                        Debouncer.DebounceType.kFalling
+//                                                                )
                                                                 .and(superstructure.hoodAtSetpoint
                                                                         .debounce(
                                                                                 0.05,
@@ -215,10 +224,21 @@ public class ShootCommands extends VirtualSubsystem {
                                         indexer.feed()
                                                 .onlyWhile(targetValid
                                                         .and(swerveReady)
-                                                        .and(superstructure.atSetpoint.debounce(
-                                                                0.5,
-                                                                Debouncer.DebounceType.kFalling
-                                                        ))),
+                                                        .and(superstructure.turretAtSetpoint
+//                                                                .debounce(
+//                                                                        0.02,
+//                                                                        Debouncer.DebounceType.kFalling
+//                                                                )
+                                                                .and(superstructure.hoodAtSetpoint
+                                                                        .debounce(
+                                                                                0.25,
+                                                                                Debouncer.DebounceType.kFalling
+                                                                        ))
+                                                                .and(superstructure.shooterAtSetpoint
+                                                                        .debounce(
+                                                                                0.5,
+                                                                                Debouncer.DebounceType.kFalling
+                                                                        )))),
                                         Target.FERRY_BLOCKED,
                                         Commands.none()
                                 ), targetSupplier),

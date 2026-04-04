@@ -14,7 +14,7 @@ public class SwerveSpeed {
         NORMAL(Units.feetToMeters(12.5), 1.7 * Math.PI),
         SLOW(Units.feetToMeters(5), 1 * Math.PI),
         SHOOTING(Units.feetToMeters(4), 1.2 * Math.PI),
-        FERRYING(Units.feetToMeters(10), 1.3 * Math.PI);
+        FERRYING(Units.feetToMeters(6.5), 1.3 * Math.PI);
 
         private final double translationSpeed;
         private final double rotationSpeed;

@@ -3,17 +3,13 @@ package frc.robot.auto;
 import choreo.auto.AutoFactory;
 import choreo.auto.AutoRoutine;
 import choreo.auto.AutoTrajectory;
-import choreo.trajectory.SwerveSample;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.wpilibj.DriverStation;
-import edu.wpi.first.wpilibj.IterativeRobotBase;
 import edu.wpi.first.wpilibj.Timer;
-import edu.wpi.first.wpilibj.Watchdog;
 import edu.wpi.first.wpilibj.event.EventLoop;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
-import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.FuelState;
 import frc.robot.Robot;
 import frc.robot.ShootCommands;
@@ -105,7 +101,7 @@ public class Autos {
         this.staticShot = staticParameters(swerve::getPose);
 
         this.movingShotProvider = new MovingTOFShot();
-        this.movingShot = movingParameters(FieldConstants::getHubPose);
+        this.movingShot = movingParameters(() -> ShootCommands.Target.HUB, FieldConstants::getHubPose);
 
         this.robotStopped = group.t(
                 "RobotStopped",
@@ -150,7 +146,7 @@ public class Autos {
 
     public AutoRoutine leftSweepDepot() {
         final AutoRoutine routine = autoFactory.newRoutine("LeftSweepDepot");
-        final AutoTrajectory startToCenterLineAndBack = routine.trajectory("LeftStartToCenterLineAndBack");
+        final AutoTrajectory startToCenterLineAndBack = routine.trajectory("LeftFirstSweep");
         final AutoTrajectory shootingToDepot = routine.trajectory("LeftShootingToDepot");
 
         routine.active().onTrue(parallel(
@@ -713,15 +709,20 @@ public class Autos {
                 robotPoseSupplier,
                 superstructure::getRobotToTurret,
                 swerve::getRobotRelativeSpeeds,
+                () -> ShootCommands.Target.HUB,
                 FieldConstants::getHubPose
         );
     }
 
-    private Supplier<ShotParameters> movingParameters(final Supplier<Pose2d> targetPoseSupplier) {
+    private Supplier<ShotParameters> movingParameters(
+            final Supplier<ShootCommands.Target> targetSupplier,
+            final Supplier<Pose2d> targetPoseSupplier
+    ) {
         return movingShotProvider.parametersSupplier(
                 swerve::getPose,
                 superstructure::getRobotToTurret,
                 swerve::getRobotRelativeSpeeds,
+                targetSupplier,
                 targetPoseSupplier
         );
     }
@@ -781,7 +782,7 @@ public class Autos {
                                 .onlyWhile(superstructure::atSetpoint)
                 ).onlyWhile(fuelState.hasFuel
                         .or(intake.isIntaking)),
-                superstructure.runParameters(movingParameters(() -> ferryPose))
+                superstructure.runParameters(movingParameters(() -> ShootCommands.Target.FERRY, () -> ferryPose))
         ).withName("FerryShotWhileMoving");
     }
 

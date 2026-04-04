@@ -18,7 +18,6 @@ import frc.robot.auto.AutoChooser;
 import frc.robot.auto.AutoOption;
 import frc.robot.auto.Autos;
 import frc.robot.constants.Constants;
-import frc.robot.constants.FieldConstants;
 import frc.robot.constants.HardwareConstants;
 import frc.robot.constants.RobotMap;
 import frc.robot.subsystems.drive.Swerve;
@@ -360,13 +359,6 @@ public class Robot extends LoggedRobot {
         CommandLogger.periodic();
 
         componentsSolver.periodic();
-
-        Logger.recordOutput(
-                "DistanceToHub",
-                superstructure
-                        .getTurretTranslation(swerve.getPose())
-                        .getDistance(FieldConstants.getHubPose().getTranslation())
-        );
 
         final AllianceShift allianceShift = AllianceShift.get(0);
         final AllianceShift offsetAllianceShift = AllianceShift.get(MatchTimeOffsetSeconds);
