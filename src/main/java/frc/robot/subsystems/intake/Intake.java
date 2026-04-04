@@ -79,4 +79,11 @@ public class Intake {
                 )
         ).withName("StowFeedIntake");
     }
+
+    public Command unstuck() {
+        return Commands.parallel(
+                rollers.toGoal(IntakeRollers.Goal.UNSTUCK),
+                slide.setGoal(IntakeSlide.Goal.EXTEND)
+        );
+    }
 }

@@ -25,6 +25,7 @@ public class IntakeRollers extends SubsystemExt {
     public enum Goal {
         OFF(0),
         FEED_PULSE(5),
+        UNSTUCK(-12),
         INTAKE(7);
 
         private final double volts;

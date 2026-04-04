@@ -589,5 +589,8 @@ public class Robot extends LoggedRobot {
 
         coController.b(teleopEventLoop)
                 .whileTrue(indexer.backOut());
+
+        coController.x(teleopEventLoop)
+                .whileTrue(intake.unstuck());
     }
 }
