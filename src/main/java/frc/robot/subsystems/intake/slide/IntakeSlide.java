@@ -215,7 +215,7 @@ public class IntakeSlide extends SubsystemExt {
 
     public boolean atGoal(final Goal goal) {
         return desiredGoal == InternalGoal.fromGoal(goal)
-                && atSetpoint();
+                && MathUtil.isNear(goal.positionRots, inputs.averagePositionRots, PositionToleranceRots);
     }
 
     private void setDesiredGoal(final Goal goal) {
