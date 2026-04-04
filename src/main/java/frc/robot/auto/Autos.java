@@ -3,6 +3,7 @@ package frc.robot.auto;
 import choreo.auto.AutoFactory;
 import choreo.auto.AutoRoutine;
 import choreo.auto.AutoTrajectory;
+import edu.wpi.first.math.filter.Debouncer;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Timer;
@@ -30,6 +31,7 @@ import org.littletonrobotics.junction.Logger;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.text.Format;
 import java.util.function.Supplier;
 
 import static edu.wpi.first.wpilibj2.command.Commands.*;
@@ -118,8 +120,18 @@ public class Autos {
         this.turretSafe = group.t(
                 "TurretSafe",
                 () -> {
-                    final double safeXClose = FieldConstants.getTurretSafeXCloseBoundary();
-                    final double safeXFar = FieldConstants.getTurretSafeXFarBoundary();
+                    final boolean isStopped = robotStopped.getAsBoolean();
+//                    final double safeXClose = FieldConstants.getTurretSafeXCloseBoundary();
+//                    final double safeXFar = FieldConstants.getTurretSafeXFarBoundary();
+
+                    final double safeXClose = isStopped
+                            ? FieldConstants.getTurretSafeXCloseBoundary()
+                            : FieldConstants.getMovingTurretSafeXCloseBoundary();
+
+                    final double safeXFar = isStopped
+                            ? FieldConstants.getTurretSafeXFarBoundary()
+                            : FieldConstants.getMovingTurretSafeXFarBoundary();
+
                     final double turretX = superstructure
                             .getTurretTranslation(swerve.getPose())
                             .getX();
@@ -128,7 +140,7 @@ public class Autos {
                             ? (turretX >= safeXClose || turretX <= safeXFar)
                             : (turretX <= safeXClose || turretX >= safeXFar);
                 }
-        );
+        ).debounce(0.1, Debouncer.DebounceType.kFalling);
     }
 
     public AutoRoutine doNothing() {
