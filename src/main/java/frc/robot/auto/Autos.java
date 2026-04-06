@@ -77,10 +77,6 @@ public class Autos {
         this.autoFactory = new AutoFactory(
                 swerve::getPose,
                 photonVision::resetPose,
-//                sample -> {
-//                    System.out.println("running...");
-//                    swerve.followChoreoSample((SwerveSample) sample);
-//                },
                 swerve::followChoreoSample,
                 true,
                 swerve,
@@ -121,8 +117,6 @@ public class Autos {
                 "TurretSafe",
                 () -> {
                     final boolean isStopped = robotStopped.getAsBoolean();
-//                    final double safeXClose = FieldConstants.getTurretSafeXCloseBoundary();
-//                    final double safeXFar = FieldConstants.getTurretSafeXFarBoundary();
 
                     final double safeXClose = isStopped
                             ? FieldConstants.getTurretSafeXCloseBoundary()
@@ -701,20 +695,6 @@ public class Autos {
     public Command warmup() {
         final AutoRoutine routine = autoFactory.newRoutine("Warmup");
         final AutoTrajectory warmup = routine.trajectory("Warmup");
-
-//        warmup.active().whileTrue(
-//                intakeFromTrench(
-//                        staticParametersFromFinalPose(doohickey),
-//                        staticShot
-//                )
-//        );
-//
-//        warmup.done().onTrue(
-//                sequence(
-//                        waitUntil(targetIsHub),
-//                        shootStatic()
-//                )
-//        );
 
         final Field pollCountField;
         final Field cycleTimestampField;

@@ -367,8 +367,8 @@ public class Robot extends LoggedRobot {
         Logger.recordOutput(AllianceShift.LogKey + "/NormalHubStatus", allianceShift.hubStatus());
         Logger.recordOutput(AllianceShift.LogKey + "/OffsetHubStatus", offsetAllianceShift.hubStatus());
 
-        Logger.recordOutput("AttemptedAutoWarmup", attemptedAutoWarmup);
-        Logger.recordOutput("AutoIsHot", autoIsHot);
+        Logger.recordOutput(LogKey + "/AttemptedAutoWarmup", attemptedAutoWarmup);
+        Logger.recordOutput(LogKey + "/AutoIsHot", autoIsHot);
     }
 
     @Override
@@ -401,13 +401,9 @@ public class Robot extends LoggedRobot {
 //        driverController.b(testEventLoop)
 //                .whileTrue(swerve.linearTorqueCurrentSysIdDynamicCommand(SysIdRoutine.Direction.kReverse));
 
-//        driverController.x(testEventLoop).whileTrue(
-//                turret.voltageSysIdCommand()
-//                        .withInterruptBehavior(Command.InterruptionBehavior.kCancelIncoming)
-//        );
-
         driverController.x(testEventLoop).whileTrue(
                 swerve.wheelRadiusCharacterization()
+                        .withInterruptBehavior(Command.InterruptionBehavior.kCancelIncoming)
         );
 
         driverController.y(testEventLoop).whileTrue(
@@ -417,14 +413,22 @@ public class Robot extends LoggedRobot {
 
         driverController.a(testEventLoop).whileTrue(
                 feeder.wheelTorqueCurrentSysIdCommand()
+                        .withInterruptBehavior(Command.InterruptionBehavior.kCancelIncoming)
         );
 
         driverController.b(testEventLoop).whileTrue(
                 spindexer.wheelTorqueCurrentSysIdCommand()
+                        .withInterruptBehavior(Command.InterruptionBehavior.kCancelIncoming)
         );
 
-        driverController.povUpRight().whileTrue(
+        driverController.povLeft().whileTrue(
+                turret.voltageSysIdCommand()
+                        .withInterruptBehavior(Command.InterruptionBehavior.kCancelIncoming)
+        );
+
+        driverController.povRight().whileTrue(
                 intakeRollers.rollersTorqueCurrentSysIdCommand()
+                        .withInterruptBehavior(Command.InterruptionBehavior.kCancelIncoming)
         );
 
         driverController.leftBumper(testEventLoop).onTrue(Commands.runOnce(SignalLogger::stop));
@@ -574,18 +578,24 @@ public class Robot extends LoggedRobot {
                 .whileTrue(shootCommands.shootNoVision())
                 .onFalse(intake.deploy());
 
+        driverController.y(teleopEventLoop)
+                .onTrue(intake.deploy());
+
+        driverController.a(teleopEventLoop)
+                .onTrue(intake.stow());
+
         coController.leftTrigger(0.5, teleopEventLoop)
                 .whileTrue(intake.intake());
+
+        coController.rightTrigger(0.5, teleopEventLoop)
+                .whileTrue(shootCommands.stopAndShoot())
+                .onFalse(intake.deploy());
 
         coController.y(teleopEventLoop)
                 .onTrue(intake.deploy());
 
         coController.a(teleopEventLoop)
                 .onTrue(intake.stow());
-
-        coController.rightTrigger(0.5, teleopEventLoop)
-                .whileTrue(shootCommands.stopAndShoot())
-                .onFalse(intake.deploy());
 
         coController.b(teleopEventLoop)
                 .whileTrue(indexer.backOut());

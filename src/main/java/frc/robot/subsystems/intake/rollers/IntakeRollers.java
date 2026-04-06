@@ -23,9 +23,9 @@ public class IntakeRollers extends SubsystemExt {
     protected static final String LogKey = "IntakeRollers";
 
     public enum Goal {
+        UNSTUCK(-12),
         OFF(0),
         FEED_PULSE(5),
-        UNSTUCK(-12),
         INTAKE(7);
 
         private final double volts;
@@ -39,7 +39,7 @@ public class IntakeRollers extends SubsystemExt {
     private final IntakeRollerIOInputsAutoLogged inputs = new IntakeRollerIOInputsAutoLogged();
 
     private Goal desiredGoal = Goal.OFF;
-    private double voltageSetpoint = 0.0;
+    private double velocitySetpoint = 0.0;
 
     private final SysIdRoutine rollersTorqueCurrentSysIdRoutine;
 
@@ -66,7 +66,7 @@ public class IntakeRollers extends SubsystemExt {
         Logger.processInputs(LogKey, inputs);
 
         Logger.recordOutput(LogKey + "/DesiredGoal", desiredGoal);
-        Logger.recordOutput(LogKey + "/VoltageSetpoint", voltageSetpoint);
+        Logger.recordOutput(LogKey + "/VelocitySetpoint", velocitySetpoint);
 
         Logger.recordOutput(
                 LogKey + "/PeriodicIOPeriodMs",
@@ -95,9 +95,9 @@ public class IntakeRollers extends SubsystemExt {
         setDesiredVelocity(goal.volts);
     }
 
-    private void setDesiredVelocity(final double volts) {
-        voltageSetpoint = volts;
-        intakeRollersIO.toRollersVoltage(volts);
+    private void setDesiredVelocity(final double velocityRotsPerSec) {
+        velocitySetpoint = velocityRotsPerSec;
+        intakeRollersIO.toRollersVelocity(velocityRotsPerSec);
     }
 
     private SysIdRoutine makeTorqueCurrentSysIdRoutine(

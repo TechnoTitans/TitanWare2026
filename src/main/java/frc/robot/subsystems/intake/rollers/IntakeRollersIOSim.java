@@ -4,6 +4,7 @@ import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.TorqueCurrentFOC;
+import com.ctre.phoenix6.controls.VelocityTorqueCurrentFOC;
 import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.ParentDevice;
 import com.ctre.phoenix6.hardware.TalonFX;
@@ -41,6 +42,7 @@ public class IntakeRollersIOSim implements IntakeRollersIO {
 
     private final VoltageOut voltageOut;
     private final TorqueCurrentFOC torqueCurrentFOC;
+    private final VelocityTorqueCurrentFOC velocityTorqueCurrentFOC;
 
     public IntakeRollersIOSim(final HardwareConstants.IntakeRollerConstants constants) {
         this.deltaTime = new DeltaTime(true);
@@ -71,6 +73,7 @@ public class IntakeRollersIOSim implements IntakeRollersIO {
 
         this.voltageOut = new VoltageOut(0);
         this.torqueCurrentFOC = new TorqueCurrentFOC(0);
+        this.velocityTorqueCurrentFOC = new VelocityTorqueCurrentFOC(0);
 
         RefreshAll.add(
                 canBus,
@@ -150,5 +153,10 @@ public class IntakeRollersIOSim implements IntakeRollersIO {
     @Override
     public void toRollersTorqueCurrent(final double torqueCurrentAmps) {
         motor.setControl(torqueCurrentFOC.withOutput(torqueCurrentAmps));
+    }
+
+    @Override
+    public void toRollersVelocity(final double velocityRotsPerSec) {
+        motor.setControl(velocityTorqueCurrentFOC.withVelocity(velocityRotsPerSec));
     }
 }
