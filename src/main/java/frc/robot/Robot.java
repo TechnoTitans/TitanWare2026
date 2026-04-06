@@ -2,6 +2,9 @@ package frc.robot;
 
 import com.ctre.phoenix6.SignalLogger;
 import edu.wpi.first.hal.AllianceStationID;
+import edu.wpi.first.math.MathShared;
+import edu.wpi.first.math.MathSharedStore;
+import edu.wpi.first.math.MathUsageId;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.wpilibj.*;
 import edu.wpi.first.wpilibj.event.EventLoop;
@@ -15,7 +18,6 @@ import frc.robot.auto.AutoChooser;
 import frc.robot.auto.AutoOption;
 import frc.robot.auto.Autos;
 import frc.robot.constants.Constants;
-import frc.robot.constants.FieldConstants;
 import frc.robot.constants.HardwareConstants;
 import frc.robot.constants.RobotMap;
 import frc.robot.subsystems.drive.Swerve;
@@ -145,7 +147,7 @@ public class Robot extends LoggedRobot {
     private final ComponentsSolver componentsSolver = new ComponentsSolver(
             turret::getTurretPosition,
             hood::getHoodPosition,
-            intakeSlide::getIntakeSlidePositionRots
+            intakeSlide::getPosition
     );
 
     private final FuelState fuelState = new FuelState(
@@ -198,7 +200,7 @@ public class Robot extends LoggedRobot {
 
     private final LoggedTrigger.Group group = LoggedTrigger.Group.from(LogKey);
 
-        private final LoggedTrigger disabled = RobotModeLoggedTriggers.disabled(group);
+    private final LoggedTrigger disabled = RobotModeLoggedTriggers.disabled(group);
     private final LoggedTrigger autonomousEnabled = RobotModeLoggedTriggers.autonomous(group);
     private final LoggedTrigger teleopEnabled = RobotModeLoggedTriggers.teleop(group);
     private final LoggedTrigger enabled = RobotModeLoggedTriggers.enabled(group);
@@ -207,8 +209,11 @@ public class Robot extends LoggedRobot {
     private final LoggedTrigger hubActive =
             group.t("HubActive", () -> AllianceShift.get(MatchTimeOffsetSeconds).hubStatus() == AllianceShift.HubStatus.ACTIVE);
 
-    @Override
-    public void robotInit() {
+    // TODO: temp
+    private boolean attemptedAutoWarmup = false;
+    private boolean autoIsHot = false;
+
+    public Robot() {
         if ((RobotBase.isReal() && Constants.CURRENT_MODE != Constants.RobotMode.REAL) ||
                 (RobotBase.isSimulation() && Constants.CURRENT_MODE == Constants.RobotMode.REAL)) {
             DriverStation.reportWarning(
@@ -244,6 +249,29 @@ public class Robot extends LoggedRobot {
             DriverStation.reportWarning("Failed to disable loop overrun warnings.", false);
         }
         CommandScheduler.getInstance().setPeriod(LoopOverrunWarningTimeoutSeconds);
+
+        // silence `Rotation2d` warnings
+        final MathShared mathShared = MathSharedStore.getMathShared();
+        MathSharedStore.setMathShared(
+                new MathShared() {
+                    @Override
+                    public void reportError(final String error, final StackTraceElement[] stackTrace) {
+                        if (error.startsWith("x and y components of Rotation2d are zero")) {
+                            return;
+                        }
+                        mathShared.reportError(error, stackTrace);
+                    }
+
+                    @Override
+                    public void reportUsage(final MathUsageId id, int count) {
+                        mathShared.reportUsage(id, count);
+                    }
+
+                    @Override
+                    public double getTimestamp() {
+                        return mathShared.getTimestamp();
+                    }
+                });
 
         switch (Constants.CURRENT_MODE) {
             case REAL -> {
@@ -332,19 +360,15 @@ public class Robot extends LoggedRobot {
 
         componentsSolver.periodic();
 
-        Logger.recordOutput(
-                "DistanceToHub",
-                superstructure
-                        .getTurretTranslation(swerve.getPose())
-                        .getDistance(FieldConstants.getHubPose().getTranslation())
-        );
-
         final AllianceShift allianceShift = AllianceShift.get(0);
         final AllianceShift offsetAllianceShift = AllianceShift.get(MatchTimeOffsetSeconds);
         Logger.recordOutput(AllianceShift.LogKey + "/Normal", allianceShift);
         Logger.recordOutput(AllianceShift.LogKey + "/Offset", offsetAllianceShift);
         Logger.recordOutput(AllianceShift.LogKey + "/NormalHubStatus", allianceShift.hubStatus());
         Logger.recordOutput(AllianceShift.LogKey + "/OffsetHubStatus", offsetAllianceShift.hubStatus());
+
+        Logger.recordOutput(LogKey + "/AttemptedAutoWarmup", attemptedAutoWarmup);
+        Logger.recordOutput(LogKey + "/AutoIsHot", autoIsHot);
     }
 
     @Override
@@ -378,12 +402,32 @@ public class Robot extends LoggedRobot {
 //                .whileTrue(swerve.linearTorqueCurrentSysIdDynamicCommand(SysIdRoutine.Direction.kReverse));
 
         driverController.x(testEventLoop).whileTrue(
-                turret.voltageSysIdCommand()
+                swerve.wheelRadiusCharacterization()
                         .withInterruptBehavior(Command.InterruptionBehavior.kCancelIncoming)
         );
 
         driverController.y(testEventLoop).whileTrue(
                 shooter.flywheelTorqueCurrentSysIdCommand()
+                        .withInterruptBehavior(Command.InterruptionBehavior.kCancelIncoming)
+        );
+
+        driverController.a(testEventLoop).whileTrue(
+                feeder.wheelTorqueCurrentSysIdCommand()
+                        .withInterruptBehavior(Command.InterruptionBehavior.kCancelIncoming)
+        );
+
+        driverController.b(testEventLoop).whileTrue(
+                spindexer.wheelTorqueCurrentSysIdCommand()
+                        .withInterruptBehavior(Command.InterruptionBehavior.kCancelIncoming)
+        );
+
+        driverController.povLeft().whileTrue(
+                turret.voltageSysIdCommand()
+                        .withInterruptBehavior(Command.InterruptionBehavior.kCancelIncoming)
+        );
+
+        driverController.povRight().whileTrue(
+                intakeRollers.rollersTorqueCurrentSysIdCommand()
                         .withInterruptBehavior(Command.InterruptionBehavior.kCancelIncoming)
         );
 
@@ -422,6 +466,20 @@ public class Robot extends LoggedRobot {
 
     public void configureAutos() {
         autonomousEnabled.whileTrue(Commands.deferredProxy(() -> autoChooser.getSelected().cmd()));
+        CommandScheduler.getInstance().schedule(
+                Commands.parallel(
+                                Commands.runOnce(() -> attemptedAutoWarmup = true),
+                                autos.warmup()
+                                        .finallyDo(interrupted -> {
+                                            if (!interrupted) {
+                                                autoIsHot = true;
+                                            }
+                                        })
+                        )
+                        .onlyIf(disabled)
+                        .onlyWhile(disabled)
+                        .ignoringDisable(true)
+        );
 
         autoChooser.addAutoOption(new AutoOption(
                 "OnlyShootPreload",
@@ -476,6 +534,24 @@ public class Robot extends LoggedRobot {
                 autos::rightDoubleSweepContinuous,
                 Constants.CompetitionType.COMPETITION
         ));
+
+        autoChooser.addAutoOption(new AutoOption(
+                "RightDoubleSweepBump",
+                autos::rightDoubleSweepBump,
+                Constants.CompetitionType.COMPETITION
+        ));
+
+        autoChooser.addAutoOption(new AutoOption(
+                "LeftDoubleSweepBumpFullWidth",
+                autos::leftDoubleSweepBumpFullWidth,
+                Constants.CompetitionType.COMPETITION
+        ));
+
+        autoChooser.addAutoOption(new AutoOption(
+                "RightDoubleSweepBumpFullWidth",
+                autos::rightDoubleSweepBumpFullWidth,
+                Constants.CompetitionType.COMPETITION
+        ));
     }
 
     public void configureButtonBindings(final EventLoop teleopEventLoop) {
@@ -502,8 +578,18 @@ public class Robot extends LoggedRobot {
                 .whileTrue(shootCommands.shootNoVision())
                 .onFalse(intake.deploy());
 
+        driverController.y(teleopEventLoop)
+                .onTrue(intake.deploy());
+
+        driverController.a(teleopEventLoop)
+                .onTrue(intake.stow());
+
         coController.leftTrigger(0.5, teleopEventLoop)
                 .whileTrue(intake.intake());
+
+        coController.rightTrigger(0.5, teleopEventLoop)
+                .whileTrue(shootCommands.stopAndShoot())
+                .onFalse(intake.deploy());
 
         coController.y(teleopEventLoop)
                 .onTrue(intake.deploy());
@@ -511,11 +597,10 @@ public class Robot extends LoggedRobot {
         coController.a(teleopEventLoop)
                 .onTrue(intake.stow());
 
-        coController.rightTrigger(0.5, teleopEventLoop)
-                .whileTrue(shootCommands.shoot())
-                .onFalse(intake.deploy());
-
         coController.b(teleopEventLoop)
                 .whileTrue(indexer.backOut());
+
+        coController.x(teleopEventLoop)
+                .whileTrue(intake.unstuck());
     }
 }

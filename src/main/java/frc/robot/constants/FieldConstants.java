@@ -37,6 +37,8 @@ public class FieldConstants {
 
     private static final double TRENCH_WIDTH = Units.inchesToMeters(6);
     private static final double TURRET_SAFE_BUFFER = Units.inchesToMeters(12);
+    private static final double TURRET_MOVING_CLOSE_SAFE_BUFFER = Units.inchesToMeters(12);
+    private static final double TURRET_MOVING_FAR_SAFE_BUFFER = Units.inchesToMeters(36);
     public static final double BLUE_TURRET_SAFE_X_CLOSE_BOUNDARY = BLUE_HUB_POSE.getX()
             - (TRENCH_WIDTH / 2)
             - TURRET_SAFE_BUFFER;
@@ -93,5 +95,19 @@ public class FieldConstants {
 
     public static double getTurretSafeXFarBoundary() {
         return getAllianceFlipped(BLUE_TURRET_SAFE_X_FAR_BOUNDARY, RED_TURRET_SAFE_X_FAR_BOUNDARY);
+    }
+
+    public static double getMovingTurretSafeXCloseBoundary() {
+        return getAllianceFlipped(
+                BLUE_TURRET_SAFE_X_CLOSE_BOUNDARY - TURRET_MOVING_CLOSE_SAFE_BUFFER,
+                RED_TURRET_SAFE_X_CLOSE_BOUNDARY + TURRET_MOVING_CLOSE_SAFE_BUFFER
+        );
+    }
+
+    public static double getMovingTurretSafeXFarBoundary() {
+        return getAllianceFlipped(
+                BLUE_TURRET_SAFE_X_FAR_BOUNDARY + TURRET_MOVING_FAR_SAFE_BUFFER,
+                RED_TURRET_SAFE_X_FAR_BOUNDARY - TURRET_MOVING_FAR_SAFE_BUFFER
+        );
     }
 }

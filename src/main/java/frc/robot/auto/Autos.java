@@ -3,9 +3,14 @@ package frc.robot.auto;
 import choreo.auto.AutoFactory;
 import choreo.auto.AutoRoutine;
 import choreo.auto.AutoTrajectory;
+import edu.wpi.first.math.filter.Debouncer;
 import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.Timer;
+import edu.wpi.first.wpilibj.event.EventLoop;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
+import edu.wpi.first.wpilibj2.command.FunctionalCommand;
 import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
 import frc.robot.FuelState;
 import frc.robot.Robot;
@@ -21,8 +26,12 @@ import frc.robot.subsystems.superstructure.params.ShotProvider;
 import frc.robot.subsystems.superstructure.params.StaticShot;
 import frc.robot.subsystems.vision.PhotonVision;
 import frc.robot.utils.commands.trigger.LoggedTrigger;
+import frc.robot.utils.commands.trigger.RobotModeLoggedTriggers;
 import org.littletonrobotics.junction.Logger;
 
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
+import java.text.Format;
 import java.util.function.Supplier;
 
 import static edu.wpi.first.wpilibj2.command.Commands.*;
@@ -93,7 +102,7 @@ public class Autos {
         this.staticShot = staticParameters(swerve::getPose);
 
         this.movingShotProvider = new MovingTOFShot();
-        this.movingShot = movingParameters(FieldConstants::getHubPose);
+        this.movingShot = movingParameters(() -> ShootCommands.Target.HUB, FieldConstants::getHubPose);
 
         this.robotStopped = group.t(
                 "RobotStopped",
@@ -107,8 +116,16 @@ public class Autos {
         this.turretSafe = group.t(
                 "TurretSafe",
                 () -> {
-                    final double safeXClose = FieldConstants.getTurretSafeXCloseBoundary();
-                    final double safeXFar = FieldConstants.getTurretSafeXFarBoundary();
+                    final boolean isStopped = robotStopped.getAsBoolean();
+
+                    final double safeXClose = isStopped
+                            ? FieldConstants.getTurretSafeXCloseBoundary()
+                            : FieldConstants.getMovingTurretSafeXCloseBoundary();
+
+                    final double safeXFar = isStopped
+                            ? FieldConstants.getTurretSafeXFarBoundary()
+                            : FieldConstants.getMovingTurretSafeXFarBoundary();
+
                     final double turretX = superstructure
                             .getTurretTranslation(swerve.getPose())
                             .getX();
@@ -117,7 +134,7 @@ public class Autos {
                             ? (turretX >= safeXClose || turretX <= safeXFar)
                             : (turretX <= safeXClose || turretX >= safeXFar);
                 }
-        );
+        ).debounce(0.1, Debouncer.DebounceType.kFalling);
     }
 
     public AutoRoutine doNothing() {
@@ -138,7 +155,7 @@ public class Autos {
 
     public AutoRoutine leftSweepDepot() {
         final AutoRoutine routine = autoFactory.newRoutine("LeftSweepDepot");
-        final AutoTrajectory startToCenterLineAndBack = routine.trajectory("LeftStartToCenterLineAndBack");
+        final AutoTrajectory startToCenterLineAndBack = routine.trajectory("LeftFirstSweep");
         final AutoTrajectory shootingToDepot = routine.trajectory("LeftShootingToDepot");
 
         routine.active().onTrue(parallel(
@@ -486,6 +503,312 @@ public class Autos {
         return routine;
     }
 
+    public AutoRoutine rightDoubleSweepBump() {
+        final AutoRoutine routine = autoFactory.newRoutine("RightDoubleSweepBump");
+        final AutoTrajectory firstSweep = routine.trajectory("RightFirstSweepContinuous");
+        final AutoTrajectory transition = routine.trajectory("RightShootingTransitionFast");
+        final AutoTrajectory secondSweep = routine.trajectory("RightSweepContinuous");
+
+        routine.active().onTrue(parallel(
+                runStartingTrajectory(firstSweep),
+                runOnce(fuelState::setSimFuelPreloaded)
+        ));
+
+
+        firstSweep.active().whileTrue(
+                intakeFromTrench(
+                        staticParametersFromFinalPose(firstSweep),
+                        staticShot
+                )
+        );
+
+        firstSweep.done().onTrue(
+                sequence(
+                        waitUntil(targetIsHub),
+                        shootStatic(),
+                        transition.cmd()
+                )
+        );
+
+        transition.done().onTrue(
+                deadline(
+                        secondSweep.cmd()
+                                .asProxy(),
+                        superstructure.runParametersWithHoodStowed(movingShot)
+                                .asProxy()
+                )
+        );
+
+        secondSweep.active().whileTrue(
+                intakeFromTrench(
+                        staticParametersFromFinalPose(secondSweep),
+                        staticShot
+                )
+        );
+
+        secondSweep.done().onTrue(
+                sequence(
+                        waitUntil(targetIsHub),
+                        shootStatic(),
+                        transition.cmd()
+                )
+        );
+
+        transition.done().onTrue(
+                deadline(
+                        secondSweep.cmd()
+                                .asProxy(),
+                        superstructure.runParametersWithHoodStowed(movingShot)
+                                .asProxy()
+                )
+        );
+
+        return routine;
+    }
+
+    public AutoRoutine leftDoubleSweepBumpFullWidth() {
+        final AutoRoutine routine = autoFactory.newRoutine("LeftDoubleSweepBumpFullWidth");
+        final AutoTrajectory firstSweep = routine.trajectory("LeftFirstSweepContinuous");
+        final AutoTrajectory transition = routine.trajectory("LeftShootingTransitionFast");
+        final AutoTrajectory secondSweep = routine.trajectory("LeftSweepContinuousFullWidth");
+
+        routine.active().onTrue(parallel(
+                runStartingTrajectory(firstSweep),
+                runOnce(fuelState::setSimFuelPreloaded)
+        ));
+
+
+        firstSweep.active().whileTrue(
+                intakeFromTrench(
+                        staticParametersFromFinalPose(firstSweep),
+                        staticShot
+                )
+        );
+
+        firstSweep.done().onTrue(
+                sequence(
+                        waitUntil(targetIsHub),
+                        shootStatic(),
+                        transition.cmd()
+                )
+        );
+
+        transition.done().onTrue(
+                deadline(
+                        secondSweep.cmd()
+                                .asProxy(),
+                        superstructure.runParametersWithHoodStowed(movingShot)
+                                .asProxy()
+                )
+        );
+
+        secondSweep.active().whileTrue(
+                intakeFromTrench(
+                        staticParametersFromFinalPose(secondSweep),
+                        staticShot
+                )
+        );
+
+        secondSweep.done().onTrue(
+                sequence(
+                        waitUntil(targetIsHub),
+                        shootStatic(),
+                        transition.cmd()
+                )
+        );
+
+        transition.done().onTrue(
+                deadline(
+                        secondSweep.cmd()
+                                .asProxy(),
+                        superstructure.runParametersWithHoodStowed(movingShot)
+                                .asProxy()
+                )
+        );
+
+        return routine;
+    }
+
+    public AutoRoutine rightDoubleSweepBumpFullWidth() {
+        final AutoRoutine routine = autoFactory.newRoutine("RightDoubleSweepBumpFullWidth");
+        final AutoTrajectory firstSweep = routine.trajectory("RightFirstSweepContinuous");
+        final AutoTrajectory transition = routine.trajectory("RightShootingTransitionFast");
+        final AutoTrajectory secondSweep = routine.trajectory("RightSweepContinuousFullWidth");
+
+        routine.active().onTrue(parallel(
+                runStartingTrajectory(firstSweep),
+                runOnce(fuelState::setSimFuelPreloaded)
+        ));
+
+
+        firstSweep.active().whileTrue(
+                intakeFromTrench(
+                        staticParametersFromFinalPose(firstSweep),
+                        staticShot
+                )
+        );
+
+        firstSweep.done().onTrue(
+                sequence(
+                        waitUntil(targetIsHub),
+                        shootStatic(),
+                        transition.cmd()
+                )
+        );
+
+        transition.done().onTrue(
+                deadline(
+                        secondSweep.cmd()
+                                .asProxy(),
+                        superstructure.runParametersWithHoodStowed(movingShot)
+                                .asProxy()
+                )
+        );
+
+        secondSweep.active().whileTrue(
+                intakeFromTrench(
+                        staticParametersFromFinalPose(secondSweep),
+                        staticShot
+                )
+        );
+
+        secondSweep.done().onTrue(
+                sequence(
+                        waitUntil(targetIsHub),
+                        shootStatic(),
+                        transition.cmd()
+                )
+        );
+
+        transition.done().onTrue(
+                deadline(
+                        secondSweep.cmd()
+                                .asProxy(),
+                        superstructure.runParametersWithHoodStowed(movingShot)
+                                .asProxy()
+                )
+        );
+
+        return routine;
+    }
+
+    public Command warmup() {
+        final AutoRoutine routine = autoFactory.newRoutine("Warmup");
+        final AutoTrajectory warmup = routine.trajectory("Warmup");
+
+        final Field pollCountField;
+        final Field cycleTimestampField;
+        final Field isActiveField;
+        try {
+            pollCountField = AutoRoutine.class.getDeclaredField("pollCount");
+            pollCountField.setAccessible(true);
+
+            cycleTimestampField = AutoRoutine.class.getDeclaredField("cycleTimestamp");
+            cycleTimestampField.setAccessible(true);
+
+            isActiveField = AutoRoutine.class.getDeclaredField("isActive");
+            isActiveField.setAccessible(true);
+        } catch (final Exception e) {
+            DriverStation.reportError(
+                    String.format("Could not access AutoRoutine fields\nReason: %s", e),
+                    true
+            );
+
+            return none();
+        }
+
+        final EventLoop loop = routine.loop();
+        final LoggedTrigger.Group routineGroup = LoggedTrigger.Group.from("Doohickey", loop);
+        final LoggedTrigger routineActive = routineGroup.t("RoutineActive", () -> {
+            try {
+                return (boolean) isActiveField.get(routine);
+            } catch (final IllegalAccessException e) {
+                // drop
+                return false;
+            }
+        });
+
+        final Command warmupCommand;
+        try {
+            final Method cmdInitialize = AutoTrajectory.class.getDeclaredMethod("cmdInitialize");
+            cmdInitialize.setAccessible(true);
+
+            final Method cmdExecute = AutoTrajectory.class.getDeclaredMethod("cmdExecute");
+            cmdExecute.setAccessible(true);
+
+            final Method cmdEnd = AutoTrajectory.class.getDeclaredMethod("cmdEnd", boolean.class);
+            cmdEnd.setAccessible(true);
+
+            final Field activeTimer = AutoTrajectory.class.getDeclaredField("activeTimer");
+            activeTimer.setAccessible(true);
+
+            warmupCommand = new FunctionalCommand(
+                    () -> {
+                        try {
+                            cmdInitialize.invoke(warmup);
+                        } catch (final Exception e) {
+                            // drop
+                        }
+                    },
+                    () -> {
+                        try {
+                            cmdExecute.invoke(warmup);
+                        } catch (final Exception e) {
+                            // drop
+                        }
+                    },
+                    interrupted -> {
+                        try {
+                            cmdEnd.invoke(warmup, interrupted);
+                        } catch (final Exception e) {
+                            // drop
+                        }
+                    },
+                    () -> {
+                        try {
+                            return ((Timer) activeTimer.get(warmup)).get()
+                                    > warmup.getRawTrajectory().getTotalTime();
+                        } catch (final Exception e) {
+                            // drop
+                            return false;
+                        }
+                    }
+            )
+                    .finallyDo(swerve::stoppedZero)
+                    .ignoringDisable(true);
+        } catch (final Exception e) {
+            DriverStation.reportError(
+                    String.format("Could not access AutoTrajectory fields\nReason: %s", e),
+                    true
+            );
+
+            return none();
+        }
+
+        routineActive
+                .whileTrue(warmupCommand);
+
+        final LoggedTrigger disabled = RobotModeLoggedTriggers.disabled(group);
+        return run(() -> {
+            try {
+                pollCountField.set(routine, ((int) pollCountField.get(routine)) + 1);
+                cycleTimestampField.set(routine, Timer.getTimestamp());
+                loop.poll();
+                isActiveField.set(routine, true);
+            } catch (final IllegalAccessException e) {
+                // drop
+            }
+        })
+                .finallyDo(() -> {
+                    warmupCommand.cancel();
+                    routine.reset();
+                })
+                .onlyIf(disabled)
+                .onlyWhile(disabled)
+                .withTimeout(20)
+                .ignoringDisable(true);
+    }
+
     private Command runStartingTrajectory(final AutoTrajectory startingTrajectory) {
         return Commands.sequence(
                 startingTrajectory.resetOdometry(),
@@ -498,15 +821,20 @@ public class Autos {
                 robotPoseSupplier,
                 superstructure::getRobotToTurret,
                 swerve::getRobotRelativeSpeeds,
+                () -> ShootCommands.Target.HUB,
                 FieldConstants::getHubPose
         );
     }
 
-    private Supplier<ShotParameters> movingParameters(final Supplier<Pose2d> targetPoseSupplier) {
+    private Supplier<ShotParameters> movingParameters(
+            final Supplier<ShootCommands.Target> targetSupplier,
+            final Supplier<Pose2d> targetPoseSupplier
+    ) {
         return movingShotProvider.parametersSupplier(
                 swerve::getPose,
                 superstructure::getRobotToTurret,
                 swerve::getRobotRelativeSpeeds,
+                targetSupplier,
                 targetPoseSupplier
         );
     }
@@ -550,7 +878,7 @@ public class Autos {
                                 intake.stowFeed()
                         )
                 )
-                        .onlyWhile(fuelState.hasFuel),
+                        .withTimeout(6),
                 superstructure.runParameters(staticShot)
                         .onlyIf(turretSafe),
                 swerve.runWheelXCommand()
@@ -566,7 +894,7 @@ public class Autos {
                                 .onlyWhile(superstructure::atSetpoint)
                 ).onlyWhile(fuelState.hasFuel
                         .or(intake.isIntaking)),
-                superstructure.runParameters(movingParameters(() -> ferryPose))
+                superstructure.runParameters(movingParameters(() -> ShootCommands.Target.FERRY, () -> ferryPose))
         ).withName("FerryShotWhileMoving");
     }
 

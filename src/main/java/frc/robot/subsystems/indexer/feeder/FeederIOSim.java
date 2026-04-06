@@ -135,8 +135,8 @@ public class FeederIOSim implements FeederIO {
         motorConfig.Feedback.SensorToMechanismRatio = constants.gearing();
         Phoenix6Utils.tryUntilOk(motor, () -> motor.getConfigurator().apply(motorConfig));
 
-        canRangeConfiguration.ProximityParams.ProximityThreshold = 0.4;
-        canRangeConfiguration.ProximityParams.ProximityHysteresis = 0.01;
+        canRangeConfiguration.ProximityParams.ProximityThreshold = 0.05;
+        canRangeConfiguration.ProximityParams.ProximityHysteresis = 0.02;
         canRangeConfiguration.ProximityParams.MinSignalStrengthForValidMeasurement = 2500;
         canRangeConfiguration.ToFParams.UpdateMode = UpdateModeValue.ShortRange100Hz;
         Phoenix6Utils.tryUntilOk(canRange, () -> canRange.getConfigurator().apply(canRangeConfiguration));

@@ -9,6 +9,7 @@ import edu.wpi.first.math.kinematics.SwerveDriveOdometry;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.math.util.Units;
+import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Filesystem;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -44,7 +45,17 @@ public class PhotonVision extends VirtualSubsystem {
         try {
             return new AprilTagFieldLayout(
                     Filesystem.getDeployDirectory().getPath() + "/2026-rebuilt-hubs.json");
-        } catch (final IOException e) {
+        } catch (final IOException ioException) {
+            DriverStation.reportError(
+                    String.format(
+                            "Failed to load apriltag layout!" +
+                                    "Falling back to default full field layout.\n" +
+                                    "Reason: %s",
+                            ioException
+                    ),
+                    true
+            );
+
             return AprilTagFieldLayout.loadField(AprilTagFields.k2026RebuiltWelded);
         }
     }
@@ -327,7 +338,23 @@ public class PhotonVision extends VirtualSubsystem {
                 final List<PhotonTrackedTarget> targetsUsed = visionUpdate.targetsUsed();
                 for (int i = 0; i < apriltagIds.length; i++) {
                     final int fiducialId = targetsUsed.get(i).getFiducialId();
+
+                    final Optional<Pose3d> tagPose = apriltagFieldLayout.getTagPose(fiducialId);
+                    if (tagPose.isEmpty()) {
+                        System.out.printf(
+                                "Empty pose for: %d%n" +
+                                        "Result: %s%n" +
+                                        "Tags used: %s%n%n",
+                                fiducialId,
+                                visionResult.result().toString(),
+                                Arrays.toString(visionUpdate.targetsUsed()
+                                        .stream()
+                                        .map(update -> update.fiducialId)
+                                        .toArray())
+                        );
+                    }
                     final Pose3d tagPose3d = apriltagFieldLayout.getTagPose(fiducialId).orElseGet(Pose3d::new);
+
                     final Pose2d tagPose2d = tagPose3d.toPose2d();
 
                     apriltagIds[i] = fiducialId;

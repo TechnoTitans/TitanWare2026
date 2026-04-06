@@ -4,13 +4,17 @@ import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.utils.Container;
+import frc.robot.utils.commands.ext.CommandsExt;
+
+import java.util.function.Supplier;
 
 public class SwerveSpeed {
     public enum Speeds {
         FAST(Units.feetToMeters(15), 2 * Math.PI),
         NORMAL(Units.feetToMeters(12.5), 1.7 * Math.PI),
         SLOW(Units.feetToMeters(5), 1 * Math.PI),
-        SHOOTING(Units.feetToMeters(5), 1.2 * Math.PI);
+        SHOOTING(Units.feetToMeters(4), 1.2 * Math.PI),
+        FERRYING(Units.feetToMeters(6.5), 1.3 * Math.PI);
 
         private final double translationSpeed;
         private final double rotationSpeed;
@@ -35,6 +39,15 @@ public class SwerveSpeed {
 
     public static Speeds getSwerveSpeed() {
         return SwerveSpeed;
+    }
+
+    public static Command toSwerveSpeed(final Supplier<Speeds> speedsSupplier) {
+        final Container<Speeds> speedsContainer = Container.of(SwerveSpeed);
+        return CommandsExt.instantRunEnd(
+                () -> speedsContainer.set(SwerveSpeed),
+                () -> SwerveSpeed = speedsSupplier.get(),
+                () -> SwerveSpeed = speedsContainer.get()
+        );
     }
 
     public static Command toSwerveSpeed(final Speeds speeds) {

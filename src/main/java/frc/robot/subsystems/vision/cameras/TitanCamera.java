@@ -119,7 +119,7 @@ public enum TitanCamera {
             Constants.Vision.BACK_CENTER_CAMERA,
             new PhotonPoseEstimator.ConstrainedSolvepnpParams(false, 1),
             CameraProperties.ARDUCAM_OV9281,
-            1,
+            1.5,
             true,
             new TitanCameraCalibration()
                     .withCalibration(

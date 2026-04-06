@@ -27,7 +27,7 @@ import static edu.wpi.first.units.Units.*;
 
 public class Shooter extends SubsystemExt {
     protected static final String LogKey = "Shooter";
-    private static final double VelocityToleranceRotsPerSec = 2;
+    private static final double VelocityToleranceRotsPerSec = 3.5;
 
     public enum Goal {
         IDLE(20),

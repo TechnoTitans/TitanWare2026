@@ -3,6 +3,7 @@ package frc.robot.subsystems.superstructure.params;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
+import frc.robot.ShootCommands;
 
 import java.util.function.Supplier;
 
@@ -17,6 +18,7 @@ public interface ShotProvider<T extends ShotProvider.Kind> {
             final Pose2d robotPose,
             final Transform2d robotToTurret,
             final ChassisSpeeds robotSpeeds,
+            final ShootCommands.Target target,
             final Pose2d targetPose
     );
 
@@ -24,6 +26,7 @@ public interface ShotProvider<T extends ShotProvider.Kind> {
             final Supplier<Pose2d> robotPoseSupplier,
             final Supplier<Transform2d> robotToTurretSupplier,
             final Supplier<ChassisSpeeds> robotRelativeSpeedsSupplier,
+            final Supplier<ShootCommands.Target> targetSupplier,
             final Supplier<Pose2d> targetPoseSupplier
     ) {
         return () -> {
@@ -32,6 +35,7 @@ public interface ShotProvider<T extends ShotProvider.Kind> {
                     robotPose,
                     robotToTurretSupplier.get(),
                     robotRelativeSpeedsSupplier.get(),
+                    targetSupplier.get(),
                     targetPoseSupplier.get()
             );
         };

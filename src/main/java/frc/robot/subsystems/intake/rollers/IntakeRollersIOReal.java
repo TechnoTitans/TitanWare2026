@@ -3,6 +3,8 @@ package frc.robot.subsystems.intake.rollers;
 import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
+import com.ctre.phoenix6.controls.TorqueCurrentFOC;
+import com.ctre.phoenix6.controls.VelocityTorqueCurrentFOC;
 import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.ParentDevice;
 import com.ctre.phoenix6.hardware.TalonFX;
@@ -26,6 +28,8 @@ public class IntakeRollersIOReal implements IntakeRollersIO {
     private final StatusSignal<Temperature> rollerDeviceTemp;
 
     private final VoltageOut voltageOut;
+    private final TorqueCurrentFOC torqueCurrentFOC;
+    private final VelocityTorqueCurrentFOC velocityTorqueCurrentFOC;
 
     public IntakeRollersIOReal(final HardwareConstants.IntakeRollerConstants constants) {
         this.constants = constants;
@@ -40,6 +44,8 @@ public class IntakeRollersIOReal implements IntakeRollersIO {
         this.rollerDeviceTemp = motor.getDeviceTemp(false);
 
         this.voltageOut = new VoltageOut(0);
+        this.torqueCurrentFOC = new TorqueCurrentFOC(0);
+        this.velocityTorqueCurrentFOC = new VelocityTorqueCurrentFOC(0);
 
         RefreshAll.add(
                 canBus,
@@ -56,9 +62,9 @@ public class IntakeRollersIOReal implements IntakeRollersIO {
     @Override
     public void config() {
         final TalonFXConfiguration motorConfig = new TalonFXConfiguration();
-        motorConfig.CurrentLimits.StatorCurrentLimit = 60;
+        motorConfig.CurrentLimits.StatorCurrentLimit = 70;
         motorConfig.CurrentLimits.StatorCurrentLimitEnable = true;
-        motorConfig.CurrentLimits.SupplyCurrentLimit = 60;
+        motorConfig.CurrentLimits.SupplyCurrentLimit = 70;
         motorConfig.CurrentLimits.SupplyCurrentLowerLimit = 40;
         motorConfig.CurrentLimits.SupplyCurrentLowerTime = 2.5;
         motorConfig.CurrentLimits.SupplyCurrentLimitEnable = true;
@@ -99,5 +105,15 @@ public class IntakeRollersIOReal implements IntakeRollersIO {
     @Override
     public void toRollersVoltage(final double volts) {
         motor.setControl(voltageOut.withOutput(volts));
+    }
+
+    @Override
+    public void toRollersTorqueCurrent(final double torqueCurrentAmps) {
+        motor.setControl(torqueCurrentFOC.withOutput(torqueCurrentAmps));
+    }
+
+    @Override
+    public void toRollersVelocity(final double velocityRotsPerSec) {
+        motor.setControl(velocityTorqueCurrentFOC.withVelocity(velocityRotsPerSec));
     }
 }

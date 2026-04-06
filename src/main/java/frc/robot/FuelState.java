@@ -3,7 +3,6 @@ package frc.robot;
 import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.Vector;
-import edu.wpi.first.math.filter.Debouncer;
 import edu.wpi.first.math.geometry.*;
 import edu.wpi.first.math.interpolation.InterpolatingDoubleTreeMap;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
@@ -20,7 +19,7 @@ import frc.robot.subsystems.drive.Swerve;
 import frc.robot.subsystems.indexer.Indexer;
 import frc.robot.subsystems.intake.Intake;
 import frc.robot.subsystems.superstructure.Superstructure;
-import frc.robot.subsystems.superstructure.params.MovingTOFShot;
+import frc.robot.subsystems.superstructure.params.MovingUtils;
 import frc.robot.utils.Container;
 import frc.robot.utils.commands.ext.CommandsExt;
 import frc.robot.utils.commands.trigger.LoggedTrigger;
@@ -73,8 +72,10 @@ public class FuelState extends VirtualSubsystem {
         this.componentsSolver = componentsSolver;
 
         this.hasSimFuel = group.t("HasSimFuel", () -> simFuelCount > 0);
-        this.hasFuel = group.t("HasFuel", indexer::isFeederTOFDetected)
-                .debounce(0.5, Debouncer.DebounceType.kFalling);
+        // TODO: check tof sensor
+//        this.hasFuel = group.t("HasFuel", indexer::isFeederTOFDetected)
+//                .debounce(0.5, Debouncer.DebounceType.kFalling);
+        this.hasFuel = group.t("HasFuel", () -> true);
 
         configureStateTriggers();
         switch (mode) {
@@ -159,7 +160,7 @@ public class FuelState extends VirtualSubsystem {
                                     ))
                                     .plus(SimConstants.Hood.FuelExitOffset);
 
-                            final ChassisSpeeds turretFieldSpeeds = MovingTOFShot.getTurretFieldSpeeds(
+                            final ChassisSpeeds turretFieldSpeeds = MovingUtils.getTurretFieldSpeeds(
                                     robotPose,
                                     superstructure.getTurretTranslation(robotPose),
                                     swerve.getFieldRelativeSpeeds()

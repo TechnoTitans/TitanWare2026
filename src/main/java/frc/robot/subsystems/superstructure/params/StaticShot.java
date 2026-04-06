@@ -6,6 +6,7 @@ import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.util.Units;
+import frc.robot.ShootCommands;
 
 public class StaticShot implements ShotProvider<ShotProvider.Kind.Static> {
     public static Rotation2d angleToTarget(
@@ -24,6 +25,7 @@ public class StaticShot implements ShotProvider<ShotProvider.Kind.Static> {
             final Pose2d robotPose,
             final Transform2d robotToTurret,
             final ChassisSpeeds robotRelativeSpeeds,
+            final ShootCommands.Target target,
             final Pose2d targetPose
     ) {
         final Translation2d turretTranslation = robotPose
@@ -31,6 +33,7 @@ public class StaticShot implements ShotProvider<ShotProvider.Kind.Static> {
                 .getTranslation();
         return new ShotParameters(
                 ShotParameters.getShot(
+                        target,
                         turretTranslation
                                 .getDistance(targetPose.getTranslation())
                 ),

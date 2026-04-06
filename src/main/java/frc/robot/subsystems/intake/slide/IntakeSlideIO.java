@@ -22,7 +22,7 @@ public interface IntakeSlideIO {
         public double averageVelocityRotsPerSec = 0.0;
         public double differentialPositionRots = 0.0;
 
-        public MechanismState mechanism;
+        public MechanismState mechanism = MechanismState.OK;
     }
 
     default void updateInputs(final IntakeSlideIOInputs inputs) {}

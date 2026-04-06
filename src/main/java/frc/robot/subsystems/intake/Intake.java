@@ -1,5 +1,6 @@
 package frc.robot.subsystems.intake;
 
+import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.subsystems.intake.rollers.IntakeRollers;
@@ -32,7 +33,8 @@ public class Intake {
                 ),
                 slide.setGoal(IntakeSlide.Goal.EXTEND),
                 Commands.sequence(
-                        Commands.waitUntil(() -> slide.atGoal(IntakeSlide.Goal.EXTEND)),
+                        Commands.waitUntil(() -> slide.atGoal(IntakeSlide.Goal.EXTEND))
+                                .withTimeout(0.5),
                         rollers.toGoal(IntakeRollers.Goal.INTAKE)
                 )
         ).withName("Intake");
@@ -52,8 +54,36 @@ public class Intake {
 
     public Command stowFeed() {
         return Commands.parallel(
-                slide.toGoalHold(IntakeSlide.Goal.SHOOTING),
-                rollers.toGoal(IntakeRollers.Goal.OFF)
+                Commands.repeatingSequence(
+                        slide.toGoalHold(IntakeSlide.Goal.SHOOTING)
+                                .until(() ->
+                                        MathUtil.isNear(
+                                                IntakeSlide.Goal.SHOOTING.positionRots,
+                                                slide.getPosition().getRotations(),
+                                                0.5
+                                        ) && MathUtil.isNear(
+                                                0,
+                                                slide.getVelocityRotsPerSec(),
+                                                0.05
+                                        )
+                                ),
+                        slide.setGoal(IntakeSlide.Goal.EXTEND),
+                        Commands.waitUntil(slide.atSetpoint)
+                                .withTimeout(2)
+                ),
+                Commands.repeatingSequence(
+                        rollers.setGoal(IntakeRollers.Goal.FEED_PULSE),
+                        Commands.waitSeconds(0.5),
+                        rollers.setGoal(IntakeRollers.Goal.OFF),
+                        Commands.waitSeconds(0.5)
+                )
         ).withName("StowFeedIntake");
+    }
+
+    public Command unstuck() {
+        return Commands.parallel(
+                rollers.toGoal(IntakeRollers.Goal.UNSTUCK),
+                slide.setGoal(IntakeSlide.Goal.EXTEND)
+        );
     }
 }

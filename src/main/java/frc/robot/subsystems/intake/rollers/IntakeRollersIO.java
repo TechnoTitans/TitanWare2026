@@ -17,4 +17,8 @@ public interface IntakeRollersIO {
     default void updateInputs(final IntakeRollerIOInputs inputs) {}
 
     default void toRollersVoltage(final double volts) {}
+
+    default void toRollersTorqueCurrent(final double torqueCurrentAmps) {}
+
+    default void toRollersVelocity(final double velocityRotsPerSec) {}
 }
