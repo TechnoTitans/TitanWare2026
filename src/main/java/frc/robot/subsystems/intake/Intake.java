@@ -60,11 +60,11 @@ public class Intake {
                                         MathUtil.isNear(
                                                 IntakeSlide.Goal.SHOOTING.positionRots,
                                                 slide.getPosition().getRotations(),
-                                                0.5
+                                                1
                                         ) && MathUtil.isNear(
                                                 0,
                                                 slide.getVelocityRotsPerSec(),
-                                                0.05
+                                                0.1
                                         )
                                 ),
                         slide.setGoal(IntakeSlide.Goal.EXTEND),

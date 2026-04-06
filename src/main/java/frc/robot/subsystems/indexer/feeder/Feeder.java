@@ -23,14 +23,14 @@ public class Feeder extends SubsystemExt {
     protected static final String LogKey = "Feeder";
 
     public enum Goal {
-        BACK_OUT(-60),
+        BACK_OUT(-20),
         OFF(0),
-        FEED(60);
+        FEED(40);
 
-        private final double torqueCurrentAmps;
+        private final double velocityRotsPerSec;
 
-        Goal(final double torqueCurrentAmps) {
-            this.torqueCurrentAmps = torqueCurrentAmps;
+        Goal(final double velocityRotsPerSec) {
+            this.velocityRotsPerSec = velocityRotsPerSec;
         }
     }
 
@@ -38,7 +38,7 @@ public class Feeder extends SubsystemExt {
     private final FeederIOInputsAutoLogged inputs = new FeederIOInputsAutoLogged();
 
     private Goal desiredGoal = Goal.OFF;
-    private double torqueCurrentSetpointAmps = 0.0;
+    private double velocitySetpoint = 0.0;
 
     private final SysIdRoutine wheelTorqueCurrentSysIdRoutine;
 
@@ -65,7 +65,7 @@ public class Feeder extends SubsystemExt {
         Logger.processInputs(LogKey, inputs);
 
         Logger.recordOutput(LogKey + "/DesiredGoal", desiredGoal);
-        Logger.recordOutput(LogKey + "/TorqueCurrentSetpointAmps", torqueCurrentSetpointAmps);
+        Logger.recordOutput(LogKey + "/VelocitySetpoint", velocitySetpoint);
 
         Logger.recordOutput(
                 LogKey + "/PeriodicIOPeriodMs",
@@ -94,12 +94,12 @@ public class Feeder extends SubsystemExt {
 
     private void setDesiredGoal(final Goal goal) {
         desiredGoal = goal;
-        setDesiredTorqueCurrent(goal.torqueCurrentAmps);
+        setDesiredVelocity(goal.velocityRotsPerSec);
     }
 
-    private void setDesiredTorqueCurrent(final double torqueCurrentAmps) {
-        torqueCurrentSetpointAmps = torqueCurrentAmps;
-        feederIO.toWheelTorqueCurrent(torqueCurrentAmps);
+    private void setDesiredVelocity(final double velocityRotsPerSec) {
+        velocitySetpoint = velocityRotsPerSec;
+        feederIO.toWheelVelocity(velocityRotsPerSec);
     }
 
     private SysIdRoutine makeTorqueCurrentSysIdRoutine(

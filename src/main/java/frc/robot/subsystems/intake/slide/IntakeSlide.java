@@ -18,13 +18,13 @@ import java.util.HashMap;
 
 public class IntakeSlide extends SubsystemExt {
     protected static final String LogKey = "IntakeSlide";
-    private static final double PositionToleranceRots = 0.2;
-    private static final double VelocityToleranceRotsPerSec = 0.04;
+    private static final double PositionToleranceRots = 0.4;
+    private static final double VelocityToleranceRotsPerSec = 0.05;
 
     public enum Goal {
         STOW(0, GoalBehavior.expo()),
-        SHOOTING(0, GoalBehavior.withVelocity(0.7, 0.7)),
-        EXTEND(3.4, GoalBehavior.expo());
+        SHOOTING(0, GoalBehavior.withVelocity(0.5, 0.5)),
+        EXTEND(3.405, GoalBehavior.expo());
 
         public final double positionRots;
         private final GoalBehavior behavior;

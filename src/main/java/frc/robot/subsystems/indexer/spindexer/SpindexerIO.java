@@ -19,4 +19,6 @@ public interface SpindexerIO {
     default void toWheelVoltage(final double volts) {}
 
     default void toWheelTorqueCurrent(final double torqueCurrentAmps) {}
+
+    default void toWheelVelocity(final double velocityRotsPerSec) {}
 }

@@ -2,6 +2,7 @@ package frc.robot.subsystems.intake.rollers;
 
 import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.StatusSignal;
+import com.ctre.phoenix6.configs.Slot0Configs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.TorqueCurrentFOC;
 import com.ctre.phoenix6.controls.VelocityTorqueCurrentFOC;
@@ -11,6 +12,7 @@ import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.FeedbackSensorSourceValue;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
+import com.ctre.phoenix6.signals.StaticFeedforwardSignValue;
 import edu.wpi.first.units.measure.*;
 import frc.robot.constants.HardwareConstants;
 import frc.robot.utils.ctre.Phoenix6Utils;
@@ -62,6 +64,13 @@ public class IntakeRollersIOReal implements IntakeRollersIO {
     @Override
     public void config() {
         final TalonFXConfiguration motorConfig = new TalonFXConfiguration();
+        motorConfig.Slot0 = new Slot0Configs()
+                .withKS(3.2198)
+                .withKV(0.068888)
+                .withKA(0.15632)
+                .withStaticFeedforwardSign(StaticFeedforwardSignValue.UseVelocitySign)
+                .withKP(5.5)
+                .withKD(0);
         motorConfig.CurrentLimits.StatorCurrentLimit = 70;
         motorConfig.CurrentLimits.StatorCurrentLimitEnable = true;
         motorConfig.CurrentLimits.SupplyCurrentLimit = 70;

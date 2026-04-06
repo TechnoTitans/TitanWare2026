@@ -7,6 +7,7 @@ import com.ctre.phoenix6.configs.CANrangeConfiguration;
 import com.ctre.phoenix6.configs.Slot0Configs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.TorqueCurrentFOC;
+import com.ctre.phoenix6.controls.VelocityTorqueCurrentFOC;
 import com.ctre.phoenix6.hardware.CANrange;
 import com.ctre.phoenix6.hardware.ParentDevice;
 import com.ctre.phoenix6.hardware.TalonFX;
@@ -50,6 +51,7 @@ public class FeederIOSim implements FeederIO {
     private final StatusSignal<Boolean> canRangeDetected;
 
     private final TorqueCurrentFOC torqueCurrentFOC;
+    private final VelocityTorqueCurrentFOC velocityTorqueCurrentFOC;
 
     public FeederIOSim(final HardwareConstants.FeederConstants constants) {
         this.deltaTime = new DeltaTime(true);
@@ -87,6 +89,7 @@ public class FeederIOSim implements FeederIO {
         this.canRangeDetected = canRange.getIsDetected(false);
 
         this.torqueCurrentFOC = new TorqueCurrentFOC(0);
+        this.velocityTorqueCurrentFOC = new VelocityTorqueCurrentFOC(0);
 
         RefreshAll.add(
                 bus,
@@ -180,6 +183,11 @@ public class FeederIOSim implements FeederIO {
     @Override
     public void toWheelTorqueCurrent(final double torqueCurrentAmps) {
         motor.setControl(torqueCurrentFOC.withOutput(torqueCurrentAmps));
+    }
+
+    @Override
+    public void toWheelVelocity(final double velocityRotsPerSec) {
+        motor.setControl(velocityTorqueCurrentFOC.withVelocity(velocityRotsPerSec));
     }
 
     @Override

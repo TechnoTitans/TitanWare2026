@@ -23,15 +23,15 @@ public class IntakeRollers extends SubsystemExt {
     protected static final String LogKey = "IntakeRollers";
 
     public enum Goal {
-        UNSTUCK(-12),
+        UNSTUCK(-10),
         OFF(0),
-        FEED_PULSE(5),
-        INTAKE(7);
+        FEED_PULSE(15),
+        INTAKE(40);
 
-        private final double volts;
+        private final double velocityRotsPerSec;
 
-        Goal(final double volts) {
-            this.volts = volts;
+        Goal(final double velocityRotsPerSec) {
+            this.velocityRotsPerSec = velocityRotsPerSec;
         }
     }
 
@@ -92,7 +92,7 @@ public class IntakeRollers extends SubsystemExt {
 
     private void setDesiredGoal(final Goal goal) {
         desiredGoal = goal;
-        setDesiredVelocity(goal.volts);
+        setDesiredVelocity(goal.velocityRotsPerSec);
     }
 
     private void setDesiredVelocity(final double velocityRotsPerSec) {

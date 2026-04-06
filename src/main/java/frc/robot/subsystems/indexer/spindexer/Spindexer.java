@@ -25,12 +25,12 @@ public class Spindexer extends SubsystemExt {
     public enum Goal {
         BACK_OUT(-6),
         STOP(0),
-        FEED(10);
+        FEED(36);
 
-        private final double volts;
+        private final double velocityRotsPerSec;
 
-        Goal(final double volts) {
-            this.volts = volts;
+        Goal(final double velocityRotsPerSec) {
+            this.velocityRotsPerSec = velocityRotsPerSec;
         }
     }
 
@@ -38,7 +38,7 @@ public class Spindexer extends SubsystemExt {
     private final SpindexerIOInputsAutoLogged inputs = new SpindexerIOInputsAutoLogged();
 
     private Goal desiredGoal = Goal.STOP;
-    private double voltageSetpoint = 0.0;
+    private double velocitySetpoint = 0.0;
 
     private final SysIdRoutine wheelTorqueCurrentSysIdRoutine;
 
@@ -65,7 +65,7 @@ public class Spindexer extends SubsystemExt {
         Logger.processInputs(LogKey, inputs);
 
         Logger.recordOutput(LogKey + "/DesiredGoal", desiredGoal);
-        Logger.recordOutput(LogKey + "/VoltageSetpoint", voltageSetpoint);
+        Logger.recordOutput(LogKey + "/VelocitySetpoint", velocitySetpoint);
 
         Logger.recordOutput(
                 LogKey + "/PeriodicIOPeriodMs",
@@ -91,12 +91,12 @@ public class Spindexer extends SubsystemExt {
 
     private void setDesiredGoal(final Goal goal) {
         desiredGoal = goal;
-        setDesiredVoltage(goal.volts);
+        setDesiredVelocity(goal.velocityRotsPerSec);
     }
 
-    private void setDesiredVoltage(final double volts) {
-        voltageSetpoint = volts;
-        spindexerIO.toWheelVoltage(volts);
+    private void setDesiredVelocity(final double velocityRotsPerSec) {
+        velocitySetpoint = velocityRotsPerSec;
+        spindexerIO.toWheelVelocity(velocityRotsPerSec);
     }
 
     private SysIdRoutine makeTorqueCurrentSysIdRoutine(

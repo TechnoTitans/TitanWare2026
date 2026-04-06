@@ -72,10 +72,12 @@ public record ShotParameters(
                 TimeOfFlightMap.put(4.8, 1.4);
                 TimeOfFlightMap.put(5.322, 1.47);
 
-                FerryTimeOfFlightMap.put(2.0, 1.1);
-                FerryTimeOfFlightMap.put(3.0, 1.2);
-                FerryTimeOfFlightMap.put(4.0, 1.3);
-                FerryTimeOfFlightMap.put(5.0, 1.4);
+                FerryTimeOfFlightMap.put(2.014, 1.16);
+                FerryTimeOfFlightMap.put(3.339, 1.06);
+                FerryTimeOfFlightMap.put(3.722464, 1.2);
+                FerryTimeOfFlightMap.put(4.541, 1.27);
+                FerryTimeOfFlightMap.put(4.780, 1.36);
+                FerryTimeOfFlightMap.put(5.995, 1.4);
             }
             case SIM -> {
                 TimeOfFlightMap.put(1.31, 1.06);

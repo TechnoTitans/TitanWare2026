@@ -7,6 +7,7 @@ import com.ctre.phoenix6.configs.CANrangeConfiguration;
 import com.ctre.phoenix6.configs.Slot0Configs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.TorqueCurrentFOC;
+import com.ctre.phoenix6.controls.VelocityTorqueCurrentFOC;
 import com.ctre.phoenix6.hardware.CANrange;
 import com.ctre.phoenix6.hardware.ParentDevice;
 import com.ctre.phoenix6.hardware.TalonFX;
@@ -32,6 +33,7 @@ public class FeederIOReal implements FeederIO {
     private final StatusSignal<Boolean> canRangeDetected;
 
     private final TorqueCurrentFOC torqueCurrentFOC;
+    private final VelocityTorqueCurrentFOC velocityTorqueCurrentFOC;
 
     public FeederIOReal(final HardwareConstants.FeederConstants constants) {
         this.constants = constants;
@@ -51,6 +53,7 @@ public class FeederIOReal implements FeederIO {
         this.canRangeDetected = canRange.getIsDetected(false);
 
         this.torqueCurrentFOC = new TorqueCurrentFOC(0);
+        this.velocityTorqueCurrentFOC = new VelocityTorqueCurrentFOC(0);
 
         RefreshAll.add(
                 bus,
@@ -70,10 +73,11 @@ public class FeederIOReal implements FeederIO {
     public void config() {
         final TalonFXConfiguration motorConfig = new TalonFXConfiguration();
         motorConfig.Slot0 = new Slot0Configs()
-                .withKS(14)
+                .withKS(6.0529)
+                .withKV(0.064323)
+                .withKA(0.070303)
                 .withStaticFeedforwardSign(StaticFeedforwardSignValue.UseVelocitySign)
-                .withKV(0)
-                .withKP(10)
+                .withKP(2.5)
                 .withKD(0);
         motorConfig.TorqueCurrent.PeakForwardTorqueCurrent = 80;
         motorConfig.TorqueCurrent.PeakReverseTorqueCurrent = -80;
@@ -133,5 +137,10 @@ public class FeederIOReal implements FeederIO {
     @Override
     public void toWheelTorqueCurrent(final double torqueCurrentAmps) {
         motor.setControl(torqueCurrentFOC.withOutput(torqueCurrentAmps));
+    }
+
+    @Override
+    public void toWheelVelocity(final double velocityRotsPerSec) {
+        motor.setControl(velocityTorqueCurrentFOC.withVelocity(velocityRotsPerSec));
     }
 }
