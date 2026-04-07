@@ -8,6 +8,7 @@ import com.ctre.phoenix6.configs.Slot0Configs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.TorqueCurrentFOC;
 import com.ctre.phoenix6.controls.VelocityTorqueCurrentFOC;
+import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.CANrange;
 import com.ctre.phoenix6.hardware.ParentDevice;
 import com.ctre.phoenix6.hardware.TalonFX;
@@ -50,6 +51,7 @@ public class FeederIOSim implements FeederIO {
 
     private final StatusSignal<Boolean> canRangeDetected;
 
+    private final VoltageOut voltageOut;
     private final TorqueCurrentFOC torqueCurrentFOC;
     private final VelocityTorqueCurrentFOC velocityTorqueCurrentFOC;
 
@@ -88,6 +90,7 @@ public class FeederIOSim implements FeederIO {
 
         this.canRangeDetected = canRange.getIsDetected(false);
 
+        this.voltageOut = new VoltageOut(0);
         this.torqueCurrentFOC = new TorqueCurrentFOC(0);
         this.velocityTorqueCurrentFOC = new VelocityTorqueCurrentFOC(0);
 
@@ -178,6 +181,11 @@ public class FeederIOSim implements FeederIO {
         inputs.wheelTempCelsius = wheelDeviceTemp.getValueAsDouble();
 
         inputs.tofDetected = canRangeDetected.getValue();
+    }
+
+    @Override
+    public void toWheelVoltage(final double volts) {
+        motor.setControl(voltageOut.withOutput(volts));
     }
 
     @Override

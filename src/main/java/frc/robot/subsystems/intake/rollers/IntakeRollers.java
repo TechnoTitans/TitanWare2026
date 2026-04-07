@@ -23,7 +23,7 @@ public class IntakeRollers extends SubsystemExt {
     protected static final String LogKey = "IntakeRollers";
 
     public enum Goal {
-        UNSTUCK(-10),
+        UNSTUCK(-40),
         OFF(0),
         FEED_PULSE(15),
         INTAKE(40);

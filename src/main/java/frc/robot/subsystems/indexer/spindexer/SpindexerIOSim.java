@@ -2,14 +2,17 @@ package frc.robot.subsystems.indexer.spindexer;
 
 import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.StatusSignal;
+import com.ctre.phoenix6.configs.Slot0Configs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.TorqueCurrentFOC;
+import com.ctre.phoenix6.controls.VelocityTorqueCurrentFOC;
 import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.ParentDevice;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.FeedbackSensorSourceValue;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
+import com.ctre.phoenix6.signals.StaticFeedforwardSignValue;
 import com.ctre.phoenix6.sim.ChassisReference;
 import com.ctre.phoenix6.sim.TalonFXSimState;
 import edu.wpi.first.math.system.plant.DCMotor;
@@ -41,6 +44,7 @@ public class SpindexerIOSim implements SpindexerIO {
 
     private final VoltageOut voltageOut;
     private final TorqueCurrentFOC torqueCurrentFOC;
+    private final VelocityTorqueCurrentFOC velocityTorqueCurrentFOC;
 
     public SpindexerIOSim(final HardwareConstants.SpindexerConstants constants) {
         this.deltaTime = new DeltaTime(true);
@@ -74,6 +78,7 @@ public class SpindexerIOSim implements SpindexerIO {
 
         this.voltageOut = new VoltageOut(0);
         this.torqueCurrentFOC = new TorqueCurrentFOC(0);
+        this.velocityTorqueCurrentFOC = new VelocityTorqueCurrentFOC(0);
 
         RefreshAll.add(
                 canBus,
@@ -101,6 +106,11 @@ public class SpindexerIOSim implements SpindexerIO {
     @Override
     public void config() {
         final TalonFXConfiguration motorConfig = new TalonFXConfiguration();
+        motorConfig.Slot0 = new Slot0Configs()
+                .withKS(4.25)
+                .withStaticFeedforwardSign(StaticFeedforwardSignValue.UseVelocitySign)
+                .withKP(40)
+                .withKD(0);
         motorConfig.CurrentLimits.StatorCurrentLimit = 80;
         motorConfig.CurrentLimits.StatorCurrentLimitEnable = true;
         motorConfig.CurrentLimits.SupplyCurrentLimit = 75;
@@ -153,5 +163,10 @@ public class SpindexerIOSim implements SpindexerIO {
     @Override
     public void toWheelTorqueCurrent(final double torqueCurrentAmps) {
         motor.setControl(torqueCurrentFOC.withOutput(torqueCurrentAmps));
+    }
+
+    @Override
+    public void toWheelVelocity(final double velocityRotsPerSec) {
+        motor.setControl(velocityTorqueCurrentFOC.withVelocity(velocityRotsPerSec));
     }
 }
