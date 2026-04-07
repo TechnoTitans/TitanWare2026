@@ -25,7 +25,7 @@ public class Spindexer extends SubsystemExt {
     public enum Goal {
         BACK_OUT(-6),
         STOP(0),
-        FEED(36);
+        FEED(9);
 
         private final double velocityRotsPerSec;
 

@@ -73,11 +73,9 @@ public class FeederIOReal implements FeederIO {
     public void config() {
         final TalonFXConfiguration motorConfig = new TalonFXConfiguration();
         motorConfig.Slot0 = new Slot0Configs()
-                .withKS(6.0529)
-                .withKV(0.064323)
-                .withKA(0.070303)
+                .withKS(4.35)
                 .withStaticFeedforwardSign(StaticFeedforwardSignValue.UseVelocitySign)
-                .withKP(2.5)
+                .withKP(15)
                 .withKD(0);
         motorConfig.TorqueCurrent.PeakForwardTorqueCurrent = 80;
         motorConfig.TorqueCurrent.PeakReverseTorqueCurrent = -80;
