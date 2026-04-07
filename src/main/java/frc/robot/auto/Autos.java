@@ -154,7 +154,7 @@ public class Autos {
 
     public AutoRoutine leftSweepDepot() {
         final AutoRoutine routine = autoFactory.newRoutine("LeftSweepDepot");
-        final AutoTrajectory startToCenterLineAndBack = routine.trajectory("LeftFirstSweep");
+        final AutoTrajectory startToCenterLineAndBack = routine.trajectory("FirstSweep");
         final AutoTrajectory shootingToDepot = routine.trajectory("LeftShootingToDepot");
 
         routine.active().onTrue(parallel(
@@ -236,8 +236,8 @@ public class Autos {
 
     public AutoRoutine leftDoubleSweep() {
         final AutoRoutine routine = autoFactory.newRoutine("LeftDoubleSweep");
-        final AutoTrajectory firstSweep = routine.trajectory("LeftFirstSweep");
-        final AutoTrajectory secondSweep = routine.trajectory("LeftSweep");
+        final AutoTrajectory firstSweep = routine.trajectory("FirstSweep");
+        final AutoTrajectory secondSweep = routine.trajectory("Sweep");
 
         routine.active().onTrue(parallel(
                 runStartingTrajectory(firstSweep),
@@ -277,7 +277,7 @@ public class Autos {
 
     public AutoRoutine rightDoubleSweep() {
         final AutoRoutine routine = autoFactory.newRoutine("RightDoubleSweep");
-        final AutoTrajectory firstSweep = routine.trajectory("LeftFirstSweep").mirrorY();
+        final AutoTrajectory firstSweep = routine.trajectory("FirstSweep").mirrorY();
         final AutoTrajectory secondSweep = routine.trajectory("RightSweep").mirrorY();
 
         routine.active().onTrue(parallel(
@@ -319,7 +319,7 @@ public class Autos {
     //Right and Left ferry positions are swapped
     public AutoRoutine leftFerryClean() {
         final AutoRoutine routine = autoFactory.newRoutine("LeftFerryClean");
-        final AutoTrajectory ferryAndClean = routine.trajectory("LeftFerryAndClean");
+        final AutoTrajectory ferryAndClean = routine.trajectory("FerryAndClean");
 
         routine.active().onTrue(parallel(
                 runStartingTrajectory(ferryAndClean),
@@ -351,7 +351,7 @@ public class Autos {
 
     public AutoRoutine rightFerryClean() {
         final AutoRoutine routine = autoFactory.newRoutine("RightFerryClean");
-        final AutoTrajectory ferryAndClean = routine.trajectory("LeftFerryAndClean").mirrorY();
+        final AutoTrajectory ferryAndClean = routine.trajectory("FerryAndClean").mirrorY();
 
         routine.active().onTrue(runStartingTrajectory(ferryAndClean));
 
@@ -379,9 +379,9 @@ public class Autos {
 
     public AutoRoutine leftDoubleSweepContinuous() {
         final AutoRoutine routine = autoFactory.newRoutine("LeftDoubleSweepContinuous");
-        final AutoTrajectory firstSweep = routine.trajectory("LeftFirstSweepContinuous");
-        final AutoTrajectory transition = routine.trajectory("LeftShootingTransition");
-        final AutoTrajectory secondSweep = routine.trajectory("LeftSweepContinuous");
+        final AutoTrajectory firstSweep = routine.trajectory("FirstSweepContinuous");
+        final AutoTrajectory transition = routine.trajectory("ShootingTransition");
+        final AutoTrajectory secondSweep = routine.trajectory("SweepContinuousFullWidth");
 
         routine.active().onTrue(parallel(
                 runStartingTrajectory(firstSweep),
@@ -441,9 +441,9 @@ public class Autos {
 
     public AutoRoutine rightDoubleSweepContinuous() {
         final AutoRoutine routine = autoFactory.newRoutine("RightDoubleSweepContinuous");
-        final AutoTrajectory firstSweep = routine.trajectory("LeftFirstSweepContinuous").mirrorY();
-        final AutoTrajectory transition = routine.trajectory("LeftShootingTransition").mirrorY();
-        final AutoTrajectory secondSweep = routine.trajectory("LeftSweepContinuous").mirrorY();
+        final AutoTrajectory firstSweep = routine.trajectory("FirstSweepContinuous").mirrorY();
+        final AutoTrajectory transition = routine.trajectory("ShootingTransition").mirrorY();
+        final AutoTrajectory secondSweep = routine.trajectory("SweepContinuousFullWidth").mirrorY();
 
         routine.active().onTrue(parallel(
                 runStartingTrajectory(firstSweep),
@@ -488,69 +488,6 @@ public class Autos {
 
         transition.active().whileTrue(
                 shootWhileMoving()
-        );
-
-        transition.done().onTrue(
-                deadline(
-                        secondSweep.cmd()
-                                .asProxy(),
-                        superstructure.runParametersWithHoodStowed(movingShot)
-                                .asProxy()
-                )
-        );
-
-        return routine;
-    }
-
-    public AutoRoutine rightDoubleSweepBump() {
-        final AutoRoutine routine = autoFactory.newRoutine("RightDoubleSweepBump");
-        final AutoTrajectory firstSweep = routine.trajectory("RightFirstSweepContinuous");
-        final AutoTrajectory transition = routine.trajectory("RightShootingTransitionFast");
-        final AutoTrajectory secondSweep = routine.trajectory("RightSweepContinuous");
-
-        routine.active().onTrue(parallel(
-                runStartingTrajectory(firstSweep),
-                runOnce(fuelState::setSimFuelPreloaded)
-        ));
-
-
-        firstSweep.active().whileTrue(
-                intakeFromTrench(
-                        staticParametersFromFinalPose(firstSweep),
-                        staticShot
-                )
-        );
-
-        firstSweep.done().onTrue(
-                sequence(
-                        waitUntil(targetIsHub),
-                        shootStatic(),
-                        transition.cmd()
-                )
-        );
-
-        transition.done().onTrue(
-                deadline(
-                        secondSweep.cmd()
-                                .asProxy(),
-                        superstructure.runParametersWithHoodStowed(movingShot)
-                                .asProxy()
-                )
-        );
-
-        secondSweep.active().whileTrue(
-                intakeFromTrench(
-                        staticParametersFromFinalPose(secondSweep),
-                        staticShot
-                )
-        );
-
-        secondSweep.done().onTrue(
-                sequence(
-                        waitUntil(targetIsHub),
-                        shootStatic(),
-                        transition.cmd()
-                )
         );
 
         transition.done().onTrue(
@@ -566,10 +503,10 @@ public class Autos {
     }
 
     public AutoRoutine leftDoubleSweepBumpFullWidth() {
-        final AutoRoutine routine = autoFactory.newRoutine("LeftDoubleSweepBumpFullWidth");
-        final AutoTrajectory firstSweep = routine.trajectory("LeftFirstSweepContinuous");
-        final AutoTrajectory transition = routine.trajectory("LeftShootingTransitionFast");
-        final AutoTrajectory secondSweep = routine.trajectory("LeftSweepContinuousFullWidth");
+        final AutoRoutine routine = autoFactory.newRoutine("DoubleSweepBumpFullWidth");
+        final AutoTrajectory firstSweep = routine.trajectory("FirstSweepContinuous");
+        final AutoTrajectory transition = routine.trajectory("ShootingTransitionFast");
+        final AutoTrajectory secondSweep = routine.trajectory("SweepContinuousFullWidth");
 
         routine.active().onTrue(parallel(
                 runStartingTrajectory(firstSweep),
@@ -630,9 +567,9 @@ public class Autos {
 
     public AutoRoutine rightDoubleSweepBumpFullWidth() {
         final AutoRoutine routine = autoFactory.newRoutine("RightDoubleSweepBumpFullWidth");
-        final AutoTrajectory firstSweep = routine.trajectory("LeftFirstSweepContinuous").mirrorY();
-        final AutoTrajectory transition = routine.trajectory("LeftShootingTransitionFast").mirrorY();
-        final AutoTrajectory secondSweep = routine.trajectory("LeftSweepContinuousFullWidth").mirrorY();
+        final AutoTrajectory firstSweep = routine.trajectory("FirstSweepContinuous").mirrorY();
+        final AutoTrajectory transition = routine.trajectory("ShootingTransitionFast").mirrorY();
+        final AutoTrajectory secondSweep = routine.trajectory("SweepContinuousFullWidth").mirrorY();
 
         routine.active().onTrue(parallel(
                 runStartingTrajectory(firstSweep),

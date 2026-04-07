@@ -118,6 +118,7 @@ public class IntakeSlide extends SubsystemExt {
     private HoldMode holdMode = HoldMode.HARD;
 
     public final LoggedTrigger atSetpoint;
+    public final LoggedTrigger isIntakeStopped;
 
     public IntakeSlide(final Constants.RobotMode mode, final HardwareConstants.IntakeSlideConstants constants) {
         this.constants = constants;
@@ -130,6 +131,11 @@ public class IntakeSlide extends SubsystemExt {
 
         final LoggedTrigger.Group group = LoggedTrigger.Group.from(LogKey);
         this.atSetpoint = group.t("AtSetpoint", () -> atPosition(positionSetpointRots));
+        this.isIntakeStopped = group.t("IsIntakeStopped", () -> MathUtil.isNear(
+                0,
+                getVelocityRotsPerSec(),
+                0.1
+        )).debounce(0.2);
 
         this.intakeSlideIO.zero();
 

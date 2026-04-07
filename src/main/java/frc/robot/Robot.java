@@ -536,12 +536,6 @@ public class Robot extends LoggedRobot {
         ));
 
         autoChooser.addAutoOption(new AutoOption(
-                "RightDoubleSweepBump",
-                autos::rightDoubleSweepBump,
-                Constants.CompetitionType.COMPETITION
-        ));
-
-        autoChooser.addAutoOption(new AutoOption(
                 "LeftDoubleSweepBumpFullWidth",
                 autos::leftDoubleSweepBumpFullWidth,
                 Constants.CompetitionType.COMPETITION
