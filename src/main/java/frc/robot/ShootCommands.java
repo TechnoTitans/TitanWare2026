@@ -6,6 +6,7 @@ import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
+import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.constants.FieldConstants;
 import frc.robot.subsystems.drive.Swerve;
 import frc.robot.subsystems.indexer.Indexer;
@@ -21,6 +22,7 @@ import frc.robot.utils.teleop.SwerveSpeed;
 import org.littletonrobotics.junction.Logger;
 
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
@@ -133,6 +135,15 @@ public class ShootCommands extends VirtualSubsystem {
                 targetSupplier,
                 targetPoseSupplier
         );
+
+        final Trigger targetIsHub = new Trigger(
+                () -> switch (targetSupplier.get()) {
+                    case HUB -> true;
+                    case FERRY, FERRY_BLOCKED -> false;
+                }
+        );
+
+        targetIsHub.negate().whileTrue(intake.intake());
 
         return superstructure.runParametersWithHoodStowed(
                 () -> linearSpeed(swerve.getFieldRelativeSpeeds()) <= 1e-3

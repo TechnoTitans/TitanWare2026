@@ -11,7 +11,7 @@ public class Intake {
     private final LoggedTrigger.Group group = LoggedTrigger.Group.from(LogKey);
 
     private final IntakeSlide slide;
-    private final IntakeRollers rollers;
+    public final IntakeRollers rollers;
 
     private boolean intaking = false;
     public final LoggedTrigger isIntaking = group.t("IsIntaking", () -> intaking);
@@ -42,6 +42,11 @@ public class Intake {
     public Command deploy() {
         return slide.setGoal(IntakeSlide.Goal.EXTEND)
                 .withName("DeployIntake");
+    }
+
+    public Command spinRollers() {
+        return rollers.toGoal(IntakeRollers.Goal.INTAKE)
+                .withName("SpinRollers");
     }
 
     public Command stow() {
