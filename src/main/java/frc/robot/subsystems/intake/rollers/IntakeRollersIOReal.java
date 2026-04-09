@@ -84,7 +84,7 @@ public class IntakeRollersIOReal implements IntakeRollersIO {
     public void config() {
         final TalonFXConfiguration motorConfig = new TalonFXConfiguration();
         motorConfig.Slot0 = new Slot0Configs()
-                .withKS(2.8)
+                .withKS(3.5)
                 .withKV(0)
                 .withKA(0)
                 .withStaticFeedforwardSign(StaticFeedforwardSignValue.UseVelocitySign)

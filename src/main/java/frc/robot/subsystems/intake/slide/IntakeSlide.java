@@ -176,6 +176,7 @@ public class IntakeSlide extends SubsystemExt {
         Logger.recordOutput(LogKey + "/AtSetpoint", atSetpoint);
         Logger.recordOutput(LogKey + "/PositionSetpointRots", positionSetpointRots);
         Logger.recordOutput(LogKey + "/HoldMode", holdMode);
+        Logger.recordOutput(LogKey + "/IsIntakeStopped", isIntakeStopped);
 
         Logger.recordOutput(LogKey + "/AtUpperLimit", atUpperLimit());
         Logger.recordOutput(LogKey + "/AtLowerLimit", atLowerLimit());
