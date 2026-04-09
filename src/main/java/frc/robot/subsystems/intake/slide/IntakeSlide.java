@@ -103,6 +103,8 @@ public class IntakeSlide extends SubsystemExt {
         HARD
     }
 
+    private final LoggedTrigger.Group group = LoggedTrigger.Group.from(LogKey);
+
     private final HardwareConstants.IntakeSlideConstants constants;
 
     private final IntakeSlideIO intakeSlideIO;
@@ -129,7 +131,6 @@ public class IntakeSlide extends SubsystemExt {
             case REPLAY, DISABLED -> new IntakeSlideIO() {};
         };
 
-        final LoggedTrigger.Group group = LoggedTrigger.Group.from(LogKey);
         this.atSetpoint = group.t("AtSetpoint", () -> atPosition(positionSetpointRots));
         this.isIntakeStopped = group.t("IsIntakeStopped", () -> MathUtil.isNear(
                 0,
@@ -215,9 +216,9 @@ public class IntakeSlide extends SubsystemExt {
         return inputs.averageVelocityRotsPerSec;
     }
 
-    public boolean atGoal(final Goal goal) {
-        return desiredGoal == InternalGoal.fromGoal(goal)
-                && atPosition(goal.positionRots);
+    public LoggedTrigger atGoal(final Goal goal) {
+        return group.t("AtGoal: " + goal, () -> desiredGoal == InternalGoal.fromGoal(goal)
+                && atPosition(goal.positionRots));
     }
 
     private void setDesiredGoal(final Goal goal) {

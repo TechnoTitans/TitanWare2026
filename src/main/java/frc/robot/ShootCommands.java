@@ -136,15 +136,6 @@ public class ShootCommands extends VirtualSubsystem {
                 targetPoseSupplier
         );
 
-        final Trigger targetIsFerry = new Trigger(
-                () -> switch (targetSupplier.get()) {
-                    case FERRY, FERRY_BLOCKED -> true;
-                    case HUB -> false;
-                }
-        );
-
-        targetIsFerry.whileTrue(intake.intake());
-
         return superstructure.runParametersWithHoodStowed(
                 () -> linearSpeed(swerve.getFieldRelativeSpeeds()) <= 1e-3
                         ? staticParametersSupplier.get()

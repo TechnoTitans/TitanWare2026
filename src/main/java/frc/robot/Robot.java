@@ -209,6 +209,14 @@ public class Robot extends LoggedRobot {
     private final LoggedTrigger hubActive =
             group.t("HubActive", () -> AllianceShift.get(MatchTimeOffsetSeconds).hubStatus() == AllianceShift.HubStatus.ACTIVE);
 
+    private final LoggedTrigger targetIsFerry =
+            group.t("TargetIsFerrying",
+                    () -> switch (ShootCommands.getTarget(superstructure.getTurretTranslation(swerve.getPose()))) {
+                        case FERRY, FERRY_BLOCKED -> true;
+                        case HUB -> false;
+                    }
+            );
+
     // TODO: temp
     private boolean attemptedAutoWarmup = false;
     private boolean autoIsHot = false;
@@ -444,6 +452,8 @@ public class Robot extends LoggedRobot {
 
     public void configureStateTriggers() {
         teleopEnabled.whileTrue(CommandsExt.defaultCommand(shootCommands.trackTarget()));
+        targetIsFerry.and(intakeSlide.atGoal(IntakeSlide.Goal.STOW).negate())
+                .whileTrue(CommandsExt.defaultCommand(intake.intake()));
 
         enabled
                 .onTrue(Commands.parallel(

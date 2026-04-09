@@ -11,7 +11,7 @@ public class Intake {
     private final LoggedTrigger.Group group = LoggedTrigger.Group.from(LogKey);
 
     private final IntakeSlide slide;
-    public final IntakeRollers rollers;
+    private final IntakeRollers rollers;
 
     private boolean intaking = false;
     public final LoggedTrigger isIntaking = group.t("IsIntaking", () -> intaking);
@@ -32,7 +32,7 @@ public class Intake {
                 ),
                 slide.setGoal(IntakeSlide.Goal.EXTEND),
                 Commands.sequence(
-                        Commands.waitUntil(() -> slide.atGoal(IntakeSlide.Goal.EXTEND))
+                        Commands.waitUntil(slide.atGoal(IntakeSlide.Goal.EXTEND))
                                 .withTimeout(0.5),
                         rollers.toGoal(IntakeRollers.Goal.INTAKE)
                 )
