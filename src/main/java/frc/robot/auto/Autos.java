@@ -400,7 +400,10 @@ public class Autos {
         );
 
         transition.active().whileTrue(
-                shootWhileMoving()
+                parallel(
+                        intake.intake(),
+                        shootWhileMoving()
+                )
         );
 
         transition.done().onTrue(
@@ -424,7 +427,10 @@ public class Autos {
         );
 
         transition.active().whileTrue(
-                shootWhileMoving()
+                parallel(
+                        intake.intake(),
+                        shootWhileMoving()
+                )
         );
 
         transition.done().onTrue(
@@ -463,7 +469,10 @@ public class Autos {
         );
 
         transition.active().whileTrue(
-                shootWhileMoving()
+                parallel(
+                        intake.intake(),
+                        shootWhileMoving()
+                )
         );
 
         transition.done().onTrue(
@@ -487,7 +496,10 @@ public class Autos {
         );
 
         transition.active().whileTrue(
-                shootWhileMoving()
+                parallel(
+                        intake.intake(),
+                        shootWhileMoving()
+                )
         );
 
         transition.done().onTrue(
