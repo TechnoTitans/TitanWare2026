@@ -572,7 +572,10 @@ public class Robot extends LoggedRobot {
                 ).withName("SwerveSpeedSlow"));
 
         driverController.leftTrigger(0.5, teleopEventLoop)
-                .whileTrue(intake.intake());
+                .whileTrue(intake.intake()
+                        .asProxy()
+                        .unless(intake.isIntaking)
+                );
 
         driverController.rightTrigger(0.5, teleopEventLoop)
                 .whileTrue(shootCommands.shoot())
