@@ -596,6 +596,9 @@ public class Robot extends LoggedRobot {
 
         coController.x(teleopEventLoop)
                 .whileTrue(intake.unstuck());
+
+        //coController.povDown()
+          //      .whileTrue(shooter.unstuck());
     }
 
     public double getTotalCurrent() {

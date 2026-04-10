@@ -30,6 +30,7 @@ public class Shooter extends SubsystemExt {
     private static final double VelocityToleranceRotsPerSec = 3.5;
 
     public enum Goal {
+       // UNSTUCK(-20),
         IDLE(20),
         NO_VISION(30);
 
@@ -43,6 +44,7 @@ public class Shooter extends SubsystemExt {
     private enum InternalGoal {
         NONE,
         DEFAULT,
+       // UNSTUCK(Goal.UNSTUCK),
         IDLE(Goal.IDLE),
         NO_VISION(Goal.NO_VISION),
         TRACKING;
@@ -153,6 +155,10 @@ public class Shooter extends SubsystemExt {
                 () -> setDesiredVelocity(velocityRotsPerSecSupplier.getAsDouble())
         ).withName("RunVelocity");
     }
+//
+//    public Command unstuck() {
+//        return toGoal(Goal.UNSTUCK);
+//    }
 
     public Command flywheelTorqueCurrentSysIdCommand() {
         return makeFlywheelSysIdCommand(flywheelTorqueCurrentSysIdRoutine);
