@@ -43,6 +43,7 @@ import frc.robot.utils.subsystems.VirtualSubsystem;
 import frc.robot.utils.teleop.ControllerUtils;
 import frc.robot.utils.teleop.SwerveSpeed;
 import org.littletonrobotics.junction.LogFileUtil;
+import org.littletonrobotics.junction.LoggedPowerDistribution;
 import org.littletonrobotics.junction.LoggedRobot;
 import org.littletonrobotics.junction.Logger;
 import org.littletonrobotics.junction.networktables.NT4Publisher;
@@ -209,14 +210,6 @@ public class Robot extends LoggedRobot {
     private final LoggedTrigger hubActive =
             group.t("HubActive", () -> AllianceShift.get(MatchTimeOffsetSeconds).hubStatus() == AllianceShift.HubStatus.ACTIVE);
 
-    private final LoggedTrigger targetIsFerry =
-            group.t("TargetIsFerrying",
-                    () -> switch (ShootCommands.getTarget(superstructure.getTurretTranslation(swerve.getPose()))) {
-                        case FERRY, FERRY_BLOCKED -> true;
-                        case HUB -> false;
-                    }
-            );
-
     // TODO: temp
     private boolean attemptedAutoWarmup = false;
     private boolean autoIsHot = false;
@@ -335,6 +328,8 @@ public class Robot extends LoggedRobot {
         powerDistribution.clearStickyFaults();
         powerDistribution.setSwitchableChannel(true);
 
+        LoggedPowerDistribution.getInstance(1, PowerDistribution.ModuleType.kRev);
+
         configureStateTriggers();
         configureAutos();
         configureButtonBindings(teleopEventLoop);
@@ -377,6 +372,8 @@ public class Robot extends LoggedRobot {
 
         Logger.recordOutput(LogKey + "/AttemptedAutoWarmup", attemptedAutoWarmup);
         Logger.recordOutput(LogKey + "/AutoIsHot", autoIsHot);
+
+        Logger.recordOutput(LogKey + "/TotalCurrent", getTotalCurrent());
     }
 
     @Override
@@ -452,8 +449,6 @@ public class Robot extends LoggedRobot {
 
     public void configureStateTriggers() {
         teleopEnabled.whileTrue(CommandsExt.defaultCommand(shootCommands.trackTarget()));
-        targetIsFerry.and(intakeSlide.atGoal(IntakeSlide.Goal.STOW).negate())
-                .whileTrue(CommandsExt.defaultCommand(intake.intake()));
 
         enabled
                 .onTrue(Commands.parallel(
@@ -476,20 +471,6 @@ public class Robot extends LoggedRobot {
 
     public void configureAutos() {
         autonomousEnabled.whileTrue(Commands.deferredProxy(() -> autoChooser.getSelected().cmd()));
-        CommandScheduler.getInstance().schedule(
-                Commands.parallel(
-                                Commands.runOnce(() -> attemptedAutoWarmup = true),
-                                autos.warmup()
-                                        .finallyDo(interrupted -> {
-                                            if (!interrupted) {
-                                                autoIsHot = true;
-                                            }
-                                        })
-                        )
-                        .onlyIf(disabled)
-                        .onlyWhile(disabled)
-                        .ignoringDisable(true)
-        );
 
         autoChooser.addAutoOption(new AutoOption(
                 "OnlyShootPreload",
@@ -556,6 +537,12 @@ public class Robot extends LoggedRobot {
                 autos::rightDoubleSweepBumpFullWidth,
                 Constants.CompetitionType.COMPETITION
         ));
+
+        autoChooser.addAutoOption(new AutoOption(
+                "CenterShoot",
+                autos::centerShoot,
+                Constants.CompetitionType.COMPETITION
+        ));
     }
 
     public void configureButtonBindings(final EventLoop teleopEventLoop) {
@@ -609,5 +596,16 @@ public class Robot extends LoggedRobot {
 
         coController.x(teleopEventLoop)
                 .whileTrue(intake.unstuck());
+    }
+
+    public double getTotalCurrent() {
+        return swerve.getSupplyCurrent()
+                + feeder.getSupplyCurrent()
+                + spindexer.getSupplyCurrent()
+                + intakeRollers.getSupplyCurrent()
+                + intakeSlide.getSupplyCurrent()
+                + hood.getSupplyCurrent()
+                + shooter.getSupplyCurrent()
+                + turret.getSupplyCurrent();
     }
 }

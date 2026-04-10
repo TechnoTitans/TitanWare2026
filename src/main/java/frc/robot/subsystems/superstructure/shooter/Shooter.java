@@ -166,6 +166,10 @@ public class Shooter extends SubsystemExt {
         return atSetpoint.getAsBoolean();
     }
 
+    public double getSupplyCurrent() {
+        return inputs.masterTorqueCurrentAmps + inputs.followerTorqueCurrentAmps;
+    }
+
     private void setDesiredGoal(final Goal goal) {
         desiredGoal = InternalGoal.fromGoal(goal);
         setDesiredVelocity(goal.velocityRotsPerSec);

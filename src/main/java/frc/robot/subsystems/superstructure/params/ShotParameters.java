@@ -27,6 +27,7 @@ public record ShotParameters(
                 HubShotMap.put(2.67, new Shooter(32, 0.01));
                 HubShotMap.put(3.07, new Shooter(33.5, 0.012));
                 HubShotMap.put(3.60, new Shooter(34, 0.014));
+//                HubShotMap.put(4.232, new Shooter(38, 0.22));
                 HubShotMap.put(4.54, new Shooter(38, 0.023));
                 HubShotMap.put(5.18, new Shooter(38.5, 0.035));
                 HubShotMap.put(5.84, new Shooter(40, 0.038));

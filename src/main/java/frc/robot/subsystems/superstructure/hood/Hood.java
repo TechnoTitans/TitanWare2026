@@ -156,6 +156,10 @@ public class Hood extends SubsystemExt {
         return atSetpoint.getAsBoolean();
     }
 
+    public double getSupplyCurrent() {
+        return inputs.hoodTorqueCurrentAmps;
+    }
+
     private void setDesiredGoal(final Goal goal) {
         desiredGoal = InternalGoal.fromGoal(goal);
         setDesiredPosition(goal.positionRots);

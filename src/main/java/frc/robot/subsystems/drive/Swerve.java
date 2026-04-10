@@ -983,6 +983,15 @@ public class Swerve extends SubsystemExt {
         );
     }
 
+    public double getSupplyCurrent() {
+        double current = 0.0;
+        for (final ModuleIOInputsAutoLogged inputs : moduleInputs) {
+            current += inputs.driveTorqueCurrentAmps + inputs.turnTorqueCurrentAmps;
+        }
+
+        return current;
+    }
+
     public static class RequestSysIdSwerveTranslationTorqueCurrent implements SwerveRequest {
         public double torqueCurrentToApply = 0;
 

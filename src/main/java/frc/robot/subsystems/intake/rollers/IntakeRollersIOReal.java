@@ -90,9 +90,9 @@ public class IntakeRollersIOReal implements IntakeRollersIO {
                 .withStaticFeedforwardSign(StaticFeedforwardSignValue.UseVelocitySign)
                 .withKP(15)
                 .withKD(0);
-        motorConfig.CurrentLimits.StatorCurrentLimit = 70;
+        motorConfig.CurrentLimits.StatorCurrentLimit = 50;
         motorConfig.CurrentLimits.StatorCurrentLimitEnable = true;
-        motorConfig.CurrentLimits.SupplyCurrentLimit = 70;
+        motorConfig.CurrentLimits.SupplyCurrentLimit = 50;
         motorConfig.CurrentLimits.SupplyCurrentLowerLimit = 40;
         motorConfig.CurrentLimits.SupplyCurrentLowerTime = 2.5;
         motorConfig.CurrentLimits.SupplyCurrentLimitEnable = true;

@@ -640,6 +640,23 @@ public class Autos {
         return routine;
     }
 
+    public AutoRoutine centerShoot() {
+        final AutoRoutine routine = autoFactory.newRoutine("CenterShoot");
+        final AutoTrajectory centerToShoot = routine.trajectory("CenterToShoot");
+
+        routine.active().onTrue(parallel(
+                runStartingTrajectory(centerToShoot),
+                runOnce(fuelState::setSimFuelPreloaded)
+                )
+        );
+
+        centerToShoot.done().onTrue(
+                shootStatic()
+        );
+
+        return routine;
+    }
+
     public Command warmup() {
         final AutoRoutine routine = autoFactory.newRoutine("Warmup");
         final AutoTrajectory warmup = routine.trajectory("Warmup");

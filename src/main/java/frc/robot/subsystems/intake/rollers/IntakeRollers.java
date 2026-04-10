@@ -90,6 +90,10 @@ public class IntakeRollers extends SubsystemExt {
         return makeRollersSysIdCommand(rollersTorqueCurrentSysIdRoutine);
     }
 
+    public double getSupplyCurrent() {
+        return inputs.masterTorqueCurrentAmps + inputs.followerTorqueCurrentAmps;
+    }
+
     private void setDesiredGoal(final Goal goal) {
         desiredGoal = goal;
         setDesiredVelocity(goal.velocityRotsPerSec);
