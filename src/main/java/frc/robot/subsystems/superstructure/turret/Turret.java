@@ -76,7 +76,7 @@ public class Turret extends SubsystemExt {
     private final HardwareConstants.TurretConstants constants;
 
     private final TurretIO turretIO;
-    private final TurretIOInputsAutoLogged inputs = new TurretIOInputsAutoLogged();
+    private final TurretIO.TurretIOInputs inputs = new TurretIO.TurretIOInputs();
 
     private InternalGoal desiredGoal = InternalGoal.STOW;
     private double positionSetpointRots = 0.0;
@@ -117,7 +117,6 @@ public class Turret extends SubsystemExt {
         final double turretPeriodicUpdateStart = Timer.getFPGATimestamp();
 
         turretIO.updateInputs(inputs);
-        Logger.processInputs(LogKey, inputs);
 
         if (!positionSeeded && MathUtil.isNear(0, inputs.turretVelocityRotsPerSec, 1e-3)) {
             final Rotation2d position = CRT.solve(
@@ -145,8 +144,8 @@ public class Turret extends SubsystemExt {
         Logger.recordOutput(LogKey + "/PositionSetpointRots", positionSetpointRots);
         Logger.recordOutput(LogKey + "/VelocitySetpointRotsPerSec", velocitySetpointRotsPerSec);
 
-        Logger.recordOutput(LogKey + "/AtUpperLimit", atUpperLimit());
-        Logger.recordOutput(LogKey + "/AtLowerLimit", atLowerLimit());
+//        Logger.recordOutput(LogKey + "/AtUpperLimit", atUpperLimit());
+//        Logger.recordOutput(LogKey + "/AtLowerLimit", atLowerLimit());
 
         Logger.recordOutput(
                 LogKey + "/PeriodicIOPeriodMs",

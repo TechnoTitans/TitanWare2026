@@ -72,8 +72,8 @@ public class Swerve extends SubsystemExt {
     private final Trigger allowedToChangeForwardDirection;
 
     private final SwerveIO swerveIO;
-    private final SwerveIOInputsAutoLogged inputs;
-    private final ModuleIOInputsAutoLogged[] moduleInputs;
+    private final SwerveIO.SwerveIOInputs inputs;
+    private final SwerveIO.ModuleIOInputs[] moduleInputs;
 
     private final SwerveDriveKinematics kinematics;
     private final SwerveDrivePoseEstimator replayPoseEstimator;
@@ -164,10 +164,10 @@ public class Swerve extends SubsystemExt {
             case SIM -> new SwerveIOSim(drivetrainConstants, moduleConstants);
             case REPLAY, DISABLED -> new SwerveIO() {};
         };
-        this.inputs = new SwerveIOInputsAutoLogged();
-        this.moduleInputs = new ModuleIOInputsAutoLogged[moduleConfigs.length];
+        this.inputs = new SwerveIO.SwerveIOInputs();
+        this.moduleInputs = new SwerveIO.ModuleIOInputs[moduleConfigs.length];
         for (int i = 0; i < moduleInputs.length; i++) {
-            moduleInputs[i] = new ModuleIOInputsAutoLogged();
+            moduleInputs[i] = new SwerveIO.ModuleIOInputs();
         }
 
         final Translation2d[] moduleOffsets = new Translation2d[moduleConfigs.length];
@@ -321,10 +321,10 @@ public class Swerve extends SubsystemExt {
         final double swervePeriodicUpdateStart = Timer.getFPGATimestamp();
 
         swerveIO.updateInputs(inputs, moduleInputs);
-        Logger.processInputs(LogKey, inputs);
-        for (final ModuleIOInputsAutoLogged moduleInputs : moduleInputs) {
-            Logger.processInputs(LogKey + "/Module" + moduleInputs.index, moduleInputs);
-        }
+//        Logger.processInputs(LogKey, inputs);
+//        for (final SwerveIO.ModuleIOInputs moduleInputs : moduleInputs) {
+//            Logger.processInputs(LogKey + "/Module" + moduleInputs.index, moduleInputs);
+//        }
 
         final double odometryUpdatePeriodSeconds = updateOdometry();
         updateStateValidCallbacks();
@@ -347,13 +347,13 @@ public class Swerve extends SubsystemExt {
                 LogKey + "/LinearSpeedMetersPerSecond",
                 Math.hypot(robotRelativeSpeeds.vxMetersPerSecond, robotRelativeSpeeds.vyMetersPerSecond)
         );
-        Logger.recordOutput(LogKey + "/RobotRelativeChassisSpeeds", robotRelativeSpeeds);
-        Logger.recordOutput(LogKey + "/FieldRelativeChassisSpeeds", getFieldRelativeSpeeds());
+//        Logger.recordOutput(LogKey + "/RobotRelativeChassisSpeeds", robotRelativeSpeeds);
+//        Logger.recordOutput(LogKey + "/FieldRelativeChassisSpeeds", getFieldRelativeSpeeds());
 
         Logger.recordOutput(LogKey + "/DesiredStates", getModuleLastDesiredStates());
         Logger.recordOutput(LogKey + "/CurrentStates", getModuleStates());
 
-        Logger.recordOutput(OdometryLogKey + "/Robot2d", robotPose);
+//        Logger.recordOutput(OdometryLogKey + "/Robot2d", robotPose);
         Logger.recordOutput(OdometryLogKey + "/Robot3d", GyroUtils.robotPose2dToPose3dWithGyro(
                 robotPose,
                 getRotation3d()
@@ -979,7 +979,7 @@ public class Swerve extends SubsystemExt {
 
     public double getSupplyCurrent() {
         double current = 0.0;
-        for (final ModuleIOInputsAutoLogged inputs : moduleInputs) {
+        for (final SwerveIO.ModuleIOInputs inputs : moduleInputs) {
             current += inputs.driveTorqueCurrentAmps + inputs.turnTorqueCurrentAmps;
         }
 

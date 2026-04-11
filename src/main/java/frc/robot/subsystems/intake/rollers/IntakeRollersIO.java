@@ -1,9 +1,6 @@
 package frc.robot.subsystems.intake.rollers;
 
-import org.littletonrobotics.junction.AutoLog;
-
 public interface IntakeRollersIO {
-    @AutoLog
     class IntakeRollerIOInputs {
         public double masterPositionRots = 0.0;
         public double masterVelocityRotsPerSec = 0.0;

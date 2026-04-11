@@ -25,14 +25,12 @@ import edu.wpi.first.util.struct.Struct;
 import edu.wpi.first.util.struct.StructSerializable;
 import frc.robot.constants.HardwareConstants.CANBus;
 import frc.robot.utils.ctre.RefreshAll;
-import org.littletonrobotics.junction.AutoLog;
 
 import java.nio.ByteBuffer;
 
 import static frc.robot.subsystems.drive.constants.SwerveConstants.ModuleCount;
 
 public interface SwerveIO {
-    @AutoLog
     class SwerveIOInputs {
         public boolean stateValid = false;
         public int bufferMaxSize = 0;
@@ -47,7 +45,6 @@ public interface SwerveIO {
 //        public double[] fpgaTimestamps = new double[0];
     }
 
-    @AutoLog
     class ModuleIOInputs {
         public int index = 0;
 

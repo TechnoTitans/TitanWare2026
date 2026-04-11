@@ -309,7 +309,7 @@ public class HolonomicDriveController {
         );
 
         Logger.recordOutput(LogKey + "/Distance", currentDistance);
-        Logger.recordOutput(LogKey + "/DistanceSetpoint", translationSetpoint.position);
+//        Logger.recordOutput(LogKey + "/DistanceSetpoint", translationSetpoint.position);
         Logger.recordOutput(
                 LogKey + "/Velocity",
                 // Component of field speeds along direction from current to target
@@ -318,13 +318,13 @@ public class HolonomicDriveController {
                         .dot(targetToCurrent.unaryMinus().toVector())
                         / currentDistance
         );
-        Logger.recordOutput(LogKey + "/VelocitySetpoint", translationSetpoint.velocity);
-
-        Logger.recordOutput(LogKey + "/Rotation", currentRotationRads);
-        Logger.recordOutput(LogKey + "/RotationSetpoint", rotationSetpoint.position);
-
-        Logger.recordOutput(LogKey + "/RotationVelocity", fieldSpeeds.omegaRadiansPerSecond);
-        Logger.recordOutput(LogKey + "/RotationVelocitySetpoint", rotationSetpoint.velocity);
+//        Logger.recordOutput(LogKey + "/VelocitySetpoint", translationSetpoint.velocity);
+//
+//        Logger.recordOutput(LogKey + "/Rotation", currentRotationRads);
+//        Logger.recordOutput(LogKey + "/RotationSetpoint", rotationSetpoint.position);
+//
+//        Logger.recordOutput(LogKey + "/RotationVelocity", fieldSpeeds.omegaRadiansPerSecond);
+//        Logger.recordOutput(LogKey + "/RotationVelocitySetpoint", rotationSetpoint.velocity);
 
         Logger.recordOutput(LogKey + "/TargetPose", targetPose);
         Logger.recordOutput(LogKey + "/Setpoint", setpointPose);

@@ -1,11 +1,8 @@
 package frc.robot.subsystems.superstructure.turret;
 
 import edu.wpi.first.math.geometry.Rotation2d;
-import org.littletonrobotics.junction.AutoLog;
 
 public interface TurretIO {
-
-    @AutoLog
     class TurretIOInputs {
         public double turretPositionRots = 0.0;
         public double turretVelocityRotsPerSec = 0.0;

@@ -35,7 +35,7 @@ public class Feeder extends SubsystemExt {
     }
 
     private final FeederIO feederIO;
-    private final FeederIOInputsAutoLogged inputs = new FeederIOInputsAutoLogged();
+    private final FeederIO.FeederIOInputs inputs = new FeederIO.FeederIOInputs();
 
     private Goal desiredGoal = Goal.OFF;
     private double velocitySetpoint = 0.0;
@@ -62,7 +62,6 @@ public class Feeder extends SubsystemExt {
         final double feederPeriodicFPGATime = Timer.getFPGATimestamp();
 
         feederIO.updateInputs(inputs);
-        Logger.processInputs(LogKey, inputs);
 
         Logger.recordOutput(LogKey + "/DesiredGoal", desiredGoal);
         Logger.recordOutput(LogKey + "/VelocitySetpoint", velocitySetpoint);

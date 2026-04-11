@@ -1,9 +1,6 @@
 package frc.robot.subsystems.indexer.feeder;
 
-import org.littletonrobotics.junction.AutoLog;
-
 public interface FeederIO {
-    @AutoLog
     class FeederIOInputs {
         public double wheelPositionRots = 0.0;
         public double wheelVelocityRotsPerSec = 0.0;

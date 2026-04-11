@@ -35,7 +35,7 @@ public class Spindexer extends SubsystemExt {
     }
 
     private final SpindexerIO spindexerIO;
-    private final SpindexerIOInputsAutoLogged inputs = new SpindexerIOInputsAutoLogged();
+    private final SpindexerIO.SpindexerIOInputs inputs = new SpindexerIO.SpindexerIOInputs();
 
     private Goal desiredGoal = Goal.STOP;
     private double velocitySetpoint = 0.0;
@@ -62,7 +62,6 @@ public class Spindexer extends SubsystemExt {
         final double spindexerPeriodicFPGATime = Timer.getFPGATimestamp();
 
         spindexerIO.updateInputs(inputs);
-        Logger.processInputs(LogKey, inputs);
 
         Logger.recordOutput(LogKey + "/DesiredGoal", desiredGoal);
         Logger.recordOutput(LogKey + "/VelocitySetpoint", velocitySetpoint);

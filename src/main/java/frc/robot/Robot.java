@@ -53,7 +53,6 @@ import java.io.IOException;
 import java.lang.reflect.Field;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.Arrays;
 import java.util.Optional;
 import java.util.function.BooleanSupplier;
 
@@ -341,9 +340,9 @@ public class Robot extends LoggedRobot {
 
         Logger.recordOutput("EmptyPose", Pose3d.kZero);
 
-        final Pose3d[] emptyPoseArray = new Pose3d[6];
-        Arrays.fill(emptyPoseArray, Pose3d.kZero);
-        Logger.recordOutput("EmptyPoses", emptyPoseArray);
+//        final Pose3d[] emptyPoseArray = new Pose3d[6];
+//        Arrays.fill(emptyPoseArray, Pose3d.kZero);
+//        Logger.recordOutput("EmptyPoses", emptyPoseArray);
     }
 
     @Override
@@ -362,13 +361,13 @@ public class Robot extends LoggedRobot {
 
         final AllianceShift allianceShift = AllianceShift.get(0);
         final AllianceShift offsetAllianceShift = AllianceShift.get(MatchTimeOffsetSeconds);
-        Logger.recordOutput(AllianceShift.LogKey + "/Normal", allianceShift);
-        Logger.recordOutput(AllianceShift.LogKey + "/Offset", offsetAllianceShift);
-        Logger.recordOutput(AllianceShift.LogKey + "/NormalHubStatus", allianceShift.hubStatus());
-        Logger.recordOutput(AllianceShift.LogKey + "/OffsetHubStatus", offsetAllianceShift.hubStatus());
+//        Logger.recordOutput(AllianceShift.LogKey + "/Normal", allianceShift);
+//        Logger.recordOutput(AllianceShift.LogKey + "/Offset", offsetAllianceShift);
+//        Logger.recordOutput(AllianceShift.LogKey + "/NormalHubStatus", allianceShift.hubStatus());
+//        Logger.recordOutput(AllianceShift.LogKey + "/OffsetHubStatus", offsetAllianceShift.hubStatus());
 
-        Logger.recordOutput(LogKey + "/AttemptedAutoWarmup", attemptedAutoWarmup);
-        Logger.recordOutput(LogKey + "/AutoIsHot", autoIsHot);
+//        Logger.recordOutput(LogKey + "/AttemptedAutoWarmup", attemptedAutoWarmup);
+//        Logger.recordOutput(LogKey + "/AutoIsHot", autoIsHot);
 
 //        Logger.recordOutput(LogKey + "/TotalCurrent", getTotalCurrent());
     }

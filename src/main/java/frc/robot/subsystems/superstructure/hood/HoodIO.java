@@ -1,9 +1,6 @@
 package frc.robot.subsystems.superstructure.hood;
 
-import org.littletonrobotics.junction.AutoLog;
-
 public interface HoodIO {
-    @AutoLog
     class HoodIOInputs {
         public double hoodPositionRots = 0.0;
         public double hoodVelocityRotsPerSec = 0.0;

@@ -83,7 +83,7 @@ public class Shooter extends SubsystemExt {
     }
 
     private final ShooterIO shooterIO;
-    private final ShooterIOInputsAutoLogged inputs = new ShooterIOInputsAutoLogged();
+    private final ShooterIO.ShooterIOInputs inputs = new ShooterIO.ShooterIOInputs();
 
     private InternalGoal desiredGoal = InternalGoal.TRACKING;
     private double setpoint;
@@ -118,7 +118,7 @@ public class Shooter extends SubsystemExt {
         final double shooterPeriodicUpdateStart = Timer.getFPGATimestamp();
 
         shooterIO.updateInputs(inputs);
-        Logger.processInputs(LogKey, inputs);
+//        Logger.processInputs(LogKey, inputs);
 
         final InternalGoal currentGoal;
         if (atSetpoint()) {

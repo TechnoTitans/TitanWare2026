@@ -66,7 +66,7 @@ public class Hood extends SubsystemExt {
     }
 
     private final HoodIO hoodIO;
-    private final HoodIOInputsAutoLogged inputs = new HoodIOInputsAutoLogged();
+    private final HoodIO.HoodIOInputs inputs = new HoodIO.HoodIOInputs();
 
     private InternalGoal desiredGoal = InternalGoal.STOW;
     private double positionSetpointRots = 0.0;
@@ -99,7 +99,6 @@ public class Hood extends SubsystemExt {
         final double hoodPeriodicUpdateStart = Timer.getFPGATimestamp();
 
         hoodIO.updateInputs(inputs);
-        Logger.processInputs(LogKey, inputs);
 
         final InternalGoal currentGoal;
         if (atSetpoint()) {
@@ -113,8 +112,8 @@ public class Hood extends SubsystemExt {
         Logger.recordOutput(LogKey + "/AtSetpoint", atSetpoint);
         Logger.recordOutput(LogKey + "/PositionSetpointRots", positionSetpointRots);
 
-        Logger.recordOutput(LogKey + "/AtUpperLimit", atUpperLimit());
-        Logger.recordOutput(LogKey + "/AtLowerLimit", atLowerLimit());
+//        Logger.recordOutput(LogKey + "/AtUpperLimit", atUpperLimit());
+//        Logger.recordOutput(LogKey + "/AtLowerLimit", atLowerLimit());
 
         Logger.recordOutput(
                 LogKey + "/PeriodicIOPeriodMs",

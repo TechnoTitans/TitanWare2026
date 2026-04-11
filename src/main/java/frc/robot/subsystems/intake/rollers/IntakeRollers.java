@@ -36,7 +36,7 @@ public class IntakeRollers extends SubsystemExt {
     }
 
     private final IntakeRollersIO intakeRollersIO;
-    private final IntakeRollerIOInputsAutoLogged inputs = new IntakeRollerIOInputsAutoLogged();
+    private final IntakeRollersIO.IntakeRollerIOInputs inputs = new IntakeRollersIO.IntakeRollerIOInputs();
 
     private Goal desiredGoal = Goal.OFF;
     private double velocitySetpoint = 0.0;
@@ -63,7 +63,7 @@ public class IntakeRollers extends SubsystemExt {
         final double intakeRollersPeriodicUpdateStart = Timer.getFPGATimestamp();
 
         intakeRollersIO.updateInputs(inputs);
-        Logger.processInputs(LogKey, inputs);
+//        Logger.processInputs(LogKey, inputs);
 
         Logger.recordOutput(LogKey + "/DesiredGoal", desiredGoal);
         Logger.recordOutput(LogKey + "/VelocitySetpoint", velocitySetpoint);

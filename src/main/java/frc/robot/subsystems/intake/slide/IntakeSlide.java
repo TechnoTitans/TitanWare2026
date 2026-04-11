@@ -106,7 +106,7 @@ public class IntakeSlide extends SubsystemExt {
     private final HardwareConstants.IntakeSlideConstants constants;
 
     private final IntakeSlideIO intakeSlideIO;
-    private final IntakeSlideIOInputsAutoLogged inputs = new IntakeSlideIOInputsAutoLogged();
+    private final IntakeSlideIO.IntakeSlideIOInputs inputs = new IntakeSlideIO.IntakeSlideIOInputs();
 
     private final DeltaTime deltaTime = new DeltaTime();
     private final TrapezoidProfile.State profileGoal = new TrapezoidProfile.State(0,0);
@@ -150,7 +150,6 @@ public class IntakeSlide extends SubsystemExt {
         final double intakeSlidePeriodicUpdateStart = Timer.getFPGATimestamp();
 
         intakeSlideIO.updateInputs(inputs);
-        Logger.processInputs(LogKey, inputs);
 
         final InternalGoal currentGoal;
         if (atSetpoint()) {
@@ -172,12 +171,12 @@ public class IntakeSlide extends SubsystemExt {
         Logger.recordOutput(LogKey + "/DesiredGoal", desiredGoal);
         Logger.recordOutput(LogKey + "/CurrentGoal", currentGoal);
         Logger.recordOutput(LogKey + "/AtSetpoint", atSetpoint);
-        Logger.recordOutput(LogKey + "/PositionSetpointRots", positionSetpointRots);
+//        Logger.recordOutput(LogKey + "/PositionSetpointRots", positionSetpointRots);
         Logger.recordOutput(LogKey + "/HoldMode", holdMode);
-        Logger.recordOutput(LogKey + "/IsIntakeStopped", isIntakeStopped);
+//        Logger.recordOutput(LogKey + "/IsIntakeStopped", isIntakeStopped);
 
-        Logger.recordOutput(LogKey + "/AtUpperLimit", atUpperLimit());
-        Logger.recordOutput(LogKey + "/AtLowerLimit", atLowerLimit());
+//        Logger.recordOutput(LogKey + "/AtUpperLimit", atUpperLimit());
+//        Logger.recordOutput(LogKey + "/AtLowerLimit", atLowerLimit());
 
         Logger.recordOutput(
                 LogKey + "/PeriodicIOPeriodMs",

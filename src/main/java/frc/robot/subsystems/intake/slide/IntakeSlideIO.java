@@ -1,10 +1,8 @@
 package frc.robot.subsystems.intake.slide;
 
 import com.ctre.phoenix6.mechanisms.MechanismState;
-import org.littletonrobotics.junction.AutoLog;
 
 public interface IntakeSlideIO {
-    @AutoLog
     class IntakeSlideIOInputs {
         public double masterPositionRots = 0.0;
         public double masterVelocityRotsPerSec = 0.0;

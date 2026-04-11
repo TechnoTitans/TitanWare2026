@@ -1,9 +1,6 @@
 package frc.robot.subsystems.superstructure.shooter;
 
-import org.littletonrobotics.junction.AutoLog;
-
 public interface ShooterIO {
-    @AutoLog
     class ShooterIOInputs {
         public double masterPositionRots = 0.0;
         public double masterVelocityRotsPerSec = 0.0;

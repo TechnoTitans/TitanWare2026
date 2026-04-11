@@ -263,10 +263,10 @@ public class PhotonVision extends VirtualSubsystem {
             final VisionIO.VisionIOInputs inputs = visionIOInputsEntry.getValue();
             final String logKey = PhotonLogKey + "/" + inputs.name;
 
-            Logger.recordOutput(
-                    logKey + "/CameraPose",
-                    new Pose3d(swerve.getPose()).transformBy(inputs.robotToCamera)
-            );
+//            Logger.recordOutput(
+//                    logKey + "/CameraPose",
+//                    new Pose3d(swerve.getPose()).transformBy(inputs.robotToCamera)
+//            );
 
             final VisionResult[] visionResults = runner.getVisionResults(visionIO);
             for (final VisionResult result : visionResults) {
@@ -297,7 +297,7 @@ public class PhotonVision extends VirtualSubsystem {
                         visionUpdate,
                         inputs.stdDevFactor
                 );
-                Logger.recordOutput(logKey + "/StdDevs", stdDevs.getData());
+//                Logger.recordOutput(logKey + "/StdDevs", stdDevs.getData());
 
                 lastVisionUpdateMap.put(visionIO, result);
                 swerve.addVisionMeasurement(
@@ -363,14 +363,14 @@ public class PhotonVision extends VirtualSubsystem {
                 }
 
                 Logger.recordOutput(logKey + "/EstimatedPose3d", estimatedPose);
-                Logger.recordOutput(logKey + "/AmbiguousPose3d", ambiguousPose);
-                Logger.recordOutput(logKey + "/EstimatedPose2d", estimatedPose.toPose2d());
+//                Logger.recordOutput(logKey + "/AmbiguousPose3d", ambiguousPose);
+//                Logger.recordOutput(logKey + "/EstimatedPose2d", estimatedPose.toPose2d());
             }
 
             Logger.recordOutput(logKey + "/TagIds", apriltagIds);
 
             Logger.recordOutput(logKey + "/TagPose3ds", apriltagPose3ds);
-            Logger.recordOutput(logKey + "/TagPose2ds", apriltagPose2ds);
+//            Logger.recordOutput(logKey + "/TagPose2ds", apriltagPose2ds);
         }
     }
 
