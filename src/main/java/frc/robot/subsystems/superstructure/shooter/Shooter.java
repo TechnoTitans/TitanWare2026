@@ -47,7 +47,7 @@ public class Shooter extends SubsystemExt {
     private enum InternalGoal {
         NONE,
         DEFAULT,
-       // UNSTUCK(Goal.UNSTUCK),
+        UNSTUCK(Goal.UNSTUCK),
         IDLE(Goal.IDLE),
         NO_VISION(Goal.NO_VISION),
         TRACKING;
