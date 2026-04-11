@@ -7,12 +7,12 @@ import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
+import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.subsystems.superstructure.hood.Hood;
 import frc.robot.subsystems.superstructure.params.ShotParameters;
 import frc.robot.subsystems.superstructure.shooter.Shooter;
 import frc.robot.subsystems.superstructure.turret.Turret;
 import frc.robot.utils.Container;
-import frc.robot.utils.commands.trigger.LoggedTrigger;
 import frc.robot.utils.subsystems.VirtualSubsystem;
 import org.littletonrobotics.junction.Logger;
 
@@ -77,12 +77,12 @@ public class Superstructure extends VirtualSubsystem {
 
     private InternalGoal desiredGoal = InternalGoal.STOW;
 
-    public final LoggedTrigger atSetpoint;
-    public final LoggedTrigger turretAtSetpoint;
-    public final LoggedTrigger hoodAtSetpoint;
-    public final LoggedTrigger shooterAtSetpoint;
+    public final Trigger atSetpoint;
+    public final Trigger turretAtSetpoint;
+    public final Trigger hoodAtSetpoint;
+    public final Trigger shooterAtSetpoint;
 
-    public final LoggedTrigger safeForTrench;
+    public final Trigger safeForTrench;
 
     public Superstructure(
             final Turret turret,

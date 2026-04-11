@@ -5,10 +5,10 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.constants.Constants;
 import frc.robot.constants.HardwareConstants;
 import frc.robot.utils.commands.ext.SubsystemExt;
-import frc.robot.utils.commands.trigger.LoggedTrigger;
 import org.littletonrobotics.junction.Logger;
 
 import java.util.HashMap;
@@ -65,16 +65,14 @@ public class Hood extends SubsystemExt {
         }
     }
 
-    private final LoggedTrigger.Group group = LoggedTrigger.Group.from(LogKey);
-
     private final HoodIO hoodIO;
     private final HoodIOInputsAutoLogged inputs = new HoodIOInputsAutoLogged();
 
     private InternalGoal desiredGoal = InternalGoal.STOW;
     private double positionSetpointRots = 0.0;
 
-    public final LoggedTrigger atSetpoint;
-    public final LoggedTrigger safeForTrench = group.t("SafeForTrench", () -> atGoal(Goal.STOW));
+    public final Trigger atSetpoint;
+    public final Trigger safeForTrench = new Trigger(() -> atGoal(Goal.STOW));
 
     public Hood(final Constants.RobotMode mode, final HardwareConstants.HoodConstants constants) {
         this.constants = constants;
@@ -85,7 +83,7 @@ public class Hood extends SubsystemExt {
         };
         this.hoodIO.zero();
 
-        this.atSetpoint = group.t("AtSetpoint", () -> MathUtil.isNear(
+        this.atSetpoint = new Trigger(() -> MathUtil.isNear(
                 positionSetpointRots,
                 inputs.hoodPositionRots,
                 PositionToleranceRots

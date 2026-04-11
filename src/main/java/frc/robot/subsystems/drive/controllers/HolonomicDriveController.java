@@ -9,8 +9,8 @@ import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.math.util.Units;
+import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.constants.Constants;
-import frc.robot.utils.commands.trigger.LoggedTrigger;
 import org.littletonrobotics.junction.Logger;
 
 import java.util.function.Supplier;
@@ -27,8 +27,6 @@ public class HolonomicDriveController {
 
     private static final double MinimumRotationInput = -Math.PI;
     private static final double MaxRotationInput = Math.PI;
-
-    private final LoggedTrigger.Group group;
 
     private final PIDController xController;
     private final PIDController yController;
@@ -76,8 +74,6 @@ public class HolonomicDriveController {
             final PositionTolerance positionTolerance,
             final VelocityTolerance velocityTolerance
     ) {
-        this.group = LoggedTrigger.Group.from(LogKey);
-
         this.xController = xController;
         this.yController = yController;
         this.rotationController = rotationController;
@@ -98,13 +94,12 @@ public class HolonomicDriveController {
         this.lastSetpointTranslation = Translation2d.kZero;
     }
 
-    public static LoggedTrigger atPose(
-            final LoggedTrigger.Group group,
+    public static Trigger atPose(
             final Supplier<Pose2d> currentPoseSupplier,
             final Supplier<Pose2d> targetPoseSupplier,
             final PositionTolerance positionTolerance
     ) {
-        return group.t("atPose", () -> {
+        return new Trigger(() -> {
             final Transform2d delta = currentPoseSupplier.get().minus(targetPoseSupplier.get());
 
             final double translationDistanceMeters = Math.abs(delta.getTranslation().getNorm());
@@ -115,15 +110,14 @@ public class HolonomicDriveController {
         });
     }
 
-    public static LoggedTrigger atPoseAndStopped(
-            final LoggedTrigger.Group group,
+    public static Trigger atPoseAndStopped(
             final Supplier<Pose2d> currentPoseSupplier,
             final Supplier<ChassisSpeeds> fieldRelativeSpeedsSupplier,
             final Supplier<Pose2d> targetPoseSupplier,
             final PositionTolerance positionTolerance,
             final VelocityTolerance velocityTolerance
     ) {
-        return group.t("atPoseAndStopped", () -> {
+        return new Trigger(() -> {
             final Transform2d delta = currentPoseSupplier.get().minus(targetPoseSupplier.get());
             final ChassisSpeeds speeds = fieldRelativeSpeedsSupplier.get();
 
@@ -139,19 +133,18 @@ public class HolonomicDriveController {
         });
     }
 
-    public LoggedTrigger atPose(
+    public Trigger atPose(
             final Supplier<Pose2d> currentPoseSupplier,
             final Supplier<Pose2d> targetPoseSupplier
     ) {
-        return atPose(group, currentPoseSupplier, targetPoseSupplier, positionTolerance);
+        return atPose(currentPoseSupplier, targetPoseSupplier, positionTolerance);
     }
 
-    public LoggedTrigger atPoseAndStopped(
+    public Trigger atPoseAndStopped(
             final Supplier<Pose2d> currentPoseSupplier,
             final Supplier<Pose2d> targetPoseSupplier
     ) {
         return atPoseAndStopped(
-                group,
                 currentPoseSupplier,
                 fieldRelativeSpeedsSupplier,
                 targetPoseSupplier,

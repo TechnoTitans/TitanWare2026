@@ -12,6 +12,8 @@ import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
+import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
+import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.constants.Constants;
 import frc.robot.constants.FieldConstants;
 import frc.robot.constants.SimConstants;
@@ -22,8 +24,6 @@ import frc.robot.subsystems.superstructure.Superstructure;
 import frc.robot.subsystems.superstructure.params.MovingUtils;
 import frc.robot.utils.Container;
 import frc.robot.utils.commands.ext.CommandsExt;
-import frc.robot.utils.commands.trigger.LoggedTrigger;
-import frc.robot.utils.commands.trigger.RobotModeLoggedTriggers;
 import frc.robot.utils.control.DeltaTime;
 import frc.robot.utils.subsystems.VirtualSubsystem;
 import org.littletonrobotics.junction.Logger;
@@ -33,8 +33,7 @@ import java.util.function.Function;
 
 public class FuelState extends VirtualSubsystem {
     protected static final String LogKey = "FuelState";
-    private final LoggedTrigger.Group group = LoggedTrigger.Group.from(LogKey);
-    private final LoggedTrigger teleopEnabled = RobotModeLoggedTriggers.teleop(group);
+    private final Trigger teleopEnabled = RobotModeTriggers.teleop();
 
     private final DeltaTime deltaTime;
     private final Constants.RobotMode mode;
@@ -47,12 +46,12 @@ public class FuelState extends VirtualSubsystem {
 
     private int simFuelCount = 0;
     private final FuelCache fuelCache;
-    private final LoggedTrigger hasSimFuel;
+    private final Trigger hasSimFuel;
 
     private int simScoredFuelCount = 0;
     private double simTimeOfFlight;
 
-    public final LoggedTrigger hasFuel;
+    public final Trigger hasFuel;
 
     public FuelState(
             final Constants.RobotMode mode,
@@ -71,11 +70,11 @@ public class FuelState extends VirtualSubsystem {
         this.superstructure = superstructure;
         this.componentsSolver = componentsSolver;
 
-        this.hasSimFuel = group.t("HasSimFuel", () -> simFuelCount > 0);
+        this.hasSimFuel = new Trigger(() -> simFuelCount > 0);
         // TODO: check tof sensor
 //        this.hasFuel = group.t("HasFuel", indexer::isFeederTOFDetected)
 //                .debounce(0.5, Debouncer.DebounceType.kFalling);
-        this.hasFuel = group.t("HasFuel", () -> true);
+        this.hasFuel = new Trigger(() -> true);
 
         configureStateTriggers();
         switch (mode) {

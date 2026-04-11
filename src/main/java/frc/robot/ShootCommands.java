@@ -16,13 +16,11 @@ import frc.robot.subsystems.superstructure.params.MovingTOFShot;
 import frc.robot.subsystems.superstructure.params.ShotParameters;
 import frc.robot.subsystems.superstructure.params.ShotProvider;
 import frc.robot.subsystems.superstructure.params.StaticShot;
-import frc.robot.utils.commands.trigger.LoggedTrigger;
 import frc.robot.utils.subsystems.VirtualSubsystem;
 import frc.robot.utils.teleop.SwerveSpeed;
 import org.littletonrobotics.junction.Logger;
 
 import java.util.Map;
-import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
@@ -37,8 +35,6 @@ public class ShootCommands extends VirtualSubsystem {
         FERRY,
         FERRY_BLOCKED
     }
-
-    private final LoggedTrigger.Group group = LoggedTrigger.Group.from(LogKey);
 
     private final Swerve swerve;
     private final Intake intake;
@@ -144,8 +140,7 @@ public class ShootCommands extends VirtualSubsystem {
     }
 
     public Command stopAndShoot() {
-        final LoggedTrigger targetValid = group.t(
-                "TargetValid",
+        final Trigger targetValid = new Trigger(
                 () -> switch (targetSupplier.get()) {
                     case HUB, FERRY -> true;
                     case FERRY_BLOCKED -> false;
@@ -177,8 +172,7 @@ public class ShootCommands extends VirtualSubsystem {
     }
 
     public Command shoot() {
-        final LoggedTrigger targetValid = group.t(
-                "TargetValid",
+        final Trigger targetValid = new Trigger(
                 () -> switch (targetSupplier.get()) {
                     case HUB, FERRY -> true;
                     case FERRY_BLOCKED -> false;
@@ -190,8 +184,7 @@ public class ShootCommands extends VirtualSubsystem {
                     case HUB -> SwerveSpeed.Speeds.SHOOTING;
                     case FERRY, FERRY_BLOCKED -> SwerveSpeed.Speeds.FERRYING;
                 };
-        final LoggedTrigger swerveReady = group.t(
-                "SwerveReady",
+        final Trigger swerveReady = new Trigger(
                 () -> linearSpeed(swerve.getFieldRelativeSpeeds())
                         <= swerveSpeedsSupplier.get().getTranslationSpeed() + SwerveSpeedTolerance
         );

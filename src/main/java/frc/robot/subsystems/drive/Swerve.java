@@ -36,6 +36,7 @@ import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
+import edu.wpi.first.wpilibj2.command.button.Trigger;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.Robot;
 import frc.robot.auto.Autos;
@@ -45,7 +46,6 @@ import frc.robot.subsystems.drive.constants.SwerveConstants;
 import frc.robot.subsystems.drive.controllers.HolonomicChoreoController;
 import frc.robot.subsystems.drive.controllers.HolonomicDriveController;
 import frc.robot.utils.commands.ext.SubsystemExt;
-import frc.robot.utils.commands.trigger.LoggedTrigger;
 import frc.robot.utils.gyro.GyroUtils;
 import frc.robot.utils.teleop.ControllerUtils;
 import frc.robot.utils.teleop.SwerveSpeed;
@@ -69,8 +69,7 @@ public class Swerve extends SubsystemExt {
     private static final double OdometryBufferHistorySeconds = 1.5;
 
     private final Constants.RobotMode mode;
-    private final LoggedTrigger.Group group;
-    private final LoggedTrigger allowedToChangeForwardDirection;
+    private final Trigger allowedToChangeForwardDirection;
 
     private final SwerveIO swerveIO;
     private final SwerveIOInputsAutoLogged inputs;
@@ -122,13 +121,13 @@ public class Swerve extends SubsystemExt {
             .withDriveRequestType(SwerveModule.DriveRequestType.OpenLoopVoltage)
             .withSteerRequestType(SwerveModule.SteerRequestType.Position);
 
-    public final LoggedTrigger atHeadingSetpoint;
+    public final Trigger atHeadingSetpoint;
     private boolean headingControllerActive = false;
     private Rotation2d headingTarget = Rotation2d.kZero;
     private final PIDController headingController;
 
-    public final LoggedTrigger atHolonomicDrivePose;
-    public final LoggedTrigger atHolonomicDrivePoseStopped;
+    public final Trigger atHolonomicDrivePose;
+    public final Trigger atHolonomicDrivePoseStopped;
     private boolean holonomicControllerActive = false;
     private Pose2d holonomicPoseTarget = Pose2d.kZero;
     private final HolonomicDriveController holonomicDriveController;
@@ -158,9 +157,7 @@ public class Swerve extends SubsystemExt {
                     TalonFXConfiguration, TalonFXConfiguration, CANcoderConfiguration>... moduleConstants
     ) {
         this.mode = mode;
-        this.group = LoggedTrigger.Group.from(LogKey);
-        this.allowedToChangeForwardDirection =
-                group.t("AllowedToChangeForwardDirection", RobotModeTriggers.disabled());
+        this.allowedToChangeForwardDirection = RobotModeTriggers.disabled();
 
         this.swerveIO = switch (mode) {
             case REAL -> new SwerveIOReal(drivetrainConstants, moduleConstants);
@@ -196,8 +193,7 @@ public class Swerve extends SubsystemExt {
         this.headingController = new PIDController(4, 0, 0);
         this.headingController.enableContinuousInput(-Math.PI, Math.PI);
         this.headingController.setTolerance(Units.degreesToRadians(4), Units.degreesToRadians(6));
-        this.atHeadingSetpoint = group.t(
-                "atHeadingSetpoint",
+        this.atHeadingSetpoint = new Trigger(
                 () -> headingControllerActive &&
                         MathUtil.isNear(
                                 headingTarget.getRadians(),
@@ -776,7 +772,7 @@ public class Swerve extends SubsystemExt {
             final DriveAxis holdAxis,
             final Supplier<Rotation2d> headingTarget
     ) {
-        final LoggedTrigger atAxis = atAxisTrigger(
+        final Trigger atAxis = atAxisTrigger(
                 holdPosition,
                 holdAxis == DriveAxis.X
                         ? () -> getPose().getX()
@@ -847,24 +843,23 @@ public class Swerve extends SubsystemExt {
         applyRequest(pointWheelsAt.withModuleDirection(Rotation2d.kZero));
     }
 
-    public LoggedTrigger atPoseTrigger(final Supplier<Pose2d> targetPoseSupplier) {
+    public Trigger atPoseTrigger(final Supplier<Pose2d> targetPoseSupplier) {
         return holonomicDriveController.atPose(this::getPose, targetPoseSupplier);
     }
 
-    public LoggedTrigger atPoseTrigger(
+    public Trigger atPoseTrigger(
             final Supplier<Pose2d> targetPoseSupplier,
             final HolonomicDriveController.PositionTolerance tolerance
     ) {
-        return HolonomicDriveController.atPose(group, this::getPose, targetPoseSupplier, tolerance);
+        return HolonomicDriveController.atPose(this::getPose, targetPoseSupplier, tolerance);
     }
 
-    public LoggedTrigger atPoseTrigger(
+    public Trigger atPoseTrigger(
             final Supplier<Pose2d> targetPoseSupplier,
             final HolonomicDriveController.PositionTolerance positionTolerance,
             final HolonomicDriveController.VelocityTolerance velocityTolerance
     ) {
         return HolonomicDriveController.atPoseAndStopped(
-                group,
                 this::getPose,
                 this::getFieldRelativeSpeeds,
                 targetPoseSupplier,
@@ -872,21 +867,20 @@ public class Swerve extends SubsystemExt {
                 velocityTolerance);
     }
 
-    public LoggedTrigger atPoseAndStoppedTrigger(final Supplier<Pose2d> targetPoseSupplier) {
+    public Trigger atPoseAndStoppedTrigger(final Supplier<Pose2d> targetPoseSupplier) {
         return holonomicDriveController.atPoseAndStopped(
                 this::getPose,
                 targetPoseSupplier
         );
     }
 
-    public LoggedTrigger atAxisTrigger(final DoubleSupplier target, final DoubleSupplier measurement) {
+    public Trigger atAxisTrigger(final DoubleSupplier target, final DoubleSupplier measurement) {
         final DoubleSupplier linearSpeedSupplier = () -> {
             final ChassisSpeeds speeds = getFieldRelativeSpeeds();
             return Math.hypot(speeds.vxMetersPerSecond, speeds.vyMetersPerSecond);
         };
 
-        return group.t(
-                "atAxis",
+        return new Trigger(
                 () -> MathUtil.isNear(
                         target.getAsDouble(),
                         measurement.getAsDouble(),

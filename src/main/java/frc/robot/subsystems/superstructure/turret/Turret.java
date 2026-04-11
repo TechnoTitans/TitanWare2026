@@ -12,11 +12,11 @@ import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
+import edu.wpi.first.wpilibj2.command.button.Trigger;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.constants.Constants;
 import frc.robot.constants.HardwareConstants;
 import frc.robot.utils.commands.ext.SubsystemExt;
-import frc.robot.utils.commands.trigger.LoggedTrigger;
 import org.littletonrobotics.junction.Logger;
 
 import java.util.HashMap;
@@ -73,8 +73,6 @@ public class Turret extends SubsystemExt {
         }
     }
 
-    @SuppressWarnings("FieldCanBeLocal")
-    private final LoggedTrigger.Group group = LoggedTrigger.Group.from(LogKey);
     private final HardwareConstants.TurretConstants constants;
 
     private final TurretIO turretIO;
@@ -86,7 +84,7 @@ public class Turret extends SubsystemExt {
 
     private boolean positionSeeded = false;
 
-    public final LoggedTrigger atSetpoint;
+    public final Trigger atSetpoint;
     private final SysIdRoutine voltageSysIdRoutine;
 
     public Turret(final Constants.RobotMode mode, final HardwareConstants.TurretConstants constants) {
@@ -97,7 +95,7 @@ public class Turret extends SubsystemExt {
             case REPLAY, DISABLED -> new TurretIO() {};
         };
 
-        this.atSetpoint = group.t("AtSetpoint", () -> MathUtil.isNear(
+        this.atSetpoint = new Trigger(() -> MathUtil.isNear(
                 positionSetpointRots,
                 inputs.turretPositionRots,
                 PositionToleranceRots

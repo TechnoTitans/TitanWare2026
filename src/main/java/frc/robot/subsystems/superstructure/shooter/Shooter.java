@@ -12,15 +12,14 @@ import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
+import edu.wpi.first.wpilibj2.command.button.Trigger;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.constants.Constants;
 import frc.robot.constants.HardwareConstants;
 import frc.robot.utils.commands.ext.SubsystemExt;
-import frc.robot.utils.commands.trigger.LoggedTrigger;
 import org.littletonrobotics.junction.Logger;
 
 import java.util.HashMap;
-import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.function.DoubleSupplier;
 
@@ -90,7 +89,7 @@ public class Shooter extends SubsystemExt {
     private double setpoint;
     private ControlType controlType = ControlType.Velocity;
 
-    public final LoggedTrigger atSetpoint;
+    public final Trigger atSetpoint;
     private final SysIdRoutine flywheelTorqueCurrentSysIdRoutine;
 
     public Shooter(final Constants.RobotMode mode, final HardwareConstants.ShooterConstants constants) {
@@ -100,8 +99,7 @@ public class Shooter extends SubsystemExt {
             case REPLAY, DISABLED -> new ShooterIO() {};
         };
 
-        final LoggedTrigger.Group group = LoggedTrigger.Group.from(LogKey);
-        this.atSetpoint = group.t("AtSetpoint", () -> MathUtil.isNear(
+        this.atSetpoint = new Trigger(() -> MathUtil.isNear(
                 setpoint,
                 inputs.masterVelocityRotsPerSec,
                 VelocityToleranceRotsPerSec

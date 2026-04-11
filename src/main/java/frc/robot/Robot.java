@@ -14,6 +14,8 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
+import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
+import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.auto.AutoChooser;
 import frc.robot.auto.AutoOption;
 import frc.robot.auto.Autos;
@@ -35,10 +37,7 @@ import frc.robot.subsystems.superstructure.turret.Turret;
 import frc.robot.subsystems.vision.PhotonVision;
 import frc.robot.utils.closeables.ToClose;
 import frc.robot.utils.commands.ext.CommandsExt;
-import frc.robot.utils.commands.trigger.LoggedTrigger;
-import frc.robot.utils.commands.trigger.RobotModeLoggedTriggers;
 import frc.robot.utils.ctre.RefreshAll;
-import frc.robot.utils.logging.CommandLogger;
 import frc.robot.utils.subsystems.VirtualSubsystem;
 import frc.robot.utils.teleop.ControllerUtils;
 import frc.robot.utils.teleop.SwerveSpeed;
@@ -199,16 +198,14 @@ public class Robot extends LoggedRobot {
     private final EventLoop teleopEventLoop = new EventLoop();
     private final EventLoop testEventLoop = new EventLoop();
 
-    private final LoggedTrigger.Group group = LoggedTrigger.Group.from(LogKey);
-
-    private final LoggedTrigger disabled = RobotModeLoggedTriggers.disabled(group);
-    private final LoggedTrigger autonomousEnabled = RobotModeLoggedTriggers.autonomous(group);
-    private final LoggedTrigger teleopEnabled = RobotModeLoggedTriggers.teleop(group);
-    private final LoggedTrigger enabled = RobotModeLoggedTriggers.enabled(group);
+    private final Trigger disabled = RobotModeTriggers.disabled();
+    private final Trigger autonomousEnabled = RobotModeTriggers.autonomous();
+    private final Trigger teleopEnabled = RobotModeTriggers.teleop();
+    private final Trigger enabled = autonomousEnabled.or(teleopEnabled);
 
     private static final double MatchTimeOffsetSeconds = 2;
-    private final LoggedTrigger hubActive =
-            group.t("HubActive", () -> AllianceShift.get(MatchTimeOffsetSeconds).hubStatus() == AllianceShift.HubStatus.ACTIVE);
+    private final Trigger hubActive = new Trigger(
+            () -> AllianceShift.get(MatchTimeOffsetSeconds).hubStatus() == AllianceShift.HubStatus.ACTIVE);
 
     // TODO: temp
     private boolean attemptedAutoWarmup = false;
@@ -334,7 +331,7 @@ public class Robot extends LoggedRobot {
         configureAutos();
         configureButtonBindings(teleopEventLoop);
 
-        CommandLogger.init(CommandScheduler.getInstance());
+//        CommandLogger.init(CommandScheduler.getInstance()); TODO:
 
         SignalLogger.enableAutoLogging(true);
         SignalLogger.start();
@@ -359,9 +356,9 @@ public class Robot extends LoggedRobot {
         driverControllerDisconnected.set(!driverController.getHID().isConnected());
         coControllerDisconnected.set(!coController.getHID().isConnected());
 
-        CommandLogger.periodic();
+//        CommandLogger.periodic();
 
-        componentsSolver.periodic();
+//        componentsSolver.periodic(); TODO: CPU UTIL TESTING
 
         final AllianceShift allianceShift = AllianceShift.get(0);
         final AllianceShift offsetAllianceShift = AllianceShift.get(MatchTimeOffsetSeconds);
@@ -373,7 +370,7 @@ public class Robot extends LoggedRobot {
         Logger.recordOutput(LogKey + "/AttemptedAutoWarmup", attemptedAutoWarmup);
         Logger.recordOutput(LogKey + "/AutoIsHot", autoIsHot);
 
-        Logger.recordOutput(LogKey + "/TotalCurrent", getTotalCurrent());
+//        Logger.recordOutput(LogKey + "/TotalCurrent", getTotalCurrent());
     }
 
     @Override

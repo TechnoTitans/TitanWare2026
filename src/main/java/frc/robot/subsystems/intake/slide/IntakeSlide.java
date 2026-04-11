@@ -7,10 +7,10 @@ import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
+import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.constants.Constants;
 import frc.robot.constants.HardwareConstants;
 import frc.robot.utils.commands.ext.SubsystemExt;
-import frc.robot.utils.commands.trigger.LoggedTrigger;
 import frc.robot.utils.control.DeltaTime;
 import org.littletonrobotics.junction.Logger;
 
@@ -103,8 +103,6 @@ public class IntakeSlide extends SubsystemExt {
         HARD
     }
 
-    private final LoggedTrigger.Group group = LoggedTrigger.Group.from(LogKey);
-
     private final HardwareConstants.IntakeSlideConstants constants;
 
     private final IntakeSlideIO intakeSlideIO;
@@ -119,8 +117,8 @@ public class IntakeSlide extends SubsystemExt {
 
     private HoldMode holdMode = HoldMode.HARD;
 
-    public final LoggedTrigger atSetpoint;
-    public final LoggedTrigger isIntakeStopped;
+    public final Trigger atSetpoint;
+    public final Trigger isIntakeStopped;
 
     public IntakeSlide(final Constants.RobotMode mode, final HardwareConstants.IntakeSlideConstants constants) {
         this.constants = constants;
@@ -131,8 +129,8 @@ public class IntakeSlide extends SubsystemExt {
             case REPLAY, DISABLED -> new IntakeSlideIO() {};
         };
 
-        this.atSetpoint = group.t("AtSetpoint", () -> atPosition(positionSetpointRots));
-        this.isIntakeStopped = group.t("IsIntakeStopped", () -> MathUtil.isNear(
+        this.atSetpoint = new Trigger(() -> atPosition(positionSetpointRots));
+        this.isIntakeStopped = new Trigger(() -> MathUtil.isNear(
                 0,
                 getVelocityRotsPerSec(),
                 0.1
@@ -140,7 +138,7 @@ public class IntakeSlide extends SubsystemExt {
 
         this.intakeSlideIO.zero();
 
-        final LoggedTrigger softModeTrigger = group.t("SoftMode", this::atSetpoint).debounce(0.1);
+        final Trigger softModeTrigger = new Trigger(this::atSetpoint).debounce(0.1);
         softModeTrigger.onTrue(Commands.runOnce(() -> {
             holdMode = HoldMode.SOFT;
             setDesiredPosition(positionSetpointRots);
@@ -217,8 +215,8 @@ public class IntakeSlide extends SubsystemExt {
         return inputs.averageVelocityRotsPerSec;
     }
 
-    public LoggedTrigger atGoal(final Goal goal) {
-        return group.t("AtGoal: " + goal, () -> desiredGoal == InternalGoal.fromGoal(goal)
+    public Trigger atGoal(final Goal goal) {
+        return new Trigger(() -> desiredGoal == InternalGoal.fromGoal(goal)
                 && atPosition(goal.positionRots));
     }
 

@@ -12,6 +12,7 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.FunctionalCommand;
 import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
+import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.FuelState;
 import frc.robot.Robot;
 import frc.robot.ShootCommands;
@@ -25,8 +26,6 @@ import frc.robot.subsystems.superstructure.params.ShotParameters;
 import frc.robot.subsystems.superstructure.params.ShotProvider;
 import frc.robot.subsystems.superstructure.params.StaticShot;
 import frc.robot.subsystems.vision.PhotonVision;
-import frc.robot.utils.commands.trigger.LoggedTrigger;
-import frc.robot.utils.commands.trigger.RobotModeLoggedTriggers;
 import org.littletonrobotics.junction.Logger;
 
 import java.lang.reflect.Field;
@@ -37,9 +36,6 @@ import static edu.wpi.first.wpilibj2.command.Commands.*;
 
 public class Autos {
     public static final String LogKey = "Auto";
-
-    @SuppressWarnings("FieldCanBeLocal")
-    private final LoggedTrigger.Group group = LoggedTrigger.Group.from(LogKey);
 
     private final Swerve swerve;
     private final Intake intake;
@@ -55,9 +51,9 @@ public class Autos {
     private final ShotProvider<ShotProvider.Kind.Moving> movingShotProvider;
     private final Supplier<ShotParameters> movingShot;
 
-    private final LoggedTrigger robotStopped;
-    private final LoggedTrigger targetIsHub;
-    private final LoggedTrigger turretSafe;
+    private final Trigger robotStopped;
+    private final Trigger targetIsHub;
+    private final Trigger turretSafe;
 
     public Autos(
             final Swerve swerve,
@@ -103,17 +99,14 @@ public class Autos {
         this.movingShotProvider = new MovingTOFShot();
         this.movingShot = movingParameters(() -> ShootCommands.Target.HUB, FieldConstants::getHubPose);
 
-        this.robotStopped = group.t(
-                "RobotStopped",
+        this.robotStopped = new Trigger(
                 () -> ShootCommands.linearSpeed(swerve.getFieldRelativeSpeeds()) <= 0.01
         );
-        this.targetIsHub = group.t(
-                "TargetIsHub",
+        this.targetIsHub = new Trigger(
                 () -> ShootCommands.getTarget(superstructure.getTurretTranslation(swerve.getPose()))
                         == ShootCommands.Target.HUB
         );
-        this.turretSafe = group.t(
-                "TurretSafe",
+        this.turretSafe = new Trigger(
                 () -> {
                     final boolean isStopped = robotStopped.getAsBoolean();
 
@@ -683,8 +676,7 @@ public class Autos {
         }
 
         final EventLoop loop = routine.loop();
-        final LoggedTrigger.Group routineGroup = LoggedTrigger.Group.from("Doohickey", loop);
-        final LoggedTrigger routineActive = routineGroup.t("RoutineActive", () -> {
+        final Trigger routineActive = new Trigger(() -> {
             try {
                 return (boolean) isActiveField.get(routine);
             } catch (final IllegalAccessException e) {
@@ -753,7 +745,7 @@ public class Autos {
         routineActive
                 .whileTrue(warmupCommand);
 
-        final LoggedTrigger disabled = RobotModeLoggedTriggers.disabled(group);
+        final Trigger disabled = RobotModeTriggers.disabled();
         return run(() -> {
             try {
                 pollCountField.set(routine, ((int) pollCountField.get(routine)) + 1);
