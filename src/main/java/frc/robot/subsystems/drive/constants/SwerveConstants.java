@@ -96,7 +96,7 @@ public class SwerveConstants {
     );
 
     public static class CTRESwerve {
-        public static final double OdometryFreqHz = 250;
+        public static final double OdometryFreqHz = 200;
         public static final Vector<N3> OdometryStdDevs = VecBuilder.fill(0.1, 0.1, Units.degreesToRadians(1));
         public static final Vector<N3> UnusedVisionStdDevs = VecBuilder.fill(0.6, 0.6, Units.degreesToRadians(80));
         public static final int BufferSize = 40;

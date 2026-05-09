@@ -93,7 +93,7 @@ public class IntakeSlideIOReal implements IntakeSlideIO {
         differentialConstants.CANBusName = canBus.name;
         differentialConstants.Alignment = MotorAlignmentValue.Opposed;
         differentialConstants.SensorToDifferentialRatio = 1;
-        differentialConstants.ClosedLoopRate = 200;
+        differentialConstants.ClosedLoopRate = 100;
         differentialConstants.LeaderInitialConfigs = masterConfiguration;
         differentialConstants.FollowerInitialConfigs = followerConfiguration;
         differentialConstants.FollowerUsesCommonLeaderConfigs = true;
