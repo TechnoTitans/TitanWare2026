@@ -20,7 +20,6 @@ import frc.robot.utils.commands.trigger.LoggedTrigger;
 import org.littletonrobotics.junction.Logger;
 
 import java.util.HashMap;
-import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.function.DoubleSupplier;
 
