@@ -1,5 +1,6 @@
 package frc.robot.subsystems.intake;
 
+import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.subsystems.intake.rollers.IntakeRollers;
@@ -11,7 +12,7 @@ public class Intake {
     private final LoggedTrigger.Group group = LoggedTrigger.Group.from(LogKey);
 
     private final IntakeSlide slide;
-    public final IntakeRollers rollers;
+    private final IntakeRollers rollers;
 
     private boolean intaking = false;
     public final LoggedTrigger isIntaking = group.t("IsIntaking", () -> intaking);
@@ -32,7 +33,7 @@ public class Intake {
                 ),
                 slide.setGoal(IntakeSlide.Goal.EXTEND),
                 Commands.sequence(
-                        Commands.waitUntil(() -> slide.atGoal(IntakeSlide.Goal.EXTEND))
+                        Commands.waitUntil(slide.atGoal(IntakeSlide.Goal.EXTEND))
                                 .withTimeout(0.5),
                         rollers.toGoal(IntakeRollers.Goal.INTAKE)
                 )
@@ -42,11 +43,6 @@ public class Intake {
     public Command deploy() {
         return slide.setGoal(IntakeSlide.Goal.EXTEND)
                 .withName("DeployIntake");
-    }
-
-    public Command spinRollers() {
-        return rollers.toGoal(IntakeRollers.Goal.INTAKE)
-                .withName("SpinRollers");
     }
 
     public Command stow() {
@@ -60,7 +56,15 @@ public class Intake {
         return Commands.parallel(
                 Commands.repeatingSequence(
                         slide.toGoalHold(IntakeSlide.Goal.SHOOTING)
-                                        .until(slide.isIntakeStopped),
+                                        .until(() -> MathUtil.isNear(
+                                                0.5,
+                                                slide.getPosition().getRotations(),
+                                                0.5
+                                        ) && MathUtil.isNear(0,
+                                                slide.getVelocityRotsPerSec(),
+                                                0.1
+                                                )
+                                        ),
                         slide.setGoal(IntakeSlide.Goal.EXTEND),
                         Commands.waitUntil(slide.atSetpoint)
                                 .withTimeout(2)

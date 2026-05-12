@@ -69,9 +69,9 @@ public class SpindexerIOReal implements SpindexerIO {
                 .withStaticFeedforwardSign(StaticFeedforwardSignValue.UseVelocitySign)
                 .withKP(40)
                 .withKD(0);
-        motorConfig.CurrentLimits.StatorCurrentLimit = 80;
+        motorConfig.CurrentLimits.StatorCurrentLimit = 60;
         motorConfig.CurrentLimits.StatorCurrentLimitEnable = true;
-        motorConfig.CurrentLimits.SupplyCurrentLimit = 75;
+        motorConfig.CurrentLimits.SupplyCurrentLimit = 50;
         motorConfig.CurrentLimits.SupplyCurrentLowerLimit = 65;
         motorConfig.CurrentLimits.SupplyCurrentLowerTime = 1.5;
         motorConfig.CurrentLimits.SupplyCurrentLimitEnable = true;

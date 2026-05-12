@@ -31,7 +31,7 @@ public class Turret extends SubsystemExt {
 
     public enum Goal {
         STOW(0),
-        NO_VISION(0.5);
+        NO_VISION(0);
 
         private final double positionSetpointRots;
 

@@ -30,19 +30,23 @@ public class Shooter extends SubsystemExt {
     private static final double VelocityToleranceRotsPerSec = 3.5;
 
     public enum Goal {
-        IDLE(20),
-        NO_VISION(30);
+        UNSTUCK(ControlType.TorqueCurrent, -20),
+        IDLE(ControlType.Velocity, 20),
+        NO_VISION(ControlType.Velocity, 30);
 
-        private final double velocityRotsPerSec;
+        private final ControlType controlType;
+        private final double setpoint;
 
-        Goal(final double velocityRotsPerSec) {
-            this.velocityRotsPerSec = velocityRotsPerSec;
+        Goal(final ControlType controlType, final double setpoint) {
+            this.controlType = controlType;
+            this.setpoint = setpoint;
         }
     }
 
     private enum InternalGoal {
         NONE,
         DEFAULT,
+        UNSTUCK(Goal.UNSTUCK),
         IDLE(Goal.IDLE),
         NO_VISION(Goal.NO_VISION),
         TRACKING;
@@ -73,11 +77,17 @@ public class Shooter extends SubsystemExt {
         }
     }
 
+    private enum ControlType {
+        Velocity,
+        TorqueCurrent
+    }
+
     private final ShooterIO shooterIO;
     private final ShooterIOInputsAutoLogged inputs = new ShooterIOInputsAutoLogged();
 
     private InternalGoal desiredGoal = InternalGoal.TRACKING;
-    private double velocitySetpointRotsPerSec;
+    private double setpoint;
+    private ControlType controlType = ControlType.Velocity;
 
     public final LoggedTrigger atSetpoint;
     private final SysIdRoutine flywheelTorqueCurrentSysIdRoutine;
@@ -91,7 +101,7 @@ public class Shooter extends SubsystemExt {
 
         final LoggedTrigger.Group group = LoggedTrigger.Group.from(LogKey);
         this.atSetpoint = group.t("AtSetpoint", () -> MathUtil.isNear(
-                velocitySetpointRotsPerSec,
+                setpoint,
                 inputs.masterVelocityRotsPerSec,
                 VelocityToleranceRotsPerSec
         ));
@@ -120,8 +130,9 @@ public class Shooter extends SubsystemExt {
 
         Logger.recordOutput(LogKey + "/DesiredGoal", desiredGoal);
         Logger.recordOutput(LogKey + "/CurrentGoal", currentGoal);
+        Logger.recordOutput(LogKey + "/ControlType", controlType);
         Logger.recordOutput(LogKey + "/AtSetpoint", atSetpoint);
-        Logger.recordOutput(LogKey + "/VelocitySetpointRotsPerSec", velocitySetpointRotsPerSec);
+        Logger.recordOutput(LogKey + "/Setpoint", setpoint);
 
         Logger.recordOutput(
                 LogKey + "/PeriodicIOPeriodMs",
@@ -149,7 +160,10 @@ public class Shooter extends SubsystemExt {
 
     public Command runVelocity(final DoubleSupplier velocityRotsPerSecSupplier) {
         return instantRun(
-                () -> desiredGoal = InternalGoal.TRACKING,
+                () -> {
+                    desiredGoal = InternalGoal.TRACKING;
+                    controlType = ControlType.Velocity;
+                },
                 () -> setDesiredVelocity(velocityRotsPerSecSupplier.getAsDouble())
         ).withName("RunVelocity");
     }
@@ -168,12 +182,20 @@ public class Shooter extends SubsystemExt {
 
     private void setDesiredGoal(final Goal goal) {
         desiredGoal = InternalGoal.fromGoal(goal);
-        setDesiredVelocity(goal.velocityRotsPerSec);
+        switch (goal.controlType) {
+            case Velocity -> setDesiredVelocity(goal.setpoint);
+            case TorqueCurrent -> setDesiredTorqueCurrent(goal.setpoint);
+        }
     }
 
     private void setDesiredVelocity(final double velocityRotsPerSec) {
-        velocitySetpointRotsPerSec = velocityRotsPerSec;
+        setpoint = velocityRotsPerSec;
         shooterIO.toFlywheelVelocity(velocityRotsPerSec);
+    }
+
+    private void setDesiredTorqueCurrent(final double torqueCurrentAmps) {
+        setpoint = torqueCurrentAmps;
+        shooterIO.toFlywheelTorqueCurrent(torqueCurrentAmps);
     }
 
     private SysIdRoutine makeVoltageSysIdRoutine(

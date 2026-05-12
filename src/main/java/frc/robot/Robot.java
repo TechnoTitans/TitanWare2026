@@ -43,6 +43,7 @@ import frc.robot.utils.subsystems.VirtualSubsystem;
 import frc.robot.utils.teleop.ControllerUtils;
 import frc.robot.utils.teleop.SwerveSpeed;
 import org.littletonrobotics.junction.LogFileUtil;
+import org.littletonrobotics.junction.LoggedPowerDistribution;
 import org.littletonrobotics.junction.LoggedRobot;
 import org.littletonrobotics.junction.Logger;
 import org.littletonrobotics.junction.networktables.NT4Publisher;
@@ -327,6 +328,8 @@ public class Robot extends LoggedRobot {
         powerDistribution.clearStickyFaults();
         powerDistribution.setSwitchableChannel(true);
 
+        LoggedPowerDistribution.getInstance(HardwareConstants.PowerDistributionHub, PowerDistribution.ModuleType.kRev);
+
         configureStateTriggers();
         configureAutos();
         configureButtonBindings(teleopEventLoop);
@@ -466,6 +469,7 @@ public class Robot extends LoggedRobot {
 
     public void configureAutos() {
         autonomousEnabled.whileTrue(Commands.deferredProxy(() -> autoChooser.getSelected().cmd()));
+        //TODO: fix auto delay
         CommandScheduler.getInstance().schedule(
                 Commands.parallel(
                                 Commands.runOnce(() -> attemptedAutoWarmup = true),
@@ -546,6 +550,12 @@ public class Robot extends LoggedRobot {
                 autos::rightDoubleSweepBumpFullWidth,
                 Constants.CompetitionType.COMPETITION
         ));
+
+        autoChooser.addAutoOption(new AutoOption(
+                "CenterShoot",
+                autos::centerShoot,
+                Constants.CompetitionType.COMPETITION
+        ));
     }
 
     public void configureButtonBindings(final EventLoop teleopEventLoop) {
@@ -562,7 +572,10 @@ public class Robot extends LoggedRobot {
                 ).withName("SwerveSpeedSlow"));
 
         driverController.leftTrigger(0.5, teleopEventLoop)
-                .whileTrue(intake.intake());
+                .whileTrue(intake.intake()
+                        .asProxy()
+                        .unless(intake.isIntaking)
+                );
 
         driverController.rightTrigger(0.5, teleopEventLoop)
                 .whileTrue(shootCommands.shoot())
@@ -596,5 +609,8 @@ public class Robot extends LoggedRobot {
 
         coController.x(teleopEventLoop)
                 .whileTrue(intake.unstuck());
+
+        coController.leftBumper(teleopEventLoop)
+                .whileTrue(shooter.toGoal(Shooter.Goal.UNSTUCK));
     }
 }
