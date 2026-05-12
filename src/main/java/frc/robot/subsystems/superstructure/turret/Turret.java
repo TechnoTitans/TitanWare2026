@@ -196,10 +196,6 @@ public class Turret extends SubsystemExt {
         return atSetpoint.getAsBoolean();
     }
 
-    public double getSupplyCurrent() {
-        return inputs.turretTorqueCurrentAmps;
-    }
-
     private void setDesiredGoal(final Goal goal) {
         desiredGoal = InternalGoal.fromGoal(goal);
         setDesiredPosition(desiredGoal.goal.positionSetpointRots);

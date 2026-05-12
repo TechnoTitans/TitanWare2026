@@ -328,7 +328,7 @@ public class Robot extends LoggedRobot {
         powerDistribution.clearStickyFaults();
         powerDistribution.setSwitchableChannel(true);
 
-        LoggedPowerDistribution.getInstance(1, PowerDistribution.ModuleType.kRev);
+        LoggedPowerDistribution.getInstance(HardwareConstants.PowerDistributionHub, PowerDistribution.ModuleType.kRev);
 
         configureStateTriggers();
         configureAutos();
@@ -372,8 +372,6 @@ public class Robot extends LoggedRobot {
 
         Logger.recordOutput(LogKey + "/AttemptedAutoWarmup", attemptedAutoWarmup);
         Logger.recordOutput(LogKey + "/AutoIsHot", autoIsHot);
-
-        Logger.recordOutput(LogKey + "/TotalCurrent", getTotalCurrent());
     }
 
     @Override
@@ -599,16 +597,5 @@ public class Robot extends LoggedRobot {
 
         coController.leftBumper(teleopEventLoop)
                 .whileTrue(shooter.toGoal(Shooter.Goal.UNSTUCK));
-    }
-
-    public double getTotalCurrent() {
-        return swerve.getSupplyCurrent()
-                + feeder.getSupplyCurrent()
-                + spindexer.getSupplyCurrent()
-                + intakeRollers.getSupplyCurrent()
-                + intakeSlide.getSupplyCurrent()
-                + hood.getSupplyCurrent()
-                + shooter.getSupplyCurrent()
-                + turret.getSupplyCurrent();
     }
 }

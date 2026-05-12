@@ -222,10 +222,6 @@ public class IntakeSlide extends SubsystemExt {
                 && atPosition(goal.positionRots));
     }
 
-    public double getSupplyCurrent() {
-        return inputs.masterTorqueCurrentAmps + inputs.followerTorqueCurrentAmps;
-    }
-
     private void setDesiredGoal(final Goal goal) {
         if (desiredGoal.goal != goal || !atSetpoint.getAsBoolean()) {
             holdMode = HoldMode.HARD;

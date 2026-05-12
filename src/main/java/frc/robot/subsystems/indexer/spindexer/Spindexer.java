@@ -89,10 +89,6 @@ public class Spindexer extends SubsystemExt {
         return makeWheelSysIdCommand(wheelTorqueCurrentSysIdRoutine);
     }
 
-    public double getSupplyCurrent() {
-        return inputs.wheelTorqueCurrentAmps;
-    }
-
     private void setDesiredGoal(final Goal goal) {
         desiredGoal = goal;
         setDesiredVelocity(goal.velocityRotsPerSec);

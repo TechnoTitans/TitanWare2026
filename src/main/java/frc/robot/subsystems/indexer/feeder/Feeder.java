@@ -84,10 +84,6 @@ public class Feeder extends SubsystemExt {
         return makeWheelSysIdCommand(wheelTorqueCurrentSysIdRoutine);
     }
 
-    public double getSupplyCurrent() {
-        return inputs.wheelTorqueCurrentAmps;
-    }
-
     public boolean isTOFDetected() {
         return inputs.tofDetected;
     }
