@@ -21,22 +21,22 @@ public record ShotParameters(
     static {
         switch (Constants.CURRENT_MODE) {
             case REAL, REPLAY, DISABLED -> {
-                HubShotMap.put(1.30, new Shooter(27.5, 0));
-                HubShotMap.put(2.07, new Shooter(30, 0.005));
-                HubShotMap.put(2.42, new Shooter(31, 0.008));
-                HubShotMap.put(2.67, new Shooter(32, 0.01));
-                HubShotMap.put(3.07, new Shooter(33.5, 0.012));
-                HubShotMap.put(3.60, new Shooter(34, 0.014));
-                HubShotMap.put(4.54, new Shooter(38, 0.023));
-                HubShotMap.put(5.18, new Shooter(38.5, 0.035));
-                HubShotMap.put(5.84, new Shooter(40, 0.038));
-                HubShotMap.put(6.16, new Shooter(40, 0.041));
+                HubShotMap.put(1.30, new Shooter(17.5, 0));
+                HubShotMap.put(2.07, new Shooter(20, 0.005));
+                HubShotMap.put(2.42, new Shooter(21, 0.008));
+                HubShotMap.put(2.67, new Shooter(22, 0.01));
+                HubShotMap.put(3.07, new Shooter(23.5, 0.012));
+                HubShotMap.put(3.60, new Shooter(24, 0.014));
+                HubShotMap.put(4.54, new Shooter(28, 0.023));
+                HubShotMap.put(5.18, new Shooter(28.5, 0.035));
+                HubShotMap.put(5.84, new Shooter(30, 0.038));
+                HubShotMap.put(6.16, new Shooter(30, 0.041));
 
-                FerryShotMap.put(2.0, new Shooter(34, 0.1));
-                FerryShotMap.put(3.0, new Shooter(34, 0.1));
-                FerryShotMap.put(4.0, new Shooter(35, 0.08));
-                FerryShotMap.put(5.0, new Shooter(36, 0.07));
-                FerryShotMap.put(6.0, new Shooter(39, 0.06));
+                FerryShotMap.put(2.0, new Shooter(24, 0.1));
+                FerryShotMap.put(3.0, new Shooter(24, 0.1));
+                FerryShotMap.put(4.0, new Shooter(25, 0.08));
+                FerryShotMap.put(5.0, new Shooter(26, 0.07));
+                FerryShotMap.put(6.0, new Shooter(29, 0.06));
             }
             case SIM -> {
                 HubShotMap.put(1.3, new Shooter(21, 0));
@@ -65,19 +65,19 @@ public record ShotParameters(
     static {
         switch (Constants.CURRENT_MODE) {
             case REAL, REPLAY, DISABLED -> {
-                TimeOfFlightMap.put(1.647, 1.08);
-                TimeOfFlightMap.put(2.246, 1.05);
-                TimeOfFlightMap.put(3.252, 1.35);
-                TimeOfFlightMap.put(3.991, 1.34);
-                TimeOfFlightMap.put(4.8, 1.4);
-                TimeOfFlightMap.put(5.322, 1.47);
+                TimeOfFlightMap.put(1.647, 0.08);
+                TimeOfFlightMap.put(2.246, 0.95);
+                TimeOfFlightMap.put(3.252, 1.25);
+                TimeOfFlightMap.put(3.991, 1.24);
+                TimeOfFlightMap.put(4.8, 1.3);
+                TimeOfFlightMap.put(5.322, 1.37);
 
-                FerryTimeOfFlightMap.put(2.014, 1.16);
-                FerryTimeOfFlightMap.put(3.339, 1.06);
-                FerryTimeOfFlightMap.put(3.722464, 1.2);
-                FerryTimeOfFlightMap.put(4.541, 1.27);
-                FerryTimeOfFlightMap.put(4.780, 1.36);
-                FerryTimeOfFlightMap.put(5.995, 1.4);
+                FerryTimeOfFlightMap.put(2.014, 1.06);
+                FerryTimeOfFlightMap.put(3.339, 0.96);
+                FerryTimeOfFlightMap.put(3.722464, 1.1);
+                FerryTimeOfFlightMap.put(4.541, 1.17);
+                FerryTimeOfFlightMap.put(4.780, 1.26);
+                FerryTimeOfFlightMap.put(5.995, 1.3);
             }
             case SIM -> {
                 TimeOfFlightMap.put(1.31, 1.06);
