@@ -559,7 +559,7 @@ public class Robot extends LoggedRobot {
     }
 
     public void configureButtonBindings(final EventLoop teleopEventLoop) {
-        driverController.rightBumper(teleopEventLoop)
+        /*driverController.rightBumper(teleopEventLoop)
                 .whileTrue(SwerveSpeed.toSwerveSpeed(
                         SwerveSpeed.Speeds.FAST,
                         SwerveSpeed.Speeds.NORMAL
@@ -569,7 +569,7 @@ public class Robot extends LoggedRobot {
                 .whileTrue(SwerveSpeed.toSwerveSpeed(
                         SwerveSpeed.Speeds.SLOW,
                         SwerveSpeed.Speeds.NORMAL
-                ).withName("SwerveSpeedSlow"));
+                ).withName("SwerveSpeedSlow"));*/
 
         driverController.leftTrigger(0.5, teleopEventLoop)
                 .whileTrue(intake.intake()

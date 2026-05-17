@@ -33,7 +33,7 @@ public class SwerveSpeed {
         }
     }
 
-    private static Speeds SwerveSpeed = Speeds.NORMAL;
+    private static Speeds SwerveSpeed = Speeds.SLOW;
 
     private SwerveSpeed() {}
 
