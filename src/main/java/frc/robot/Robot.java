@@ -470,20 +470,20 @@ public class Robot extends LoggedRobot {
     public void configureAutos() {
         autonomousEnabled.whileTrue(Commands.deferredProxy(() -> autoChooser.getSelected().cmd()));
         //TODO: fix auto delay
-        CommandScheduler.getInstance().schedule(
-                Commands.parallel(
-                                Commands.runOnce(() -> attemptedAutoWarmup = true),
-                                autos.warmup()
-                                        .finallyDo(interrupted -> {
-                                            if (!interrupted) {
-                                                autoIsHot = true;
-                                            }
-                                        })
-                        )
-                        .onlyIf(disabled)
-                        .onlyWhile(disabled)
-                        .ignoringDisable(true)
-        );
+//        CommandScheduler.getInstance().schedule(
+//                Commands.parallel(
+//                                Commands.runOnce(() -> attemptedAutoWarmup = true),
+//                                autos.warmup()
+//                                        .finallyDo(interrupted -> {
+//                                            if (!interrupted) {
+//                                                autoIsHot = true;
+//                                            }
+//                                        })
+//                        )
+//                        .onlyIf(disabled)
+//                        .onlyWhile(disabled)
+//                        .ignoringDisable(true)
+//        );
 
         autoChooser.addAutoOption(new AutoOption(
                 "OnlyShootPreload",
