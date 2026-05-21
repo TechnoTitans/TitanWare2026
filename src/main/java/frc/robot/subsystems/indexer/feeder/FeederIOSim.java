@@ -173,7 +173,7 @@ public class FeederIOSim implements FeederIO {
     }
 
     @Override
-    public void updateInputs(FeederIO.FeederIOInputs inputs) {
+    public void updateInputs(final FeederIOInputs inputs) {
         inputs.wheelPositionRots = wheelPosition.getValueAsDouble();
         inputs.wheelVelocityRotsPerSec = wheelVelocity.getValueAsDouble();
         inputs.wheelVoltage = wheelVoltage.getValueAsDouble();

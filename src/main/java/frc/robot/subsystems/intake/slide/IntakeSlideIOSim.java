@@ -211,7 +211,7 @@ public class IntakeSlideIOSim implements IntakeSlideIO {
     }
 
     @Override
-    public void updateInputs(IntakeSlideIOInputs inputs) {
+    public void updateInputs(final IntakeSlideIOInputs inputs) {
         inputs.masterPositionRots = masterPosition.getValueAsDouble();
         inputs.masterVelocityRotsPerSec = masterVelocity.getValueAsDouble();
         inputs.masterVoltage = masterVoltage.getValueAsDouble();

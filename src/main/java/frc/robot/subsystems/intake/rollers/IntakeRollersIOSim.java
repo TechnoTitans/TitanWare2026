@@ -188,7 +188,7 @@ public class IntakeRollersIOSim implements IntakeRollersIO {
     }
 
     @Override
-    public void updateInputs(IntakeRollerIOInputs inputs) {
+    public void updateInputs(final IntakeRollerIOInputs inputs) {
         inputs.masterPositionRots = masterPosition.getValueAsDouble();
         inputs.masterVelocityRotsPerSec = masterVelocity.getValueAsDouble();
         inputs.masterVoltage = masterVoltage.getValueAsDouble();
