@@ -931,20 +931,19 @@ public class Swerve extends SubsystemExt {
         final WheelRadiusCharacterizationState state = new WheelRadiusCharacterizationState();
 
         final Supplier<double[]> drivePositionsSupplier = () -> {
-            final SwerveModulePosition[] positions = getModulePositions();
-            final double[] positionMeters = new double[positions.length];
-            for (int i = 0; i < positionMeters.length; i++) {
-                positionMeters[i] = positions[i].distanceMeters;
+            final double[] positionRots = new double[SwerveConstants.ModuleCount];
+            for (int i = 0; i < positionRots.length; i++) {
+                positionRots[i] = moduleInputs[i].drivePositionRots;
             }
 
-            return positionMeters;
+            return positionRots;
         };
 
         final Supplier<Rotation2d> yawRotation2dSupplier = this::getYaw;
 
         return Commands.parallel(
                 Commands.sequence(
-                        Commands.runOnce(() -> limiter.reset(0.0)),
+                        runOnce(() -> limiter.reset(0.0)),
                         run(() -> {
                             final double speed = limiter.calculate(wheelRadiusMaxVelocityRadsPerSec);
                             drive(new ChassisSpeeds(0.0, 0.0, speed));
@@ -952,20 +951,21 @@ public class Swerve extends SubsystemExt {
                 ),
                 Commands.sequence(
                         Commands.waitSeconds(1.0),
-                        Commands.runOnce(() -> {
+                        runOnce(() -> {
                             state.positions = drivePositionsSupplier.get();
                             state.gyroDelta = 0.0;
                             state.lastAngle = yawRotation2dSupplier.get();
                         }),
-                        Commands.run(() -> {
+                        run(() -> {
                             final Rotation2d rotation = yawRotation2dSupplier.get();
                             state.gyroDelta += Math.abs(rotation.minus(state.lastAngle).getRotations());
                             state.lastAngle = rotation;
                         }).finallyDo(() -> {
                             final double[] positions = drivePositionsSupplier.get();
                             double wheelDeltaRots = 0.0;
-                            for (int i = 0; i < 4; i++) {
-                                wheelDeltaRots += Math.abs(positions[i] - state.positions[i]) / 4.0;
+                            for (int i = 0; i < SwerveConstants.ModuleCount; i++) {
+                                wheelDeltaRots += Math.abs(positions[i] - state.positions[i])
+                                        / SwerveConstants.ModuleCount;
                             }
 
                             final double wheelRadius =
