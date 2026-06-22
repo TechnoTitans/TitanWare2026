@@ -943,7 +943,7 @@ public class Swerve extends SubsystemExt {
 
         return Commands.parallel(
                 Commands.sequence(
-                        runOnce(() -> limiter.reset(0.0)),
+                        Commands.runOnce(() -> limiter.reset(0.0)),
                         run(() -> {
                             final double speed = limiter.calculate(wheelRadiusMaxVelocityRadsPerSec);
                             drive(new ChassisSpeeds(0.0, 0.0, speed));
@@ -951,12 +951,12 @@ public class Swerve extends SubsystemExt {
                 ),
                 Commands.sequence(
                         Commands.waitSeconds(1.0),
-                        runOnce(() -> {
+                        Commands.runOnce(() -> {
                             state.positions = drivePositionsSupplier.get();
                             state.gyroDelta = 0.0;
                             state.lastAngle = yawRotation2dSupplier.get();
                         }),
-                        run(() -> {
+                        Commands.run(() -> {
                             final Rotation2d rotation = yawRotation2dSupplier.get();
                             state.gyroDelta += Math.abs(rotation.minus(state.lastAngle).getRotations());
                             state.lastAngle = rotation;
