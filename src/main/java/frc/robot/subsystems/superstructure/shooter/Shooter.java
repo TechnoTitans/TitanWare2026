@@ -30,7 +30,7 @@ public class Shooter extends SubsystemExt {
     private static final double VelocityToleranceRotsPerSec = 3.5;
 
     public enum Goal {
-        UNSTUCK(ControlType.TorqueCurrent, -20),
+        UNSTUCK(ControlType.Voltage, -3),
         IDLE(ControlType.Velocity, 20),
         NO_VISION(ControlType.Velocity, 30);
 
@@ -79,7 +79,7 @@ public class Shooter extends SubsystemExt {
 
     private enum ControlType {
         Velocity,
-        TorqueCurrent
+        Voltage
     }
 
     private final ShooterIO shooterIO;
@@ -184,7 +184,7 @@ public class Shooter extends SubsystemExt {
         desiredGoal = InternalGoal.fromGoal(goal);
         switch (goal.controlType) {
             case Velocity -> setDesiredVelocity(goal.setpoint);
-            case TorqueCurrent -> setDesiredTorqueCurrent(goal.setpoint);
+            case Voltage -> setDesiredVoltage(goal.setpoint);
         }
     }
 
@@ -193,9 +193,9 @@ public class Shooter extends SubsystemExt {
         shooterIO.toFlywheelVelocity(velocityRotsPerSec);
     }
 
-    private void setDesiredTorqueCurrent(final double torqueCurrentAmps) {
-        setpoint = torqueCurrentAmps;
-        shooterIO.toFlywheelTorqueCurrent(torqueCurrentAmps);
+    private void setDesiredVoltage(final double volts) {
+        setpoint = volts;
+        shooterIO.toFlywheelVoltage(volts);
     }
 
     private SysIdRoutine makeVoltageSysIdRoutine(

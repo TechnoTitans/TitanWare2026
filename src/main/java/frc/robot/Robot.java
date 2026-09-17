@@ -1,5 +1,6 @@
 package frc.robot;
 
+import au.grapplerobotics.MitoCANdria;
 import com.ctre.phoenix6.SignalLogger;
 import edu.wpi.first.hal.AllianceStationID;
 import edu.wpi.first.math.MathShared;
@@ -73,6 +74,8 @@ public class Robot extends LoggedRobot {
     public final PowerDistribution powerDistribution = new PowerDistribution(
             HardwareConstants.PowerDistributionHub, PowerDistribution.ModuleType.kRev
     );
+
+    public final MitoCANdria mito = new MitoCANdria(27);
 
     public final Swerve swerve = new Swerve(
             Constants.CURRENT_MODE,
