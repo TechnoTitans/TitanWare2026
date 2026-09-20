@@ -43,7 +43,7 @@ public class HardwareConstants {
     ) {}
 
     public static final IntakeRollerConstants INTAKE_ROLLER = new IntakeRollerConstants(
-            CANBus.RIO,
+            CANBus.CANIVORE,
             14,
             15,
             5.0 / 3
@@ -157,8 +157,8 @@ public class HardwareConstants {
             21,
             22,
             23,
-            -0.290283,
-            -0.637695,
+            -0.639,
+            -0.654,
             0.75,
             -0.25,
             10,
