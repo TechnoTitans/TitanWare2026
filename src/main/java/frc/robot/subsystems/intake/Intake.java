@@ -71,9 +71,9 @@ public class Intake {
                 ),
                 Commands.repeatingSequence(
                         rollers.setGoal(IntakeRollers.Goal.FEED_PULSE),
-                        Commands.waitSeconds(0.5),
+                        Commands.waitSeconds(0.75),
                         rollers.setGoal(IntakeRollers.Goal.OFF),
-                        Commands.waitSeconds(0.5)
+                        Commands.waitSeconds(0.25)
                 )
         ).withName("StowFeedIntake");
     }
