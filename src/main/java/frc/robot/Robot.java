@@ -489,10 +489,10 @@ public class Robot extends LoggedRobot {
                         swerve.stopCommand()
                 ));
 
-        shooter.stalled.debounce(0.5)
+        shooter.stalled.debounce(0.05)
                 .onTrue(shooter.toGoal(Shooter.Goal.UNSTUCK).
                         until(shooter.fuelEjected)
-                        .withTimeout(3));
+                        .withTimeout(20));
     }
 
     public void configureAutos() {
