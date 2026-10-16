@@ -30,7 +30,7 @@ public class Shooter extends SubsystemExt {
     private static final double VelocityToleranceRotsPerSec = 3.5;
 
     public enum Goal {
-        UNSTUCK(ControlType.Voltage, -7),
+        UNSTUCK(ControlType.Voltage, -8),
         IDLE(ControlType.Velocity, 20),
         NO_VISION(ControlType.Velocity, 30);
 
