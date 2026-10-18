@@ -25,8 +25,8 @@ public class IntakeRollers extends SubsystemExt {
     public enum Goal {
         UNSTUCK(-40),
         OFF(0),
-        FEED_PULSE(17.5),
-        INTAKE(25);
+        FEED_PULSE(15),
+        INTAKE(27.5);
 
         private final double velocityRotsPerSec;
 
