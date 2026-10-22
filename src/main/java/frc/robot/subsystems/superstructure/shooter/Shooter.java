@@ -30,7 +30,7 @@ public class Shooter extends SubsystemExt {
     private static final double VelocityToleranceRotsPerSec = 3.5;
 
     public enum Goal {
-        UNSTUCK(ControlType.Voltage, -7),
+        UNSTUCK(ControlType.Voltage, -11),
         IDLE(ControlType.Velocity, 20),
         NO_VISION(ControlType.Velocity, 30);
 
@@ -90,6 +90,8 @@ public class Shooter extends SubsystemExt {
     private ControlType controlType = ControlType.Velocity;
 
     public final LoggedTrigger atSetpoint;
+    public final LoggedTrigger stalled;
+    public final LoggedTrigger fuelEjected;
     private final SysIdRoutine flywheelTorqueCurrentSysIdRoutine;
 
     public Shooter(final Constants.RobotMode mode, final HardwareConstants.ShooterConstants constants) {
@@ -105,6 +107,13 @@ public class Shooter extends SubsystemExt {
                 inputs.masterVelocityRotsPerSec,
                 VelocityToleranceRotsPerSec
         ));
+
+        this.stalled = group.t("Stalled", () ->
+                MathUtil.isNear(inputs.masterVelocityRotsPerSec, 0, 0.5)
+                && inputs.masterTorqueCurrentAmps > 60
+        );
+
+        this.fuelEjected = group.t("FuelEjected", () -> inputs.masterVelocityRotsPerSec < -5);
 
         this.flywheelTorqueCurrentSysIdRoutine = makeTorqueCurrentSysIdRoutine(
                 Amps.of(4).per(Second),
@@ -133,6 +142,8 @@ public class Shooter extends SubsystemExt {
         Logger.recordOutput(LogKey + "/ControlType", controlType);
         Logger.recordOutput(LogKey + "/AtSetpoint", atSetpoint);
         Logger.recordOutput(LogKey + "/Setpoint", setpoint);
+        Logger.recordOutput(LogKey + "/FuelEjected", fuelEjected);
+        Logger.recordOutput(LogKey + "/Stalled", stalled);
 
         Logger.recordOutput(
                 LogKey + "/PeriodicIOPeriodMs",

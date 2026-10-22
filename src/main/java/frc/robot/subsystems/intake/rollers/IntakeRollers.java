@@ -26,7 +26,7 @@ public class IntakeRollers extends SubsystemExt {
         UNSTUCK(-40),
         OFF(0),
         FEED_PULSE(15),
-        INTAKE(20);
+        INTAKE(27.5);
 
         private final double velocityRotsPerSec;
 
